@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.6.0');
+define('MAD_OKUL_VERSION', '1.7.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -378,8 +378,18 @@ function mad_okul_store_rural($il,$ilce,$kurum,$adres,$reason) {
 function mad_okul_missing_page() {
     if (!current_user_can('manage_options')) return; global $wpdb;
     $rows=$wpdb->get_results("SELECT * FROM ".mad_okul_table()." WHERE adres='' OR durum='Adres Eksik' ORDER BY il,ilce,kurum_adi LIMIT 1000");
-    ?><div class="wrap mad-okul-wrap"><h1>Adresi Eksik Kurumlar</h1><p><?php echo count($rows); ?> kayıt listeleniyor. Adresleri tamamlandıktan sonra koordinatlandırma yapılabilir.</p><table class="widefat striped"><thead><tr><th>İl</th><th>İlçe</th><th>Kurum</th><th>Durum</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html($r->il); ?></td><td><?php echo esc_html($r->ilce); ?></td><td><?php echo esc_html($r->kurum_adi); ?></td><td><?php echo esc_html($r->durum); ?></td></tr><?php endforeach; ?></tbody></table></div><?php
+    ?><div class="wrap mad-okul-wrap"><h1>Adresi Eksik Kurumlar</h1><?php if(!empty($_GET['saved'])): ?><div class="notice notice-success inline"><p>Adres kaydedildi.</p></div><?php endif; ?><p><?php echo count($rows); ?> kayıt listeleniyor. Adresi buradan tamamlayınca kurum rota işlemlerine hazır hâle gelir.</p><table class="widefat striped"><thead><tr><th>İl</th><th>İlçe</th><th>Kurum</th><th>Adres Gir</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html($r->il); ?></td><td><?php echo esc_html($r->ilce); ?></td><td><?php echo esc_html($r->kurum_adi); ?></td><td><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-address-form"><input type="hidden" name="action" value="mad_okul_save_address"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>"><?php wp_nonce_field('mad_okul_save_address_'.$r->id); ?><input required class="regular-text" name="adres" placeholder="Açık adresi yazın"><button class="button button-primary">Adresi Kaydet</button></form></td></tr><?php endforeach; ?></tbody></table></div><?php
 }
+
+add_action('admin_post_mad_okul_save_address', function() {
+    if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+    $id=absint($_POST['id'] ?? 0); check_admin_referer('mad_okul_save_address_'.$id); global $wpdb;
+    $row=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE id=%d',$id));
+    $adres=sanitize_textarea_field($_POST['adres'] ?? '');
+    if (!$row || !$adres) wp_die('Kurum veya adres bulunamadı.');
+    $wpdb->update(mad_okul_table(),['adres'=>$adres,'durum'=>'Bekliyor','dedupe_hash'=>mad_okul_hash($row->il,$row->ilce,$row->kurum_adi,$adres),'updated_at'=>current_time('mysql')],['id'=>$id]);
+    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-missing','saved'=>1],admin_url('admin.php'))); exit;
+});
 
 function mad_okul_rural_page() {
     if (!current_user_can('manage_options')) return; global $wpdb;
@@ -594,8 +604,11 @@ function mad_okul_route_page() {
     if($ilce){$w[]='ilce=%s';$params[]=$ilce;}
     if($durum){$w[]='durum=%s';$params[]=$durum;}
     $where=implode(' AND ',$w);
-    $sql="SELECT * FROM $table WHERE $where ORDER BY kurum_adi LIMIT 120";
-    $rows=$params ? $wpdb->get_results($wpdb->prepare($sql,$params)) : $wpdb->get_results($sql);
+    $rows=[];
+    if($il && $ilce){
+        $sql="SELECT * FROM $table WHERE $where ORDER BY kurum_adi LIMIT 120";
+        $rows=$params ? $wpdb->get_results($wpdb->prepare($sql,$params)) : $wpdb->get_results($sql);
+    }
 
     $selected=array_map('absint', $_POST['school_ids'] ?? []);
     $start=sanitize_text_field($_POST['start_address'] ?? '');
@@ -612,6 +625,8 @@ function mad_okul_route_page() {
         </select>
         <button class="button">Listeyi Getir</button>
       </form>
+
+      <?php if(!$il || !$ilce): ?><div class="notice notice-info inline"><p>Rota listesini görmek için önce il ve ilçe seçin.</p></div><?php endif; ?>
 
       <form method="post">
         <?php wp_nonce_field('mad_okul_route'); ?>
