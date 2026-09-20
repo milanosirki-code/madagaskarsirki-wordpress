@@ -15,6 +15,8 @@
 .mad-edit-form label{display:flex;flex-direction:column;gap:4px}
 .mad-edit-form .mad-note{grid-column:1/-2}
 .mad-upload-box{background:#fff;border:2px dashed #c3c4c7;padding:28px;display:flex;gap:14px;align-items:center;margin:20px 0}
+.mad-program-form{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:24px;display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:18px;margin:20px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.mad-field{display:flex;flex-direction:column;gap:7px;font-weight:600}.mad-field input,.mad-field textarea{width:100%;font-weight:400}.mad-span-2{grid-column:span 2}.mad-form-actions{grid-column:1/-1;border-top:1px solid #dcdcde;padding-top:16px}.mad-address-form{display:flex;gap:8px;align-items:center}.mad-address-form input{width:min(650px,65vw)}
 .mad-route-start{background:#fff;border:1px solid #dcdcde;padding:12px;margin:15px 0}
 .mad-route-start label{display:flex;gap:12px;align-items:center}
 .mad-route-start input{width:min(700px,80vw)}
@@ -23,4 +25,6 @@
   .mad-cards{grid-template-columns:repeat(2,1fr)}
   .mad-edit-form{grid-template-columns:1fr}
   .mad-edit-form .mad-note{grid-column:auto}
+  .mad-program-form{grid-template-columns:1fr 1fr}.mad-span-2{grid-column:span 2}
 }
+@media(max-width:600px){.mad-program-form{grid-template-columns:1fr}.mad-span-2{grid-column:auto}.mad-address-form{align-items:stretch;flex-direction:column}.mad-address-form input{width:100%}}
