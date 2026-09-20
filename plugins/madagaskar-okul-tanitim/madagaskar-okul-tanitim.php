@@ -2,16 +2,18 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.0.0');
+define('MAD_OKUL_VERSION', '1.1.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
+
+require_once MAD_OKUL_DIR . 'includes/class-mad-okul-operations.php';
 
 function mad_okul_table() {
     global $wpdb;
@@ -52,13 +54,20 @@ function mad_okul_create_table() {
         etkinlik varchar(190) NOT NULL DEFAULT '',
         son_ziyaret date NULL,
         notlar text NULL,
+        latitude decimal(10,7) NULL,
+        longitude decimal(10,7) NULL,
+        program_id bigint(20) unsigned NOT NULL DEFAULT 0,
+        assigned_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+        route_group varchar(50) NOT NULL DEFAULT '',
+        route_order int unsigned NOT NULL DEFAULT 0,
         dedupe_hash char(32) NOT NULL,
         created_at datetime NOT NULL,
         updated_at datetime NOT NULL,
         PRIMARY KEY  (id),
         UNIQUE KEY dedupe_hash (dedupe_hash),
         KEY il_ilce (il(40), ilce(40)),
-        KEY durum (durum)
+        KEY durum (durum),
+        KEY program_assignment (program_id, assigned_user_id, route_group(20), route_order)
     ) $charset;";
     dbDelta($sql);
 }
@@ -102,6 +111,7 @@ function mad_okul_seed() {
 
 function mad_okul_activate() {
     mad_okul_create_table();
+    Mad_Okul_Operations::activate();
     mad_okul_seed();
 }
 register_activation_hook(__FILE__, 'mad_okul_activate');
@@ -109,8 +119,10 @@ register_activation_hook(__FILE__, 'mad_okul_activate');
 add_action('plugins_loaded', function() {
     if (get_option('mad_okul_db_version') !== MAD_OKUL_VERSION) {
         mad_okul_create_table();
+        Mad_Okul_Operations::activate();
         update_option('mad_okul_db_version', MAD_OKUL_VERSION);
     }
+    Mad_Okul_Operations::boot();
 });
 
 add_action('admin_menu', function() {
