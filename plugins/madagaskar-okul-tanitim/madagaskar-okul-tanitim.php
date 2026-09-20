@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.5.0');
+define('MAD_OKUL_VERSION', '1.6.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -18,6 +18,11 @@ require_once MAD_OKUL_DIR . 'includes/class-mad-okul-operations.php';
 function mad_okul_table() {
     global $wpdb;
     return $wpdb->prefix . 'mad_okul_tanitim';
+}
+
+function mad_okul_excluded_table() {
+    global $wpdb;
+    return $wpdb->prefix . 'mad_okul_kirsal_cikarilanlar';
 }
 
 function mad_okul_norm($s) {
@@ -72,6 +77,20 @@ function mad_okul_create_table() {
         KEY program_assignment (program_id, assigned_user_id, route_group(20), route_order)
     ) $charset;";
     dbDelta($sql);
+    $excluded = mad_okul_excluded_table();
+    dbDelta("CREATE TABLE $excluded (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        il varchar(100) NOT NULL,
+        ilce varchar(100) NOT NULL,
+        kurum_adi text NOT NULL,
+        adres text NOT NULL,
+        cikarilma_nedeni varchar(190) NOT NULL,
+        dedupe_hash char(32) NOT NULL,
+        created_at datetime NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY dedupe_hash (dedupe_hash),
+        KEY il_ilce (il(40), ilce(40))
+    ) $charset;");
 }
 
 function mad_okul_insert_school($il, $ilce, $kurum, $adres) {
@@ -139,6 +158,8 @@ add_action('admin_menu', function() {
     );
     add_submenu_page('mad-okul','Tüm Okullar','Tüm Okullar','manage_options','mad-okul-list','mad_okul_list_page');
     add_submenu_page('mad-okul','MEBBİS İçe Aktar','MEBBİS İçe Aktar','manage_options','mad-okul-import','mad_okul_import_page');
+    add_submenu_page('mad-okul','Adresi Eksik Kurumlar','Adresi Eksik','manage_options','mad-okul-missing','mad_okul_missing_page');
+    add_submenu_page('mad-okul','Kırsal Çıkarılanlar','Kırsal Çıkarılanlar','manage_options','mad-okul-rural','mad_okul_rural_page');
     add_submenu_page('mad-okul','Google Maps Rota','Google Maps Rota','manage_options','mad-okul-route','mad_okul_route_page');
 });
 
@@ -335,6 +356,11 @@ function mad_okul_should_include($row) {
     $name = mad_okul_norm($row['KURUM_ADI'] ?? '');
     $type = trim($row['KURUM_TUR_ADI'] ?? '');
 
+    $blocked = ['LİSE','MESLEKİ EĞİTİM','ÖZEL EĞİTİM','REHABİLİTASYON','KURS','SÜRÜCÜ','MOTORLU TAŞIT','KİŞİSEL GELİŞİM','HALK EĞİTİM','BİLİM VE SANAT','BİLSEM','REHBERLİK VE ARAŞTIRMA','YURT','ÖĞRETMENEVİ','MİLLİ EĞİTİM MÜDÜRLÜĞÜ','MİLLÎ EĞİTİM MÜDÜRLÜĞÜ'];
+    $haystack = mad_okul_norm($name.' '.$type);
+    foreach ($blocked as $keyword) if (strpos($haystack, $keyword)!==false) return false;
+    if (preg_match('/\bRAM\b/u',$haystack)) return false;
+
     foreach (['KREŞ','GÜNDÜZ BAK','ANAOKULU','İLKOKULU','ORTAOKULU'] as $keyword) {
         if (strpos($name, $keyword) !== false) return true;
     }
@@ -342,6 +368,23 @@ function mad_okul_should_include($row) {
     $official = ['Anaokulu','İlkokul','Ortaokul','İmam Hatip Ortaokulu','Yatılı Bölge Ortaokulu'];
     $private  = ['Özel Türk Okul Öncesi Kurumu','Özel Türk İlkokulu','Özel Türk Ortaokulu'];
     return in_array($type, $official, true) || in_array($type, $private, true);
+}
+
+function mad_okul_store_rural($il,$ilce,$kurum,$adres,$reason) {
+    global $wpdb; $hash=mad_okul_hash($il,$ilce,$kurum,$adres);
+    return $wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.mad_okul_excluded_table().' (il,ilce,kurum_adi,adres,cikarilma_nedeni,dedupe_hash,created_at) VALUES (%s,%s,%s,%s,%s,%s,%s)',sanitize_text_field($il),sanitize_text_field($ilce),sanitize_text_field($kurum),sanitize_textarea_field($adres),sanitize_text_field($reason),$hash,current_time('mysql')));
+}
+
+function mad_okul_missing_page() {
+    if (!current_user_can('manage_options')) return; global $wpdb;
+    $rows=$wpdb->get_results("SELECT * FROM ".mad_okul_table()." WHERE adres='' OR durum='Adres Eksik' ORDER BY il,ilce,kurum_adi LIMIT 1000");
+    ?><div class="wrap mad-okul-wrap"><h1>Adresi Eksik Kurumlar</h1><p><?php echo count($rows); ?> kayıt listeleniyor. Adresleri tamamlandıktan sonra koordinatlandırma yapılabilir.</p><table class="widefat striped"><thead><tr><th>İl</th><th>İlçe</th><th>Kurum</th><th>Durum</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html($r->il); ?></td><td><?php echo esc_html($r->ilce); ?></td><td><?php echo esc_html($r->kurum_adi); ?></td><td><?php echo esc_html($r->durum); ?></td></tr><?php endforeach; ?></tbody></table></div><?php
+}
+
+function mad_okul_rural_page() {
+    if (!current_user_can('manage_options')) return; global $wpdb;
+    $rows=$wpdb->get_results('SELECT * FROM '.mad_okul_excluded_table().' ORDER BY il,ilce,kurum_adi LIMIT 2000');
+    ?><div class="wrap mad-okul-wrap"><h1>Kırsal Çıkarılanlar</h1><p>Burada yalnız hedef kurum türünde olduğu hâlde açık kırsal ifade nedeniyle ana listeden çıkarılan kayıtlar bulunur.</p><table class="widefat striped"><thead><tr><th>İl</th><th>İlçe</th><th>Kurum</th><th>Adres</th><th>Çıkarılma Nedeni</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html($r->il); ?></td><td><?php echo esc_html($r->ilce); ?></td><td><?php echo esc_html($r->kurum_adi); ?></td><td><?php echo esc_html($r->adres); ?></td><td><?php echo esc_html($r->cikarilma_nedeni); ?></td></tr><?php endforeach; ?></tbody></table></div><?php
 }
 
 function mad_okul_is_rural($name, $address) {
@@ -482,7 +525,7 @@ function mad_okul_import_page() {
       <h1>MEBBİS Listesi İçe Aktar</h1>
       <p>MEBBİS'ten indirdiğiniz <strong>.xls, .xlsx veya .csv</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; kırsal açık adresleri ve mükerrerleri dışarıda bırakır.</p>
       <?php if (!empty($_GET['imported'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo (int)$_GET['imported']; ?> yeni kurum eklendi. <?php echo (int)($_GET['skipped'] ?? 0); ?> kayıt atlandı. <?php echo (int)($_GET['missing'] ?? 0); ?> kurumun adresi eksik olduğu için “Adres Eksik” durumuyla kaydedildi.</p></div>
+        <div class="notice notice-success is-dismissible"><p>Ham: <?php echo (int)($_GET['raw'] ?? 0); ?> · Ana liste: <?php echo (int)$_GET['imported']; ?> · Kırsal çıkarılan: <?php echo (int)($_GET['rural'] ?? 0); ?> · Hedef dışı: <?php echo (int)($_GET['non_target'] ?? 0); ?> · Adresi eksik: <?php echo (int)($_GET['missing'] ?? 0); ?>.</p></div>
       <?php endif; ?>
       <?php if ($errors): ?><div class="notice notice-error"><p><?php echo esc_html(implode(' ', (array)$errors)); ?></p></div><?php endif; ?>
       <form method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-upload-box">
@@ -500,7 +543,7 @@ add_action('admin_post_mad_okul_import', function() {
     if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
     check_admin_referer('mad_okul_import');
 
-    $imported=0; $skipped=0; $missing=0; $errors=[];
+    $imported=0; $skipped=0; $missing=0; $rural=0; $non_target=0; $raw=0; $errors=[];
     $names = $_FILES['files']['name'] ?? [];
     $tmps  = $_FILES['files']['tmp_name'] ?? [];
     if (!is_array($names)) { $names=[$names]; $tmps=[$tmps]; }
@@ -514,10 +557,12 @@ add_action('admin_post_mad_okul_import', function() {
         if (is_wp_error($rows)) { $errors[]=$rows->get_error_message(); continue; }
 
         foreach ($rows as $r) {
+            $raw++;
             $r=mad_okul_canonical_row($r);
             $il=$r['IL_ADI']; $ilce=$r['ILCE_ADI'];
             $kurum=$r['KURUM_ADI']; $adres=$r['ADRES'];
-            if (!mad_okul_should_include($r) || mad_okul_is_rural($kurum,$adres)) { $skipped++; continue; }
+            if (!mad_okul_should_include($r)) { $skipped++; $non_target++; continue; }
+            if (mad_okul_is_rural($kurum,$adres)) { mad_okul_store_rural($il,$ilce,$kurum,$adres,'Açık kırsal adres ifadesi'); $skipped++; $rural++; continue; }
             $res=mad_okul_insert_school($il,$ilce,$kurum,$adres);
             if ($res) {
                 $imported++;
@@ -531,7 +576,7 @@ add_action('admin_post_mad_okul_import', function() {
     }
 
     if ($errors) set_transient('mad_okul_import_errors_'.get_current_user_id(), $errors, 120);
-    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-import','imported'=>$imported,'skipped'=>$skipped,'missing'=>$missing], admin_url('admin.php')));
+    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-import','raw'=>$raw,'imported'=>$imported,'skipped'=>$skipped,'missing'=>$missing,'rural'=>$rural,'non_target'=>$non_target], admin_url('admin.php')));
     exit;
 });
 
