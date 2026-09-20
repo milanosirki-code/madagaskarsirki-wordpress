@@ -1,4 +1,4 @@
-Madagaskar Okul Tanıtım Yönetimi v1.4.0
+Madagaskar Okul Tanıtım Yönetimi v1.5.0
 ================================================
 
 Bu paket madagaskarsirki.com WordPress yönetim paneli için hazırlanmıştır.
@@ -21,6 +21,8 @@ Bu paket madagaskarsirki.com WordPress yönetim paneli için hazırlanmıştır.
 - Okullar gösteri salonuna kuş uçuşu mesafesine göre yakından uzağa sıralanabilir.
 - Google Routes API ile gerçek araç mesafesi ve tahmini sürüş süresi hesaplanabilir.
 - Program/personel bazlı rota planı yazdırılabilir veya PDF olarak kaydedilebilir.
+- Personel ve rota grubuna göre çok duraklı Google Maps bağlantıları oluşturulur.
+- Rota bağlantıları WhatsApp üzerinden personele paylaşılabilir.
 - Köy/belde/küme evleri/köyiçi gibi açık kırsal adresler otomatik dışarıda bırakılır.
 - Mükerrer kayıtlar dedupe hash ile engellenir.
 
@@ -34,7 +36,7 @@ Not:
 Google Maps rota ekranı v1'de seçilen okulları Google Maps bağlantılarına böler.
 Trafik/sürüş süresine göre otomatik rota optimizasyonu ayrı Google Routes API entegrasyonu gerektirir.
 
-V1.4 kullanım sırası:
+V1.5 kullanım sırası:
 1. WordPress kullanıcıları bölümünden personele "Tanıtım Elemanı" rolü verin.
 2. Okul Tanıtım > Program ve Salonlar bölümünden gösteri programını kaydedin.
 3. Görev Dağıtımı bölümünde programı, personeli ve okulları seçin.
@@ -44,3 +46,4 @@ V1.4 kullanım sırası:
 7. “Salondan Yakından Uzağa Sırala” düğmesiyle ziyaret sırasını oluşturun.
 8. Routes API etkinse “Gerçek Sürüş Mesafesine Göre Sırala” düğmesini kullanın.
 9. “Rota Planı / PDF” ekranından görev planını yazdırın veya PDF kaydedin.
+10. Aynı ekrandan personel rotasını WhatsApp ile paylaşın.
