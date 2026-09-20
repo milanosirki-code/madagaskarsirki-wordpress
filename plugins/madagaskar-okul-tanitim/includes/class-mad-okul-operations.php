@@ -44,6 +44,9 @@ final class Mad_Okul_Operations {
         add_action('admin_post_mad_okul_assign_tasks', [__CLASS__, 'assign_tasks']);
         add_action('admin_post_mad_okul_task_status', [__CLASS__, 'task_status']);
         add_action('admin_post_mad_okul_save_settings', [__CLASS__, 'save_settings']);
+        add_action('admin_post_mad_okul_geocode_program', [__CLASS__, 'geocode_program']);
+        add_action('admin_post_mad_okul_geocode_schools', [__CLASS__, 'geocode_schools']);
+        add_action('admin_post_mad_okul_sort_route', [__CLASS__, 'sort_route']);
     }
 
     public static function menus() {
@@ -77,9 +80,9 @@ final class Mad_Okul_Operations {
             <button class="button button-primary">Programı Kaydet</button>
           </form>
           <h2>Kayıtlı Programlar</h2>
-          <table class="widefat striped"><thead><tr><th>Program</th><th>İl / İlçe</th><th>Salon</th><th>Tarih</th><th>Harita</th></tr></thead><tbody>
+          <table class="widefat striped"><thead><tr><th>Program</th><th>İl / İlçe</th><th>Salon</th><th>Tarih</th><th>Koordinat</th><th>Harita</th></tr></thead><tbody>
           <?php foreach ($programs as $p): ?>
-            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo esc_html($p->salon_adi); ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><a target="_blank" href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a></td></tr>
+            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo esc_html($p->salon_adi); ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><?php if($p->latitude && $p->longitude): echo esc_html($p->latitude.', '.$p->longitude); else: ?><a class="button button-small" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_program&program_id='.(int)$p->id),'mad_okul_geocode_program_'.$p->id)); ?>">Koordinat Bul</a><?php endif; ?></td><td><a target="_blank" href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a></td></tr>
           <?php endforeach; ?>
           </tbody></table>
         </div>
@@ -112,13 +115,19 @@ final class Mad_Okul_Operations {
         $program_id = absint($_GET['program_id'] ?? 0);
         $program = $program_id ? $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d', $program_id)) : null;
         $users = get_users(['role__in'=>['mad_tanitim_elemani','administrator'],'orderby'=>'display_name']);
-        $schools = $program ? $wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s ORDER BY kurum_adi', $program->il, $program->ilce)) : [];
+        $schools = $program ? $wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s ORDER BY CASE WHEN route_order>0 THEN 0 ELSE 1 END, route_order, kurum_adi', $program->il, $program->ilce)) : [];
         ?>
         <div class="wrap mad-okul-wrap"><h1>Görev Dağıtımı</h1>
           <?php if (!empty($_GET['assigned'])): ?><div class="notice notice-success is-dismissible"><p><?php echo absint($_GET['assigned']); ?> okul personele atandı.</p></div><?php endif; ?>
           <form method="get" class="mad-filter"><input type="hidden" name="page" value="mad-okul-assign"><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $p): ?><option value="<?php echo (int)$p->id; ?>" <?php selected($program_id,$p->id); ?>><?php echo esc_html($p->program_adi); ?></option><?php endforeach; ?></select><button class="button">Okulları Getir</button></form>
           <?php if ($program): ?>
           <p><strong><?php echo esc_html($program->salon_adi); ?></strong> başlangıç noktası · <?php echo count($schools); ?> kurum</p>
+          <p>
+            <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_schools&program_id='.(int)$program->id),'mad_okul_geocode_schools_'.$program->id)); ?>">Eksik Okul Koordinatlarını Bul</a>
+            <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_sort_route&program_id='.(int)$program->id),'mad_okul_sort_route_'.$program->id)); ?>">Salondan Yakından Uzağa Sırala</a>
+          </p>
+          <?php if(isset($_GET['geo'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['geo']); ?> okul koordinatlandırıldı. Kalan: <?php echo absint($_GET['remaining'] ?? 0); ?>.</p></div><?php endif; ?>
+          <?php if(isset($_GET['sorted'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['sorted']); ?> okul salona kuş uçuşu mesafesine göre sıralandı.</p></div><?php endif; ?>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="mad_okul_assign_tasks"><input type="hidden" name="program_id" value="<?php echo (int)$program->id; ?>"><?php wp_nonce_field('mad_okul_assign_tasks'); ?>
             <p><label>Tanıtım elemanı <select name="assigned_user_id" required><option value="">Seçin</option><?php foreach($users as $u): ?><option value="<?php echo (int)$u->ID; ?>"><?php echo esc_html($u->display_name); ?></option><?php endforeach; ?></select></label> <label>Rota grubu <input name="route_group" value="A" size="6"></label></p>
@@ -142,6 +151,61 @@ final class Mad_Okul_Operations {
 
     private static function directions_url($destination) {
         return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($destination) . '&travelmode=driving';
+    }
+
+    private static function geocode_address($address) {
+        $key = trim((string)get_option('mad_okul_google_maps_api_key'));
+        if (!$key || !$address) return new WP_Error('missing_key', 'Google Maps API anahtarı veya adres eksik.');
+        $url = add_query_arg(['address'=>$address,'key'=>$key,'region'=>'tr','language'=>'tr'], 'https://maps.googleapis.com/maps/api/geocode/json');
+        $response = wp_remote_get($url, ['timeout'=>20]);
+        if (is_wp_error($response)) return $response;
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (($data['status'] ?? '') !== 'OK' || empty($data['results'][0]['geometry']['location'])) return new WP_Error('geocode_failed', sanitize_text_field($data['status'] ?? 'Adres bulunamadı'));
+        return $data['results'][0]['geometry']['location'];
+    }
+
+    public static function geocode_program() {
+        if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+        $id=absint($_GET['program_id'] ?? 0); check_admin_referer('mad_okul_geocode_program_'.$id); global $wpdb;
+        $p=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$id));
+        if (!$p) wp_die('Program bulunamadı');
+        $loc=self::geocode_address($p->salon_adi.', '.$p->salon_adresi.', '.$p->ilce.', '.$p->il.', Türkiye');
+        if (is_wp_error($loc)) wp_die(esc_html($loc->get_error_message()));
+        $wpdb->update(self::programs_table(),['latitude'=>(float)$loc['lat'],'longitude'=>(float)$loc['lng'],'updated_at'=>current_time('mysql')],['id'=>$id]);
+        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-programs','geocoded'=>1],admin_url('admin.php'))); exit;
+    }
+
+    public static function geocode_schools() {
+        if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+        $pid=absint($_GET['program_id'] ?? 0); check_admin_referer('mad_okul_geocode_schools_'.$pid); global $wpdb;
+        $p=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid));
+        if (!$p) wp_die('Program bulunamadı');
+        $rows=$wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s AND adres<>%s AND (latitude IS NULL OR longitude IS NULL) ORDER BY id LIMIT 20',$p->il,$p->ilce,''));
+        $done=0;
+        foreach($rows as $s) {
+            $loc=self::geocode_address($s->kurum_adi.', '.$s->adres.', '.$s->ilce.', '.$s->il.', Türkiye');
+            if (is_wp_error($loc)) continue;
+            $wpdb->update(mad_okul_table(),['latitude'=>(float)$loc['lat'],'longitude'=>(float)$loc['lng'],'updated_at'=>current_time('mysql')],['id'=>$s->id]); $done++;
+        }
+        $remaining=(int)$wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s AND adres<>%s AND (latitude IS NULL OR longitude IS NULL)',$p->il,$p->ilce,''));
+        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-assign','program_id'=>$pid,'geo'=>$done,'remaining'=>$remaining],admin_url('admin.php'))); exit;
+    }
+
+    private static function distance_km($lat1,$lon1,$lat2,$lon2) {
+        $r=6371; $dlat=deg2rad($lat2-$lat1); $dlon=deg2rad($lon2-$lon1);
+        $a=sin($dlat/2)**2+cos(deg2rad($lat1))*cos(deg2rad($lat2))*sin($dlon/2)**2;
+        return $r*2*atan2(sqrt($a),sqrt(1-$a));
+    }
+
+    public static function sort_route() {
+        if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+        $pid=absint($_GET['program_id'] ?? 0); check_admin_referer('mad_okul_sort_route_'.$pid); global $wpdb;
+        $p=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid));
+        if (!$p || !$p->latitude || !$p->longitude) wp_die('Önce program salonunun koordinatını bulun.');
+        $rows=$wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s AND latitude IS NOT NULL AND longitude IS NOT NULL',$p->il,$p->ilce));
+        usort($rows,function($a,$b) use($p){ return self::distance_km($p->latitude,$p->longitude,$a->latitude,$a->longitude) <=> self::distance_km($p->latitude,$p->longitude,$b->latitude,$b->longitude); });
+        foreach($rows as $i=>$s) $wpdb->update(mad_okul_table(),['route_order'=>$i+1,'updated_at'=>current_time('mysql')],['id'=>$s->id]);
+        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-assign','program_id'=>$pid,'sorted'=>count($rows)],admin_url('admin.php'))); exit;
     }
 
     public static function my_tasks_page() {
