@@ -71,15 +71,15 @@ final class Mad_Okul_Operations {
           <h1>Program ve Salonlar</h1>
           <p class="description">Gösteri salonu rota planının başlangıç noktasıdır.</p>
           <?php if (!empty($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>Program kaydedildi.</p></div><?php endif; ?>
-          <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-upload-box">
+          <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-program-form">
             <input type="hidden" name="action" value="mad_okul_save_program">
             <?php wp_nonce_field('mad_okul_save_program'); ?>
-            <p><label>Program adı<br><input required class="regular-text" name="program_adi" placeholder="Örn. Mamak – 10 Ekim 2026"></label></p>
-            <p><label>İl <input required name="il"></label> <label>İlçe <input required name="ilce"></label> <label>Tarih <input type="date" name="etkinlik_tarihi"></label></p>
-            <p><label>Salon adı<br><input required class="regular-text" name="salon_adi"></label></p>
-            <p><label>Salon adresi<br><textarea required class="large-text" rows="2" name="salon_adresi"></textarea></label></p>
-            <p><label>Enlem <input name="latitude" inputmode="decimal"></label> <label>Boylam <input name="longitude" inputmode="decimal"></label></p>
-            <button class="button button-primary">Programı Kaydet</button>
+            <label class="mad-field mad-span-2">Program adı<input required name="program_adi" placeholder="Örn. Mamak – 10 Ekim 2026"></label>
+            <label class="mad-field">İl<input required name="il"></label><label class="mad-field">İlçe<input required name="ilce"></label><label class="mad-field">Tarih<input type="date" name="etkinlik_tarihi"></label>
+            <label class="mad-field mad-span-2">Salon adı<input required name="salon_adi"></label>
+            <label class="mad-field mad-span-2">Salon adresi<textarea required rows="3" name="salon_adresi"></textarea></label>
+            <label class="mad-field">Enlem <span class="description">İsteğe bağlı</span><input name="latitude" inputmode="decimal"></label><label class="mad-field">Boylam <span class="description">İsteğe bağlı</span><input name="longitude" inputmode="decimal"></label>
+            <div class="mad-form-actions"><button class="button button-primary button-large">Programı Kaydet</button></div>
           </form>
           <h2>Kayıtlı Programlar</h2>
           <table class="widefat striped"><thead><tr><th>Program</th><th>İl / İlçe</th><th>Salon</th><th>Tarih</th><th>Koordinat</th><th>Harita</th></tr></thead><tbody>
