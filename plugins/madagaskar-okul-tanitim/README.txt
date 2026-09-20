@@ -1,4 +1,4 @@
-Madagaskar Okul Tanıtım Yönetimi v1.6.0
+Madagaskar Okul Tanıtım Yönetimi v1.7.0
 ================================================
 
 Bu paket madagaskarsirki.com WordPress yönetim paneli için hazırlanmıştır.
@@ -26,6 +26,9 @@ Bu paket madagaskarsirki.com WordPress yönetim paneli için hazırlanmıştır.
 - Hedef dışı kurumlar kesin dışlama kurallarıyla elenir.
 - Hedef kurum olduğu hâlde kırsal çıkan kayıtlar ayrı menüde saklanır.
 - Adresi eksik kurumlar ayrı yönetim ekranında gösterilir.
+- Eksik adresler yönetim ekranından doğrudan tamamlanabilir.
+- Rota ekranı il ve ilçe seçilmeden farklı şehirleri karıştırmaz.
+- Program/salon formu masaüstü ve mobil için düzenli ızgara yapısına geçirildi.
 - Köy/belde/küme evleri/köyiçi gibi açık kırsal adresler otomatik dışarıda bırakılır.
 - Mükerrer kayıtlar dedupe hash ile engellenir.
 
@@ -39,7 +42,7 @@ Not:
 Google Maps rota ekranı v1'de seçilen okulları Google Maps bağlantılarına böler.
 Trafik/sürüş süresine göre otomatik rota optimizasyonu ayrı Google Routes API entegrasyonu gerektirir.
 
-V1.6 kullanım sırası:
+V1.7 kullanım sırası:
 1. WordPress kullanıcıları bölümünden personele "Tanıtım Elemanı" rolü verin.
 2. Okul Tanıtım > Program ve Salonlar bölümünden gösteri programını kaydedin.
 3. Görev Dağıtımı bölümünde programı, personeli ve okulları seçin.
