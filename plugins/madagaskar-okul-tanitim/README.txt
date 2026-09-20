@@ -4,7 +4,7 @@ Madagaskar Okul Tanıtım Yönetimi v1.6.0
 Bu paket madagaskarsirki.com WordPress yönetim paneli için hazırlanmıştır.
 
 İlk kurulumda:
-- 2387 okul/kurum başlangıç verisi yüklenir.
+- Okul verisi pakete gömülmez; MEBBİS/Drive listeleri yönetim ekranından yüklenir.
 - İl/ilçe bazında filtreleme yapılır.
 - Durum, personel, etkinlik, son ziyaret ve not tutulur.
 - Her okul Google Maps'te açılabilir.
