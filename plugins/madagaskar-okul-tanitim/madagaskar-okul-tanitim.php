@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.3.0');
+define('MAD_OKUL_VERSION', '1.4.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -60,6 +60,8 @@ function mad_okul_create_table() {
         assigned_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
         route_group varchar(50) NOT NULL DEFAULT '',
         route_order int unsigned NOT NULL DEFAULT 0,
+        route_distance_m int unsigned NOT NULL DEFAULT 0,
+        route_duration_s int unsigned NOT NULL DEFAULT 0,
         dedupe_hash char(32) NOT NULL,
         created_at datetime NOT NULL,
         updated_at datetime NOT NULL,
