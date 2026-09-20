@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.1.0');
+define('MAD_OKUL_VERSION', '1.2.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -244,7 +244,7 @@ function mad_okul_list_page() {
     $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE $where ORDER BY il, ilce, kurum_adi LIMIT %d OFFSET %d", $qparams));
     [$ils,$ilceler] = mad_okul_filter_options();
 
-    $statuses = ['Bekliyor','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'];
+    $statuses = ['Bekliyor','Adres Eksik','Atandı','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'];
     ?>
     <div class="wrap mad-okul-wrap">
       <h1>Tüm Okullar</h1>
@@ -400,19 +400,91 @@ function mad_okul_csv_rows($path) {
     fclose($fh); return $out;
 }
 
+function mad_okul_header_key($value) {
+    $value = mad_okul_norm($value);
+    $value = strtr($value, ['İ'=>'I','Ş'=>'S','Ğ'=>'G','Ü'=>'U','Ö'=>'O','Ç'=>'C']);
+    return preg_replace('/[^A-Z0-9]+/', '_', trim($value));
+}
+
+function mad_okul_canonical_row($row) {
+    $aliases = [
+        'IL_ADI' => ['IL_ADI','IL','SEHIR'],
+        'ILCE_ADI' => ['ILCE_ADI','ILCE'],
+        'KURUM_ADI' => ['KURUM_ADI','OKUL_ADI','KURUM','OKUL'],
+        'KURUM_TUR_ADI' => ['KURUM_TUR_ADI','KURUM_TURU','OKUL_TURU','TUR'],
+        'ADRES' => ['ADRES','ACIK_ADRES','KURUM_ADRESI','OKUL_ADRESI'],
+    ];
+    $normalized = [];
+    foreach ($row as $key=>$value) $normalized[mad_okul_header_key($key)] = trim((string)$value);
+    $out = [];
+    foreach ($aliases as $target=>$keys) {
+        $out[$target] = '';
+        foreach ($keys as $key) if (isset($normalized[$key]) && $normalized[$key] !== '') { $out[$target]=$normalized[$key]; break; }
+    }
+    return $out;
+}
+
+function mad_okul_xlsx_rows($path) {
+    if (!class_exists('ZipArchive')) return new WP_Error('xlsx_zip', 'Sunucuda ZIP desteği olmadığı için XLSX açılamadı. Dosyayı CSV olarak kaydedip yükleyin.');
+    $zip = new ZipArchive();
+    if ($zip->open($path) !== true) return new WP_Error('xlsx_open', 'XLSX dosyası açılamadı.');
+    $shared = [];
+    $shared_xml = $zip->getFromName('xl/sharedStrings.xml');
+    if ($shared_xml) {
+        $xml = simplexml_load_string($shared_xml);
+        if ($xml) foreach ($xml->si as $si) {
+            $parts=[]; foreach ($si->xpath('.//t') as $t) $parts[]=(string)$t;
+            $shared[]=implode('', $parts);
+        }
+    }
+    $sheet_xml = $zip->getFromName('xl/worksheets/sheet1.xml');
+    $zip->close();
+    if (!$sheet_xml) return new WP_Error('xlsx_sheet', 'XLSX içinde ilk çalışma sayfası bulunamadı.');
+    $xml = simplexml_load_string($sheet_xml);
+    if (!$xml) return new WP_Error('xlsx_xml', 'XLSX çalışma sayfası okunamadı.');
+    $grid=[];
+    foreach ($xml->sheetData->row as $row) {
+        $values=[];
+        foreach ($row->c as $cell) {
+            $ref=(string)$cell['r']; preg_match('/^[A-Z]+/', $ref, $m);
+            $letters=$m[0] ?? 'A'; $index=0;
+            for($i=0;$i<strlen($letters);$i++) $index=$index*26+(ord($letters[$i])-64);
+            $type=(string)$cell['t'];
+            if ($type==='inlineStr') $value=(string)$cell->is->t;
+            else { $raw=(string)$cell->v; $value=$type==='s' ? ($shared[(int)$raw] ?? '') : $raw; }
+            $values[$index-1]=trim($value);
+        }
+        if ($values) { ksort($values); $grid[]=$values; }
+    }
+    $header_index=null; $headers=[];
+    foreach ($grid as $i=>$row) foreach ($row as $value) if (in_array(mad_okul_header_key($value), ['KURUM_ADI','OKUL_ADI'], true)) { $header_index=$i; break 2; }
+    if ($header_index===null) return new WP_Error('xlsx_header', 'Kurum/okul adı sütunu bulunamadı.');
+    $max=max(array_keys($grid[$header_index]));
+    for($i=0;$i<=$max;$i++) $headers[$i]=$grid[$header_index][$i] ?? '';
+    $out=[];
+    for($i=$header_index+1;$i<count($grid);$i++) {
+        $assoc=[]; foreach($headers as $n=>$header) if($header!=='') $assoc[$header]=$grid[$i][$n] ?? '';
+        $canon=mad_okul_canonical_row($assoc); if($canon['KURUM_ADI']!=='') $out[]=$canon;
+    }
+    return $out;
+}
+
 function mad_okul_import_page() {
     if (!current_user_can('manage_options')) return;
+    $errors = get_transient('mad_okul_import_errors_'.get_current_user_id());
+    delete_transient('mad_okul_import_errors_'.get_current_user_id());
     ?>
     <div class="wrap mad-okul-wrap">
       <h1>MEBBİS Listesi İçe Aktar</h1>
-      <p>MEBBİS'ten indirdiğiniz <strong>.xls</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; kırsal açık adresleri ve mükerrerleri dışarıda bırakır.</p>
+      <p>MEBBİS'ten indirdiğiniz <strong>.xls, .xlsx veya .csv</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; kırsal açık adresleri ve mükerrerleri dışarıda bırakır.</p>
       <?php if (!empty($_GET['imported'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo (int)$_GET['imported']; ?> yeni kurum eklendi. <?php echo (int)($_GET['skipped'] ?? 0); ?> kayıt atlandı.</p></div>
+        <div class="notice notice-success is-dismissible"><p><?php echo (int)$_GET['imported']; ?> yeni kurum eklendi. <?php echo (int)($_GET['skipped'] ?? 0); ?> kayıt atlandı. <?php echo (int)($_GET['missing'] ?? 0); ?> kurumun adresi eksik olduğu için “Adres Eksik” durumuyla kaydedildi.</p></div>
       <?php endif; ?>
+      <?php if ($errors): ?><div class="notice notice-error"><p><?php echo esc_html(implode(' ', (array)$errors)); ?></p></div><?php endif; ?>
       <form method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-upload-box">
         <input type="hidden" name="action" value="mad_okul_import">
         <?php wp_nonce_field('mad_okul_import'); ?>
-        <input type="file" name="files[]" accept=".xls,.csv" multiple required>
+        <input type="file" name="files[]" accept=".xls,.xlsx,.csv" multiple required>
         <button class="button button-primary button-hero">Dosyaları İşle ve Ekle</button>
       </form>
       <p><small>Not: Mevcut okul verileri eklenti ile birlikte gelir. Bu ekran yeni şehir/ilçe MEBBİS listelerini sonraki dönemlerde eklemek içindir.</small></p>
@@ -424,7 +496,7 @@ add_action('admin_post_mad_okul_import', function() {
     if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
     check_admin_referer('mad_okul_import');
 
-    $imported=0; $skipped=0;
+    $imported=0; $skipped=0; $missing=0; $errors=[];
     $names = $_FILES['files']['name'] ?? [];
     $tmps  = $_FILES['files']['tmp_name'] ?? [];
     if (!is_array($names)) { $names=[$names]; $tmps=[$tmps]; }
@@ -432,18 +504,30 @@ add_action('admin_post_mad_okul_import', function() {
     foreach ($names as $i=>$name) {
         if (empty($tmps[$i]) || !is_uploaded_file($tmps[$i])) continue;
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $rows = $ext === 'csv' ? mad_okul_csv_rows($tmps[$i]) : mad_okul_html_xls_rows($tmps[$i]);
+        if ($ext==='csv') $rows=mad_okul_csv_rows($tmps[$i]);
+        elseif ($ext==='xlsx') $rows=mad_okul_xlsx_rows($tmps[$i]);
+        else $rows=mad_okul_html_xls_rows($tmps[$i]);
+        if (is_wp_error($rows)) { $errors[]=$rows->get_error_message(); continue; }
 
         foreach ($rows as $r) {
-            $il=$r['IL_ADI'] ?? ''; $ilce=$r['ILCE_ADI'] ?? '';
-            $kurum=$r['KURUM_ADI'] ?? ''; $adres=$r['ADRES'] ?? '';
+            $r=mad_okul_canonical_row($r);
+            $il=$r['IL_ADI']; $ilce=$r['ILCE_ADI'];
+            $kurum=$r['KURUM_ADI']; $adres=$r['ADRES'];
             if (!mad_okul_should_include($r) || mad_okul_is_rural($kurum,$adres)) { $skipped++; continue; }
             $res=mad_okul_insert_school($il,$ilce,$kurum,$adres);
-            if ($res) $imported++; else $skipped++;
+            if ($res) {
+                $imported++;
+                if (!$adres) {
+                    $missing++;
+                    global $wpdb;
+                    $wpdb->update(mad_okul_table(), ['durum'=>'Adres Eksik','updated_at'=>current_time('mysql')], ['dedupe_hash'=>mad_okul_hash($il,$ilce,$kurum,$adres)]);
+                }
+            } else $skipped++;
         }
     }
 
-    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-import','imported'=>$imported,'skipped'=>$skipped], admin_url('admin.php')));
+    if ($errors) set_transient('mad_okul_import_errors_'.get_current_user_id(), $errors, 120);
+    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-import','imported'=>$imported,'skipped'=>$skipped,'missing'=>$missing], admin_url('admin.php')));
     exit;
 });
 
@@ -475,7 +559,7 @@ function mad_okul_route_page() {
         <select name="il"><option value="">İl Seç</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
         <select name="ilce"><option value="">İlçe Seç</option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
         <select name="durum">
-          <?php foreach(['Bekliyor','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'] as $x): ?><option <?php selected($durum,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?>
+          <?php foreach(['Bekliyor','Adres Eksik','Atandı','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'] as $x): ?><option <?php selected($durum,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?>
         </select>
         <button class="button">Listeyi Getir</button>
       </form>
