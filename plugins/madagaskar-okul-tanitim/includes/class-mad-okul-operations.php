@@ -158,6 +158,38 @@ final class Mad_Okul_Operations {
         return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($destination) . '&travelmode=driving';
     }
 
+    private static function school_address($school) {
+        return trim($school->kurum_adi.', '.$school->adres.', '.$school->ilce.', '.$school->il, ', ');
+    }
+
+    private static function multi_stop_url($origin, $schools) {
+        if (!$schools) return '';
+        $points=array_map([__CLASS__,'school_address'],$schools);
+        $destination=array_pop($points);
+        $url='https://www.google.com/maps/dir/?api=1&origin='.rawurlencode($origin).'&destination='.rawurlencode($destination).'&travelmode=driving';
+        if ($points) $url.='&waypoints='.implode('%7C',array_map('rawurlencode',$points));
+        return $url;
+    }
+
+    private static function grouped_route_links($rows) {
+        $groups=[];
+        foreach($rows as $r) {
+            $key=(int)$r->program_id.'|'.($r->route_group ?: 'A').'|'.(int)$r->assigned_user_id;
+            if(!isset($groups[$key])) $groups[$key]=[];
+            $groups[$key][]=$r;
+        }
+        $links=[];
+        foreach($groups as $key=>$items) {
+            $origin=trim($items[0]->salon_adi.', '.$items[0]->salon_adresi, ', ');
+            foreach(array_chunk($items,8) as $i=>$chunk) {
+                $url=self::multi_stop_url($origin,$chunk);
+                $links[]=['key'=>$key,'part'=>$i+1,'url'=>$url,'count'=>count($chunk),'row'=>$chunk[0]];
+                $origin=self::school_address(end($chunk));
+            }
+        }
+        return $links;
+    }
+
     private static function geocode_address($address) {
         $key = trim((string)get_option('mad_okul_google_maps_api_key'));
         if (!$key || !$address) return new WP_Error('missing_key', 'Google Maps API anahtarı veya adres eksik.');
@@ -256,9 +288,11 @@ final class Mad_Okul_Operations {
         if (!current_user_can('manage_options')) return;
         global $wpdb; $pid=absint($_GET['program_id'] ?? 0); $programs=self::programs();
         $p=$pid ? $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid)) : null;
-        $rows=$p ? $wpdb->get_results($wpdb->prepare('SELECT s.*,u.display_name FROM '.mad_okul_table().' s LEFT JOIN '.$wpdb->users.' u ON u.ID=s.assigned_user_id WHERE s.program_id=%d ORDER BY s.route_group,s.route_order,s.kurum_adi',$pid)) : [];
+        $rows=$p ? $wpdb->get_results($wpdb->prepare('SELECT s.*,u.display_name,p.program_adi,p.salon_adi,p.salon_adresi,p.etkinlik_tarihi FROM '.mad_okul_table().' s LEFT JOIN '.$wpdb->users.' u ON u.ID=s.assigned_user_id LEFT JOIN '.self::programs_table().' p ON p.id=s.program_id WHERE s.program_id=%d ORDER BY s.assigned_user_id,s.route_group,s.route_order,s.kurum_adi',$pid)) : [];
+        $route_links=self::grouped_route_links($rows);
         ?><div class="wrap mad-okul-wrap mad-route-print"><div class="mad-no-print"><h1>Rota Planı / PDF</h1><form method="get"><input type="hidden" name="page" value="mad-okul-route-plan"><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $x): ?><option value="<?php echo (int)$x->id; ?>" <?php selected($pid,$x->id); ?>><?php echo esc_html($x->program_adi); ?></option><?php endforeach; ?></select> <button class="button">Getir</button><?php if($p): ?> <button type="button" class="button button-primary" onclick="window.print()">Yazdır / PDF Kaydet</button><?php endif; ?></form></div>
         <?php if($p): ?><h1><?php echo esc_html($p->program_adi); ?> — Okul Tanıtım Rota Planı</h1><p><strong>Salon:</strong> <?php echo esc_html($p->salon_adi); ?><br><strong>Adres:</strong> <?php echo esc_html($p->salon_adresi); ?><br><strong>Tarih:</strong> <?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></p>
+        <div class="mad-no-print"><h2>Personele Gönderilecek Rotalar</h2><?php foreach($route_links as $link): $label=($link['row']->display_name ?: 'Atanmamış').' · Grup '.($link['row']->route_group ?: 'A').' · Bölüm '.$link['part']; $message=$p->program_adi.' — '.$label.' ('.$link['count'].' okul) '.$link['url']; ?><p><a class="button button-primary" target="_blank" href="<?php echo esc_url($link['url']); ?>"><?php echo esc_html($label); ?> Maps</a> <a class="button" target="_blank" href="<?php echo esc_url('https://wa.me/?text='.rawurlencode($message)); ?>">WhatsApp ile Paylaş</a></p><?php endforeach; ?></div>
         <table class="widefat striped"><thead><tr><th>Sıra</th><th>Personel</th><th>Okul ve adres</th><th>Mesafe</th><th>Süre</th><th>Durum</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html(($r->route_group ?: 'A').'-'.($r->route_order ?: '-')); ?></td><td><?php echo esc_html($r->display_name ?: '-'); ?></td><td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><?php echo esc_html($r->adres.', '.$r->ilce.'/'.$r->il); ?></td><td><?php echo $r->route_distance_m ? esc_html(number_format_i18n($r->route_distance_m/1000,1).' km') : '-'; ?></td><td><?php echo $r->route_duration_s ? esc_html(round($r->route_duration_s/60).' dk') : '-'; ?></td><td><?php echo esc_html($r->durum); ?></td></tr><?php endforeach; ?></tbody></table>
         <p><small>Oluşturulma: <?php echo esc_html(current_time('d.m.Y H:i')); ?></small></p><?php endif; ?></div>
         <style>@media print{#adminmenumain,#wpadminbar,#wpfooter,.notice,.mad-no-print{display:none!important}#wpcontent{margin:0!important}.mad-route-print{margin:12mm!important}.mad-route-print table{font-size:10px}.mad-route-print h1{font-size:20px}}</style><?php
@@ -268,7 +302,9 @@ final class Mad_Okul_Operations {
         if (!current_user_can('mad_okul_field_access')) return;
         global $wpdb; $uid = get_current_user_id();
         $rows = $wpdb->get_results($wpdb->prepare('SELECT s.*,p.program_adi,p.salon_adi,p.salon_adresi,p.etkinlik_tarihi FROM '.mad_okul_table().' s LEFT JOIN '.self::programs_table().' p ON p.id=s.program_id WHERE s.assigned_user_id=%d ORDER BY p.etkinlik_tarihi DESC,s.route_group,s.route_order', $uid));
+        $route_links=self::grouped_route_links($rows);
         ?><div class="wrap mad-okul-wrap"><h1>Tanıtım Görevlerim</h1><p class="description">Görev sırasına göre ilerleyin ve ziyaret sonucunu kaydedin.</p>
+        <?php if($route_links): ?><div class="mad-upload-box"><h2>Hazır Google Maps Rotalarım</h2><?php foreach($route_links as $link): ?><a class="button button-primary" target="_blank" href="<?php echo esc_url($link['url']); ?>"><?php echo esc_html(($link['row']->program_adi ?: 'Program').' · Grup '.($link['row']->route_group ?: 'A').' · Bölüm '.$link['part'].' ('.$link['count'].' okul)'); ?></a> <?php endforeach; ?></div><?php endif; ?>
         <table class="widefat striped"><thead><tr><th>Rota</th><th>Okul</th><th>Program</th><th>İşlem</th></tr></thead><tbody><?php foreach($rows as $r): $dest=$r->kurum_adi.', '.$r->adres.', '.$r->ilce.', '.$r->il; ?><tr><td><?php echo esc_html($r->route_group.'-'.$r->route_order); ?></td><td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><?php echo esc_html($r->adres); ?><br><span class="mad-status"><?php echo esc_html($r->durum); ?></span></td><td><?php echo esc_html($r->program_adi ?: '-'); ?><br><small><?php echo esc_html($r->salon_adi ?: ''); ?></small></td><td><a class="button button-primary" target="_blank" href="<?php echo esc_url(self::directions_url($dest)); ?>">Yol Tarifi</a><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:8px"><input type="hidden" name="action" value="mad_okul_task_status"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>"><?php wp_nonce_field('mad_okul_task_status_'.$r->id); ?><select name="durum"><option>Ziyaret Edildi</option><option>Afiş Bırakıldı</option><option>Görüşüldü</option><option>Tekrar Gidilecek</option><option>Olumsuz</option></select><input name="notlar" placeholder="Kısa not"><button class="button">Kaydet</button></form></td></tr><?php endforeach; ?></tbody></table></div><?php
     }
 
