@@ -47,12 +47,14 @@ final class Mad_Okul_Operations {
         add_action('admin_post_mad_okul_geocode_program', [__CLASS__, 'geocode_program']);
         add_action('admin_post_mad_okul_geocode_schools', [__CLASS__, 'geocode_schools']);
         add_action('admin_post_mad_okul_sort_route', [__CLASS__, 'sort_route']);
+        add_action('admin_post_mad_okul_driving_route', [__CLASS__, 'driving_route']);
     }
 
     public static function menus() {
         add_submenu_page('mad-okul', 'Program ve Salonlar', 'Program ve Salonlar', 'manage_options', 'mad-okul-programs', [__CLASS__, 'programs_page']);
         add_submenu_page('mad-okul', 'Görev Dağıtımı', 'Görev Dağıtımı', 'manage_options', 'mad-okul-assign', [__CLASS__, 'assign_page']);
         add_submenu_page('mad-okul', 'Harita Ayarları', 'Harita Ayarları', 'manage_options', 'mad-okul-settings', [__CLASS__, 'settings_page']);
+        add_submenu_page('mad-okul', 'Rota Planı', 'Rota Planı / PDF', 'manage_options', 'mad-okul-route-plan', [__CLASS__, 'route_plan_page']);
         add_menu_page('Tanıtım Görevlerim', 'Görevlerim', 'mad_okul_field_access', 'mad-okul-my-tasks', [__CLASS__, 'my_tasks_page'], 'dashicons-location', 28);
     }
 
@@ -125,9 +127,12 @@ final class Mad_Okul_Operations {
           <p>
             <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_schools&program_id='.(int)$program->id),'mad_okul_geocode_schools_'.$program->id)); ?>">Eksik Okul Koordinatlarını Bul</a>
             <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_sort_route&program_id='.(int)$program->id),'mad_okul_sort_route_'.$program->id)); ?>">Salondan Yakından Uzağa Sırala</a>
+            <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_driving_route&program_id='.(int)$program->id),'mad_okul_driving_route_'.$program->id)); ?>">Gerçek Sürüş Mesafesine Göre Sırala</a>
+            <a class="button" href="<?php echo esc_url(add_query_arg(['page'=>'mad-okul-route-plan','program_id'=>(int)$program->id],admin_url('admin.php'))); ?>">Rota Planı / PDF</a>
           </p>
           <?php if(isset($_GET['geo'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['geo']); ?> okul koordinatlandırıldı. Kalan: <?php echo absint($_GET['remaining'] ?? 0); ?>.</p></div><?php endif; ?>
           <?php if(isset($_GET['sorted'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['sorted']); ?> okul salona kuş uçuşu mesafesine göre sıralandı.</p></div><?php endif; ?>
+          <?php if(isset($_GET['driving'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['driving']); ?> okul gerçek sürüş mesafesine göre sıralandı.</p></div><?php endif; ?>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="mad_okul_assign_tasks"><input type="hidden" name="program_id" value="<?php echo (int)$program->id; ?>"><?php wp_nonce_field('mad_okul_assign_tasks'); ?>
             <p><label>Tanıtım elemanı <select name="assigned_user_id" required><option value="">Seçin</option><?php foreach($users as $u): ?><option value="<?php echo (int)$u->ID; ?>"><?php echo esc_html($u->display_name); ?></option><?php endforeach; ?></select></label> <label>Rota grubu <input name="route_group" value="A" size="6"></label></p>
@@ -206,6 +211,57 @@ final class Mad_Okul_Operations {
         usort($rows,function($a,$b) use($p){ return self::distance_km($p->latitude,$p->longitude,$a->latitude,$a->longitude) <=> self::distance_km($p->latitude,$p->longitude,$b->latitude,$b->longitude); });
         foreach($rows as $i=>$s) $wpdb->update(mad_okul_table(),['route_order'=>$i+1,'updated_at'=>current_time('mysql')],['id'=>$s->id]);
         wp_safe_redirect(add_query_arg(['page'=>'mad-okul-assign','program_id'=>$pid,'sorted'=>count($rows)],admin_url('admin.php'))); exit;
+    }
+
+    public static function driving_route() {
+        if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+        $pid=absint($_GET['program_id'] ?? 0); check_admin_referer('mad_okul_driving_route_'.$pid); global $wpdb;
+        $key=trim((string)get_option('mad_okul_google_maps_api_key'));
+        if (!$key) wp_die('Önce Harita Ayarları bölümüne Google Maps API anahtarı girin.');
+        $p=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid));
+        if (!$p || !$p->latitude || !$p->longitude) wp_die('Önce program salonunun koordinatını bulun.');
+        $schools=$wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY id',$p->il,$p->ilce));
+        $updated=0;
+        foreach(array_chunk($schools,25) as $chunk) {
+            $destinations=[];
+            foreach($chunk as $s) $destinations[]=['waypoint'=>['location'=>['latLng'=>['latitude'=>(float)$s->latitude,'longitude'=>(float)$s->longitude]]]];
+            $body=[
+                'origins'=>[['waypoint'=>['location'=>['latLng'=>['latitude'=>(float)$p->latitude,'longitude'=>(float)$p->longitude]]]]],
+                'destinations'=>$destinations,
+                'travelMode'=>'DRIVE',
+                'routingPreference'=>'TRAFFIC_AWARE',
+            ];
+            $response=wp_remote_post('https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix',[
+                'timeout'=>45,
+                'headers'=>['Content-Type'=>'application/json','X-Goog-Api-Key'=>$key,'X-Goog-FieldMask'=>'originIndex,destinationIndex,distanceMeters,duration,status,condition'],
+                'body'=>wp_json_encode($body),
+            ]);
+            if (is_wp_error($response)) wp_die(esc_html($response->get_error_message()));
+            $code=wp_remote_retrieve_response_code($response); $data=json_decode(wp_remote_retrieve_body($response),true);
+            if ($code<200 || $code>=300 || !is_array($data)) wp_die('Google Routes API yanıtı alınamadı. API etkinleştirme ve anahtar kısıtlarını kontrol edin.');
+            foreach($data as $item) {
+                if (!isset($item['destinationIndex'])) continue;
+                $index=absint($item['destinationIndex']);
+                if (!isset($chunk[$index]) || ($item['condition'] ?? '')!=='ROUTE_EXISTS') continue;
+                $duration=(int)round((float)rtrim((string)($item['duration'] ?? '0'),'s'));
+                $wpdb->update(mad_okul_table(),['route_distance_m'=>absint($item['distanceMeters'] ?? 0),'route_duration_s'=>$duration,'updated_at'=>current_time('mysql')],['id'=>$chunk[$index]->id]); $updated++;
+            }
+        }
+        $ranked=$wpdb->get_results($wpdb->prepare('SELECT id FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s AND route_distance_m>0 ORDER BY route_distance_m,kurum_adi',$p->il,$p->ilce));
+        foreach($ranked as $i=>$s) $wpdb->update(mad_okul_table(),['route_order'=>$i+1],['id'=>$s->id]);
+        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-assign','program_id'=>$pid,'driving'=>$updated],admin_url('admin.php'))); exit;
+    }
+
+    public static function route_plan_page() {
+        if (!current_user_can('manage_options')) return;
+        global $wpdb; $pid=absint($_GET['program_id'] ?? 0); $programs=self::programs();
+        $p=$pid ? $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid)) : null;
+        $rows=$p ? $wpdb->get_results($wpdb->prepare('SELECT s.*,u.display_name FROM '.mad_okul_table().' s LEFT JOIN '.$wpdb->users.' u ON u.ID=s.assigned_user_id WHERE s.program_id=%d ORDER BY s.route_group,s.route_order,s.kurum_adi',$pid)) : [];
+        ?><div class="wrap mad-okul-wrap mad-route-print"><div class="mad-no-print"><h1>Rota Planı / PDF</h1><form method="get"><input type="hidden" name="page" value="mad-okul-route-plan"><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $x): ?><option value="<?php echo (int)$x->id; ?>" <?php selected($pid,$x->id); ?>><?php echo esc_html($x->program_adi); ?></option><?php endforeach; ?></select> <button class="button">Getir</button><?php if($p): ?> <button type="button" class="button button-primary" onclick="window.print()">Yazdır / PDF Kaydet</button><?php endif; ?></form></div>
+        <?php if($p): ?><h1><?php echo esc_html($p->program_adi); ?> — Okul Tanıtım Rota Planı</h1><p><strong>Salon:</strong> <?php echo esc_html($p->salon_adi); ?><br><strong>Adres:</strong> <?php echo esc_html($p->salon_adresi); ?><br><strong>Tarih:</strong> <?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></p>
+        <table class="widefat striped"><thead><tr><th>Sıra</th><th>Personel</th><th>Okul ve adres</th><th>Mesafe</th><th>Süre</th><th>Durum</th></tr></thead><tbody><?php foreach($rows as $r): ?><tr><td><?php echo esc_html(($r->route_group ?: 'A').'-'.($r->route_order ?: '-')); ?></td><td><?php echo esc_html($r->display_name ?: '-'); ?></td><td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><?php echo esc_html($r->adres.', '.$r->ilce.'/'.$r->il); ?></td><td><?php echo $r->route_distance_m ? esc_html(number_format_i18n($r->route_distance_m/1000,1).' km') : '-'; ?></td><td><?php echo $r->route_duration_s ? esc_html(round($r->route_duration_s/60).' dk') : '-'; ?></td><td><?php echo esc_html($r->durum); ?></td></tr><?php endforeach; ?></tbody></table>
+        <p><small>Oluşturulma: <?php echo esc_html(current_time('d.m.Y H:i')); ?></small></p><?php endif; ?></div>
+        <style>@media print{#adminmenumain,#wpadminbar,#wpfooter,.notice,.mad-no-print{display:none!important}#wpcontent{margin:0!important}.mad-route-print{margin:12mm!important}.mad-route-print table{font-size:10px}.mad-route-print h1{font-size:20px}}</style><?php
     }
 
     public static function my_tasks_page() {
