@@ -333,7 +333,9 @@ function mad_okul_should_include($row) {
     $name = mad_okul_norm($row['KURUM_ADI'] ?? '');
     $type = trim($row['KURUM_TUR_ADI'] ?? '');
 
-    if (strpos($name,'KREŞ') !== false || strpos($name,'GÜNDÜZ BAK') !== false) return true;
+    foreach (['KREŞ','GÜNDÜZ BAK','ANAOKULU','İLKOKULU','ORTAOKULU'] as $keyword) {
+        if (strpos($name, $keyword) !== false) return true;
+    }
 
     $official = ['Anaokulu','İlkokul','Ortaokul','İmam Hatip Ortaokulu','Yatılı Bölge Ortaokulu'];
     $private  = ['Özel Türk Okul Öncesi Kurumu','Özel Türk İlkokulu','Özel Türk Ortaokulu'];
