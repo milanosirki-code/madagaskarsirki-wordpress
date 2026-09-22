@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar 2025 Nüfus Verisi
  * Description: Türkiye'nin 2025 il ve ilçe nüfus verilerini GitHub/TurkiyeAPI veri setinden içe aktarır ve Madagaskar yönetim modülleri için sorgu yardımcıları sağlar.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Madagaskar Sirki
  */
 
@@ -10,11 +10,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MMC_POPULATION_VERSION', '1.0.0');
+define('MMC_POPULATION_VERSION', '1.1.0');
 define('MMC_POPULATION_DATA_YEAR', 2025);
 define('MMC_POPULATION_SOURCE_NAME', 'TurkiyeAPI / TÜİK MEDAS');
 define('MMC_POPULATION_PROVINCES_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/provinces.json');
 define('MMC_POPULATION_DISTRICTS_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/districts.json');
+
+require_once plugin_dir_path(__FILE__) . 'includes/mmc-preparation-bridge.php';
 
 function mmc_population_table_provinces() {
     global $wpdb;
