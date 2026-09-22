@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar 2025 Nüfus Verisi
  * Description: Türkiye'nin 2025 il ve ilçe nüfus verilerini GitHub/TurkiyeAPI veri setinden içe aktarır ve Madagaskar yönetim modülleri için sorgu yardımcıları sağlar.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Madagaskar Sirki
  */
 
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MMC_POPULATION_VERSION', '1.1.0');
+define('MMC_POPULATION_VERSION', '1.1.1');
 define('MMC_POPULATION_DATA_YEAR', 2025);
 define('MMC_POPULATION_SOURCE_NAME', 'TurkiyeAPI / TÜİK MEDAS');
 define('MMC_POPULATION_PROVINCES_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/provinces.json');
@@ -320,10 +320,34 @@ function mmc_population_get_target_summary($province_name, array $district_names
 }
 
 function mmc_population_register_admin_page() {
-    global $menu;
+    global $menu, $submenu;
 
     $parent_slug = '';
-    if (is_array($menu)) {
+
+    /*
+     * Öncelik: "Veri Ambarı" alt menüsünün bağlı olduğu Madagaskar ana menüsünü bul.
+     * Böylece Nüfus Verisi aynı yönetim grubunda, Veri Ambarı satırının hemen altında görünür.
+     */
+    if (is_array($submenu)) {
+        foreach ($submenu as $candidate_parent => $items) {
+            if (!is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $item) {
+                $label = isset($item[0]) ? wp_strip_all_tags((string) $item[0]) : '';
+                if (stripos($label, 'Veri Ambar') !== false) {
+                    $parent_slug = (string) $candidate_parent;
+                    break 2;
+                }
+            }
+        }
+    }
+
+    /*
+     * Veri Ambarı bulunamazsa Madagaskar ana menüsünü bul.
+     */
+    if (!$parent_slug && is_array($menu)) {
         foreach ($menu as $item) {
             $label = isset($item[0]) ? wp_strip_all_tags((string) $item[0]) : '';
             $slug = isset($item[2]) ? (string) $item[2] : '';
@@ -343,6 +367,45 @@ function mmc_population_register_admin_page() {
             'mmc-population-data',
             'mmc_population_render_admin_page'
         );
+
+        /*
+         * WordPress iç içe üçüncü seviye menü desteklemediği için "Veri Ambarı"
+         * ile "Nüfus Verisi" aynı alt menü seviyesinde tutulur. Nüfus Verisi,
+         * görsel olarak Veri Ambarı satırının hemen arkasına taşınır.
+         */
+        if (isset($submenu[$parent_slug]) && is_array($submenu[$parent_slug])) {
+            $population_item = null;
+            $population_key = null;
+            $warehouse_key = null;
+
+            foreach ($submenu[$parent_slug] as $key => $item) {
+                $label = isset($item[0]) ? wp_strip_all_tags((string) $item[0]) : '';
+                $slug = isset($item[2]) ? (string) $item[2] : '';
+
+                if ($slug === 'mmc-population-data') {
+                    $population_item = $item;
+                    $population_key = $key;
+                }
+
+                if ($warehouse_key === null && stripos($label, 'Veri Ambar') !== false) {
+                    $warehouse_key = $key;
+                }
+            }
+
+            if ($population_item !== null && $population_key !== null && $warehouse_key !== null) {
+                unset($submenu[$parent_slug][$population_key]);
+
+                $ordered = [];
+                foreach ($submenu[$parent_slug] as $key => $item) {
+                    $ordered[$key] = $item;
+                    if ((string) $key === (string) $warehouse_key) {
+                        $ordered['mmc_population_after_warehouse'] = $population_item;
+                    }
+                }
+
+                $submenu[$parent_slug] = array_values($ordered);
+            }
+        }
     } else {
         add_management_page(
             'Madagaskar Nüfus Verisi',
@@ -353,7 +416,7 @@ function mmc_population_register_admin_page() {
         );
     }
 }
-add_action('admin_menu', 'mmc_population_register_admin_page', 999);
+add_action('admin_menu', 'mmc_population_register_admin_page', 99999);
 
 function mmc_population_render_admin_page() {
     if (!current_user_can('manage_options')) {
