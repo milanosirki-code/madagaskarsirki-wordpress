@@ -52,21 +52,79 @@ function mmc_population_bridge_program_province($program_id) {
         }
     }
 
-    $province_column = '';
+    if (!$id_column) {
+        return '';
+    }
+
     foreach (['province_name', 'il', 'province', 'city_name', 'city'] as $candidate) {
         if (in_array($candidate, $columns, true)) {
-            $province_column = $candidate;
+            $sql = $wpdb->prepare(
+                "SELECT {$candidate} FROM {$table} WHERE {$id_column} = %d LIMIT 1",
+                $program_id
+            );
+            $value = trim((string) $wpdb->get_var($sql));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+    }
+
+    $province_fk = '';
+    foreach (['province_id', 'il_id', 'city_id', 'province_code', 'il_kodu'] as $candidate) {
+        if (in_array($candidate, $columns, true)) {
+            $province_fk = $candidate;
             break;
         }
     }
 
-    if (!$id_column || !$province_column) {
+    if (!$province_fk) {
+        return '';
+    }
+
+    $fk_value = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT {$province_fk} FROM {$table} WHERE {$id_column} = %d LIMIT 1",
+            $program_id
+        )
+    );
+
+    if ($fk_value === null || $fk_value === '') {
+        return '';
+    }
+
+    $province_table = $wpdb->prefix . 'mmc_provinces';
+    if (!mmc_population_bridge_table_exists($province_table)) {
+        return '';
+    }
+
+    $province_columns = $wpdb->get_col("SHOW COLUMNS FROM {$province_table}", 0);
+    if (!$province_columns) {
+        return '';
+    }
+
+    $province_name_column = '';
+    foreach (['name', 'province_name', 'il', 'city_name'] as $candidate) {
+        if (in_array($candidate, $province_columns, true)) {
+            $province_name_column = $candidate;
+            break;
+        }
+    }
+
+    $province_id_column = '';
+    foreach (['id', 'province_id', 'code', 'province_code', 'il_kodu'] as $candidate) {
+        if (in_array($candidate, $province_columns, true)) {
+            $province_id_column = $candidate;
+            break;
+        }
+    }
+
+    if (!$province_name_column || !$province_id_column) {
         return '';
     }
 
     $sql = $wpdb->prepare(
-        "SELECT {$province_column} FROM {$table} WHERE {$id_column} = %d LIMIT 1",
-        $program_id
+        "SELECT {$province_name_column} FROM {$province_table} WHERE {$province_id_column} = %s LIMIT 1",
+        (string) $fk_value
     );
 
     return trim((string) $wpdb->get_var($sql));
