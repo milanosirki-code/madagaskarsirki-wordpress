@@ -69,3 +69,19 @@ $population = $province ? (int) $province['population'] : 0;
 ## 0–14 yaş alanı
 
 Bu veri setinde ilçe bazlı 0–14 yaş verisi yoktur. Modül bu alanı tahmin etmez ve `null` bırakır. Ayrı bir resmi veri kaynağı sağlanınca eklenmelidir.
+
+
+## MMC Hazırlık ekranı bağlantısı
+
+Sürüm 1.1.0 ile eklenti, `admin.php?page=mmc-preparation&program_id=...` ekranına otomatik bağlanır.
+
+- Seçili hedef ilçeleri ekrandaki checkbox/select alanlarından okur.
+- Programın ilini ekrandan veya `mmc_programs` tablosundan belirler.
+- Program il alanı yabancı anahtar ile tutuluyorsa `mmc_provinces` tablosu üzerinden il adını çözer.
+- **Hedef Bölge Özeti → Toplam Nüfus** değerini seçili ilçelerin 2025 nüfus toplamıyla günceller.
+- **Veri Kalitesi → Nüfus** satırını `x / y ilçe` olarak günceller.
+- **İl Geneli Referans → Nüfus** satırına ilin 2025 nüfusunu yazar.
+- 0–14 yaş verisini üretmez; bu alan kaynakta olmadığı için boş/veri yok kalır.
+- 2025 veri seti henüz içe aktarılmamışsa yönetici oturumunda ilk hazırlık ekranı isteğinde bir kez otomatik içe aktarmayı dener.
+
+Köprü kodu: `wp-content/plugins/madagaskar-population-data/includes/mmc-preparation-bridge.php`.
