@@ -61,3 +61,14 @@ Sürüm 1.3.0 ile Hazırlık Dashboard, seçili hedef ilçeler için okul sayıs
 - **Öğrenci Sayısı**: ilçe düzeyi doğrulanmış öğrenci kaynağı olmadığı sürece tahmin edilmez ve mevcut "Veri yok" davranışı korunur.
 
 MEB Tablo 1.17 verisi yalnız **İl Geneli Referans** içindir; ilçe okul veya öğrenci toplamına dağıtılmaz.
+
+
+## MMC v1.3.3 için hazır CSV aktarımı
+
+Canlı Management Center v1.3.3, il geneli eğitim metriklerini `mmc_region_metrics` üzerinden doğrudan destekler. Bu nedenle 81 il için MEB 2024/25 okul ve öğrenci toplamlarını içeren hazır dosya oluşturulmuştur:
+
+`data-imports/meb-2024-25-province-metrics.csv`
+
+Dosyada 81 il × 2 metrik = **162 kayıt** vardır. `district_name` alanı boş olduğundan veriler yalnız **İl Geneli Referans** bölümünde kullanılır; seçili ilçelere bölünmez veya tahmin edilmez.
+
+Yükleme yolu: **Madagaskar Yönetim Merkezi → Bölge Veri Ambarı → Ek Metrikleri CSV ile Yükle**.
