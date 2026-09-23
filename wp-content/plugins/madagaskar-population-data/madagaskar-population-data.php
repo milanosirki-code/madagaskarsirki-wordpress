@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Veri Ambarı - Nüfus ve Eğitim
  * Description: 2025 il/ilçe nüfus, MEB 2024/25 il geneli eğitim ve Okul Tanıtım ilçe okul verilerini Madagaskar Veri Ambarına bağlar.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Madagaskar Sirki
  */
 
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MMC_POPULATION_VERSION', '1.3.0');
+define('MMC_POPULATION_VERSION', '1.3.1');
 define('MMC_POPULATION_DATA_YEAR', 2025);
 define('MMC_POPULATION_SOURCE_NAME', 'TurkiyeAPI / TÜİK MEDAS');
 define('MMC_POPULATION_PROVINCES_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/provinces.json');
@@ -286,6 +286,38 @@ function mmc_population_get_district($province_name, $district_name, $year = MMC
             (int) $year
         ),
         ARRAY_A
+    );
+}
+
+function mmc_population_get_districts_by_province($province_name, $year = MMC_POPULATION_DATA_YEAR) {
+    global $wpdb;
+
+    $table = mmc_population_table_districts();
+    $province_key = mmc_population_normalize_key($province_name);
+
+    return $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT source_id, province_source_id, name, slug, population, area_km2, data_year, source_name, imported_at
+             FROM {$table}
+             WHERE province_name_key = %s AND data_year = %d
+             ORDER BY name ASC",
+            $province_key,
+            (int) $year
+        ),
+        ARRAY_A
+    );
+}
+
+function mmc_population_get_all_district_names($year = MMC_POPULATION_DATA_YEAR) {
+    global $wpdb;
+
+    $table = mmc_population_table_districts();
+
+    return $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT DISTINCT name FROM {$table} WHERE data_year = %d ORDER BY name ASC",
+            (int) $year
+        )
     );
 }
 
