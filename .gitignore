@@ -1,0 +1,4 @@
+*.zip
+*.log
+.DS_Store
+plugins/madagaskar-okul-tanitim/data/schools.csv
