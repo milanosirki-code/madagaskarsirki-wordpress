@@ -1,0 +1,22 @@
+{
+  "package": "madagaskar-management-center",
+  "from_version": "1.3.3",
+  "to_version": "1.3.4",
+  "db_version": "1.3.3",
+  "baseline_zip_sha256": "e447b3e66ddc8dd4fb22257d088f26e28b0c10a918b1bb4e694a495af4729fc6",
+  "built_zip_sha256": "e85583910b9909980944b4a6cffc6a4d4dd7288029ad82b367e4e2bd5acc175a",
+  "data": {
+    "academic_year": "2024-2025",
+    "source": "MEB Millî Eğitim İstatistikleri, Örgün Eğitim 2024/25 - Tablo 1.17",
+    "province_count": 81,
+    "metric_count": 162,
+    "school_total": 74040,
+    "student_total": 17956523,
+    "district_estimation": false
+  },
+  "overlay_files": [
+    "madagaskar-management-center.php",
+    "includes/class-mmc-meb-source-service.php",
+    "data/meb-2024-25-province-metrics.csv"
+  ]
+}
