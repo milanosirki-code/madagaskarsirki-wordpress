@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Madagaskar Veri Ambarı - Nüfus ve Eğitim
- * Description: 2025 il/ilçe nüfus verileri ile MEB 2024/25 il geneli okul ve öğrenci verilerini Madagaskar Veri Ambarına aktarır.
- * Version: 1.2.0
+ * Description: 2025 il/ilçe nüfus, MEB 2024/25 il geneli eğitim ve Okul Tanıtım ilçe okul verilerini Madagaskar Veri Ambarına bağlar.
+ * Version: 1.3.0
  * Author: Madagaskar Sirki
  */
 
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MMC_POPULATION_VERSION', '1.2.0');
+define('MMC_POPULATION_VERSION', '1.3.0');
 define('MMC_POPULATION_DATA_YEAR', 2025);
 define('MMC_POPULATION_SOURCE_NAME', 'TurkiyeAPI / TÜİK MEDAS');
 define('MMC_POPULATION_PROVINCES_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/provinces.json');
