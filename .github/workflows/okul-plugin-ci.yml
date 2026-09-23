@@ -35,12 +35,12 @@ jobs:
         run: |
           mkdir -p dist
           cd plugins
-          zip -r ../dist/madagaskar-okul-tanitim-v1.7.0.zip madagaskar-okul-tanitim \
+          zip -r ../dist/madagaskar-okul-tanitim-v1.7.2.zip madagaskar-okul-tanitim \
             -x "madagaskar-okul-tanitim/data/schools.csv"
 
       - name: Paketi iş akışı çıktısı olarak yükle
         uses: actions/upload-artifact@v4
         with:
-          name: madagaskar-okul-tanitim-v1.7.0
-          path: dist/madagaskar-okul-tanitim-v1.7.0.zip
+          name: madagaskar-okul-tanitim-v1.7.2
+          path: dist/madagaskar-okul-tanitim-v1.7.2.zip
           if-no-files-found: error
