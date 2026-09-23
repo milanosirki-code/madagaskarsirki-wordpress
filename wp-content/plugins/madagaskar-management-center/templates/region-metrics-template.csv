@@ -1,0 +1,5 @@
+province_name,district_name,metric_key,metric_value,unit,data_year,source_org,source_name,source_url,verified_at
+Ankara,Sincan,population_0_14,0,kisi,2025,TÜİK,Yaş grubu doğrulanmış veri,https://data.tuik.gov.tr/,2026-02-09
+Ankara,Sincan,population_15_24,0,kisi,2025,TÜİK,Yaş grubu doğrulanmış veri,https://data.tuik.gov.tr/,2026-02-09
+Ankara,Sincan,preschool_count,0,kisi,2025-2026,MEB veya MEM,Doğrulanmış ilçe eğitim verisi,,
+Ankara,Sincan,primary_count,0,kisi,2025-2026,MEB veya MEM,Doğrulanmış ilçe eğitim verisi,,
