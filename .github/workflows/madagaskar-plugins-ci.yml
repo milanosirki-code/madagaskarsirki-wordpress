@@ -1,0 +1,39 @@
+name: Madagaskar Plugins CI
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-okul-tanitim/**'
+      - 'wp-content/plugins/madagaskar-population-data/**'
+      - '.github/workflows/madagaskar-plugins-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-okul-tanitim/**'
+      - 'wp-content/plugins/madagaskar-population-data/**'
+      - '.github/workflows/madagaskar-plugins-ci.yml'
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
+          do
+            test -d "$dir"
+            find "$dir" -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          done
+      - name: Verify canonical plugin versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq 'Version:[[:space:]]*1\.3\.5' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.7\.2' wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.1' wp-content/plugins/madagaskar-population-data/madagaskar-population-data.php
