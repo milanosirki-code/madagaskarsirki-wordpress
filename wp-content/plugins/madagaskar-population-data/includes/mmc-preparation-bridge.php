@@ -150,6 +150,55 @@ function mmc_population_bridge_data_ready() {
     return $province_count === 81 && $district_count === 973;
 }
 
+function mmc_population_bridge_school_summary($province, array $districts) {
+    global $wpdb;
+
+    $districts = array_values(array_unique(array_filter(array_map('trim', $districts))));
+    $table = $wpdb->prefix . 'mad_okul_tanitim';
+
+    $result = [
+        'target_district_count' => count($districts),
+        'covered_district_count' => 0,
+        'school_count' => 0,
+        'school_list_count' => 0,
+        'missing_districts' => [],
+        'source_available' => false,
+    ];
+
+    if (!mmc_population_bridge_table_exists($table)) {
+        $result['missing_districts'] = $districts;
+        return $result;
+    }
+
+    $columns = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+    if (!in_array('il', $columns, true) || !in_array('ilce', $columns, true)) {
+        $result['missing_districts'] = $districts;
+        return $result;
+    }
+
+    $result['source_available'] = true;
+
+    foreach ($districts as $district) {
+        $count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE il = %s AND ilce = %s",
+                $province,
+                $district
+            )
+        );
+
+        if ($count > 0) {
+            $result['covered_district_count']++;
+            $result['school_count'] += $count;
+            $result['school_list_count'] += $count;
+        } else {
+            $result['missing_districts'][] = $district;
+        }
+    }
+
+    return $result;
+}
+
 function mmc_population_bridge_ajax_summary() {
     if (!is_user_logged_in() || !current_user_can('read')) {
         wp_send_json_error(['message' => 'Yetkisiz işlem.'], 403);
@@ -209,6 +258,7 @@ function mmc_population_bridge_ajax_summary() {
     }
 
     $summary = mmc_population_get_target_summary($province, $districts, MMC_POPULATION_DATA_YEAR);
+    $school_summary = mmc_population_bridge_school_summary($province, $districts);
     $province_row = mmc_population_get_province($province, MMC_POPULATION_DATA_YEAR);
     $education_row = function_exists('mmc_education_get_province')
         ? mmc_education_get_province($province, MMC_EDUCATION_ACADEMIC_YEAR)
@@ -226,6 +276,12 @@ function mmc_population_bridge_ajax_summary() {
         'covered_district_count' => (int) $summary['covered_district_count'],
         'total_population' => (int) $summary['total_population'],
         'age_0_14' => null,
+        'target_school_count' => (int) $school_summary['school_count'],
+        'school_list_count' => (int) $school_summary['school_list_count'],
+        'school_covered_district_count' => (int) $school_summary['covered_district_count'],
+        'school_source_available' => (bool) $school_summary['source_available'],
+        'school_missing_districts' => array_values($school_summary['missing_districts']),
+        'target_student_count' => null,
         'missing_districts' => array_values($summary['missing_districts']),
         'source' => MMC_POPULATION_SOURCE_NAME,
         'data_ready' => true,
@@ -355,6 +411,16 @@ function mmc_population_bridge_enqueue() {
         var out = [];
         var seen = {};
 
+        function addDistrict(value) {
+            var text = cleanDistrictName(value);
+            if (!text) return;
+            var key = text.toLocaleLowerCase('tr-TR');
+            if (!seen[key]) {
+                seen[key] = true;
+                out.push(text);
+            }
+        }
+
         var boxes = document.querySelectorAll('#wpbody-content input[type="checkbox"]:checked');
         boxes.forEach(function(cb){
             if (cb.disabled) return;
@@ -364,14 +430,7 @@ function mmc_population_bridge_enqueue() {
 
             if (/(select.?all|tum|all)/.test(name + ' ' + id)) return;
 
-            var text = cleanDistrictName(labelTextForCheckbox(cb));
-            if (!text) return;
-
-            var key = text.toLocaleLowerCase('tr-TR');
-            if (!seen[key]) {
-                seen[key] = true;
-                out.push(text);
-            }
+            addDistrict(labelTextForCheckbox(cb));
         });
 
         if (!out.length) {
@@ -379,15 +438,33 @@ function mmc_population_bridge_enqueue() {
             selects.forEach(function(el){
                 var n = String(el.name || el.id || '').toLowerCase();
                 if (!/(ilce|district)/.test(n)) return;
-                var text = cleanDistrictName(fieldValue(el));
-                if (!text) return;
-                var key = text.toLocaleLowerCase('tr-TR');
-                if (!seen[key]) {
-                    seen[key] = true;
-                    out.push(text);
-                }
+                addDistrict(fieldValue(el));
             });
         }
+
+        var extraFields = document.querySelectorAll('#wpbody-content input[type="text"], #wpbody-content textarea');
+        extraFields.forEach(function(el){
+            var idName = String((el.name || '') + ' ' + (el.id || '')).toLowerCase();
+            var placeholder = String(el.getAttribute('placeholder') || '').toLocaleLowerCase('tr-TR');
+            var labelText = '';
+            if (el.id) {
+                var lbl = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+                if (lbl) labelText = normText(lbl.textContent).toLocaleLowerCase('tr-TR');
+            }
+            if (!labelText && el.parentElement) {
+                labelText = normText(el.parentElement.textContent).toLocaleLowerCase('tr-TR');
+            }
+
+            var isExtraDistrict = /ek[_\- ]?ilce|extra[_\- ]?district|additional[_\- ]?district/.test(idName)
+                || /ek ilçe adları/.test(labelText)
+                || /örn\.\s*ayaş/.test(placeholder);
+
+            if (!isExtraDistrict || !el.value) return;
+
+            String(el.value).split(/[,;\n]+/).forEach(function(part){
+                addDistrict(part);
+            });
+        });
 
         return out;
     }
@@ -458,7 +535,7 @@ function mmc_population_bridge_enqueue() {
             card.appendChild(live);
         }
 
-        if (!coverageDone) {
+        if (!coverageDone && coverageText) {
             var meta = document.createElement('small');
             meta.style.display = 'block';
             meta.style.marginTop = '4px';
@@ -477,15 +554,38 @@ function mmc_population_bridge_enqueue() {
             if (cells.length < 2) return;
 
             var first = normText(cells[0].textContent).toLocaleLowerCase('tr-TR');
-            if (first !== 'nüfus' && first !== 'nufus') return;
 
-            var second = normText(cells[1].textContent);
-            if (!/ilçe/i.test(second)) return;
+            if (first === 'nüfus' || first === 'nufus') {
+                cells[1].textContent = data.covered_district_count + ' / ' + data.target_district_count + ' ilçe';
+                if (cells.length > 2) {
+                    var populationComplete = data.target_district_count > 0 && data.covered_district_count === data.target_district_count;
+                    cells[2].textContent = populationComplete ? '● Veri mevcut' : '● Eksik veri';
+                }
+                return;
+            }
 
-            cells[1].textContent = data.covered_district_count + ' / ' + data.target_district_count + ' ilçe';
-            if (cells.length > 2) {
-                var complete = data.target_district_count > 0 && data.covered_district_count === data.target_district_count;
-                cells[2].textContent = complete ? '● Veri mevcut' : '● Eksik veri';
+            if (first === 'okul') {
+                cells[1].textContent = data.school_covered_district_count + ' / ' + data.target_district_count + ' ilçe';
+                if (cells.length > 2) {
+                    var schoolComplete = data.target_district_count > 0 && data.school_covered_district_count === data.target_district_count;
+                    cells[2].textContent = schoolComplete ? '● Veri mevcut' : (data.school_source_available ? '● Eksik veri' : '● Veri yok');
+                }
+                return;
+            }
+
+            if (first === 'okul listesi') {
+                cells[1].textContent = formatNumber(data.school_list_count) + ' okul kaydı';
+                if (cells.length > 2) {
+                    cells[2].textContent = data.school_list_count > 0 ? '● Veri mevcut' : '● Veri yok';
+                }
+                return;
+            }
+
+            if ((first === 'öğrenci' || first === 'ogrenci') && data.target_student_count !== null) {
+                cells[1].textContent = data.target_district_count + ' / ' + data.target_district_count + ' ilçe';
+                if (cells.length > 2) {
+                    cells[2].textContent = '● Veri mevcut';
+                }
             }
         });
     }
@@ -547,16 +647,29 @@ function mmc_population_bridge_enqueue() {
     }
 
     function applyData(data) {
-        var coverage = data.covered_district_count + '/' + data.target_district_count + ' ilçe verisi';
-        updateMetricCard('Toplam Nüfus', formatNumber(data.total_population), coverage);
+        var populationCoverage = data.covered_district_count + '/' + data.target_district_count + ' ilçe verisi';
+        var schoolCoverage = data.school_covered_district_count + '/' + data.target_district_count + ' ilçe verisi';
+
+        updateMetricCard('Hedef İlçe', formatNumber(data.target_district_count), '');
+        updateMetricCard('Toplam Nüfus', formatNumber(data.total_population), populationCoverage);
+        updateMetricCard('Okul Sayısı', formatNumber(data.target_school_count), schoolCoverage);
+
+        if (data.target_student_count !== null) {
+            updateMetricCard('Öğrenci Sayısı', formatNumber(data.target_student_count), data.target_district_count + '/' + data.target_district_count + ' ilçe verisi');
+        }
+
         updateQualityTables(data);
         updateProvinceReference(data);
 
+        var warnings = [];
         if (data.missing_districts && data.missing_districts.length) {
-            showStatus('Nüfus verisi bulunamayan ilçe: ' + data.missing_districts.join(', '), 'error');
-        } else {
-            showStatus('', 'info');
+            warnings.push('Nüfus verisi bulunamayan ilçe: ' + data.missing_districts.join(', '));
         }
+        if (data.school_source_available && data.school_missing_districts && data.school_missing_districts.length) {
+            warnings.push('Okul Tanıtım listesinde kayıt bulunmayan ilçe: ' + data.school_missing_districts.join(', '));
+        }
+
+        showStatus(warnings.join(' | '), warnings.length ? 'error' : 'info');
     }
 
     function refresh() {
@@ -602,7 +715,7 @@ function mmc_population_bridge_enqueue() {
     $(function(){
         scheduleRefresh();
 
-        $('#wpbody-content').on('change', 'input[type="checkbox"], select, input[name*="il"], input[name*="province"]', scheduleRefresh);
+        $('#wpbody-content').on('change input', 'input[type="checkbox"], select, input[name*="il"], input[name*="province"], input[type="text"], textarea', scheduleRefresh);
         $('#wpbody-content').on('click', 'button, input[type="submit"]', function(){
             window.setTimeout(scheduleRefresh, 250);
         });
