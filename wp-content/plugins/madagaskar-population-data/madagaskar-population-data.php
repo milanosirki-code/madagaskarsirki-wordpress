@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Madagaskar 2025 Nüfus Verisi
- * Description: Türkiye'nin 2025 il ve ilçe nüfus verilerini GitHub/TurkiyeAPI veri setinden içe aktarır ve Madagaskar yönetim modülleri için sorgu yardımcıları sağlar.
- * Version: 1.1.1
+ * Plugin Name: Madagaskar Veri Ambarı - Nüfus ve Eğitim
+ * Description: 2025 il/ilçe nüfus verileri ile MEB 2024/25 il geneli okul ve öğrenci verilerini Madagaskar Veri Ambarına aktarır.
+ * Version: 1.2.0
  * Author: Madagaskar Sirki
  */
 
@@ -10,13 +10,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MMC_POPULATION_VERSION', '1.1.1');
+define('MMC_POPULATION_VERSION', '1.2.0');
 define('MMC_POPULATION_DATA_YEAR', 2025);
 define('MMC_POPULATION_SOURCE_NAME', 'TurkiyeAPI / TÜİK MEDAS');
 define('MMC_POPULATION_PROVINCES_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/provinces.json');
 define('MMC_POPULATION_DISTRICTS_URL', 'https://raw.githubusercontent.com/ubeydeozdmr/turkiye-api/main/datasets/2025/districts.json');
 
 require_once plugin_dir_path(__FILE__) . 'includes/mmc-preparation-bridge.php';
+require_once plugin_dir_path(__FILE__) . 'includes/mmc-education-data.php';
 
 function mmc_population_table_provinces() {
     global $wpdb;
@@ -361,8 +362,8 @@ function mmc_population_register_admin_page() {
     if ($parent_slug) {
         add_submenu_page(
             $parent_slug,
-            'Nüfus Verisi',
-            'Nüfus Verisi',
+            'Nüfus ve Eğitim Verisi',
+            'Nüfus ve Eğitim Verisi',
             'manage_options',
             'mmc-population-data',
             'mmc_population_render_admin_page'
@@ -408,8 +409,8 @@ function mmc_population_register_admin_page() {
         }
     } else {
         add_management_page(
-            'Madagaskar Nüfus Verisi',
-            'Madagaskar Nüfus Verisi',
+            'Madagaskar Veri Ambarı - Nüfus ve Eğitim',
+            'Nüfus ve Eğitim Verisi',
             'manage_options',
             'mmc-population-data',
             'mmc_population_render_admin_page'
@@ -443,7 +444,7 @@ function mmc_population_render_admin_page() {
     }
 
     echo '<div class="wrap">';
-    echo '<h1>Madagaskar Nüfus Verisi</h1>';
+    echo '<h1>Madagaskar Veri Ambarı – Nüfus ve Eğitim Verileri</h1>';
 
     if (is_array($message) && !empty($message['text'])) {
         $class = !empty($message['success']) ? 'notice notice-success' : 'notice notice-error';
@@ -467,6 +468,11 @@ function mmc_population_render_admin_page() {
     echo '</form>';
 
     echo '<p style="margin-top:18px;color:#646970;">Kaynak dosyalar doğrulanmadan veritabanına yazılmaz. Beklenen kayıt sayısı: 81 il, 973 ilçe.</p>';
+
+    if (function_exists('mmc_education_render_admin_section')) {
+        mmc_education_render_admin_section();
+    }
+
     echo '</div>';
 }
 

@@ -210,10 +210,17 @@ function mmc_population_bridge_ajax_summary() {
 
     $summary = mmc_population_get_target_summary($province, $districts, MMC_POPULATION_DATA_YEAR);
     $province_row = mmc_population_get_province($province, MMC_POPULATION_DATA_YEAR);
+    $education_row = function_exists('mmc_education_get_province')
+        ? mmc_education_get_province($province, MMC_EDUCATION_ACADEMIC_YEAR)
+        : null;
 
     wp_send_json_success([
         'province' => $province,
         'province_population' => $province_row ? (int) $province_row['population'] : null,
+        'province_school_count' => $education_row ? (int) $education_row['school_count'] : null,
+        'province_student_count' => $education_row ? (int) $education_row['student_count'] : null,
+        'education_academic_year' => defined('MMC_EDUCATION_ACADEMIC_YEAR') ? MMC_EDUCATION_ACADEMIC_YEAR : null,
+        'education_source' => $education_row ? (string) $education_row['source_name'] : null,
         'data_year' => MMC_POPULATION_DATA_YEAR,
         'target_district_count' => (int) $summary['target_district_count'],
         'covered_district_count' => (int) $summary['covered_district_count'],
@@ -249,7 +256,7 @@ function mmc_population_bridge_enqueue() {
     var lastKey = '';
 
     function normText(v) {
-        return String(v || '').replace(/s+/g, ' ').trim();
+        return String(v || '').replace(/\s+/g, ' ').trim();
     }
 
     function formatNumber(v) {
@@ -334,8 +341,8 @@ function mmc_population_bridge_enqueue() {
 
     function cleanDistrictName(v) {
         v = normText(v);
-        v = v.replace(/^[✓✔☑-s]+/, '').trim();
-        v = v.replace(/s*(s*(seçili|selected)s*)s*$/i, '').trim();
+        v = v.replace(/^[✓✔☑\-\s]+/, '').trim();
+        v = v.replace(/\s*\(\s*(seçili|selected)\s*\)\s*$/i, '').trim();
 
         if (!v || v.length > 100) return '';
         if (/^(tümü|tumunu seç|hepsini seç|seç|sec|all)$/i.test(v)) return '';
@@ -428,7 +435,7 @@ function mmc_population_bridge_enqueue() {
 
             var t = normText(el.textContent);
 
-            if (!valueDone && /^[0-9.s]+$/.test(t)) {
+            if (!valueDone && /^[0-9.\s]+$/.test(t)) {
                 el.textContent = value;
                 el.setAttribute('data-mmc-population-live', '1');
                 valueDone = true;
@@ -473,22 +480,50 @@ function mmc_population_bridge_enqueue() {
             if (first !== 'nüfus' && first !== 'nufus') return;
 
             var second = normText(cells[1].textContent);
-            var third = cells.length > 2 ? normText(cells[2].textContent) : '';
+            if (!/ilçe/i.test(second)) return;
 
-            if (//s*d+s*ilçe/i.test(second) || /ilçe/i.test(second)) {
-                cells[1].textContent = data.covered_district_count + ' / ' + data.target_district_count + ' ilçe';
-                if (cells.length > 2) {
-                    var complete = data.target_district_count > 0 && data.covered_district_count === data.target_district_count;
-                    cells[2].textContent = complete ? '● Veri mevcut' : '● Eksik veri';
-                }
-                return;
+            cells[1].textContent = data.covered_district_count + ' / ' + data.target_district_count + ' ilçe';
+            if (cells.length > 2) {
+                var complete = data.target_district_count > 0 && data.covered_district_count === data.target_district_count;
+                cells[2].textContent = complete ? '● Veri mevcut' : '● Eksik veri';
             }
+        });
+    }
 
-            if ((/veri yok/i.test(second) || second === '-') && (third === '-' || /veri yok/i.test(third))) {
+    function updateProvinceReference(data) {
+        var heading = findExactText(document.getElementById('wpbody-content') || document, '4. İl Geneli Referans');
+        if (!heading) return;
+
+        var container = heading.parentElement;
+        while (container && container !== document.body && !container.querySelector('table')) {
+            container = container.parentElement;
+        }
+        if (!container) return;
+
+        var values = {
+            'nüfus': data.province_population,
+            'nufus': data.province_population,
+            'okul': data.province_school_count,
+            'öğrenci': data.province_student_count,
+            'ogrenci': data.province_student_count
+        };
+
+        var rows = container.querySelectorAll('tr');
+        rows.forEach(function(row){
+            var cells = row.querySelectorAll('th,td');
+            if (cells.length < 2) return;
+
+            var key = normText(cells[0].textContent).toLocaleLowerCase('tr-TR');
+            if (!Object.prototype.hasOwnProperty.call(values, key)) return;
+
+            var value = values[key];
+            if (value === null || typeof value === 'undefined') return;
+
+            if (cells.length >= 3) {
                 cells[1].textContent = 'Veri mevcut';
-                if (cells.length > 2 && data.province_population !== null) {
-                    cells[2].textContent = formatNumber(data.province_population);
-                }
+                cells[2].textContent = formatNumber(value);
+            } else {
+                cells[1].textContent = formatNumber(value);
             }
         });
     }
@@ -515,6 +550,7 @@ function mmc_population_bridge_enqueue() {
         var coverage = data.covered_district_count + '/' + data.target_district_count + ' ilçe verisi';
         updateMetricCard('Toplam Nüfus', formatNumber(data.total_population), coverage);
         updateQualityTables(data);
+        updateProvinceReference(data);
 
         if (data.missing_districts && data.missing_districts.length) {
             showStatus('Nüfus verisi bulunamayan ilçe: ' + data.missing_districts.join(', '), 'error');
