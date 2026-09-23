@@ -1,0 +1,49 @@
+name: Canonical plugin layout cleanup
+
+on:
+  push:
+    branches:
+      - chore/canonical-plugin-layout-cleanup
+    paths:
+      - .github/workflows/canonical-layout-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify canonical sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          test -f wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
+          test -f wp-content/plugins/madagaskar-population-data/madagaskar-population-data.php
+          grep -q "Version: 1.3.5" wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -q "Version: 1.7.2" wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
+          grep -q "Version: 1.3.1" wp-content/plugins/madagaskar-population-data/madagaskar-population-data.php
+
+      - name: Remove legacy duplicate paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf plugins/madagaskar-okul-tanitim
+          rmdir plugins 2>/dev/null || true
+          rm -f .github/workflows/okul-plugin-ci.yml
+          rm -f .github/workflows/canonical-layout-cleanup.yml
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "madagaskar-github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: keep only canonical WordPress plugin sources"
+          git push origin HEAD:chore/canonical-plugin-layout-cleanup
