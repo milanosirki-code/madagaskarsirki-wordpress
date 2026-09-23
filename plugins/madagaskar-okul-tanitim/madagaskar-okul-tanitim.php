@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.1
+ * Version: 1.7.2
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.1');
+define('MAD_OKUL_VERSION', '1.7.2');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -31,6 +31,64 @@ function mad_okul_norm($s) {
     else $s = strtoupper($s);
     $s = preg_replace('/\s+/u', ' ', $s);
     return $s;
+}
+
+function mad_okul_place_title($s) {
+    $s = trim((string)$s);
+    if ($s === '') return '';
+
+    $s = preg_replace('/\s+/u', ' ', $s);
+    $s = strtr($s, ['I'=>'ı', 'İ'=>'i']);
+
+    if (function_exists('mb_strtolower')) $s = mb_strtolower($s, 'UTF-8');
+    else $s = strtolower($s);
+
+    $parts = preg_split('/([\s-]+)/u', $s, -1, PREG_SPLIT_DELIM_CAPTURE);
+    foreach ($parts as &$part) {
+        if ($part === '' || preg_match('/^[\s-]+$/u', $part)) continue;
+        if (function_exists('mb_substr')) {
+            $first = mb_substr($part, 0, 1, 'UTF-8');
+            $rest  = mb_substr($part, 1, null, 'UTF-8');
+        } else {
+            $first = substr($part, 0, 1);
+            $rest  = substr($part, 1);
+        }
+        $first = strtr($first, [
+            'i'=>'İ','ı'=>'I','ç'=>'Ç','ğ'=>'Ğ','ö'=>'Ö','ş'=>'Ş','ü'=>'Ü',
+            'a'=>'A','b'=>'B','c'=>'C','d'=>'D','e'=>'E','f'=>'F','g'=>'G','h'=>'H',
+            'j'=>'J','k'=>'K','l'=>'L','m'=>'M','n'=>'N','o'=>'O','p'=>'P','q'=>'Q',
+            'r'=>'R','s'=>'S','t'=>'T','u'=>'U','v'=>'V','w'=>'W','x'=>'X','y'=>'Y','z'=>'Z'
+        ]);
+        $part = $first . $rest;
+    }
+    unset($part);
+    return implode('', $parts);
+}
+
+function mad_okul_normalize_existing_places() {
+    global $wpdb;
+    foreach ([mad_okul_table(), mad_okul_excluded_table()] as $target) {
+        $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $target));
+        if ($exists !== $target) continue;
+
+        $pairs = $wpdb->get_results("SELECT DISTINCT il, ilce FROM $target");
+        foreach ((array)$pairs as $pair) {
+            $new_il = mad_okul_place_title($pair->il);
+            $new_ilce = mad_okul_place_title($pair->ilce);
+            if ($new_il === $pair->il && $new_ilce === $pair->ilce) continue;
+
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE $target SET il=%s, ilce=%s WHERE il=%s AND ilce=%s",
+                    $new_il,
+                    $new_ilce,
+                    $pair->il,
+                    $pair->ilce
+                )
+            );
+        }
+    }
+    update_option('mad_okul_place_normalized_version', MAD_OKUL_VERSION, false);
 }
 
 function mad_okul_hash($il, $ilce, $kurum, $adres) {
@@ -95,8 +153,8 @@ function mad_okul_create_table() {
 
 function mad_okul_insert_school($il, $ilce, $kurum, $adres) {
     global $wpdb;
-    $il = sanitize_text_field($il);
-    $ilce = sanitize_text_field($ilce);
+    $il = mad_okul_place_title(sanitize_text_field($il));
+    $ilce = mad_okul_place_title(sanitize_text_field($ilce));
     $kurum = sanitize_text_field($kurum);
     $adres = sanitize_textarea_field($adres);
     if (!$il || !$ilce || !$kurum) return false;
@@ -142,6 +200,9 @@ add_action('plugins_loaded', function() {
         mad_okul_create_table();
         Mad_Okul_Operations::activate();
         update_option('mad_okul_db_version', MAD_OKUL_VERSION);
+    }
+    if (get_option('mad_okul_place_normalized_version') !== MAD_OKUL_VERSION) {
+        mad_okul_normalize_existing_places();
     }
     Mad_Okul_Operations::boot();
 });
