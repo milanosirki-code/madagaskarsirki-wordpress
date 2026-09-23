@@ -1,0 +1,475 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+/**
+ * Kommo + AI bridge for Madagaskar Management Center.
+ *
+ * Design goals:
+ * - MMC remains the source of truth.
+ * - Kommo receives a stable, tokenized URL that always renders the current
+ *   verified Program/Event facts.
+ * - CRM program tracking is optional and only enabled when a pipeline id is set.
+ * - Kommo API secrets are read from wp-config constants; they are never stored
+ *   by this plugin in plain text.
+ * - Public Kommo AI docs do not expose a safe update method for text/file
+ *   sources. URL sources are therefore used. If an already-added URL source
+ *   needs reparsing, MMC marks it as refresh_needed instead of creating stale
+ *   duplicate sources.
+ */
+class MMC_Kommo_Service {
+    const CRON_HOOK = 'mmc_kommo_process_queue';
+
+    public static function hooks() {
+        add_action( 'init', array( __CLASS__, 'register_rewrite' ) );
+        add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
+        add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_source' ) );
+        add_filter( 'cron_schedules', array( __CLASS__, 'cron_schedules' ) );
+        add_action( self::CRON_HOOK, array( __CLASS__, 'process_queue' ) );
+        add_action( 'mmc_program_logged', array( __CLASS__, 'on_program_log' ), 10, 7 );
+
+        if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+            wp_schedule_event( time() + 300, 'mmc_15min', self::CRON_HOOK );
+        }
+    }
+
+    public static function register_rewrite() {
+        add_rewrite_tag( '%mmc_kommo_source%', '([A-Za-z0-9_-]{32,80})' );
+        add_rewrite_rule( '^madagaskar-kommo-source/([A-Za-z0-9_-]{32,80})/?$', 'index.php?mmc_kommo_source=$matches[1]', 'top' );
+    }
+
+    public static function query_vars( $vars ) {
+        $vars[] = 'mmc_kommo_source';
+        return $vars;
+    }
+
+    public static function cron_schedules( $schedules ) {
+        if ( ! isset( $schedules['mmc_15min'] ) ) {
+            $schedules['mmc_15min'] = array( 'interval' => 15 * MINUTE_IN_SECONDS, 'display' => 'MMC her 15 dakika' );
+        }
+        return $schedules;
+    }
+
+    public static function maybe_serve_source() {
+        $token = get_query_var( 'mmc_kommo_source' );
+        if ( ! $token ) return;
+
+        $profile = self::profile_by_token( $token );
+        if ( ! $profile ) {
+            status_header( 404 );
+            nocache_headers();
+            header( 'Content-Type: text/plain; charset=utf-8' );
+            echo 'Kaynak bulunamadı.'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            exit;
+        }
+
+        $text = self::build_source_text( (int) $profile->program_id );
+        status_header( 200 );
+        nocache_headers();
+        header( 'Content-Type: text/plain; charset=utf-8' );
+        header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+        header( 'Referrer-Policy: no-referrer', true );
+        echo $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentionally plain text source.
+        exit;
+    }
+
+    public static function ensure_profile( $program_id ) {
+        global $wpdb;
+        $program_id = absint( $program_id );
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) return new WP_Error( 'mmc_kommo_program_missing', 'Program bulunamadı.' );
+
+        $table = $wpdb->prefix . 'mmc_kommo_profiles';
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE program_id=%d LIMIT 1", $program_id ) );
+        $event = class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
+        $now = current_time( 'mysql' );
+
+        if ( ! $row ) {
+            $token = wp_generate_password( 48, false, false );
+            $wpdb->insert( $table, array(
+                'program_id'       => $program_id,
+                'event_id'         => $event ? (int) $event->id : null,
+                'source_token'     => $token,
+                'source_url'       => self::source_url_from_token( $token ),
+                'source_hash'      => '',
+                'ai_synced_hash'   => '',
+                'search_keywords'  => '',
+                'ai_source_status' => 'not_synced',
+                'crm_status'       => 'not_synced',
+                'created_at'       => $now,
+                'updated_at'       => $now,
+            ) );
+            $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE id=%d", (int) $wpdb->insert_id ) );
+            self::seed_templates( $program_id, $event ? (int)$event->id : 0 );
+        }
+
+        $text = self::build_source_text( $program_id );
+        $hash = hash( 'sha256', $text );
+        $keywords = implode( ', ', self::search_keywords( $program_id ) );
+        $event_id = $event ? (int)$event->id : null;
+        $ai_status = (string) $row->ai_source_status;
+        if ( $row->ai_source_id && $row->ai_synced_hash && $row->ai_synced_hash !== $hash && 'error' !== $ai_status ) {
+            $ai_status = 'refresh_needed';
+        }
+
+        $wpdb->update( $table, array(
+            'event_id'         => $event_id,
+            'source_url'       => self::source_url_from_token( $row->source_token ),
+            'source_hash'      => $hash,
+            'search_keywords'  => $keywords,
+            'ai_source_status' => $ai_status,
+            'updated_at'       => $now,
+        ), array( 'id' => (int)$row->id ) );
+
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE id=%d", (int)$row->id ) );
+    }
+
+    public static function get_profile( $program_id ) {
+        global $wpdb;
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mmc_kommo_profiles WHERE program_id=%d LIMIT 1", absint($program_id) ) );
+    }
+
+    public static function profile_by_token( $token ) {
+        global $wpdb;
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mmc_kommo_profiles WHERE source_token=%s LIMIT 1", sanitize_text_field($token) ) );
+    }
+
+    public static function source_url_from_token( $token ) {
+        return home_url( '/madagaskar-kommo-source/' . rawurlencode( $token ) . '/' );
+    }
+
+    public static function search_keywords( $program_id ) {
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) return array();
+        $event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program($program_id) : null;
+        $venue = ( $event && $event->program_venue_id && class_exists('MMC_Venue_Service') ) ? MMC_Venue_Service::get_program_venue($event->program_venue_id) : null;
+        $values = array(
+            'Madagaskar Sirki', 'Madagaskar', 'sirk',
+            $program->province_name,
+            $program->district_name,
+            $program->province_name . ' sirki',
+            $program->district_name ? $program->district_name . ' sirki' : '',
+            $event ? $event->event_title : '',
+            $venue ? $venue->venue_name : '',
+            $venue ? $venue->institution_name : '',
+        );
+        if ( $event && $event->event_date ) {
+            $values[] = wp_date( 'd.m.Y', strtotime($event->event_date) );
+            $values[] = wp_date( 'j F Y', strtotime($event->event_date) );
+        }
+        $expanded = array();
+        foreach ( $values as $v ) {
+            $v = trim( (string)$v );
+            if ( '' === $v ) continue;
+            $expanded[] = $v;
+            $ascii = remove_accents( $v );
+            if ( $ascii !== $v ) $expanded[] = $ascii;
+        }
+        $expanded = array_values( array_unique( array_filter( array_map( 'trim', $expanded ) ) ) );
+        return $expanded;
+    }
+
+    public static function build_source_text( $program_id ) {
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) return 'Program bulunamadı.';
+        $statuses = MMC_Program_Service::statuses();
+        $event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program($program_id) : null;
+        $venue = ( $event && $event->program_venue_id && class_exists('MMC_Venue_Service') ) ? MMC_Venue_Service::get_program_venue($event->program_venue_id) : null;
+        $sessions = $event ? MMC_Event_Service::sessions($event->id) : array();
+        $tickets  = $event ? MMC_Event_Service::ticket_types($event->id) : array();
+        $biletinial = $event ? MMC_Event_Service::channel_prices($event->id, 'biletinial') : array();
+        $bmap = array(); foreach ( $biletinial as $b ) { $bmap[(int)$b->ticket_type_id] = $b; }
+        $sales = ( $event && class_exists('MMC_Sales_Service') ) ? MMC_Sales_Service::summary($event->id) : array();
+        $cancelled = 'cancelled' === $program->status || ( $event && 'cancelled' === $event->status );
+
+        $lines = array();
+        $lines[] = 'MADAGASKAR SİRKİ — GÜNCEL PROGRAM KAYNAĞI';
+        $lines[] = 'Program Kodu: ' . $program->program_code;
+        $lines[] = 'Program Durumu: ' . ( $statuses[$program->status] ?? $program->status );
+        $lines[] = 'Son Güncelleme: ' . wp_date( 'd.m.Y H:i' );
+        $lines[] = '';
+
+        if ( $cancelled ) {
+            $lines[] = 'KRİTİK: BU PROGRAM İPTALDİR. Müşteriye aktif etkinlik veya satış seçeneği olarak sunulmaz.';
+            $lines[] = 'İl: ' . $program->province_name;
+            $lines[] = 'İlçe: ' . ( $program->district_name ?: 'Genel' );
+            if ( $event && $event->event_date ) $lines[] = 'Eski Etkinlik Tarihi: ' . wp_date( 'd.m.Y', strtotime($event->event_date) );
+            return implode( "\n", $lines );
+        }
+
+        $lines[] = 'Marka: Madagaskar Sirki';
+        $lines[] = 'Konsept: Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.';
+        $lines[] = 'İl: ' . $program->province_name;
+        $lines[] = 'İlçe: ' . ( $program->district_name ?: 'Genel' );
+        if ( $event ) {
+            $lines[] = 'Etkinlik: ' . $event->event_title;
+            $lines[] = 'Etkinlik Durumu: ' . ( MMC_Event_Service::event_statuses()[$event->status] ?? $event->status );
+            $lines[] = 'Tarih: ' . ( $event->event_date ? wp_date('d.m.Y', strtotime($event->event_date)) : 'Kesinleşmedi' );
+        }
+        if ( $venue ) {
+            $lines[] = 'Salon: ' . $venue->venue_name;
+            $lines[] = 'Adres: ' . trim( $venue->address . ' ' . $venue->district_name . ' / ' . $venue->province_name );
+            if ( $venue->maps_url ) $lines[] = 'Konum: ' . $venue->maps_url;
+        } else {
+            $lines[] = 'Salon: Henüz kesinleşmedi.';
+        }
+
+        $lines[] = '';
+        $lines[] = 'SEANSLAR';
+        if ( $sessions ) {
+            foreach ( $sessions as $s ) {
+                $lines[] = '- ' . wp_date( 'H:i', strtotime($s->session_time) ) . ' | Kapasite: ' . (int)$s->capacity;
+            }
+        } else {
+            $lines[] = '- Seanslar henüz kesinleşmedi.';
+        }
+
+        $lines[] = '';
+        $lines[] = 'BİLET VE YAŞ POLİTİKASI';
+        $lines[] = '- 0–2 yaş: Ücretsiz';
+        $lines[] = '- 3–12 yaş: Çocuk bileti';
+        $lines[] = '- 13 yaş ve üzeri: Yetişkin bileti';
+        $lines[] = '- Çocuklar yetişkin eşliğinde katılır.';
+        foreach ( $tickets as $t ) {
+            if ( ! (int)$t->is_active ) continue;
+            $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
+            if ( isset($bmap[(int)$t->id]) && null !== $bmap[(int)$t->id]->channel_price ) {
+                $row .= ' | Biletinial: ' . number_format_i18n((float)$bmap[(int)$t->id]->channel_price, 2) . ' TL + varsa hizmet bedeli';
+            }
+            if ( 'family_2_2' === $t->ticket_code ) $row .= ' | 2 yetişkin + 2 çocuk, 4 kişi kapasite tüketir';
+            $lines[] = $row;
+        }
+        $lines[] = 'Resmî merkezi bilet sayfası: https://madagaskarsirki.com/bilet-al/';
+        $lines[] = 'Kapıda nakit ve kredi kartı ile ödeme yapılabilir.';
+
+        if ( $sales ) {
+            $lines[] = '';
+            $lines[] = 'CANLI SATIŞ ÖZETİ';
+            $lines[] = '- Satılan kişi kapasitesi: ' . (int)($sales['sold_capacity'] ?? 0);
+            $lines[] = '- Net ciro: ' . number_format_i18n((float)($sales['net_revenue'] ?? 0), 2) . ' TL';
+        }
+
+        $lines[] = '';
+        $lines[] = 'MÜŞTERİ İLETİŞİM KURALLARI';
+        $lines[] = '- Müşteriye bütün aktif seansları göster; müşteri adına seans seçme.';
+        $lines[] = '- Kesinleşmemiş salon, tarih, seans veya fiyatı kesinmiş gibi söyleme.';
+        $lines[] = '- İade, ödeme uyuşmazlığı, başarısız ödeme, yanlış bilet ve özel kampanya uyuşmazlıklarını canlı temsilciye aktar.';
+        $lines[] = '- WhatsApp / dijital bilgi hattı: +90 312 911 37 10';
+        $lines[] = 'Arama kelimeleri: ' . implode( ', ', self::search_keywords($program_id) );
+
+        return implode( "\n", $lines );
+    }
+
+    public static function enqueue_program_sync( $program_id, $reason = '' ) {
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error($profile) ) return $profile;
+        self::enqueue_job( $program_id, (int)$profile->event_id, 'program_lead_sync', array('reason'=>$reason) );
+        self::enqueue_job( $program_id, (int)$profile->event_id, 'ai_source_sync', array('reason'=>$reason) );
+        return true;
+    }
+
+    public static function enqueue_job( $program_id, $event_id, $job_type, $payload = array() ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mmc_kommo_queue';
+        $existing = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM $table WHERE program_id=%d AND job_type=%s AND status IN ('queued','waiting_config') ORDER BY id DESC LIMIT 1",
+            absint($program_id), sanitize_key($job_type)
+        ) );
+        $now = current_time('mysql');
+        $data = array(
+            'program_id'=>absint($program_id),'event_id'=>$event_id?absint($event_id):null,
+            'job_type'=>sanitize_key($job_type),'payload'=>wp_json_encode($payload,JSON_UNESCAPED_UNICODE),
+            'status'=>'queued','available_at'=>$now,'last_error'=>'','updated_at'=>$now,
+        );
+        if ( $existing ) return $wpdb->update($table,$data,array('id'=>(int)$existing));
+        $data['attempts']=0; $data['created_at']=$now;
+        return $wpdb->insert($table,$data);
+    }
+
+    public static function queue_rows( $program_id, $limit = 25 ) {
+        global $wpdb;
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}mmc_kommo_queue WHERE program_id=%d ORDER BY id DESC LIMIT %d",
+            absint($program_id), max(1,min(100,absint($limit)))
+        ) );
+    }
+
+    public static function on_program_log( $program_id, $action, $entity_type, $entity_id, $old_value, $new_value, $note ) {
+        if ( ! $program_id || 0 === strpos( (string)$action, 'kommo_' ) ) return;
+        $interesting = array('program','event','session','ticket_type','integration','program_venue','finance_entry');
+        if ( ! in_array( $entity_type, $interesting, true ) ) return;
+        self::enqueue_program_sync( $program_id, $action );
+    }
+
+    public static function process_queue( $limit = 10 ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mmc_kommo_queue';
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM $table WHERE status='queued' AND available_at<=%s ORDER BY id ASC LIMIT %d",
+            current_time('mysql'), max(1,min(25,absint($limit)))
+        ) );
+        foreach ( $rows as $job ) {
+            self::process_job( $job );
+        }
+    }
+
+    private static function process_job( $job ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mmc_kommo_queue';
+        $wpdb->update($table,array('status'=>'running','attempts'=>(int)$job->attempts+1,'updated_at'=>current_time('mysql')),array('id'=>(int)$job->id));
+        $result = 'ai_source_sync' === $job->job_type ? self::sync_ai_source((int)$job->program_id) : self::sync_program_lead((int)$job->program_id);
+        if ( is_wp_error($result) ) {
+            $code = $result->get_error_code();
+            $waiting = in_array($code,array('mmc_kommo_not_configured','mmc_kommo_pipeline_missing'),true);
+            $wpdb->update($table,array(
+                'status'=>$waiting?'waiting_config':'error',
+                'last_error'=>$result->get_error_message(),
+                'processed_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')
+            ),array('id'=>(int)$job->id));
+            return;
+        }
+        $wpdb->update($table,array('status'=>'done','last_error'=>'','processed_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')),array('id'=>(int)$job->id));
+    }
+
+    public static function sync_now( $program_id ) {
+        self::enqueue_program_sync( $program_id, 'manual_sync' );
+        self::process_queue( 10 );
+        return true;
+    }
+
+    public static function sync_ai_source( $program_id ) {
+        global $wpdb;
+        $profile = self::ensure_profile($program_id);
+        if ( is_wp_error($profile) ) return $profile;
+        if ( ! self::configured() ) return new WP_Error('mmc_kommo_not_configured','Kommo subdomain/token yapılandırılmadı.');
+
+        // Existing URL source: do not create duplicate stale sources. Official public docs
+        // describe reparsing URL sources but do not expose a documented AI-source refresh endpoint.
+        if ( $profile->ai_source_id ) {
+            if ( $profile->ai_synced_hash !== $profile->source_hash ) {
+                $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
+                    'ai_source_status'=>'refresh_needed','updated_at'=>current_time('mysql')
+                ),array('id'=>(int)$profile->id));
+                return true;
+            }
+            return true;
+        }
+
+        $mode = get_option('mmc_kommo_ai_mode','suggested_reply');
+        if ( ! in_array($mode,array('suggested_reply','agent'),true) ) $mode='suggested_reply';
+        $response = self::api_request(
+            'https://airewriter.kommo.com/api/v2/sources/url',
+            'POST',
+            array('url'=>$profile->source_url,'with_nested'=>false,'available_functions'=>array($mode))
+        );
+        if ( is_wp_error($response) ) {
+            self::profile_error($profile->id,'ai_source_status',$response->get_error_message());
+            return $response;
+        }
+        $id = isset($response['id']) ? (string)$response['id'] : '';
+        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
+            'ai_source_id'=>$id,'ai_source_status'=>'synced','ai_synced_hash'=>$profile->source_hash,
+            'last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
+        ),array('id'=>(int)$profile->id));
+        MMC_Program_Service::add_log($program_id,'kommo_ai_source_added','program',$program_id,null,array('source_id'=>$id),'Kommo AI URL kaynağı eklendi.');
+        return true;
+    }
+
+    public static function mark_ai_refreshed( $program_id ) {
+        global $wpdb;
+        $profile=self::ensure_profile($program_id); if(is_wp_error($profile))return $profile;
+        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
+            'ai_source_status'=>'synced','ai_synced_hash'=>$profile->source_hash,'last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
+        ),array('id'=>(int)$profile->id));
+        MMC_Program_Service::add_log($program_id,'kommo_ai_source_refreshed','program',$program_id,null,null,'Kommo AI URL kaynağı yeniden tarandı olarak işaretlendi.');
+        return true;
+    }
+
+    public static function sync_program_lead( $program_id ) {
+        global $wpdb;
+        $profile=self::ensure_profile($program_id); if(is_wp_error($profile))return $profile;
+        if ( ! self::configured() ) return new WP_Error('mmc_kommo_not_configured','Kommo subdomain/token yapılandırılmadı.');
+        $pipeline_id=absint(get_option('mmc_kommo_pipeline_id',0));
+        if(!$pipeline_id) return new WP_Error('mmc_kommo_pipeline_missing','Kommo Program pipeline ID tanımlanmadı; CRM program kaydı atlandı.');
+        $status_id=absint(get_option('mmc_kommo_status_id',0));
+        $program=MMC_Program_Service::get_program($program_id); if(!$program)return new WP_Error('mmc_kommo_program_missing','Program bulunamadı.');
+        $event=MMC_Event_Service::event_for_program($program_id);
+        $name='Madagaskar | '.$program->province_name.' / '.($program->district_name?:'Genel');
+        if($event&&$event->event_date)$name.=' | '.wp_date('d.m.Y',strtotime($event->event_date));
+        $lead=array('name'=>$name,'pipeline_id'=>$pipeline_id);
+        if($status_id)$lead['status_id']=$status_id;
+        if($profile->kommo_lead_id){
+            $lead['id']=(int)$profile->kommo_lead_id;
+            $response=self::api_request(self::crm_base().'/leads','PATCH',array($lead));
+        }else{
+            $response=self::api_request(self::crm_base().'/leads','POST',array($lead));
+        }
+        if(is_wp_error($response)){
+            self::profile_error($profile->id,'crm_status',$response->get_error_message()); return $response;
+        }
+        $lead_id=$profile->kommo_lead_id;
+        if(!$lead_id && isset($response['_embedded']['leads'][0]['id']))$lead_id=(string)$response['_embedded']['leads'][0]['id'];
+        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
+            'kommo_lead_id'=>$lead_id,'crm_status'=>'synced','last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
+        ),array('id'=>(int)$profile->id));
+        MMC_Program_Service::add_log($program_id,'kommo_program_lead_synced','program',$program_id,null,array('lead_id'=>$lead_id),'Kommo program takip kaydı senkronlandı.');
+        return true;
+    }
+
+    public static function test_connection() {
+        if(!self::configured()) return new WP_Error('mmc_kommo_not_configured','Kommo subdomain/token yapılandırılmadı.');
+        return self::api_request(self::crm_base().'/account','GET');
+    }
+
+    private static function api_request( $url, $method='GET', $body=null ) {
+        $token=self::token();
+        if(!$token)return new WP_Error('mmc_kommo_not_configured','Kommo token bulunamadı.');
+        $args=array(
+            'method'=>$method,'timeout'=>25,
+            'headers'=>array('Authorization'=>'Bearer '.$token,'Accept'=>'application/json','Content-Type'=>'application/json'),
+        );
+        if(null!==$body)$args['body']=wp_json_encode($body,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+        $r=wp_remote_request($url,$args);
+        if(is_wp_error($r))return $r;
+        $code=(int)wp_remote_retrieve_response_code($r); $raw=wp_remote_retrieve_body($r);
+        $data=$raw!==''?json_decode($raw,true):array();
+        if($code<200||$code>=300){
+            $msg=is_array($data)?($data['detail']??$data['title']??$data['error']??'Kommo API hatası'):('Kommo API HTTP '.$code);
+            return new WP_Error('mmc_kommo_api','Kommo API '.$code.': '.$msg,array('status'=>$code,'body'=>$data));
+        }
+        return is_array($data)?$data:array();
+    }
+
+    public static function configured() { return self::subdomain() && self::token(); }
+    public static function subdomain() {
+        if(defined('MMC_KOMMO_SUBDOMAIN')&&MMC_KOMMO_SUBDOMAIN)return sanitize_title((string)MMC_KOMMO_SUBDOMAIN);
+        return sanitize_title((string)get_option('mmc_kommo_subdomain',''));
+    }
+    private static function token() { return defined('MMC_KOMMO_TOKEN') ? trim((string)MMC_KOMMO_TOKEN) : ''; }
+    private static function crm_base(){ return 'https://'.self::subdomain().'.kommo.com/api/v4'; }
+
+    private static function profile_error($id,$field,$message){
+        global $wpdb; $allowed=array('ai_source_status','crm_status'); if(!in_array($field,$allowed,true))return;
+        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array($field=>'error','last_error'=>sanitize_textarea_field($message),'updated_at'=>current_time('mysql')),array('id'=>absint($id)));
+    }
+
+    public static function templates( $program_id ) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_kommo_templates WHERE program_id=%d ORDER BY id ASC",absint($program_id)));
+    }
+    public static function update_template( $id, $status, $external_name='', $notes='' ) {
+        global $wpdb;
+        $allowed=array('expected','verified','inactive','error'); if(!in_array($status,$allowed,true))return new WP_Error('mmc_kommo_template_status','Geçersiz şablon durumu.');
+        $row=$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_kommo_templates WHERE id=%d",absint($id))); if(!$row)return new WP_Error('mmc_kommo_template_missing','Şablon kaydı bulunamadı.');
+        $wpdb->update($wpdb->prefix.'mmc_kommo_templates',array('status'=>$status,'external_name'=>sanitize_text_field($external_name),'notes'=>sanitize_textarea_field($notes),'last_checked_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')),array('id'=>(int)$row->id));
+        MMC_Program_Service::add_log($row->program_id,'kommo_template_updated','kommo_template',$row->id,null,array('status'=>$status),'WhatsApp şablon durumu güncellendi.');
+        return true;
+    }
+
+    private static function seed_templates( $program_id, $event_id ) {
+        global $wpdb; $table=$wpdb->prefix.'mmc_kommo_templates'; $now=current_time('mysql');
+        foreach(array('madagaskar_bilet_linki_v2','madagaskar_bilet_takip_v1','madagaskar_etkinlik_hatirlatma_v1','madagaskar_memnuniyet_v3') as $key){
+            $exists=$wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND template_key=%s",$program_id,$key)); if($exists)continue;
+            $wpdb->insert($table,array('program_id'=>$program_id,'event_id'=>$event_id?:null,'template_key'=>$key,'external_name'=>$key,'status'=>'expected','created_at'=>$now,'updated_at'=>$now));
+        }
+    }
+}
