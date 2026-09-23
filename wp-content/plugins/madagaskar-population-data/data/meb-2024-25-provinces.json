@@ -1,0 +1,824 @@
+{
+  "dataset": "MEB Milli Eğitim İstatistikleri - Örgün Eğitim 2024/25",
+  "academic_year": "2024/25",
+  "table": "1.17",
+  "scope": "province",
+  "method": "Okul öncesi + ilkokul + ortaokul + ortaöğretim toplamları. Açık öğretim öğrencileri kaynak tablonun kapsamına göre hariçtir.",
+  "validation": {
+    "province_count": 81,
+    "school_count_total": 74040,
+    "student_count_total": 17956523
+  },
+  "records": [
+    {
+      "code": "TR100",
+      "province": "İstanbul",
+      "school_count": 7909,
+      "student_count": 3150326,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR211",
+      "province": "Tekirdağ",
+      "school_count": 742,
+      "student_count": 230976,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR212",
+      "province": "Edirne",
+      "school_count": 331,
+      "student_count": 57805,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR213",
+      "province": "Kırklareli",
+      "school_count": 280,
+      "student_count": 55273,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR221",
+      "province": "Balıkesir",
+      "school_count": 1038,
+      "student_count": 199632,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR222",
+      "province": "Çanakkale",
+      "school_count": 460,
+      "student_count": 85734,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR310",
+      "province": "İzmir",
+      "school_count": 2927,
+      "student_count": 788865,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR321",
+      "province": "Aydın",
+      "school_count": 969,
+      "student_count": 200117,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR322",
+      "province": "Denizli",
+      "school_count": 952,
+      "student_count": 193399,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR323",
+      "province": "Muğla",
+      "school_count": 932,
+      "student_count": 178970,
+      "source_pages": [
+        48,
+        49
+      ]
+    },
+    {
+      "code": "TR331",
+      "province": "Manisa",
+      "school_count": 1268,
+      "student_count": 270723,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR332",
+      "province": "Afyonkarahisar",
+      "school_count": 995,
+      "student_count": 143267,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR333",
+      "province": "Kütahya",
+      "school_count": 590,
+      "student_count": 92384,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR334",
+      "province": "Uşak",
+      "school_count": 363,
+      "student_count": 64607,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR411",
+      "province": "Bursa",
+      "school_count": 2049,
+      "student_count": 663265,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR412",
+      "province": "Eskişehir",
+      "school_count": 610,
+      "student_count": 154330,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR413",
+      "province": "Bilecik",
+      "school_count": 205,
+      "student_count": 40090,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR421",
+      "province": "Kocaeli",
+      "school_count": 1554,
+      "student_count": 461090,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR422",
+      "province": "Sakarya",
+      "school_count": 1011,
+      "student_count": 213873,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR423",
+      "province": "Düzce",
+      "school_count": 414,
+      "student_count": 77441,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR424",
+      "province": "Bolu",
+      "school_count": 243,
+      "student_count": 54262,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR425",
+      "province": "Yalova",
+      "school_count": 264,
+      "student_count": 55434,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR510",
+      "province": "Ankara",
+      "school_count": 4176,
+      "student_count": 1113415,
+      "source_pages": [
+        50,
+        51
+      ]
+    },
+    {
+      "code": "TR521",
+      "province": "Konya",
+      "school_count": 2176,
+      "student_count": 512538,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR522",
+      "province": "Karaman",
+      "school_count": 279,
+      "student_count": 50969,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR611",
+      "province": "Antalya",
+      "school_count": 2214,
+      "student_count": 526933,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR612",
+      "province": "Isparta",
+      "school_count": 521,
+      "student_count": 77936,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR613",
+      "province": "Burdur",
+      "school_count": 283,
+      "student_count": 44915,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR621",
+      "province": "Adana",
+      "school_count": 1540,
+      "student_count": 546995,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR622",
+      "province": "Mersin",
+      "school_count": 1616,
+      "student_count": 438702,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR631",
+      "province": "Hatay",
+      "school_count": 1639,
+      "student_count": 426969,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR632",
+      "province": "Kahramanmaraş",
+      "school_count": 1126,
+      "student_count": 290273,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR633",
+      "province": "Osmaniye",
+      "school_count": 528,
+      "student_count": 142823,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR711",
+      "province": "Kırıkkale",
+      "school_count": 258,
+      "student_count": 49366,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR712",
+      "province": "Aksaray",
+      "school_count": 526,
+      "student_count": 90842,
+      "source_pages": [
+        52,
+        53
+      ]
+    },
+    {
+      "code": "TR713",
+      "province": "Niğde",
+      "school_count": 429,
+      "student_count": 76124,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR714",
+      "province": "Nevşehir",
+      "school_count": 372,
+      "student_count": 60231,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR715",
+      "province": "Kırşehir",
+      "school_count": 228,
+      "student_count": 44075,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR721",
+      "province": "Kayseri",
+      "school_count": 1164,
+      "student_count": 329009,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR722",
+      "province": "Sivas",
+      "school_count": 701,
+      "student_count": 115057,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR723",
+      "province": "Yozgat",
+      "school_count": 522,
+      "student_count": 72774,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR811",
+      "province": "Zonguldak",
+      "school_count": 546,
+      "student_count": 92367,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR812",
+      "province": "Karabük",
+      "school_count": 251,
+      "student_count": 37589,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR813",
+      "province": "Bartın",
+      "school_count": 198,
+      "student_count": 30774,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR821",
+      "province": "Kastamonu",
+      "school_count": 374,
+      "student_count": 56672,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR822",
+      "province": "Çankırı",
+      "school_count": 176,
+      "student_count": 29593,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR823",
+      "province": "Sinop",
+      "school_count": 180,
+      "student_count": 33834,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR831",
+      "province": "Samsun",
+      "school_count": 1304,
+      "student_count": 253179,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR832",
+      "province": "Tokat",
+      "school_count": 660,
+      "student_count": 102464,
+      "source_pages": [
+        54,
+        55
+      ]
+    },
+    {
+      "code": "TR833",
+      "province": "Çorum",
+      "school_count": 501,
+      "student_count": 92500,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR834",
+      "province": "Amasya",
+      "school_count": 369,
+      "student_count": 58432,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR901",
+      "province": "Trabzon",
+      "school_count": 720,
+      "student_count": 147899,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR902",
+      "province": "Ordu",
+      "school_count": 688,
+      "student_count": 131905,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR903",
+      "province": "Giresun",
+      "school_count": 410,
+      "student_count": 68628,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR904",
+      "province": "Rize",
+      "school_count": 333,
+      "student_count": 59841,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR905",
+      "province": "Artvin",
+      "school_count": 178,
+      "student_count": 24618,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TR906",
+      "province": "Gümüşhane",
+      "school_count": 167,
+      "student_count": 19128,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA11",
+      "province": "Erzurum",
+      "school_count": 1362,
+      "student_count": 160913,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA12",
+      "province": "Erzincan",
+      "school_count": 272,
+      "student_count": 42541,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA13",
+      "province": "Bayburt",
+      "school_count": 136,
+      "student_count": 14597,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA21",
+      "province": "Ağrı",
+      "school_count": 1028,
+      "student_count": 137967,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA22",
+      "province": "Kars",
+      "school_count": 644,
+      "student_count": 59573,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA23",
+      "province": "Iğdır",
+      "school_count": 323,
+      "student_count": 51063,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRA24",
+      "province": "Ardahan",
+      "school_count": 187,
+      "student_count": 16347,
+      "source_pages": [
+        56,
+        57
+      ]
+    },
+    {
+      "code": "TRB11",
+      "province": "Malatya",
+      "school_count": 862,
+      "student_count": 156562,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB12",
+      "province": "Elazığ",
+      "school_count": 563,
+      "student_count": 121758,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB13",
+      "province": "Bingöl",
+      "school_count": 418,
+      "student_count": 62690,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB14",
+      "province": "Tunceli",
+      "school_count": 102,
+      "student_count": 10182,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB21",
+      "province": "Van",
+      "school_count": 1680,
+      "student_count": 308498,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB22",
+      "province": "Muş",
+      "school_count": 730,
+      "student_count": 104880,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB23",
+      "province": "Bitlis",
+      "school_count": 791,
+      "student_count": 97086,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRB24",
+      "province": "Hakkari",
+      "school_count": 441,
+      "student_count": 70174,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC11",
+      "province": "Gaziantep",
+      "school_count": 1707,
+      "student_count": 707285,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC12",
+      "province": "Adıyaman",
+      "school_count": 827,
+      "student_count": 157943,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC13",
+      "province": "Kilis",
+      "school_count": 230,
+      "student_count": 57675,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC21",
+      "province": "Şanlıurfa",
+      "school_count": 2858,
+      "student_count": 743888,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC22",
+      "province": "Diyarbakır",
+      "school_count": 1979,
+      "student_count": 498449,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC31",
+      "province": "Mardin",
+      "school_count": 1287,
+      "student_count": 255350,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC32",
+      "province": "Batman",
+      "school_count": 798,
+      "student_count": 184297,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC33",
+      "province": "Şırnak",
+      "school_count": 788,
+      "student_count": 162113,
+      "source_pages": [
+        58,
+        59
+      ]
+    },
+    {
+      "code": "TRC34",
+      "province": "Siirt",
+      "school_count": 568,
+      "student_count": 93460,
+      "source_pages": [
+        58,
+        59
+      ]
+    }
+  ]
+}
