@@ -48,3 +48,16 @@ Bu MEB tablosu ilçe düzeyinde değildir. Bu nedenle MEB il toplamları **Hedef
 **Madagaskar Yönetim Merkezi → Veri Ambarı → Nüfus ve Eğitim Verisi**
 
 bölümünde hem 2025 nüfus verisi hem de MEB 2024/25 eğitim verisi durumları görülebilir ve yeniden aktarılabilir.
+
+
+## Hedef Bölge Özeti — Okul Tanıtım bağlantısı
+
+Sürüm 1.3.0 ile Hazırlık Dashboard, seçili hedef ilçeler için okul sayısını doğrudan `{prefix}mad_okul_tanitim` ana listesinden hesaplar.
+
+- **Hedef İlçe** kartı: checkbox seçimleri ile "Ek ilçe adları" alanındaki ilçelerin birleşimini gösterir.
+- **Okul Sayısı** kartı: seçili ilçelerdeki Okul Tanıtım kayıtlarının toplamını gösterir.
+- **Veri Kalitesi → Okul**: kaç hedef ilçede okul listesi bulunduğunu gösterir.
+- **Veri Kalitesi → Okul listesi**: toplam okul kayıt sayısını gösterir.
+- **Öğrenci Sayısı**: ilçe düzeyi doğrulanmış öğrenci kaynağı olmadığı sürece tahmin edilmez ve mevcut "Veri yok" davranışı korunur.
+
+MEB Tablo 1.17 verisi yalnız **İl Geneli Referans** içindir; ilçe okul veya öğrenci toplamına dağıtılmaz.
