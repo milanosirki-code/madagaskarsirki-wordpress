@@ -256,7 +256,7 @@ function mmc_population_bridge_enqueue() {
     var lastKey = '';
 
     function normText(v) {
-        return String(v || '').replace(/\\s+/g, ' ').trim();
+        return String(v || '').replace(/\s+/g, ' ').trim();
     }
 
     function formatNumber(v) {
@@ -341,8 +341,8 @@ function mmc_population_bridge_enqueue() {
 
     function cleanDistrictName(v) {
         v = normText(v);
-        v = v.replace(/^[✓✔☑\\-\\s]+/, '').trim();
-        v = v.replace(/\\s*\\(\\s*(seçili|selected)\\s*\\)\\s*$/i, '').trim();
+        v = v.replace(/^[✓✔☑\-\s]+/, '').trim();
+        v = v.replace(/\s*\(\s*(seçili|selected)\s*\)\s*$/i, '').trim();
 
         if (!v || v.length > 100) return '';
         if (/^(tümü|tumunu seç|hepsini seç|seç|sec|all)$/i.test(v)) return '';
@@ -435,7 +435,7 @@ function mmc_population_bridge_enqueue() {
 
             var t = normText(el.textContent);
 
-            if (!valueDone && /^[0-9.\\s]+$/.test(t)) {
+            if (!valueDone && /^[0-9.\s]+$/.test(t)) {
                 el.textContent = value;
                 el.setAttribute('data-mmc-population-live', '1');
                 valueDone = true;
