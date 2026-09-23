@@ -1,0 +1,54 @@
+name: Publish Madagaskar Plugin ZIPs
+
+on:
+  push:
+    branches:
+      - release/plugin-zips-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  package-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
+          do
+            test -d "$dir"
+            find "$dir" -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          done
+
+      - name: Package WordPress plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (
+            cd wp-content/plugins
+            zip -qr ../../../dist/madagaskar-management-center-1.3.5.zip madagaskar-management-center
+            zip -qr ../../../dist/madagaskar-okul-tanitim-1.7.2.zip madagaskar-okul-tanitim
+            zip -qr ../../../dist/madagaskar-nufus-egitim-1.3.1.zip madagaskar-population-data
+          )
+          unzip -t dist/madagaskar-management-center-1.3.5.zip
+          unzip -t dist/madagaskar-okul-tanitim-1.7.2.zip
+          unzip -t dist/madagaskar-nufus-egitim-1.3.1.zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="madagaskar-plugins-2026-09-23"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.zip --clobber
+          else
+            gh release create "$TAG" dist/*.zip               --title "Madagaskar WordPress Eklentileri — 23.09.2026"               --notes "WordPress kurulum paketleri: MMC 1.3.5, Okul Tanıtım 1.7.2, Nüfus ve Eğitim 1.3.1. Paketler canonical main kaynaklarından üretilmiş ve PHP lint + ZIP bütünlük kontrolünden geçirilmiştir."
+          fi
