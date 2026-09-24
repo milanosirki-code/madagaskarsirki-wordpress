@@ -68,10 +68,35 @@ class MMC_Kommo_Service {
         status_header( 200 );
         nocache_headers();
         header( 'Content-Type: text/plain; charset=utf-8' );
-        header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+        header( 'Content-Language: tr', true );
+        header( 'X-Content-Type-Options: nosniff', true );
+
+        // Important: Kommo AI URL knowledge sources must be publicly fetchable and parseable.
+        // Do not send X-Robots-Tag:noindex here; some knowledge crawlers honor robots headers
+        // and refuse to parse the source. The URL itself remains unlisted and tokenized.
+        header_remove( 'X-Robots-Tag' );
+
         header( 'Referrer-Policy: no-referrer', true );
         echo $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentionally plain text source.
         exit;
+    }
+
+    public static function source_delivery_diagnostics( $program_id ) {
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) {
+            return $profile;
+        }
+
+        return array(
+            'source_url'        => (string) $profile->source_url,
+            'content_type'      => 'text/plain; charset=utf-8',
+            'content_language'  => 'tr',
+            'robots_blocked'    => false,
+            'tokenized'         => ! empty( $profile->source_token ),
+            'source_status'     => (string) $profile->ai_source_status,
+            'source_hash'       => (string) $profile->source_hash,
+            'ai_synced_hash'    => (string) $profile->ai_synced_hash,
+        );
     }
 
     public static function ensure_profile( $program_id ) {
