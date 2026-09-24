@@ -1,3 +1,23 @@
+# Madagaskar Management Center v1.3.29
+
+Bu sürüm **v1.3.27 program/Etkinlik Yayınla köprüsünü ve v1.3.28 MDG taslak senkronunu tek sürümde birleştirir; yayın içeriği Excel akışını MMC ana verisine göre sadeleştirir.**
+
+## v1.3.29 — Tek Kaynaklı Etkinlik Yayını + MMC Uyumlu Excel
+
+- v1.3.26'daki **Satış Hazırlığı → tek adım kesin salon bağlama** korunur.
+- v1.3.27'deki **MMC Programı → Etkinlik Yayınla** program seçici ve güvenli taslak köprüsü korunur.
+- v1.3.28'deki **MMC Etkinlik & Seans → MDG Etkinlik Taslağı** senkronu eklenmiştir.
+- MDG taslağının program kimliği, il/ilçe, kesin salon, tarih, seans, ortak kapasite ve gerçek Çocuk/Yetişkin fiyatları yalnız MMC'den gelir.
+- MMC'deki `family_2_2` fiyatı MDG'de kapasite-4 üçüncü gerçek bilet satırına çevrilmez; Aile Paketi modülü 2 Çocuk + 2 Yetişkin gerçek bileti kullanır.
+- **Etkinlik Yayınla** ekranına bağlı programlarda **Yayın İçeriği Excel — MMC Uyumlu** paneli eklenmiştir.
+- Excel yalnız kısa/uzun yayın metni, kurallar, SEO, video URL'si ve SSS günceller.
+- Salon/tarih/seans/kapasite/fiyat Excel'den değiştirilemez.
+- Satışa açılmış MDG etkinliği otomatik senkron ve Excel içeriği güncellemesinden korunur.
+- Canlı WooCommerce/Tickera/PayTR verisine dokunulmaz.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+---
+
 # Madagaskar Management Center v1.3.27
 
 Bu sürüm **MMC programlarını eski MDG Etkinlik Yayınla ekranına yeniden veri girmeden aktarır**.
