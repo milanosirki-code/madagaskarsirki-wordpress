@@ -1,3 +1,21 @@
+# Madagaskar Management Center v1.3.30
+
+Bu sürüm **MMC Programı tek yapısal kaynak** ilkesini güçlendirir ve yayın Excel'ini yalnız içerik yönetimine ayırır.
+
+## v1.3.30 — MMC Tek Kaynak + Zengin Yayın Excel + Otomatik Aile Paketi
+
+- İl, ilçe, kesin salon, salon adresi, tarih, seans, ortak kapasite ve bilet fiyatları MMC Programı'ndan gelir.
+- Etkinlik Yayınla ekranında MMC Programı seçimi ve güvenli MDG taslak eşitlemesi korunur.
+- Satış Hazırlığı ekranındaki tek tık kesin salon bağlantısı korunur.
+- Yeni yayın Excel değişkenleri: adres, uzun tarih, bilet özeti, bilgi hattı, resmî bilet linki ve etkinlik adı.
+- Excel yalnız kısa/uzun açıklama, kurallar, SEO, video URL'si ve SSS alanlarını günceller; program verilerini değiştirmez.
+- Aile Paketi 2+2 fiziksel üçüncü MDG bilet türü değildir; gerçek 2 yetişkin + 2 çocuk biletlerinden 4 QR üretir.
+- MMC'deki family_2_2 aktiflik ve etkinlik fiyatı MDG taslağı eşitlendiğinde Aile Paketi eklentisinin etkinlik ayarına otomatik aktarılır.
+- Mevcut canlı WooCommerce/Tickera/PayTR satış nesneleri otomatik değiştirilmez.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+---
+
 # Madagaskar Management Center v1.3.29
 
 Bu sürüm **v1.3.27 program/Etkinlik Yayınla köprüsünü ve v1.3.28 MDG taslak senkronunu tek sürümde birleştirir; yayın içeriği Excel akışını MMC ana verisine göre sadeleştirir.**

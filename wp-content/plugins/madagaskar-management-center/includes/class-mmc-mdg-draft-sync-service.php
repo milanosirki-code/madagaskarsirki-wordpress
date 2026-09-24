@@ -126,6 +126,7 @@ final class MMC_MDG_Draft_Sync_Service {
             'doors_open_before'        => (int) $source->door_open_minutes,
             'seating_type'             => 'numbered' === (string) $source->seating_mode ? 'numbered' : 'free',
             'age_info'                 => '0–2 yaş ücretsiz; 3–12 çocuk, 13 yaş ve üzeri yetişkin bileti.',
+            'organizer_name'           => 'Dünya Organizasyon Medya Turizm Eğitim Danışmanlık Reklam Seyahat Acenteliği Ltd. Şti.',
             'status'                   => 'draft',
             'updated_at'               => $now,
         );
@@ -165,7 +166,62 @@ final class MMC_MDG_Draft_Sync_Service {
             return new WP_Error( 'mmc_mdg_sync', $e->getMessage() );
         }
 
+        self::sync_family_package_option( $id, $source_tickets );
+
         return $id;
+    }
+
+    /**
+     * Aile Paketi gerçek bir üçüncü MDG bilet türü değildir.
+     * MMC'deki family_2_2 aktiflik/fiyatını sanal aile paketi eklentisine eşitler.
+     */
+    private static function sync_family_package_option( $mdg_event_id, $source_tickets ) {
+        $mdg_event_id = absint( $mdg_event_id );
+        if ( ! $mdg_event_id ) { return; }
+
+        $family_active = false;
+        $family_price = 0.0;
+        foreach ( (array) $source_tickets as $ticket ) {
+            if ( 'family_2_2' !== (string) ( $ticket->ticket_code ?? '' ) ) { continue; }
+            $family_active = (int) ( $ticket->is_active ?? 0 ) === 1;
+            $family_price = round( max( 0, (float) ( $ticket->price ?? 0 ) ), 2 );
+            break;
+        }
+
+        $key = 'mdg_family_package_22_v1';
+        $settings = get_option( $key, array() );
+        if ( ! is_array( $settings ) ) { $settings = array(); }
+        if ( empty( $settings['label'] ) ) { $settings['label'] = 'Aile Paketi 2+2'; }
+        if ( empty( $settings['price'] ) ) { $settings['price'] = 1100.00; }
+
+        $raw_events = (array) ( $settings['events'] ?? array() );
+        $keys = array_keys( $raw_events );
+        $is_list = empty( $raw_events ) || $keys === range( 0, count( $raw_events ) - 1 );
+        $events = array();
+        if ( $is_list ) {
+            foreach ( $raw_events as $value ) {
+                $event_id = absint( $value );
+                if ( $event_id ) { $events[ $event_id ] = 1; }
+            }
+        } else {
+            foreach ( $raw_events as $event_id => $enabled ) {
+                $event_id = absint( $event_id );
+                if ( $event_id && $enabled ) { $events[ $event_id ] = 1; }
+            }
+        }
+
+        $event_prices = is_array( $settings['event_prices'] ?? null ) ? $settings['event_prices'] : array();
+
+        if ( $family_active && $family_price > 0 ) {
+            $events[ $mdg_event_id ] = 1;
+            $event_prices[ $mdg_event_id ] = $family_price;
+        } else {
+            unset( $events[ $mdg_event_id ], $event_prices[ $mdg_event_id ] );
+        }
+
+        $settings['events'] = $events;
+        $settings['event_prices'] = $event_prices;
+        update_option( $key, $settings, false );
     }
 
     private static function program_uuid( $program_code ) {
