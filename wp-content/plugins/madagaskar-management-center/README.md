@@ -1,22 +1,23 @@
 # Madagaskar Management Center v1.3.29
 
-Bu sürüm **v1.3.27 program/Etkinlik Yayınla köprüsünü ve v1.3.28 MDG taslak senkronunu tek sürümde birleştirir; yayın içeriği Excel akışını MMC ana verisine göre sadeleştirir.**
+Bu sürümde MMC programı **tek yapısal kaynak** olarak kullanılır; Etkinlik Yayınla ekranındaki Excel yalnız yayın içeriği içindir.
 
-## v1.3.29 — Tek Kaynaklı Etkinlik Yayını + MMC Uyumlu Excel
+## v1.3.29 — Program Tek Kaynak + Yayın İçeriği Excel
 
-- v1.3.26'daki **Satış Hazırlığı → tek adım kesin salon bağlama** korunur.
-- v1.3.27'deki **MMC Programı → Etkinlik Yayınla** program seçici ve güvenli taslak köprüsü korunur.
-- v1.3.28'deki **MMC Etkinlik & Seans → MDG Etkinlik Taslağı** senkronu eklenmiştir.
-- MDG taslağının program kimliği, il/ilçe, kesin salon, tarih, seans, ortak kapasite ve gerçek Çocuk/Yetişkin fiyatları yalnız MMC'den gelir.
-- MMC'deki `family_2_2` fiyatı MDG'de kapasite-4 üçüncü gerçek bilet satırına çevrilmez; Aile Paketi modülü 2 Çocuk + 2 Yetişkin gerçek bileti kullanır.
-- **Etkinlik Yayınla** ekranına bağlı programlarda **Yayın İçeriği Excel — MMC Uyumlu** paneli eklenmiştir.
-- Excel yalnız kısa/uzun yayın metni, kurallar, SEO, video URL'si ve SSS günceller.
-- Salon/tarih/seans/kapasite/fiyat Excel'den değiştirilemez.
-- Satışa açılmış MDG etkinliği otomatik senkron ve Excel içeriği güncellemesinden korunur.
-- Canlı WooCommerce/Tickera/PayTR verisine dokunulmaz.
+- İl, ilçe, kesin salon, tarih, seans, ortak kapasite ve fiyatlar MMC Programı’ndan gelir.
+- Satış Hazırlığı ekranındaki **Kesin Salonu Hemen Bağla** akışı korunur.
+- Etkinlik Yayınla ekranındaki MMC Programı seçimiyle MDG taslağı güvenli biçimde oluşturulur/güncellenir.
+- Canlı WooCommerce/Tickera/PayTR nesnesi otomatik değiştirilmez.
+- MDG taslağında yalnız Çocuk ve Yetişkin gerçek bilet türleri bulunur; `family_2_2` üçüncü gerçek bilet türü olarak oluşturulmaz.
+- **Aile Paketi 2+2 = 2 yetişkin + 2 çocuk = 4 QR / 4 kişi**. MMC’deki aile paketi aktiflik ve etkinlik fiyatı sanal aile paketi ayarına otomatik eşitlenir.
+- Yeni **Yayın İçeriği Excel**; kısa/uzun açıklama, kurallar, SEO, isteğe bağlı video ve SSS alanlarını yönetir.
+- Excel değişkenleri MMC’den otomatik doldurulur: program kodu, il/ilçe, salon, adres, tarih, uzun tarih, seanslar, bilet özeti, çocuk/yetişkin/aile fiyatı, oturma, kapı açılışı, bilgi hattı, bilet linki ve etkinlik adı.
+- Boş Excel alanı mevcut içeriği silmez; içerik aktarımı yalnız MDG `draft` durumunda çalışır.
+- Eski tam etkinlik Excel’i MMC’ye bağlı programlarda yapısal veri girişi için kullanılmamalıdır.
 - DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
 
 ---
+
 
 # Madagaskar Management Center v1.3.27
 
