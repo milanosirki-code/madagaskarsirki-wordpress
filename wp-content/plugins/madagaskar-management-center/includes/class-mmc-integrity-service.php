@@ -208,6 +208,8 @@ class MMC_Integrity_Service {
         if ( $kommo && class_exists( 'MMC_Kommo_Service' ) ) {
             $bridge = MMC_Kommo_Service::status_bridge_preview( $program_id );
             $queue = MMC_Kommo_Service::queue_health( $program_id );
+            $transport = MMC_Kommo_Service::ai_transport_mode( $program_id );
+            $kommo_detail .= ' · AI taşıma ' . ( 'text' === $transport ? 'direct-text' : 'url' );
 
             if ( is_wp_error( $bridge ) ) {
                 if ( 'ok' === $kommo_sev ) { $kommo_sev = 'warning'; }
