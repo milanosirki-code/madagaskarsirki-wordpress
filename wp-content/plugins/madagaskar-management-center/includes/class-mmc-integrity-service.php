@@ -5,7 +5,7 @@ class MMC_Integrity_Service {
     public static function remember_context() {
         if ( ! is_admin() || ! is_user_logged_in() ) { return; }
         $page = sanitize_key( wp_unslash( $_REQUEST['page'] ?? '' ) );
-        if ( 0 !== strpos( $page, 'mmc-' ) && 0 !== strpos( $page, 'mad-okul' ) ) { return; }
+        if ( 0 !== strpos( $page, 'mmc-' ) && 0 !== strpos( $page, 'mad-okul' ) && 0 !== strpos( $page, 'mdg-' ) ) { return; }
 
         $program_id = self::request_program_id();
         if ( $program_id && MMC_Program_Service::get_program( $program_id ) ) {
@@ -24,6 +24,15 @@ class MMC_Integrity_Service {
         $page = sanitize_key( wp_unslash( $_REQUEST['page'] ?? '' ) );
         if ( 0 === strpos( $page, 'mad-okul' ) ) {
             return absint( $_REQUEST['mmc_program_id'] ?? 0 );
+        }
+        if ( 0 === strpos( $page, 'mdg-' ) ) {
+            $program_id = absint( $_REQUEST['mmc_program_id'] ?? 0 );
+            if ( $program_id ) { return $program_id; }
+            $mdg_event_id = absint( $_REQUEST['event_id'] ?? $_REQUEST['edit'] ?? 0 );
+            if ( $mdg_event_id && class_exists('MMC_MDG_Bridge_Service') ) {
+                return MMC_MDG_Bridge_Service::program_for_mdg_event( $mdg_event_id );
+            }
+            return 0;
         }
         return absint( $_REQUEST['program_id'] ?? $_REQUEST['mmc_program_id'] ?? 0 );
     }
@@ -58,6 +67,7 @@ class MMC_Integrity_Service {
             'Okul/Saha'  => add_query_arg( array( 'page'=>'mmc-field', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Okul Rota'  => add_query_arg( array( 'page'=>'mad-okul-route', 'mmc_program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Satış'      => add_query_arg( array( 'page'=>'mmc-sales', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
+            'MDG Bilet'  => class_exists('MMC_MDG_Bridge_Service') ? MMC_MDG_Bridge_Service::admin_url( $program_id ) : add_query_arg( array( 'page'=>'mdg-dashboard', 'mmc_program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Kommo'      => add_query_arg( array( 'page'=>'mmc-kommo', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Operasyon'  => add_query_arg( array( 'page'=>'mmc-operations', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Finans'     => add_query_arg( array( 'page'=>'mmc-finance', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
@@ -143,6 +153,10 @@ class MMC_Integrity_Service {
         $publish_detail = $event ? ( 'Event durumu: ' . $event->status . ' · satış nesnesi eşleştirmesi ' . $mapped . '/' . $expected . ( $mapping_mismatch ? ' · farklı event_id kullanan kayıt var' : '' ) ) : 'Önce etkinlik oluşturulmalı.';
         $out[] = self::row( 'publish', 'Etkinlik Yayın / WooCommerce / Tickera', $publish_sev, $publish_detail, self::url( 'mmc-events', $program_id ) );
 
+        foreach ( self::mdg_bridge_rows( $program_id, $event ) as $mdg_row ) {
+            $out[] = $mdg_row;
+        }
+
         $orders = 0; $net_revenue = 0.0;
         if ( self::table_exists( $wpdb->prefix . 'mmc_sales_ledger' ) ) {
             $sales_row = $wpdb->get_row( $wpdb->prepare(
@@ -188,6 +202,111 @@ class MMC_Integrity_Service {
         $out[] = self::row( 'finance', 'Finans & Kapanış', $closure ? 'ok' : 'warning', $entries . ' finans kaydı · kapanış: ' . ( $closure ? $closure->close_status : 'oluşturulmadı' ) . ' · program_id=' . $program_id, self::url( 'mmc-finance', $program_id ) );
 
         return $out;
+    }
+
+    private static function mdg_bridge_rows( $program_id, $mmc_event ) {
+        if ( ! class_exists('MMC_MDG_Bridge_Service') ) {
+            return array( self::row(
+                'mdg_engine',
+                'MDG Bilet Motoru',
+                'warning',
+                'MMC MDG köprü servisi yüklenemedi.',
+                add_query_arg( array('page'=>'mdg-dashboard','mmc_program_id'=>$program_id), admin_url('admin.php') )
+            ) );
+        }
+
+        $s = MMC_MDG_Bridge_Service::status( $program_id );
+        $url = MMC_MDG_Bridge_Service::admin_url( $program_id );
+        if ( empty($s['available']) ) {
+            return array( self::row(
+                'mdg_engine',
+                'MDG Bilet Motoru',
+                'warning',
+                'Madagaskar Bilet Yönetimi aktif değil veya MDG tabloları erişilebilir değil.',
+                $url
+            ) );
+        }
+
+        $rows = array();
+        $rows[] = self::row(
+            'mdg_engine',
+            'MDG Bilet Motoru',
+            'ok',
+            'Aktif' . ( ! empty($s['version']) ? ' · sürüm ' . $s['version'] : '' ) . ' · events/sessions/ticket_types/order_map erişilebilir.',
+            $url
+        );
+
+        if ( empty($s['linked']) ) {
+            $strong = array_values( array_filter( (array)$s['candidates'], function($row){ return ! empty($row['strong']); } ) );
+            $detail = $strong
+                ? count($strong) . ' güçlü MDG etkinlik adayı bulundu; Program ID henüz kalıcı bağlanmadı.'
+                : 'MMC Program ID ile MDG event_id arasında kalıcı köprü bulunamadı.';
+            $rows[] = self::row(
+                'mdg_bridge',
+                'MMC ↔ MDG Etkinlik Köprüsü',
+                'warning',
+                $detail,
+                $url,
+                1 === count($strong)
+            );
+            return $rows;
+        }
+
+        $bridge = $s['bridge'];
+        $mdg_event = $s['event'];
+        $bridge_mismatch = $mmc_event && (int)$bridge->mmc_event_id !== (int)$mmc_event->id;
+        $rows[] = self::row(
+            'mdg_bridge',
+            'MMC ↔ MDG Etkinlik Köprüsü',
+            $bridge_mismatch ? 'critical' : 'ok',
+            'MMC Program #' . (int)$program_id . ' / Event #' . (int)$bridge->mmc_event_id .
+            ' ↔ MDG Event #' . (int)$bridge->mdg_event_id .
+            ( $mdg_event ? ' · ' . $mdg_event->title : ' · MDG etkinliği bulunamadı' ) .
+            ' · yöntem: ' . $bridge->match_method .
+            ( $bridge_mismatch ? ' · MMC EVENT UYUŞMUYOR' : '' ),
+            $url
+        );
+
+        $expected = (int)$s['identity_expected'];
+        $matched = (int)$s['identity_matched'];
+        $identity_sev = $expected > 0 && $matched === $expected ? 'ok' : ( $expected > 0 ? 'critical' : 'warning' );
+        $rows[] = self::row(
+            'mdg_identity',
+            'MDG / WooCommerce / Tickera Kimliği',
+            $identity_sev,
+            'Satış eşleştirmesi ' . $matched . '/' . $expected .
+            ' · MMC seans ' . (int)$s['sessions_mmc'] . ' · MDG seans ' . (int)$s['sessions_mdg'] .
+            ( $expected && $matched !== $expected ? ' · ÜRÜN/VARYASYON/TICKERA EŞLEŞMESİ FARKLI' : '' ),
+            $url
+        );
+
+        $sales = (array)$s['sales'];
+        if ( empty($sales['has_sales']) ) {
+            $rows[] = self::row(
+                'mdg_sales_reconcile',
+                'MDG ↔ MMC Satış Mutabakatı',
+                'ok',
+                'Her iki defterde de ücretli satış yok; çift sayım yapılmıyor.',
+                self::url('mmc-sales',$program_id)
+            );
+        } else {
+            $sales_ok = ! empty($sales['ok']);
+            $detail = 'MDG: ' . (int)$sales['mdg_orders'] . ' sipariş / ' . (int)$sales['mdg_units'] . ' kişi · ' .
+                      'MMC: ' . (int)$sales['mmc_orders'] . ' sipariş / ' . (int)$sales['mmc_units'] . ' kişi';
+            if ( ! $sales_ok ) {
+                $detail .= ' · MMC eksik satır: ' . count((array)$sales['missing_in_mmc']) .
+                           ' · MMC fazla satır: ' . count((array)$sales['extra_in_mmc']);
+            }
+            $detail .= ' · MDG satır toplamı KDV hariç olabilir; ciro farkı bu kontrolde kritik ölçüt değildir.';
+            $rows[] = self::row(
+                'mdg_sales_reconcile',
+                'MDG ↔ MMC Satış Mutabakatı',
+                $sales_ok ? 'ok' : 'critical',
+                $detail,
+                self::url('mmc-sales',$program_id)
+            );
+        }
+        return $rows;
     }
 
     public static function summary( $program_id ) {
