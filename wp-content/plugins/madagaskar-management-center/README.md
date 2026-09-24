@@ -1,3 +1,28 @@
+# Madagaskar Management Center v1.3.11
+
+Bu sürüm **Sistem & Yetkiler ve diğer gizlenmiş MMC ayrıntı ekranlarının WordPress erişim kaydını korur**. Sol menü sade kalır; kartlardan açılan ayrıntı sayfaları artık doğrudan erişilebilir.
+
+## v1.3.11 — Güvenli Gizli Sayfalar & Arayüz Temizliği
+
+- `remove_submenu_page()` ile MMC ayrıntı sayfalarının kayıt zincirini kesme yöntemi kaldırıldı.
+- `mmc-roles`, `mmc-system`, `mmc-preparation`, `mmc-events`, `mmc-sales`, `mmc-field` ve diğer ayrıntı ekranları WordPress'te kayıtlı kalır.
+- Bu ayrıntı ekranları yalnız sol yönetim menüsünde JavaScript ile görsel olarak gizlenir.
+- Kart bağlantıları `admin.php?page=...` üzerinden mevcut callback ve capability kontrolleriyle çalışmaya devam eder.
+- **Yetkiler** ve **Kurulum & Sağlık** için kullanılan `mmc_manage_settings` yetkisi değiştirilmez.
+- Yönetici ve Madagaskar Yönetici rollerinin mevcut yetki modeli korunur.
+- Hub sayfalarındaki test amaçlı **Güvenli menü modu** kutusu kaldırıldı.
+- Rutin başarı/güncelleme bildirimleri hub ekranlarında gizlenir; warning/error mesajları görünmeye devam eder.
+- Veri tabanı şeması değişmediği için `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- WooCommerce, Tickera, PayTR, QR ve MDG satış motoruna müdahale edilmez.
+- MDG ve Okul Tanıtım veri tablolarında değişiklik yoktur.
+- Eski sayfa slug, callback, nonce ve form action yapıları korunur.
+- Sol menü sadeleştirme yalnız görsel katmanda yapılır.
+
+---
+
 # Madagaskar Management Center v1.3.10
 
 Bu sürüm **eski Madagaskar Bilet Yönetimi modüllerini görevlerine göre doğru MMC merkezlerine otomatik dağıtır** ve merkez ekranlarını mobil kullanım için sadeleştirir.
