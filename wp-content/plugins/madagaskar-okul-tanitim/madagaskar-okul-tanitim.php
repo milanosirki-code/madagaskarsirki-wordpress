@@ -697,7 +697,7 @@ function mad_okul_route_page() {
     [$ils,$ilceler]=mad_okul_filter_options($il);
 
     // İl değiştiyse eski/uyumsuz ilçe seçimini taşımayalım.
-    if($ilce && !in_array($ilce,$ilceler,true)) $ilce='';
+    if(!$mmc_program_id && $ilce && !in_array($ilce,$ilceler,true)) $ilce='';
 
     // Seçilen ilde tek ilçe varsa (ör. Kırıkkale/Merkez) otomatik seç.
     if($il && !$ilce && count($ilceler)===1) $ilce=(string)$ilceler[0];
