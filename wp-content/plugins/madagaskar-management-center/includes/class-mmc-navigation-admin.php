@@ -2,11 +2,11 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.10 smart unified admin navigation.
+ * MMC v1.3.11 safe hidden-page navigation.
  *
  * Navigation only:
  * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
- * - Detail pages are removed only from the visible submenu and remain directly accessible.
+ * - Detail pages stay registered in WordPress and are hidden only in the rendered admin menu.
  * - WooCommerce, Tickera, PayTR, QR, MDG and school data are untouched.
  * - If MMC is disabled, legacy top-level menus return automatically.
  */
@@ -19,6 +19,7 @@ class MMC_Navigation_Admin {
         add_filter( 'parent_file', array( $this, 'parent_file' ), 999999 );
         add_filter( 'submenu_file', array( $this, 'submenu_file' ), 999999 );
         add_action( 'admin_head', array( $this, 'hub_admin_css' ), 999999 );
+        add_action( 'admin_footer', array( $this, 'admin_menu_cleanup_js' ), 999999 );
     }
 
     public function compact_navigation() {
@@ -39,7 +40,7 @@ class MMC_Navigation_Admin {
         }
 
         $this->register_hubs();
-        $this->hide_detail_pages();
+        // Keep detail pages registered so admin.php?page=... remains accessible.
         $this->rename_visible_pages();
         $this->reorder_visible_pages();
     }
@@ -129,8 +130,8 @@ class MMC_Navigation_Admin {
         );
     }
 
-    private function hide_detail_pages() {
-        $hidden = array(
+    private function hidden_detail_pages() {
+        return array(
             'mmc-preparation',
             'mmc-region-data',
             'mmc-population-data',
@@ -147,10 +148,6 @@ class MMC_Navigation_Admin {
             'mmc-roles',
             'mmc-system',
         );
-
-        foreach ( $hidden as $slug ) {
-            remove_submenu_page( 'mmc-dashboard', $slug );
-        }
     }
 
     private function rename_visible_pages() {
@@ -434,9 +431,6 @@ class MMC_Navigation_Admin {
                 <?php if ( ! $shown ) : ?><p>Bu bölümde mevcut kullanıcı için erişilebilir araç bulunamadı.</p><?php endif; ?>
             </div>
 
-            <div class="notice notice-info inline">
-                <p><strong>Güvenli menü modu:</strong> Bu merkez yalnızca navigasyonu sadeleştirir. Kaynak sayfaların slug, callback, form action ve veri tabloları değiştirilmez.</p>
-            </div>
         </div>
         <?php
     }
@@ -573,7 +567,23 @@ class MMC_Navigation_Admin {
 
     public function hub_admin_css() {
         $page = $this->current_page();
-        $hubs = array(
+        $hubs = $this->hub_pages();
+
+        if ( ! in_array( $page, $hubs, true ) ) {
+            return;
+        }
+
+        // Keep warning/error notices visible. Routine success/update notices on navigation hubs
+        // are hidden to reduce visual noise, especially on mobile.
+        echo '<style>
+            #wpbody-content .notice-success,
+            #wpbody-content .updated,
+            #wpbody-content div.updated { display:none!important; }
+        </style>';
+    }
+
+    private function hub_pages() {
+        return array(
             'mmc-prep-region-hub',
             'mmc-venue-event-hub',
             'mmc-mdg-hub',
@@ -584,14 +594,26 @@ class MMC_Navigation_Admin {
             'mmc-finance-hub',
             'mmc-system-hub',
         );
+    }
 
-        if ( ! in_array( $page, $hubs, true ) ) {
+    public function admin_menu_cleanup_js() {
+        if ( ! current_user_can( 'mmc_view_dashboard' ) ) {
             return;
         }
 
-        // Hub pages are navigation screens. Hide only routine success/update notices
-        // to keep mobile navigation compact; warnings and errors remain visible.
-        echo '<style>.wrap + .notice-success,.wrap + .updated,#wpbody-content > .notice-success,#wpbody-content > .updated{display:none!important}</style>';
+        $hidden = wp_json_encode( $this->hidden_detail_pages() );
+        $is_hub = in_array( $this->current_page(), $this->hub_pages(), true ) ? 'true' : 'false';
+
+        echo '<script>(function(){';
+        echo 'var hidden=' . $hidden . ';';
+        echo 'document.querySelectorAll("#toplevel_page_mmc-dashboard .wp-submenu a").forEach(function(a){';
+        echo 'try{var u=new URL(a.href,window.location.href);var p=u.searchParams.get("page");if(hidden.indexOf(p)!==-1){var li=a.closest("li");if(li){li.style.display="none";}}}catch(e){}';
+        echo '});';
+        echo 'if(' . $is_hub . '){document.querySelectorAll("#wpbody-content .notice, #wpbody-content .updated").forEach(function(n){';
+        echo 'if(n.classList.contains("notice-warning")||n.classList.contains("notice-error")){return;}';
+        echo 'if(n.classList.contains("notice-success")||n.classList.contains("updated")){n.style.display="none";}';
+        echo '});}';
+        echo '})();</script>';
     }
 
     private function guard( $capability ) {
