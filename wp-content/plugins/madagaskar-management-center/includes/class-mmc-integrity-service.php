@@ -192,7 +192,77 @@ class MMC_Integrity_Service {
 
         $kommo = self::one_where( 'mmc_kommo_profiles', 'program_id', $program_id );
         $kommo_mismatch = $kommo && $event && (int) $kommo->event_id && (int) $kommo->event_id !== (int) $event->id;
-        $out[] = self::row( 'kommo', 'Kommo / AI', $kommo_mismatch ? 'critical' : ( $kommo ? 'ok' : 'warning' ), $kommo ? ( 'Profil #' . (int)$kommo->id . ' · ' . $kommo->crm_status . ( $kommo_mismatch ? ' · EVENT UYUŞMUYOR' : '' ) ) : 'Program profili henüz oluşturulmadı.', self::url( 'mmc-kommo', $program_id ) );
+        $kommo_sev = $kommo ? 'ok' : 'warning';
+        $kommo_detail = $kommo
+            ? ( 'Profil #' . (int)$kommo->id .
+                ' · Lead ' . ( $kommo->kommo_lead_id ? '#' . (int)$kommo->kommo_lead_id : 'yok' ) .
+                ' · CRM ' . $kommo->crm_status .
+                ' · AI ' . $kommo->ai_source_status )
+            : 'Program profili henüz oluşturulmadı.';
+
+        if ( $kommo_mismatch ) {
+            $kommo_sev = 'critical';
+            $kommo_detail .= ' · EVENT UYUŞMUYOR';
+        }
+
+        if ( $kommo && class_exists( 'MMC_Kommo_Service' ) ) {
+            $bridge = MMC_Kommo_Service::status_bridge_preview( $program_id );
+            $queue = MMC_Kommo_Service::queue_health( $program_id );
+
+            if ( is_wp_error( $bridge ) ) {
+                if ( 'ok' === $kommo_sev ) { $kommo_sev = 'warning'; }
+                $kommo_detail .= ' · Aşama doğrulanamadı: ' . $bridge->get_error_message();
+            } else {
+                $action = (string) ( $bridge['action'] ?? '' );
+                $current = (string) ( $bridge['current_stage'] ?? '' );
+                $desired = (string) ( $bridge['desired_stage'] ?? '' );
+
+                if ( $current || $desired ) {
+                    $kommo_detail .= ' · Aşama ' . ( $current ?: '—' ) . ' → ' . ( $desired ?: 'manuel' );
+                }
+
+                if ( 'pipeline_mismatch' === $action ) {
+                    $kommo_sev = 'critical';
+                    $kommo_detail .= ' · PIPELINE UYUŞMUYOR';
+                } elseif ( in_array( $action, array( 'advance','create','preserve_ahead','unknown_current_status','non_mmc_status','manual_cancel' ), true ) ) {
+                    if ( 'ok' === $kommo_sev ) { $kommo_sev = 'warning'; }
+                    $labels = array(
+                        'advance' => 'ileri senkron bekliyor',
+                        'create' => 'kart oluşturulacak',
+                        'preserve_ahead' => 'Kommo ileride; geri alma engelli',
+                        'unknown_current_status' => 'mevcut status bilinmiyor',
+                        'non_mmc_status' => 'MMC dışı status',
+                        'manual_cancel' => 'iptal manuel yönetim',
+                    );
+                    $kommo_detail .= ' · ' . ( $labels[$action] ?? $action );
+                }
+            }
+
+            if ( ! empty( $queue['pending'] ) ) {
+                if ( 'ok' === $kommo_sev ) { $kommo_sev = 'warning'; }
+                $kommo_detail .= ' · kuyruk: ' . (int)$queue['pending'] . ' bekleyen';
+            }
+            if ( ! empty( $queue['errors'] ) ) {
+                if ( 'ok' === $kommo_sev ) { $kommo_sev = 'warning'; }
+                $kommo_detail .= ' · geçmiş hata: ' . (int)$queue['errors'];
+                if ( ! empty( $queue['latest'] ) && 'error' === (string)$queue['latest']->status && ! empty( $queue['latest']->last_error ) ) {
+                    $kommo_detail .= ' · son hata: ' . sanitize_text_field( $queue['latest']->last_error );
+                }
+            }
+
+            if ( 'refresh_needed' === (string)$kommo->ai_source_status && 'ok' === $kommo_sev ) {
+                $kommo_sev = 'warning';
+                $kommo_detail .= ' · AI kaynak yeniden tarama bekliyor';
+            }
+        }
+
+        $out[] = self::row(
+            'kommo',
+            'Kommo / AI',
+            $kommo_sev,
+            $kommo_detail,
+            self::url( 'mmc-kommo', $program_id )
+        );
 
         $operation = self::one_where( 'mmc_operation_plans', 'program_id', $program_id );
         $out[] = self::row( 'operations', 'Operasyon & Lojistik', $operation ? 'ok' : 'warning', $operation ? ( 'Plan #' . (int)$operation->id . ' · ' . $operation->status . ' · program_id=' . $program_id ) : 'Operasyon planı henüz oluşturulmadı.', self::url( 'mmc-operations', $program_id ) );
