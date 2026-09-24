@@ -1,3 +1,60 @@
+# Madagaskar Management Center v1.3.20
+
+Bu sürüm **otomatik Kommo program aşama senkronunu hızlandırır, geçici API hatalarında kontrollü retry ekler ve Program Bütünlüğü ekranında Kommo kart/aşama mutabakatını görünür hale getirir.**
+
+## v1.3.20 — Otomatik Program Aşama Senkronu & Kommo Sağlık Özeti
+
+- MMC program/event/session/ticket/integration/salon/finans değişiklikleri mevcut `mmc_program_logged` zinciri üzerinden Kommo kuyruğuna otomatik alınmaya devam eder.
+- 15 dakikalık güvenlik cron'una ek olarak değişiklik sonrası **30 saniyelik hızlı tek-seferlik Kommo kuyruk çalışması** istenir.
+- WordPress cron çalışması ziyaret/istek tetiklemeli olduğundan 30 saniye mutlak gerçek-zaman garantisi değildir; ilk uygun WordPress isteğinde çalışır.
+- Kommo kuyruk hataları artık türüne göre ayrılır:
+  - yapılandırma/pipeline eksik → `waiting_config`
+  - HTTP/network geçici hata → kontrollü retry
+  - yapısal/yetki/validation hatası → doğrudan `error`
+- Retry yalnız şu durumlarda yapılır:
+  - WordPress HTTP network hataları,
+  - HTTP 408,
+  - HTTP 429,
+  - HTTP 5xx.
+- Retry aralıkları:
+  - 1. başarısız deneme → 5 dakika
+  - 2. başarısız deneme → 15 dakika
+  - 3. başarısız deneme → 30 dakika
+  - toplam 4 denemeden sonra kalıcı `error`.
+- HTTP 400/401/403 gibi hatalar körlemesine yeniden denenmez.
+- Forward-only Kommo status köprüsü v1.3.19 davranışı aynen korunur:
+  - yalnız ileri aşama PATCH edilir,
+  - aynı aşamada status gönderilmez,
+  - Kommo kartı ilerideyse geriye çekilmez,
+  - pipeline uyuşmazlığında otomatik taşıma yapılmaz.
+- Yeni `queue_health()` özeti program bazında queued/running/waiting/error/done durumlarını raporlar.
+- **Program Bütünlüğü → Kommo / AI** satırı artık:
+  - MMC Kommo profil ID,
+  - Kommo Lead ID,
+  - CRM durumu,
+  - AI kaynak durumu,
+  - mevcut Kommo aşaması,
+  - hedef MMC aşaması,
+  - ileri senkron/fark durumu,
+  - bekleyen kuyruk sayısı,
+  - geçmiş/son kuyruk hatası
+  bilgilerini tek satırda gösterir.
+- Kommo kartı hedef aşamadaysa satır sağlıklı olabilir.
+- Hedefe ilerleme bekliyorsa, AI kaynağı `refresh_needed` ise veya kuyruk bekliyorsa Uyarı gösterilir.
+- Kommo kartı beklenen MMC Program pipeline dışında ise Kritik gösterilir.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Otomatik kuyruk mevcut Lead ID üzerinde çalışır; kopya program kartı üretmez.
+- Retry yalnız geçici hata sınıflarında yapılır.
+- 400 validation ve yetki hataları tekrar tekrar Kommo'ya gönderilmez.
+- Mevcut satış/WooCommerce/Kurumsal pipeline'larına dokunulmaz.
+- İptal durumu hâlâ manuel Kommo yönetimindedir.
+- Token/secret davranışı değişmez.
+
+---
+
 # Madagaskar Management Center v1.3.19
 
 Bu sürüm **MMC Program Yaşam Döngüsü → Kommo Status Köprüsü** ekler ve mevcut kartların sıradan senkronla yanlışlıkla tekrar **Hazırlık** aşamasına çekilmesini engeller.
