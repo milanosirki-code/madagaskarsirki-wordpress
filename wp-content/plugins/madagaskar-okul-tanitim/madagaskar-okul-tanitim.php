@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.4
+ * Version: 1.7.5
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.4');
+define('MAD_OKUL_VERSION', '1.7.5');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -764,6 +764,45 @@ function mad_okul_route_page() {
             }
         }
     }
+    $route_links=[];
+    $route_error='';
+    if($_SERVER['REQUEST_METHOD']==='POST'){
+        check_admin_referer('mad_okul_route');
+        $available_ids=array_map(function($row){ return (int)$row->id; },(array)$rows);
+        $selected=array_values(array_intersect($selected,$available_ids));
+        if(!$selected){
+            $route_error='Rotaya eklenecek en az bir okul seçin.';
+        }elseif(!$start){
+            $route_error='Kesin salon henüz bağlı değil. Önce başlangıç salonunun tam adresini girin veya MMC’de kesin salonu bağlayın.';
+        }else{
+            $ids=implode(',',$selected);
+            if($mmc_program_id && $mmc_ctx && !is_wp_error($mmc_ctx)){
+                $linked=Mad_Okul_Operations::ensure_mmc_bridge($mmc_program_id);
+                if(is_wp_error($linked)){
+                    $route_error=$linked->get_error_message();
+                }else{
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE $table SET mmc_program_id=%d,program_id=%d,updated_at=%s WHERE id IN ($ids)",
+                        $mmc_program_id,(int)$linked->id,current_time('mysql')
+                    ));
+                }
+            }
+            if(!$route_error){
+                $chosen=$wpdb->get_results("SELECT * FROM $table WHERE id IN ($ids) ORDER BY FIELD(id,$ids)");
+                foreach(array_chunk((array)$chosen,8) as $n=>$chunk){
+                    $dest=end($chunk);
+                    $middle=$chunk; array_pop($middle);
+                    $waypoints=[];
+                    foreach($middle as $school) $waypoints[]=$school->adres.', '.$school->ilce.', '.$school->il;
+                    $url='https://www.google.com/maps/dir/?api=1&origin='.rawurlencode($start).
+                         '&destination='.rawurlencode($dest->adres.', '.$dest->ilce.', '.$dest->il).
+                         '&travelmode=driving';
+                    if($waypoints) $url.='&waypoints='.implode('%7C',array_map('rawurlencode',$waypoints));
+                    $route_links[]=['url'=>$url,'number'=>$n+1,'count'=>count($chunk)];
+                }
+            }
+        }
+    }
     ?>
     <div class="wrap mad-okul-wrap">
       <h1>Google Maps Rota Oluştur</h1>
@@ -791,6 +830,14 @@ function mad_okul_route_page() {
       <?php elseif(!$ilce): ?><div class="notice notice-info inline"><p><?php echo esc_html($il); ?> için ilçe seçin.</p></div>
       <?php elseif(!$rows): ?><div class="notice notice-warning inline"><p><?php echo esc_html($il.' / '.$ilce); ?> için seçili durumda okul bulunamadı.</p></div><?php endif; ?>
 
+      <?php if($mmc_ctx && !is_wp_error($mmc_ctx) && !$mmc_ctx->venue): ?>
+        <div class="notice notice-warning inline"><p>Bu programa kesin salon bağlanmamış. Eski koordinat başlangıç noktası olarak kullanılmıyor; rota için salonun tam adresini girin.</p></div>
+      <?php endif; ?>
+      <?php if($route_error): ?><div id="mad-route-result" class="notice notice-error inline"><p><?php echo esc_html($route_error); ?></p></div><?php endif; ?>
+      <?php if($route_links): ?><div id="mad-route-result" class="mad-routes"><h2>Oluşturulan Rotalar</h2>
+        <?php foreach($route_links as $route): ?><p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($route['url']); ?>">Rota <?php echo (int)$route['number']; ?> — <?php echo (int)$route['count']; ?> okul Google Maps’te Aç</a></p><?php endforeach; ?>
+        <p class="description">Bağlantıya tıklayarak rotayı Google Maps’te açın.</p></div><?php endif; ?>
+
       <form method="post">
         <?php wp_nonce_field('mad_okul_route'); ?>
         <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
@@ -813,35 +860,9 @@ function mad_okul_route_page() {
         <p><button class="button button-primary button-hero">Seçilenlerden Rota Oluştur</button></p>
       </form>
 
-      <?php
-      if ($_SERVER['REQUEST_METHOD']==='POST' && $selected) {
-          check_admin_referer('mad_okul_route');
-          $ids=implode(',',array_map('absint',$selected));
-          if($mmc_program_id){
-              $wpdb->query("UPDATE $table SET mmc_program_id=".absint($mmc_program_id).",updated_at='".esc_sql(current_time('mysql'))."' WHERE id IN ($ids)");
-          }
-          $chosen=$wpdb->get_results("SELECT * FROM $table WHERE id IN ($ids) ORDER BY FIELD(id,$ids)");
-          if ($chosen) {
-              echo '<div class="mad-routes"><h2>Oluşturulan Rotalar</h2>';
-              $chunks=array_chunk($chosen,8);
-              foreach($chunks as $n=>$chunk) {
-                  $origin=$start ?: ($chunk[0]->adres.', '.$chunk[0]->ilce.', '.$chunk[0]->il);
-                  $dest=end($chunk);
-                  $middle=$chunk; array_pop($middle);
-                  $waypoints=[];
-                  foreach($middle as $m) $waypoints[]=$m->adres.', '.$m->ilce.', '.$m->il;
-                  $url='https://www.google.com/maps/dir/?api=1&origin='.rawurlencode($origin).
-                       '&destination='.rawurlencode($dest->adres.', '.$dest->ilce.', '.$dest->il).
-                       '&travelmode=driving';
-                  if($waypoints) $url.='&waypoints='.implode('%7C',array_map('rawurlencode',$waypoints));
-                  echo '<p><a class="button button-primary" target="_blank" href="'.esc_url($url).'">Rota '.($n+1).' — '.count($chunk).' okul Google Maps’te Aç</a></p>';
-              }
-              echo '<p class="description">Bu sürüm seçilen okulları gruplandırır. Trafik/sürüş süresine göre otomatik optimum sıralama Google Routes API entegrasyonu ile ikinci aşamada eklenebilir.</p></div>';
-          }
-      }
-      ?>
     </div>
     <script>
+      document.getElementById('mad-route-result')?.scrollIntoView({block:'center'});
       document.addEventListener('change',function(e){
         if(e.target.id==='mad-all'){
           document.querySelectorAll('input[name="school_ids[]"]').forEach(x=>x.checked=e.target.checked);

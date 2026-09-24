@@ -24,8 +24,8 @@ final class Mad_Okul_Operations {
             $venue=$wpdb->get_row($wpdb->prepare(
                 "SELECT pv.*,v.venue_name,v.address,v.province_name,v.district_name
                  FROM $program_venues pv INNER JOIN $venues v ON v.id=pv.venue_id
-                 WHERE pv.program_id=%d AND pv.is_selected=1
-                 ORDER BY (pv.allocation_status='approved') DESC,pv.id DESC LIMIT 1",
+                 WHERE pv.program_id=%d AND pv.is_selected=1 AND pv.allocation_status='approved'
+                 ORDER BY pv.id DESC LIMIT 1",
                 $mmc_program_id
             ));
         }
@@ -77,6 +77,18 @@ final class Mad_Okul_Operations {
         if($ctx->venue){
             $payload['salon_adi']=(string)$ctx->venue->venue_name;
             $payload['salon_adresi']=(string)$ctx->venue->address;
+            // MMC salon tablosu koordinat tutmuyor. Eski ilçe merkezi koordinatını
+            // yeni salon için devralmayın; kesin adresle yeniden geocode edilsin.
+            if(!$linked || $linked->salon_adi!==$payload['salon_adi'] || $linked->salon_adresi!==$payload['salon_adresi']){
+                $payload['latitude']=null;
+                $payload['longitude']=null;
+            }
+        }else{
+            // MMC'de kesin salon yoksa eski ilçe merkezini salon konumu gibi göstermeyin.
+            $payload['salon_adi']='';
+            $payload['salon_adresi']='';
+            $payload['latitude']=null;
+            $payload['longitude']=null;
         }
 
         if(!$linked){
@@ -211,7 +223,7 @@ final class Mad_Okul_Operations {
           <h2>Kayıtlı Programlar</h2>
           <table class="widefat striped"><thead><tr><th>Program</th><th>İl / İlçe</th><th>Salon</th><th>Tarih</th><th>Koordinat</th><th>Harita</th></tr></thead><tbody>
           <?php foreach ($programs as $p): ?>
-            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo esc_html($p->salon_adi); ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><?php if($p->latitude && $p->longitude): echo esc_html($p->latitude.', '.$p->longitude); else: ?><a class="button button-small" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_program&program_id='.(int)$p->id),'mad_okul_geocode_program_'.$p->id)); ?>">Koordinat Bul</a><?php endif; ?></td><td><a target="_blank" href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a></td></tr>
+            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo $p->salon_adi ? esc_html($p->salon_adi) : 'Kesin salon bekleniyor'; ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><?php if($p->latitude && $p->longitude): echo esc_html($p->latitude.', '.$p->longitude); elseif($p->salon_adi && $p->salon_adresi): ?><a class="button button-small" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_program&program_id='.(int)$p->id),'mad_okul_geocode_program_'.$p->id)); ?>">Koordinat Bul</a><?php else: ?>Kesin salon bekleniyor<?php endif; ?></td><td><?php if($p->salon_adi): ?><a target="_blank" href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a><?php else: ?>—<?php endif; ?></td></tr>
           <?php endforeach; ?>
           </tbody></table>
         </div>
@@ -339,6 +351,7 @@ final class Mad_Okul_Operations {
         $id=absint($_GET['program_id'] ?? 0); check_admin_referer('mad_okul_geocode_program_'.$id); global $wpdb;
         $p=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$id));
         if (!$p) wp_die('Program bulunamadı');
+        if (!$p->salon_adi || !$p->salon_adresi) wp_die('Önce MMC programına kesin salon ve adres bağlayın. İlçe merkezini salon koordinatı olarak kaydedemeyiz.');
         $loc=self::geocode_address($p->salon_adi.', '.$p->salon_adresi.', '.$p->ilce.', '.$p->il.', Türkiye');
         if (is_wp_error($loc)) wp_die(esc_html($loc->get_error_message()));
         $wpdb->update(self::programs_table(),['latitude'=>(float)$loc['lat'],'longitude'=>(float)$loc['lng'],'updated_at'=>current_time('mysql')],['id'=>$id]);
@@ -419,7 +432,13 @@ final class Mad_Okul_Operations {
 
     public static function route_plan_page() {
         if (!current_user_can('manage_options')) return;
-        global $wpdb; $pid=absint($_GET['program_id'] ?? 0); $programs=self::programs();
+        global $wpdb; $pid=absint($_GET['program_id'] ?? 0);
+        $mmc_program_id=absint($_GET['mmc_program_id'] ?? 0);
+        if($mmc_program_id){
+            $linked=self::ensure_mmc_bridge($mmc_program_id);
+            if(!is_wp_error($linked)) $pid=(int)$linked->id;
+        }
+        $programs=self::programs();
         $p=$pid ? $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d',$pid)) : null;
         $rows=$p ? $wpdb->get_results($wpdb->prepare('SELECT s.*,u.display_name,p.program_adi,p.salon_adi,p.salon_adresi,p.etkinlik_tarihi FROM '.mad_okul_table().' s LEFT JOIN '.$wpdb->users.' u ON u.ID=s.assigned_user_id LEFT JOIN '.self::programs_table().' p ON p.id=s.program_id WHERE s.program_id=%d ORDER BY s.assigned_user_id,s.route_group,s.route_order,s.kurum_adi',$pid)) : [];
         $route_links=self::grouped_route_links($rows);
