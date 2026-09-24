@@ -64,20 +64,20 @@ class MMC_Kommo_Service {
             exit;
         }
 
-        $text = self::build_source_text( (int) $profile->program_id );
+        $html = self::build_source_html( (int) $profile->program_id );
         status_header( 200 );
         nocache_headers();
-        header( 'Content-Type: text/plain; charset=utf-8' );
+        header( 'Content-Type: text/html; charset=utf-8' );
         header( 'Content-Language: tr', true );
         header( 'X-Content-Type-Options: nosniff', true );
 
-        // Important: Kommo AI URL knowledge sources must be publicly fetchable and parseable.
-        // Do not send X-Robots-Tag:noindex here; some knowledge crawlers honor robots headers
-        // and refuse to parse the source. The URL itself remains unlisted and tokenized.
+        // Kommo AI URL sources are web-page crawls. Keep the URL tokenized and unlisted,
+        // but do not block knowledge crawlers with a robots response header.
         header_remove( 'X-Robots-Tag' );
 
         header( 'Referrer-Policy: no-referrer', true );
-        echo $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentionally plain text source.
+        self::record_source_delivery( (int) $profile->program_id );
+        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped semantic HTML.
         exit;
     }
 
@@ -89,9 +89,10 @@ class MMC_Kommo_Service {
 
         return array(
             'source_url'        => (string) $profile->source_url,
-            'content_type'      => 'text/plain; charset=utf-8',
+            'content_type'      => 'text/html; charset=utf-8',
             'content_language'  => 'tr',
             'robots_blocked'    => false,
+            'semantic_html'     => true,
             'tokenized'         => ! empty( $profile->source_token ),
             'source_status'     => (string) $profile->ai_source_status,
             'source_hash'       => (string) $profile->source_hash,
@@ -284,6 +285,105 @@ class MMC_Kommo_Service {
         $lines[] = 'Arama kelimeleri: ' . implode( ', ', self::search_keywords($program_id) );
 
         return implode( "\n", $lines );
+    }
+
+    public static function build_source_html( $program_id ) {
+        $text = self::build_source_text( $program_id );
+        $lines = preg_split( '/\r\n|\r|\n/', (string) $text );
+        $body = array();
+        $list_open = false;
+
+        foreach ( (array) $lines as $raw_line ) {
+            $line = trim( (string) $raw_line );
+
+            if ( '' === $line ) {
+                if ( $list_open ) {
+                    $body[] = '</ul>';
+                    $list_open = false;
+                }
+                continue;
+            }
+
+            $is_heading = mb_strlen( $line ) <= 90
+                && preg_match( '/^[A-ZÇĞİÖŞÜ0-9][A-ZÇĞİÖŞÜ0-9 &\/\-–—]+$/u', $line );
+
+            if ( $is_heading ) {
+                if ( $list_open ) {
+                    $body[] = '</ul>';
+                    $list_open = false;
+                }
+                $body[] = '<h2>' . esc_html( $line ) . '</h2>';
+                continue;
+            }
+
+            if ( 0 === strpos( $line, '- ' ) ) {
+                if ( ! $list_open ) {
+                    $body[] = '<ul>';
+                    $list_open = true;
+                }
+                $body[] = '<li>' . esc_html( substr( $line, 2 ) ) . '</li>';
+                continue;
+            }
+
+            if ( $list_open ) {
+                $body[] = '</ul>';
+                $list_open = false;
+            }
+
+            if ( false !== strpos( $line, ':' ) ) {
+                list( $label, $value ) = array_pad( explode( ':', $line, 2 ), 2, '' );
+                if ( '' !== trim( $label ) && '' !== trim( $value ) && mb_strlen( $label ) <= 48 ) {
+                    $body[] = '<p><strong>' . esc_html( trim( $label ) ) . ':</strong> ' . esc_html( trim( $value ) ) . '</p>';
+                    continue;
+                }
+            }
+
+            $body[] = '<p>' . esc_html( $line ) . '</p>';
+        }
+
+        if ( $list_open ) {
+            $body[] = '</ul>';
+        }
+
+        $program = MMC_Program_Service::get_program( $program_id );
+        $title = $program
+            ? 'Madagaskar Sirki — ' . $program->province_name . ( $program->district_name ? ' / ' . $program->district_name : '' )
+            : 'Madagaskar Sirki — Güncel Program Bilgileri';
+
+        return '<!doctype html>' .
+            '<html lang="tr"><head>' .
+            '<meta charset="utf-8">' .
+            '<meta name="viewport" content="width=device-width,initial-scale=1">' .
+            '<title>' . esc_html( $title ) . '</title>' .
+            '<meta name="description" content="Madagaskar Sirki güncel program, salon, seans, bilet ve müşteri iletişim bilgileri.">' .
+            '</head><body><main><article>' .
+            '<h1>' . esc_html( $title ) . '</h1>' .
+            implode( "\n", $body ) .
+            '</article></main></body></html>';
+    }
+
+    private static function record_source_delivery( $program_id ) {
+        $ua = isset( $_SERVER['HTTP_USER_AGENT'] )
+            ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+            : '';
+        $accept = isset( $_SERVER['HTTP_ACCEPT'] )
+            ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) )
+            : '';
+
+        update_option(
+            'mmc_kommo_source_delivery_' . absint( $program_id ),
+            array(
+                'at' => current_time( 'mysql' ),
+                'user_agent' => substr( $ua, 0, 220 ),
+                'accept' => substr( $accept, 0, 160 ),
+            ),
+            false
+        );
+    }
+
+    public static function source_delivery_last_hit( $program_id ) {
+        $row = get_option( 'mmc_kommo_source_delivery_' . absint( $program_id ), array() );
+        return is_array( $row ) ? $row : array();
     }
 
     public static function enqueue_program_sync( $program_id, $reason = '' ) {
