@@ -429,6 +429,7 @@ class MMC_Kommo_Service {
                 'http_ok' => false,
                 'account_id' => 0,
                 'account_name' => '',
+                'current_user_id' => 0,
                 'error' => 'Kommo subdomain veya token yapılandırılmadı.',
                 'checked_at' => '',
             ) );
@@ -449,6 +450,7 @@ class MMC_Kommo_Service {
                 'http_ok' => false,
                 'account_id' => 0,
                 'account_name' => '',
+                'current_user_id' => 0,
                 'error' => $r->get_error_message(),
                 'checked_at' => current_time( 'mysql' ),
             );
@@ -458,6 +460,7 @@ class MMC_Kommo_Service {
                 'http_ok' => true,
                 'account_id' => isset( $r['id'] ) ? absint( $r['id'] ) : 0,
                 'account_name' => sanitize_text_field( $r['name'] ?? '' ),
+                'current_user_id' => isset( $r['current_user_id'] ) ? absint( $r['current_user_id'] ) : 0,
                 'error' => '',
                 'checked_at' => current_time( 'mysql' ),
             );
@@ -550,6 +553,93 @@ class MMC_Kommo_Service {
         return $out;
     }
 
+    public static function admin_write_readiness( $force = false ) {
+        $diag = self::connection_diagnostics( $force );
+
+        if ( empty( $diag['connected'] ) ) {
+            return array(
+                'verified' => false,
+                'is_admin' => null,
+                'user_id' => 0,
+                'user_name' => '',
+                'detail' => $diag['error'] ?: 'Kommo API bağlantısı doğrulanamadı.',
+            );
+        }
+
+        $user_id = absint( $diag['current_user_id'] ?? 0 );
+        if ( ! $user_id ) {
+            return array(
+                'verified' => false,
+                'is_admin' => null,
+                'user_id' => 0,
+                'user_name' => '',
+                'detail' => 'Kommo /account yanıtında current_user_id bulunamadı; yönetici yazma yetkisi ön kontrolde doğrulanamadı.',
+            );
+        }
+
+        $cache_key = 'mmc_kommo_admin_ready_' . md5( self::subdomain() . '|' . $user_id . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return $cached;
+            }
+        }
+
+        $r = self::api_request( self::crm_base() . '/users/' . $user_id, 'GET' );
+        if ( is_wp_error( $r ) ) {
+            $data = $r->get_error_data();
+            $status = is_array( $data ) ? absint( $data['status'] ?? 0 ) : 0;
+            $out = array(
+                'verified' => false,
+                'is_admin' => null,
+                'user_id' => $user_id,
+                'user_name' => '',
+                'detail' => $status === 403
+                    ? 'Kommo kullanıcı yetkisi endpoint’i 403 döndürdü. Pipeline oluşturma yalnız Kommo yöneticilerine açıktır; mevcut tokenın yönetici kullanıcı adına yetkilendirildiğini kontrol edin.'
+                    : 'Kommo kullanıcı yönetici yetkisi doğrulanamadı: ' . $r->get_error_message(),
+            );
+            set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+            return $out;
+        }
+
+        $is_admin = ! empty( $r['rights']['is_admin'] );
+        $out = array(
+            'verified' => true,
+            'is_admin' => $is_admin,
+            'user_id' => $user_id,
+            'user_name' => sanitize_text_field( $r['name'] ?? '' ),
+            'detail' => $is_admin
+                ? 'Kommo current user yönetici olarak doğrulandı.'
+                : 'Kommo current user yönetici değil. Pipeline ve stage oluşturma API çağrıları bu kullanıcıyla çalışmaz.',
+        );
+        set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+        return $out;
+    }
+
+    public static function last_pipeline_install_result() {
+        $row = get_option( 'mmc_kommo_last_pipeline_install', array() );
+        return is_array( $row ) ? $row : array();
+    }
+
+    public static function record_pipeline_install_result( $status, $message, $meta = array() ) {
+        $safe_meta = array();
+        foreach ( (array) $meta as $key => $value ) {
+            if ( is_scalar( $value ) || null === $value ) {
+                $safe_meta[ sanitize_key( (string) $key ) ] = sanitize_text_field( (string) $value );
+            }
+        }
+        update_option(
+            'mmc_kommo_last_pipeline_install',
+            array(
+                'status' => sanitize_key( $status ),
+                'message' => sanitize_textarea_field( $message ),
+                'meta' => $safe_meta,
+                'at' => current_time( 'mysql' ),
+            ),
+            false
+        );
+    }
+
     public static function program_pipeline_blueprint() {
         return array(
             'name' => 'MMC — Program Yönetimi',
@@ -593,6 +683,14 @@ class MMC_Kommo_Service {
         $diag = self::connection_diagnostics( true );
         if ( empty( $diag['connected'] ) ) {
             return new WP_Error( 'mmc_kommo_not_connected', $diag['error'] ?: 'Kommo API bağlantısı doğrulanamadı.' );
+        }
+
+        $readiness = self::admin_write_readiness( true );
+        if ( true === $readiness['verified'] && false === $readiness['is_admin'] ) {
+            return new WP_Error(
+                'mmc_kommo_admin_required',
+                'Kommo pipeline kurulumu yapılamaz: tokenın bağlı olduğu Kommo kullanıcısı yönetici değil. Pipeline/stage oluşturma yalnız yönetici yetkisiyle kullanılabilir.'
+            );
         }
 
         $blueprint = self::program_pipeline_blueprint();
@@ -915,10 +1013,68 @@ class MMC_Kommo_Service {
         $code=(int)wp_remote_retrieve_response_code($r); $raw=wp_remote_retrieve_body($r);
         $data=$raw!==''?json_decode($raw,true):array();
         if($code<200||$code>=300){
-            $msg=is_array($data)?($data['detail']??$data['title']??$data['error']??'Kommo API hatası'):('Kommo API HTTP '.$code);
-            return new WP_Error('mmc_kommo_api','Kommo API '.$code.': '.$msg,array('status'=>$code,'body'=>$data));
+            $msg=self::api_error_message($data,$code);
+            $path=(string)wp_parse_url($url,PHP_URL_PATH);
+            return new WP_Error(
+                'mmc_kommo_api',
+                'Kommo API '.$code.' ['.$path.']: '.$msg,
+                array('status'=>$code,'endpoint'=>$path)
+            );
         }
         return is_array($data)?$data:array();
+    }
+
+    private static function api_error_message( $data, $code ) {
+        if ( ! is_array( $data ) ) {
+            return 'HTTP ' . (int) $code . ' hata yanıtı.';
+        }
+
+        $parts = array();
+        foreach ( array( 'title', 'detail', 'error', 'message' ) as $key ) {
+            if ( isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
+                $parts[] = sanitize_text_field( (string) $data[ $key ] );
+            }
+        }
+
+        foreach ( array( 'validation-errors', 'validation_errors', 'errors' ) as $key ) {
+            if ( empty( $data[ $key ] ) || ! is_array( $data[ $key ] ) ) {
+                continue;
+            }
+            $flat = self::flatten_api_error_values( $data[ $key ] );
+            $parts = array_merge( $parts, array_slice( $flat, 0, 8 ) );
+        }
+
+        $parts = array_values( array_unique( array_filter( $parts ) ) );
+        if ( ! $parts ) {
+            return 'Kommo API hata yanıtı.';
+        }
+        return substr( implode( ' | ', $parts ), 0, 800 );
+    }
+
+    private static function flatten_api_error_values( $value ) {
+        $out = array();
+        $walk = function( $node ) use ( &$walk, &$out ) {
+            if ( count( $out ) >= 12 ) {
+                return;
+            }
+            if ( is_scalar( $node ) ) {
+                $text = sanitize_text_field( (string) $node );
+                if ( '' !== $text ) {
+                    $out[] = $text;
+                }
+                return;
+            }
+            if ( is_array( $node ) ) {
+                foreach ( $node as $child ) {
+                    $walk( $child );
+                    if ( count( $out ) >= 12 ) {
+                        break;
+                    }
+                }
+            }
+        };
+        $walk( $value );
+        return $out;
     }
 
     public static function configured() { return self::subdomain() && self::token(); }
