@@ -2,11 +2,12 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.8 unified admin navigation.
+ * MMC v1.3.9 compact unified admin navigation.
  *
- * This class changes navigation only:
- * - Existing MDG and Okul Tanıtım pages keep their original slugs/callbacks.
- * - WooCommerce, Tickera, PayTR, QR and legacy database writes are untouched.
+ * Navigation only:
+ * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
+ * - Detail pages are removed only from the visible submenu and remain directly accessible.
+ * - WooCommerce, Tickera, PayTR, QR, MDG and school data are untouched.
  * - If MMC is disabled, legacy top-level menus return automatically.
  */
 class MMC_Navigation_Admin {
@@ -14,12 +15,12 @@ class MMC_Navigation_Admin {
     private $school_items = array();
 
     public function __construct() {
-        add_action( 'admin_menu', array( $this, 'merge_legacy_menus' ), 99999 );
-        add_filter( 'parent_file', array( $this, 'parent_file' ), 99999 );
-        add_filter( 'submenu_file', array( $this, 'submenu_file' ), 99999 );
+        add_action( 'admin_menu', array( $this, 'compact_navigation' ), 999999 );
+        add_filter( 'parent_file', array( $this, 'parent_file' ), 999999 );
+        add_filter( 'submenu_file', array( $this, 'submenu_file' ), 999999 );
     }
 
-    public function merge_legacy_menus() {
+    public function compact_navigation() {
         if ( ! current_user_can( 'mmc_view_dashboard' ) ) {
             return;
         }
@@ -31,29 +32,176 @@ class MMC_Navigation_Admin {
 
         if ( $this->mdg_items ) {
             remove_menu_page( 'mdg-dashboard' );
+        }
+        if ( $this->school_items ) {
+            remove_menu_page( 'mad-okul' );
+        }
+
+        $this->register_hubs();
+        $this->hide_detail_pages();
+        $this->rename_visible_pages();
+        $this->reorder_visible_pages();
+    }
+
+    private function register_hubs() {
+        add_submenu_page(
+            'mmc-dashboard',
+            'Hazırlık & Bölge',
+            'Hazırlık & Bölge',
+            'mmc_view_programs',
+            'mmc-prep-region-hub',
+            array( $this, 'prep_region_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
+            'Salon & Etkinlik',
+            'Salon & Etkinlik',
+            'mmc_view_programs',
+            'mmc-venue-event-hub',
+            array( $this, 'venue_event_hub' )
+        );
+
+        if ( $this->mdg_items ) {
             add_submenu_page(
                 'mmc-dashboard',
                 'Bilet Yönetimi',
                 'Bilet Yönetimi',
                 'manage_woocommerce',
                 'mmc-mdg-hub',
-                array( $this, 'mdg_hub' ),
-                55
+                array( $this, 'mdg_hub' )
             );
         }
 
-        if ( $this->school_items ) {
-            remove_menu_page( 'mad-okul' );
-            add_submenu_page(
-                'mmc-dashboard',
-                'Okul Tanıtım',
-                'Okul Tanıtım',
-                'manage_options',
-                'mmc-school-hub',
-                array( $this, 'school_hub' ),
-                75
-            );
+        add_submenu_page(
+            'mmc-dashboard',
+            'Satış & Müşteri',
+            'Satış & Müşteri',
+            'mmc_view_programs',
+            'mmc-sales-customer-hub',
+            array( $this, 'sales_customer_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
+            'Okul Tanıtım & Saha',
+            'Okul Tanıtım & Saha',
+            'mmc_manage_field',
+            'mmc-school-hub',
+            array( $this, 'school_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
+            'Sistem & Yetkiler',
+            'Sistem & Yetkiler',
+            'mmc_manage_settings',
+            'mmc-system-hub',
+            array( $this, 'system_hub' )
+        );
+    }
+
+    private function hide_detail_pages() {
+        $hidden = array(
+            'mmc-preparation',
+            'mmc-region-data',
+            'mmc-population-data',
+            'mmc-workflow',
+            'mmc-venues',
+            'mmc-venue-flow',
+            'mmc-events',
+            'mmc-sales-prep',
+            'mmc-sales',
+            'mmc-field',
+            'mmc-roles',
+            'mmc-system',
+        );
+
+        foreach ( $hidden as $slug ) {
+            remove_submenu_page( 'mmc-dashboard', $slug );
         }
+    }
+
+    private function rename_visible_pages() {
+        global $submenu;
+        if ( empty( $submenu['mmc-dashboard'] ) || ! is_array( $submenu['mmc-dashboard'] ) ) {
+            return;
+        }
+
+        $labels = array(
+            'mmc-dashboard'      => 'Kontrol Paneli',
+            'mmc-programs'       => 'Programlar',
+            'mmc-marketing'      => 'Pazarlama',
+            'mmc-kommo'          => 'Kommo & AI',
+            'mmc-operations'     => 'Operasyon',
+            'mmc-finance'        => 'Finans',
+            'mmc-night-reports'  => 'Raporlar',
+            'mmc-integrity'      => 'Program Bütünlüğü',
+        );
+
+        foreach ( $submenu['mmc-dashboard'] as &$item ) {
+            if ( ! is_array( $item ) || empty( $item[2] ) ) {
+                continue;
+            }
+            $slug = (string) $item[2];
+            if ( isset( $labels[ $slug ] ) ) {
+                $item[0] = $labels[ $slug ];
+            }
+        }
+        unset( $item );
+    }
+
+    private function reorder_visible_pages() {
+        global $submenu;
+        if ( empty( $submenu['mmc-dashboard'] ) || ! is_array( $submenu['mmc-dashboard'] ) ) {
+            return;
+        }
+
+        $desired = array(
+            'mmc-dashboard',
+            'mmc-programs',
+            'mmc-prep-region-hub',
+            'mmc-venue-event-hub',
+            'mmc-mdg-hub',
+            'mmc-sales-customer-hub',
+            'mmc-school-hub',
+            'mmc-marketing',
+            'mmc-kommo',
+            'mmc-operations',
+            'mmc-finance',
+            'mmc-night-reports',
+            'mmc-integrity',
+            'mmc-system-hub',
+        );
+
+        $by_slug = array();
+        $unknown = array();
+
+        foreach ( $submenu['mmc-dashboard'] as $item ) {
+            if ( ! is_array( $item ) || empty( $item[2] ) ) {
+                continue;
+            }
+            $slug = (string) $item[2];
+            if ( in_array( $slug, $desired, true ) ) {
+                $by_slug[ $slug ] = $item;
+            } else {
+                $unknown[] = $item;
+            }
+        }
+
+        $ordered = array();
+        foreach ( $desired as $slug ) {
+            if ( isset( $by_slug[ $slug ] ) ) {
+                $ordered[] = $by_slug[ $slug ];
+            }
+        }
+
+        // Preserve future/third-party MMC modules instead of silently making them unreachable.
+        foreach ( $unknown as $item ) {
+            $ordered[] = $item;
+        }
+
+        $submenu['mmc-dashboard'] = $ordered;
     }
 
     private function capture_items( $items ) {
@@ -81,57 +229,133 @@ class MMC_Navigation_Admin {
         return $captured;
     }
 
+    public function prep_region_hub() {
+        $this->guard( 'mmc_view_programs' );
+        $this->render_group_hub(
+            'Hazırlık & Bölge',
+            'Program hazırlığı, tanıtım havzası, bölgesel veri ve iş akışı tek merkezde.',
+            array(
+                $this->card( 'Program Hazırlığı', 'mmc-preparation', 'mmc_view_programs', 'Tanıtım havzası, hedef ilçe ve program hazırlık kontrolü.' ),
+                $this->card( 'Bölge Veri Ambarı', 'mmc-region-data', 'mmc_manage_region_data', 'Nüfus, okul ve öğrenci kaynaklarının program analizine bağlandığı alan.' ),
+                $this->card( 'Nüfus ve Eğitim Verisi', 'mmc-population-data', 'manage_options', 'İl ve ilçe bazlı nüfus/eğitim veri kaynağı.' ),
+                $this->card( 'İş Akışı', 'mmc-workflow', 'mmc_view_programs', 'Programın hazırlıktan kapanışa görev ve aşama akışı.' )
+            )
+        );
+    }
+
+    public function venue_event_hub() {
+        $this->guard( 'mmc_view_programs' );
+        $this->render_group_hub(
+            'Salon & Etkinlik',
+            'Salon ana kayıtları, tahsis, etkinlik, seans ve satış hazırlığı aynı program kimliği altında.',
+            array(
+                $this->card( 'Salonlar', 'mmc-venues', 'mmc_view_programs', 'Tekil salon ana kayıtları ve konum bilgileri.' ),
+                $this->card( 'Salon & Tahsis', 'mmc-venue-flow', 'mmc_view_programs', 'Aktif program için salon seçimi ve tahsis durumu.' ),
+                $this->card( 'Etkinlik & Seans', 'mmc-events', 'mmc_view_programs', 'MMC etkinliği, tarih ve bağımsız seans kayıtları.' ),
+                $this->card( 'Satış Hazırlığı', 'mmc-sales-prep', 'mmc_view_programs', 'WooCommerce/Tickera satış nesneleri oluşturulmadan önce hazırlık kontrolü.' )
+            )
+        );
+    }
+
     public function mdg_hub() {
-        if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
+        $this->guard( 'manage_woocommerce' );
+
+        $items = array();
+        foreach ( $this->mdg_items as $item ) {
+            if ( in_array( $item['slug'], array( 'mdg-reports', 'mdg-customers' ), true ) ) {
+                continue;
+            }
+            $items[] = $item;
         }
 
-        $this->render_hub(
+        $this->render_legacy_hub(
             'Bilet Yönetimi',
-            'Eski Madagaskar Bilet Yönetimi motoru aynı slug, callback ve veri zinciriyle çalışmaya devam eder. MMC yalnızca yönetim navigasyonunu tek menü altında toplar.',
-            $this->mdg_items,
-            array(
-                array(
-                    'title' => 'MMC Satış & Doluluk',
-                    'url'   => $this->mmc_url( 'mmc-sales' ),
-                    'note'  => 'MMC Program ID bazlı satış görünümü ve MDG mutabakatı.',
-                ),
-                array(
-                    'title' => 'Program Bütünlüğü',
-                    'url'   => $this->mmc_url( 'mmc-integrity' ),
-                    'note'  => 'MMC ↔ MDG ↔ WooCommerce ↔ Tickera bütünlük kontrolü.',
-                ),
-            ),
+            'Madagaskar Bilet Yönetimi motoru aynı slug, callback ve veri zinciriyle çalışmaya devam eder. Bu merkez bilet motorunun üretim araçlarını toplar.',
+            $items,
             'mdg'
         );
     }
 
-    public function school_hub() {
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
+    public function sales_customer_hub() {
+        $this->guard( 'mmc_view_programs' );
+
+        $cards = array(
+            $this->card( 'Satış & Doluluk', 'mmc-sales', 'mmc_view_programs', 'MMC Program ID bazlı sipariş, bilet, kişi, ciro ve doluluk görünümü.' ),
+        );
+
+        foreach ( $this->mdg_items as $item ) {
+            if ( ! in_array( $item['slug'], array( 'mdg-reports', 'mdg-customers' ), true ) ) {
+                continue;
+            }
+            $cards[] = array(
+                'title'      => $item['title'],
+                'slug'       => $item['slug'],
+                'capability' => $item['capability'],
+                'note'       => $this->item_note( $item['slug'], 'mdg' ),
+                'legacy'     => true,
+            );
         }
 
-        $this->render_hub(
-            'Okul Tanıtım',
-            'Okul Tanıtım eklentisinin okul, MEBBİS, rota, program ve görev ekranları aynı veri tablolarını kullanmaya devam eder. MMC yalnızca bunları tek yönetim menüsünde toplar.',
-            $this->school_items,
-            array(
-                array(
-                    'title' => 'MMC Okul / Saha',
-                    'url'   => $this->mmc_url( 'mmc-field' ),
-                    'note'  => 'MMC Program ID bazlı hedef okul ve saha yönetimi.',
-                ),
-                array(
-                    'title' => 'Program Bütünlüğü',
-                    'url'   => $this->mmc_url( 'mmc-integrity' ),
-                    'note'  => 'MMC Program ID ↔ Okul Tanıtım legacy program köprüsü.',
-                ),
-            ),
-            'school'
+        $this->render_group_hub(
+            'Satış & Müşteri',
+            'MMC satış ledgerı ile eski MDG order_map raporları mutabakat amacıyla yan yana kullanılır; aynı satış ikinci kez gelir sayılmaz.',
+            $cards
         );
     }
 
-    private function render_hub( $title, $description, $items, $mmc_links, $type ) {
+    public function school_hub() {
+        $this->guard( 'mmc_manage_field' );
+
+        $cards = array(
+            $this->card( 'MMC Okul / Saha', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef okul, saha planı ve ziyaret takibi.' ),
+        );
+
+        foreach ( $this->school_items as $item ) {
+            $cards[] = array(
+                'title'      => $item['title'],
+                'slug'       => $item['slug'],
+                'capability' => $item['capability'],
+                'note'       => $this->item_note( $item['slug'], 'school' ),
+                'legacy'     => true,
+            );
+        }
+
+        $this->render_group_hub(
+            'Okul Tanıtım & Saha',
+            'MMC saha hedefleri ile mevcut Okul Tanıtım, MEBBİS, rota ve görev araçları tek merkezde. Legacy okul verileri taşınmaz veya yeniden yazılmaz.',
+            $cards
+        );
+    }
+
+    public function system_hub() {
+        $this->guard( 'mmc_manage_settings' );
+        $this->render_group_hub(
+            'Sistem & Yetkiler',
+            'Rol, yetki, kurulum ve sağlık kontrolleri.',
+            array(
+                $this->card( 'Yetkiler', 'mmc-roles', 'mmc_manage_settings', 'MMC rol ve yetki yönetimi.' ),
+                $this->card( 'Kurulum & Sağlık', 'mmc-system', 'mmc_manage_settings', 'Eklenti, tablo, entegrasyon ve sistem sağlık kontrolleri.' )
+            )
+        );
+    }
+
+    private function render_legacy_hub( $title, $description, $items, $type ) {
+        $cards = array();
+
+        foreach ( $items as $item ) {
+            $cards[] = array(
+                'title'      => $item['title'],
+                'slug'       => $item['slug'],
+                'capability' => $item['capability'],
+                'note'       => $this->item_note( $item['slug'], $type ),
+                'legacy'     => true,
+            );
+        }
+
+        $this->render_group_hub( $title, $description, $cards );
+    }
+
+    private function render_group_hub( $title, $description, $cards ) {
         $program_id = class_exists( 'MMC_Integrity_Service' ) ? MMC_Integrity_Service::active_program_id() : 0;
         $program = $program_id && class_exists( 'MMC_Program_Service' ) ? MMC_Program_Service::get_program( $program_id ) : null;
         ?>
@@ -150,43 +374,43 @@ class MMC_Navigation_Admin {
                 </div>
             <?php endif; ?>
 
-            <div class="notice notice-info inline">
-                <p><strong>Güvenli birleşim modu:</strong> Bu ekran eski modüllerin veri yapısını veya satış motorunu taşımaz. Yalnızca WordPress yönetim menüsünü tek çatı altında toplar. MMC devre dışı bırakılırsa eski üst menüler otomatik olarak geri gelir.</p>
-            </div>
-
             <div class="mmc-panel">
-                <h2>MMC Bağlantıları</h2>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-                    <?php foreach ( $mmc_links as $link ) : ?>
-                        <a href="<?php echo esc_url( $link['url'] ); ?>" style="display:block;text-decoration:none;border:1px solid #dcdcde;border-radius:8px;padding:14px;background:#fff">
-                            <strong style="display:block;margin-bottom:5px"><?php echo esc_html( $link['title'] ); ?></strong>
-                            <span style="color:#646970"><?php echo esc_html( $link['note'] ); ?></span>
-                        </a>
-                    <?php endforeach; ?>
+                <?php
+                $shown = 0;
+                foreach ( $cards as $card ) :
+                    if ( empty( $card['slug'] ) || empty( $card['capability'] ) || ! current_user_can( $card['capability'] ) ) {
+                        continue;
+                    }
+                    $shown++;
+                    $url = ! empty( $card['legacy'] )
+                        ? $this->legacy_url( $card['slug'], $program_id )
+                        : $this->mmc_url( $card['slug'] );
+                ?>
+                    <a href="<?php echo esc_url( $url ); ?>" style="display:block;text-decoration:none;border:1px solid #dcdcde;border-radius:8px;padding:14px;background:#fff">
+                        <strong style="display:block;margin-bottom:5px"><?php echo esc_html( $card['title'] ); ?></strong>
+                        <span style="color:#646970"><?php echo esc_html( $card['note'] ); ?></span>
+                    </a>
+                <?php endforeach; ?>
                 </div>
+                <?php if ( ! $shown ) : ?><p>Bu bölümde mevcut kullanıcı için erişilebilir araç bulunamadı.</p><?php endif; ?>
             </div>
 
-            <div class="mmc-panel">
-                <h2><?php echo 'mdg' === $type ? 'Madagaskar Bilet Yönetimi Ekranları' : 'Okul Tanıtım Ekranları'; ?></h2>
-                <?php if ( ! $items ) : ?>
-                    <p>Bağlı eski modül menüsü bulunamadı.</p>
-                <?php else : ?>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-                    <?php foreach ( $items as $item ) :
-                        if ( ! current_user_can( $item['capability'] ) ) { continue; }
-                        $url = $this->legacy_url( $item['slug'], $program_id );
-                        $note = $this->item_note( $item['slug'], $type );
-                    ?>
-                        <a href="<?php echo esc_url( $url ); ?>" style="display:block;text-decoration:none;border:1px solid #dcdcde;border-radius:8px;padding:14px;background:#fff">
-                            <strong style="display:block;margin-bottom:5px"><?php echo esc_html( $item['title'] ); ?></strong>
-                            <span style="color:#646970"><?php echo esc_html( $note ); ?></span>
-                        </a>
-                    <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+            <div class="notice notice-info inline">
+                <p><strong>Güvenli menü modu:</strong> Bu merkez yalnızca navigasyonu sadeleştirir. Kaynak sayfaların slug, callback, form action ve veri tabloları değiştirilmez.</p>
             </div>
         </div>
         <?php
+    }
+
+    private function card( $title, $slug, $capability, $note ) {
+        return array(
+            'title'      => $title,
+            'slug'       => $slug,
+            'capability' => $capability,
+            'note'       => $note,
+            'legacy'     => false,
+        );
     }
 
     private function legacy_url( $slug, $program_id = 0 ) {
@@ -249,8 +473,58 @@ class MMC_Navigation_Admin {
             : 'Okul Tanıtım eklentisi tarafından sağlanan mevcut ekran.';
     }
 
+    private function guard( $capability ) {
+        if ( ! current_user_can( $capability ) ) {
+            wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
+        }
+    }
+
     private function current_page() {
         return sanitize_key( wp_unslash( $_GET['page'] ?? '' ) );
+    }
+
+    private function group_for_page( $page ) {
+        $groups = array(
+            'mmc-preparation'     => 'mmc-prep-region-hub',
+            'mmc-region-data'     => 'mmc-prep-region-hub',
+            'mmc-population-data' => 'mmc-prep-region-hub',
+            'mmc-workflow'        => 'mmc-prep-region-hub',
+            'mmc-venues'          => 'mmc-venue-event-hub',
+            'mmc-venue-flow'      => 'mmc-venue-event-hub',
+            'mmc-events'          => 'mmc-venue-event-hub',
+            'mmc-sales-prep'      => 'mmc-venue-event-hub',
+            'mmc-sales'           => 'mmc-sales-customer-hub',
+            'mmc-field'           => 'mmc-school-hub',
+            'mmc-roles'           => 'mmc-system-hub',
+            'mmc-system'          => 'mmc-system-hub',
+        );
+
+        if ( isset( $groups[ $page ] ) ) {
+            return $groups[ $page ];
+        }
+
+        if ( in_array( $page, array(
+            'mmc-prep-region-hub',
+            'mmc-venue-event-hub',
+            'mmc-mdg-hub',
+            'mmc-sales-customer-hub',
+            'mmc-school-hub',
+            'mmc-system-hub',
+        ), true ) ) {
+            return $page;
+        }
+
+        if ( 0 === strpos( $page, 'mdg-' ) ) {
+            return in_array( $page, array( 'mdg-reports', 'mdg-customers' ), true )
+                ? 'mmc-sales-customer-hub'
+                : 'mmc-mdg-hub';
+        }
+
+        if ( 0 === strpos( $page, 'mad-okul' ) && 'mad-okul-my-tasks' !== $page ) {
+            return 'mmc-school-hub';
+        }
+
+        return '';
     }
 
     public function parent_file( $parent_file ) {
@@ -258,16 +532,8 @@ class MMC_Navigation_Admin {
             return $parent_file;
         }
 
-        $page = $this->current_page();
-        if ( 0 === strpos( $page, 'mdg-' ) ) {
-            return 'mmc-dashboard';
-        }
-
-        if ( 0 === strpos( $page, 'mad-okul' ) && 'mad-okul-my-tasks' !== $page ) {
-            return 'mmc-dashboard';
-        }
-
-        return $parent_file;
+        $group = $this->group_for_page( $this->current_page() );
+        return $group ? 'mmc-dashboard' : $parent_file;
     }
 
     public function submenu_file( $submenu_file ) {
@@ -275,15 +541,7 @@ class MMC_Navigation_Admin {
             return $submenu_file;
         }
 
-        $page = $this->current_page();
-        if ( 0 === strpos( $page, 'mdg-' ) ) {
-            return 'mmc-mdg-hub';
-        }
-
-        if ( 0 === strpos( $page, 'mad-okul' ) && 'mad-okul-my-tasks' !== $page ) {
-            return 'mmc-school-hub';
-        }
-
-        return $submenu_file;
+        $group = $this->group_for_page( $this->current_page() );
+        return $group ?: $submenu_file;
     }
 }
