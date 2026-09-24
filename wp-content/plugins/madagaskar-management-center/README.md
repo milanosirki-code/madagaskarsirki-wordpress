@@ -1,3 +1,41 @@
+# Madagaskar Management Center v1.3.14
+
+Bu sürüm **mevcut çalışan Kommo entegrasyonunu MMC'ye güvenli biçimde köprüler ve canlı API/pipeline teşhisini sağlık merkezine taşır.**
+
+## v1.3.14 — Kommo Legacy Bridge & Connection Diagnostics
+
+- MMC Kommo servisi önce `MMC_KOMMO_TOKEN` / `MMC_KOMMO_SUBDOMAIN` kullanır.
+- Geçiş döneminde bu değerler yoksa mevcut `MS_KOMMO_TOKEN` ve `MS_KOMMO_BASE_URL` sabitlerinden salt-okunur fallback yapabilir.
+- Legacy token değeri hiçbir MMC ekranında gösterilmez, veritabanına kopyalanmaz veya loglanmaz.
+- Canlı bağlantı testi Kommo `/api/v4/account` endpoint'ine salt-okunur GET çağrısı yapar.
+- Bağlantı sonucu 10 dakika cache edilir; sağlık ekranı her açılışta gereksiz API çağrısı yapmaz.
+- Sağlık merkezinde artık ayrı kontroller vardır:
+  - **Kommo API** — canlı bağlantı ve hesap doğrulaması,
+  - **Kommo Secret Kaynağı** — MMC secret mı, legacy secret mı,
+  - **Kommo Program Pipeline** — explicit MMC pipeline doğrulaması.
+- Eski `MS_KOMMO_PIPELINE_ID` yalnız legacy bilgi/adayı olarak gösterilir; otomatik MMC Program Pipeline yapılmaz.
+- Explicit Program Pipeline ID tanımlıysa Kommo API'den pipeline ve Status ID üyeliği doğrulanır.
+- Kommo ayar ekranında:
+  - API bağlantı durumu,
+  - subdomain ve kaynağı,
+  - token kaynağı (değer gizli),
+  - Program Pipeline,
+  - legacy pipeline adayı,
+  - güvenli wp-config geçiş şablonu
+  gösterilir.
+- Manuel **Kommo Bağlantısını Yeniden Test Et** butonu gerçek canlı testi zorlar.
+- Veritabanı şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Token değeri ekranda, logda, URL'de veya WordPress option alanında gösterilmez/saklanmaz.
+- Eski tokenı MMC'ye kopyalamak yerine Kommo'dan yeni/yenilenmiş uzun ömürlü token üretip `wp-config.php` içinde `MMC_KOMMO_TOKEN` olarak taşımak önerilir.
+- WooCommerce sipariş pipeline'ı ile MMC program takip pipeline'ı otomatik birleştirilmez.
+- Kommo API testleri salt-okunurdur; lead/pipeline kaydı oluşturmaz veya değiştirmez.
+- WooCommerce, Tickera, PayTR, QR, MDG ve Okul Tanıtım verilerine yazma yoktur.
+
+---
+
 # Madagaskar Management Center v1.3.13
 
 Bu sürüm **Code Snippets envanterini salt-okunur analiz eder ve gerçek riskleri genel “snippet var” uyarısından ayırır.**
