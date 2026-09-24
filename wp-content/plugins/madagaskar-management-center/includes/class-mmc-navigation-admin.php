@@ -18,6 +18,7 @@ class MMC_Navigation_Admin {
         add_action( 'admin_menu', array( $this, 'compact_navigation' ), 999999 );
         add_filter( 'parent_file', array( $this, 'parent_file' ), 999999 );
         add_filter( 'submenu_file', array( $this, 'submenu_file' ), 999999 );
+        add_action( 'admin_head', array( $this, 'hub_admin_css' ), 999999 );
     }
 
     public function compact_navigation() {
@@ -570,6 +571,29 @@ class MMC_Navigation_Admin {
             : 'Okul Tanıtım eklentisi tarafından sağlanan mevcut ekran.';
     }
 
+    public function hub_admin_css() {
+        $page = $this->current_page();
+        $hubs = array(
+            'mmc-prep-region-hub',
+            'mmc-venue-event-hub',
+            'mmc-mdg-hub',
+            'mmc-sales-customer-hub',
+            'mmc-school-hub',
+            'mmc-marketing-hub',
+            'mmc-kommo-hub',
+            'mmc-finance-hub',
+            'mmc-system-hub',
+        );
+
+        if ( ! in_array( $page, $hubs, true ) ) {
+            return;
+        }
+
+        // Hub pages are navigation screens. Hide only routine success/update notices
+        // to keep mobile navigation compact; warnings and errors remain visible.
+        echo '<style>.wrap + .notice-success,.wrap + .updated,#wpbody-content > .notice-success,#wpbody-content > .updated{display:none!important}</style>';
+    }
+
     private function guard( $capability ) {
         if ( ! current_user_can( $capability ) ) {
             wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
@@ -617,22 +641,29 @@ class MMC_Navigation_Admin {
             return $page;
         }
 
-        if ( 0 === strpos( $page, 'mdg-' ) ) {
-            foreach ( $this->mdg_items as $item ) {
-                if ( $item['slug'] !== $page ) {
-                    continue;
-                }
-                $destination = $this->mdg_destination( $item );
-                $map = array(
-                    'sales'     => 'mmc-sales-customer-hub',
-                    'marketing' => 'mmc-marketing-hub',
-                    'kommo'     => 'mmc-kommo-hub',
-                    'finance'   => 'mmc-finance-hub',
-                    'system'    => 'mmc-system-hub',
-                    'venue'     => 'mmc-venue-event-hub',
-                );
-                return $map[ $destination ] ?? 'mmc-mdg-hub';
+        foreach ( $this->mdg_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
             }
+            $destination = $this->mdg_destination( $item );
+            $map = array(
+                'sales'     => 'mmc-sales-customer-hub',
+                'marketing' => 'mmc-marketing-hub',
+                'kommo'     => 'mmc-kommo-hub',
+                'finance'   => 'mmc-finance-hub',
+                'system'    => 'mmc-system-hub',
+                'venue'     => 'mmc-venue-event-hub',
+            );
+            return $map[ $destination ] ?? 'mmc-mdg-hub';
+        }
+
+        foreach ( $this->school_items as $item ) {
+            if ( $item['slug'] === $page && 'mad-okul-my-tasks' !== $page ) {
+                return 'mmc-school-hub';
+            }
+        }
+
+        if ( 0 === strpos( $page, 'mdg-' ) ) {
             return 'mmc-mdg-hub';
         }
 
