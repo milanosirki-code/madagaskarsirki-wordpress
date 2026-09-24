@@ -40,6 +40,7 @@ class MMC_Kommo_Admin {
         $queue=MMC_Kommo_Service::queue_rows($program->id,12);
         $keywords=MMC_Kommo_Service::search_keywords($program->id);
         $source=MMC_Kommo_Service::build_source_text($program->id);
+        $bridge=MMC_Kommo_Service::status_bridge_preview($program->id);
         ?>
         <div class="mmc-panel mmc-hero-panel"><div><small><?php echo esc_html($program->program_code); ?></small><h2><?php echo esc_html($program->province_name.' / '.($program->district_name?:'Genel')); ?></h2></div><div><strong>Kommo:</strong> <?php echo MMC_Kommo_Service::configured()?'🟢 API yapılandırıldı':'🟡 API yapılandırma bekliyor'; ?></div></div>
 
@@ -49,6 +50,36 @@ class MMC_Kommo_Admin {
             <div class="mmc-card"><span>Kaynak Hash</span><strong><?php echo esc_html(substr($profile->source_hash,0,10)); ?></strong><small>Program verisi değişince değişir</small></div>
             <div class="mmc-card"><span>Son Senkron</span><strong><?php echo esc_html($profile->last_synced_at?:'-'); ?></strong></div>
         </div>
+
+        <?php if(is_wp_error($bridge)): ?>
+            <div class="notice notice-warning inline"><p><strong>Kommo Durum Köprüsü:</strong> <?php echo esc_html($bridge->get_error_message()); ?></p></div>
+        <?php else:
+            $action_labels=array(
+                'create'=>'Yeni kart hedef aşamada oluşturulacak',
+                'advance'=>'İleri taşı',
+                'stay'=>'Aynı aşamada bırak',
+                'preserve_ahead'=>'Geri alma engellendi',
+                'pipeline_mismatch'=>'Pipeline uyuşmazlığı — otomatik taşıma yok',
+                'unknown_current_status'=>'Mevcut status bilinmiyor — otomatik taşıma yok',
+                'non_mmc_status'=>'MMC dışı status — otomatik taşıma yok',
+                'manual_cancel'=>'İptal — manuel yönetim'
+            );
+        ?>
+            <div class="mmc-panel">
+                <h2>Kommo Program Durum Köprüsü</h2>
+                <div class="mmc-cards">
+                    <div class="mmc-card"><span>MMC Program Durumu</span><strong><?php echo esc_html($bridge['program_status_name']?:$bridge['program_status']); ?></strong><small><?php echo esc_html($bridge['program_status']); ?></small></div>
+                    <div class="mmc-card"><span>Kommo Mevcut Aşama</span><strong><?php echo esc_html($bridge['current_stage']?:($bridge['lead_id']?'Bilinmiyor':'Kart yok')); ?></strong><small><?php echo !empty($bridge['current_status_id'])?'#'.(int)$bridge['current_status_id']:'-'; ?></small></div>
+                    <div class="mmc-card"><span>Hedef Aşama</span><strong><?php echo esc_html($bridge['desired_stage']?:'Manuel'); ?></strong><small><?php echo !empty($bridge['desired_status_id'])?'#'.(int)$bridge['desired_status_id']:'-'; ?></small></div>
+                    <div class="mmc-card"><span>Köprü Kararı</span><strong><?php echo esc_html($action_labels[$bridge['action']]??$bridge['action']); ?></strong><small><?php echo esc_html($bridge['reason']); ?></small></div>
+                </div>
+                <?php if('advance'===$bridge['action']): ?>
+                    <div class="notice notice-info inline"><p>Bir sonraki Kommo senkronunda kart yalnız ileri yönde <strong><?php echo esc_html($bridge['desired_stage']); ?></strong> aşamasına taşınacak.</p></div>
+                <?php elseif('preserve_ahead'===$bridge['action']): ?>
+                    <div class="notice notice-success inline"><p>Kommo kartı MMC durumundan ileride. Normal senkron kartı geriye çekmeyecek.</p></div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="mmc-grid-2">
             <div class="mmc-panel"><h2>1. Kommo AI Kaynak URL'si</h2><p>Kommo AI bu sabit adresi kaynak olarak kullanır. İçerik her zaman MMC'deki güncel Program Dosyasından üretilir.</p><p><input style="width:100%" readonly value="<?php echo esc_attr($profile->source_url); ?>"></p><p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url($profile->source_url); ?>">Kaynağı Aç</a></p><?php if('refresh_needed'===$profile->ai_source_status): ?><div class="notice notice-warning inline"><p>MMC verisi Kommo'ya son taratılan sürümden farklı. Kommo → Settings → Kommo AI içinde bu URL kaynağını <strong>yeniden tara/güncelle</strong>; sonra aşağıdaki butonla doğrulayın.</p></div><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_mark_refreshed"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_kommo_mark_refreshed_'.$program->id,'mmc_nonce'); ?><button class="button">Kommo'da Yeniden Tarandı Olarak İşaretle</button></form><?php endif; ?></div>
