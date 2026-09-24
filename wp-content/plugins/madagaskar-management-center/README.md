@@ -1,3 +1,20 @@
+# Madagaskar Management Center v1.3.26
+
+Bu sürüm **salon bağlama işlemini Satış Hazırlığı ekranında tek adıma indirir**.
+
+## v1.3.26 — Hızlı Kesin Salon Bağlantısı
+
+- “Kesin salon bağlantısı eksik.” uyarısı görüldüğünde aynı ekranda **Kesin Salonu Hemen Bağla** alanı açılır.
+- Salon ana kaynağı yine **Madagaskar → Salonlar** ekranıdır; MMC ikinci salon ana kaydı oluşturmaz.
+- Liste yalnız programın ili içindeki salonları gösterir.
+- Aynı ilçedeki salonlar **Önerilen** grubunda en üstte gösterilir.
+- Seçilen salon programın salon adaylarına eklenir (zaten varsa mevcut kayıt kullanılır), kesin salon yapılır ve mevcut MMC etkinliğinin program_venue_id alanına bağlanır.
+- Hızlı bağlantı **program yaşam döngüsü durumunu geriye çekmez**. Örneğin “Satışa Hazırlanıyor” programı “Salon Kesinleşti” aşamasına dönmez.
+- Satışa açık ürün, WooCommerce siparişi, Tickera bileti/QR, PayTR ve MDG satış verisi değiştirilmez.
+- DB şeması değişmez; MMC_DB_VERSION **1.3.7** olarak kalır.
+
+---
+
 # Madagaskar Management Center v1.3.25
 
 Bu sürüm **tek Madagaskar yönetim menüsü** hedefini tamamlar. Mevcut MMC, MDG Bilet Yönetimi, Madagaskar V4 ve Okul Tanıtım sayfalarının callback/slug yapısı korunur; yalnız WordPress yönetim navigasyonu tek üst menü altında konsolide edilir.
