@@ -1,3 +1,36 @@
+# Madagaskar Management Center v1.3.10
+
+Bu sürüm **eski Madagaskar Bilet Yönetimi modüllerini görevlerine göre doğru MMC merkezlerine otomatik dağıtır** ve merkez ekranlarını mobil kullanım için sadeleştirir.
+
+## v1.3.10 — Akıllı Modül Dağıtımı
+
+- Bilet Yönetimi artık yalnız bilet motorunun çekirdek operasyon ekranlarını tutar.
+- Yinelenen **Genel Bakış** kartları başlık bazında tekilleştirilir.
+- Eski MDG modülleri başlık/slug üzerinden güvenli biçimde sınıflanır:
+  - **Satışlar ve Biletler / Satış Raporları / Müşteri-Bilet / İadeler** → Satış & Müşteri
+  - **Gider ve Kârlılık / Finans** → Finans
+  - **V2 Pazarlama / Marketing** → Pazarlama
+  - **V3 CRM / Kommo** → Kommo & AI
+  - **Entegrasyonlar / Geliştirici Araçları** → Sistem & Yetkiler
+  - Genel legacy **Salonlar / Etkinlikler** → Salon & Etkinlik
+- Salon & Etkinlik merkezinde legacy MDG bakım ekranları açıkça **Legacy** etiketiyle gösterilir.
+- Pazarlama, Kommo & AI ve Finans artık merkez ekranlarıdır; MMC sayfası ile ilgili legacy MDG aracı aynı merkezde açılır.
+- Merkez sayfalarındaki ikinci **Aktif Program** kartı kaldırıldı; üstteki MMC aktif program şeridi tek kaynak olarak kullanılır.
+- Hub sayfalarında yalnız rutin başarı/güncelleme bildirimleri gizlenir; warning/error bildirimleri görünmeye devam eder.
+- Dinamik olarak yakalanan MDG slug'ları `mdg-` ile başlamasa bile doğru MMC merkezinin menü vurgusu korunur.
+- Veritabanı şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- WooCommerce sipariş, ürün ve varyasyonlarına yazma yoktur.
+- Tickera event/bilet/QR verileri değiştirilmez.
+- PayTR akışına dokunulmaz.
+- MDG `events/sessions/ticket_types/order_map` tabloları değiştirilmez.
+- Okul Tanıtım verileri ve görev/rota kayıtları taşınmaz.
+- Tüm legacy sayfaların mevcut slug, callback ve form action yapısı korunur.
+
+---
+
 # Madagaskar Management Center v1.3.9
 
 Bu sürüm **tek Madagaskar menüsünü sadeleştirir ve ayrıntılı ekranları iş merkezleri altında toplar**. İşlevsel sayfalar, slug'lar, callback'ler, form action'lar ve veri tabloları korunur.

@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.9 compact unified admin navigation.
+ * MMC v1.3.10 smart unified admin navigation.
  *
  * Navigation only:
  * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
@@ -18,6 +18,7 @@ class MMC_Navigation_Admin {
         add_action( 'admin_menu', array( $this, 'compact_navigation' ), 999999 );
         add_filter( 'parent_file', array( $this, 'parent_file' ), 999999 );
         add_filter( 'submenu_file', array( $this, 'submenu_file' ), 999999 );
+        add_action( 'admin_head', array( $this, 'hub_admin_css' ), 999999 );
     }
 
     public function compact_navigation() {
@@ -93,6 +94,33 @@ class MMC_Navigation_Admin {
 
         add_submenu_page(
             'mmc-dashboard',
+            'Pazarlama',
+            'Pazarlama',
+            'mmc_manage_marketing',
+            'mmc-marketing-hub',
+            array( $this, 'marketing_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
+            'Kommo & AI',
+            'Kommo & AI',
+            'mmc_manage_kommo',
+            'mmc-kommo-hub',
+            array( $this, 'kommo_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
+            'Finans',
+            'Finans',
+            'mmc_manage_finance',
+            'mmc-finance-hub',
+            array( $this, 'finance_hub' )
+        );
+
+        add_submenu_page(
+            'mmc-dashboard',
             'Sistem & Yetkiler',
             'Sistem & Yetkiler',
             'mmc_manage_settings',
@@ -113,6 +141,9 @@ class MMC_Navigation_Admin {
             'mmc-sales-prep',
             'mmc-sales',
             'mmc-field',
+            'mmc-marketing',
+            'mmc-kommo',
+            'mmc-finance',
             'mmc-roles',
             'mmc-system',
         );
@@ -131,10 +162,7 @@ class MMC_Navigation_Admin {
         $labels = array(
             'mmc-dashboard'      => 'Kontrol Paneli',
             'mmc-programs'       => 'Programlar',
-            'mmc-marketing'      => 'Pazarlama',
-            'mmc-kommo'          => 'Kommo & AI',
             'mmc-operations'     => 'Operasyon',
-            'mmc-finance'        => 'Finans',
             'mmc-night-reports'  => 'Raporlar',
             'mmc-integrity'      => 'Program Bütünlüğü',
         );
@@ -165,10 +193,10 @@ class MMC_Navigation_Admin {
             'mmc-mdg-hub',
             'mmc-sales-customer-hub',
             'mmc-school-hub',
-            'mmc-marketing',
-            'mmc-kommo',
+            'mmc-marketing-hub',
+            'mmc-kommo-hub',
             'mmc-operations',
-            'mmc-finance',
+            'mmc-finance-hub',
             'mmc-night-reports',
             'mmc-integrity',
             'mmc-system-hub',
@@ -245,33 +273,31 @@ class MMC_Navigation_Admin {
 
     public function venue_event_hub() {
         $this->guard( 'mmc_view_programs' );
+        $cards = array(
+            $this->card( 'Salonlar', 'mmc-venues', 'mmc_view_programs', 'Tekil salon ana kayıtları ve konum bilgileri.' ),
+            $this->card( 'Salon & Tahsis', 'mmc-venue-flow', 'mmc_view_programs', 'Aktif program için salon seçimi ve tahsis durumu.' ),
+            $this->card( 'Etkinlik & Seans', 'mmc-events', 'mmc_view_programs', 'MMC etkinliği, tarih ve bağımsız seans kayıtları.' ),
+            $this->card( 'Satış Hazırlığı', 'mmc-sales-prep', 'mmc_view_programs', 'WooCommerce/Tickera satış nesneleri oluşturulmadan önce hazırlık kontrolü.' )
+        );
+        foreach ( $this->mdg_items_for( 'venue' ) as $item ) {
+            $legacy = $this->legacy_card( $item, 'mdg' );
+            $legacy['title'] = 'MDG ' . $legacy['title'] . ' (Legacy)';
+            $cards[] = $legacy;
+        }
         $this->render_group_hub(
             'Salon & Etkinlik',
             'Salon ana kayıtları, tahsis, etkinlik, seans ve satış hazırlığı aynı program kimliği altında.',
-            array(
-                $this->card( 'Salonlar', 'mmc-venues', 'mmc_view_programs', 'Tekil salon ana kayıtları ve konum bilgileri.' ),
-                $this->card( 'Salon & Tahsis', 'mmc-venue-flow', 'mmc_view_programs', 'Aktif program için salon seçimi ve tahsis durumu.' ),
-                $this->card( 'Etkinlik & Seans', 'mmc-events', 'mmc_view_programs', 'MMC etkinliği, tarih ve bağımsız seans kayıtları.' ),
-                $this->card( 'Satış Hazırlığı', 'mmc-sales-prep', 'mmc_view_programs', 'WooCommerce/Tickera satış nesneleri oluşturulmadan önce hazırlık kontrolü.' )
-            )
+            $cards
         );
     }
 
     public function mdg_hub() {
         $this->guard( 'manage_woocommerce' );
 
-        $items = array();
-        foreach ( $this->mdg_items as $item ) {
-            if ( in_array( $item['slug'], array( 'mdg-reports', 'mdg-customers' ), true ) ) {
-                continue;
-            }
-            $items[] = $item;
-        }
-
         $this->render_legacy_hub(
             'Bilet Yönetimi',
-            'Madagaskar Bilet Yönetimi motoru aynı slug, callback ve veri zinciriyle çalışmaya devam eder. Bu merkez bilet motorunun üretim araçlarını toplar.',
-            $items,
+            'Madagaskar Bilet Yönetimi motorunun çekirdek etkinlik ve bilet operasyonları. Satış, finans, pazarlama, CRM ve entegrasyon araçları kendi merkezlerine ayrılmıştır.',
+            $this->mdg_items_for( 'mdg' ),
             'mdg'
         );
     }
@@ -283,17 +309,8 @@ class MMC_Navigation_Admin {
             $this->card( 'Satış & Doluluk', 'mmc-sales', 'mmc_view_programs', 'MMC Program ID bazlı sipariş, bilet, kişi, ciro ve doluluk görünümü.' ),
         );
 
-        foreach ( $this->mdg_items as $item ) {
-            if ( ! in_array( $item['slug'], array( 'mdg-reports', 'mdg-customers' ), true ) ) {
-                continue;
-            }
-            $cards[] = array(
-                'title'      => $item['title'],
-                'slug'       => $item['slug'],
-                'capability' => $item['capability'],
-                'note'       => $this->item_note( $item['slug'], 'mdg' ),
-                'legacy'     => true,
-            );
+        foreach ( $this->mdg_items_for( 'sales' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
         }
 
         $this->render_group_hub(
@@ -327,16 +344,49 @@ class MMC_Navigation_Admin {
         );
     }
 
+    public function marketing_hub() {
+        $this->guard( 'mmc_manage_marketing' );
+        $cards = array(
+            $this->card( 'MMC Pazarlama', 'mmc-marketing', 'mmc_manage_marketing', 'Afiş, sosyal medya ve Meta reklam planı.' ),
+        );
+        foreach ( $this->mdg_items_for( 'marketing' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
+        }
+        $this->render_group_hub( 'Pazarlama', 'MMC pazarlama planı ile eski MDG pazarlama araçları aynı merkezde.', $cards );
+    }
+
+    public function kommo_hub() {
+        $this->guard( 'mmc_manage_kommo' );
+        $cards = array(
+            $this->card( 'MMC Kommo & AI', 'mmc-kommo', 'mmc_manage_kommo', 'MMC Program ID bazlı Kommo ve AI profil yönetimi.' ),
+        );
+        foreach ( $this->mdg_items_for( 'kommo' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
+        }
+        $this->render_group_hub( 'Kommo & AI', 'MMC Kommo profili ile eski MDG CRM araçları aynı merkezde.', $cards );
+    }
+
+    public function finance_hub() {
+        $this->guard( 'mmc_manage_finance' );
+        $cards = array(
+            $this->card( 'MMC Finans & Kapanış', 'mmc-finance', 'mmc_manage_finance', 'Program bazlı gelir, gider, fatura, teminat ve kapanış defteri.' ),
+        );
+        foreach ( $this->mdg_items_for( 'finance' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
+        }
+        $this->render_group_hub( 'Finans', 'MMC finans defteri ile eski MDG gider/kârlılık araçları aynı merkezde.', $cards );
+    }
+
     public function system_hub() {
         $this->guard( 'mmc_manage_settings' );
-        $this->render_group_hub(
-            'Sistem & Yetkiler',
-            'Rol, yetki, kurulum ve sağlık kontrolleri.',
-            array(
-                $this->card( 'Yetkiler', 'mmc-roles', 'mmc_manage_settings', 'MMC rol ve yetki yönetimi.' ),
-                $this->card( 'Kurulum & Sağlık', 'mmc-system', 'mmc_manage_settings', 'Eklenti, tablo, entegrasyon ve sistem sağlık kontrolleri.' )
-            )
+        $cards = array(
+            $this->card( 'Yetkiler', 'mmc-roles', 'mmc_manage_settings', 'MMC rol ve yetki yönetimi.' ),
+            $this->card( 'Kurulum & Sağlık', 'mmc-system', 'mmc_manage_settings', 'Eklenti, tablo, entegrasyon ve sistem sağlık kontrolleri.' ),
         );
+        foreach ( $this->mdg_items_for( 'system' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
+        }
+        $this->render_group_hub( 'Sistem & Yetkiler', 'Rol, yetki, kurulum, sağlık, entegrasyon ve geliştirici araçları.', $cards );
     }
 
     private function render_legacy_hub( $title, $description, $items, $type ) {
@@ -357,22 +407,10 @@ class MMC_Navigation_Admin {
 
     private function render_group_hub( $title, $description, $cards ) {
         $program_id = class_exists( 'MMC_Integrity_Service' ) ? MMC_Integrity_Service::active_program_id() : 0;
-        $program = $program_id && class_exists( 'MMC_Program_Service' ) ? MMC_Program_Service::get_program( $program_id ) : null;
         ?>
         <div class="wrap mmc-wrap">
             <h1><?php echo esc_html( $title ); ?></h1>
             <p class="mmc-lead"><?php echo esc_html( $description ); ?></p>
-
-            <?php if ( $program ) : ?>
-                <div class="mmc-panel mmc-hero-panel">
-                    <div>
-                        <small>Aktif Program</small>
-                        <h2><?php echo esc_html( $program->program_code ); ?></h2>
-                        <p><?php echo esc_html( $program->province_name . ' / ' . ( $program->district_name ?: 'Genel' ) ); ?></p>
-                    </div>
-                    <div><strong>MMC Program ID:</strong> <?php echo (int) $program_id; ?></div>
-                </div>
-            <?php endif; ?>
 
             <div class="mmc-panel">
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
@@ -401,6 +439,66 @@ class MMC_Navigation_Admin {
             </div>
         </div>
         <?php
+    }
+
+    private function legacy_card( $item, $type ) {
+        return array(
+            'title'      => $item['title'],
+            'slug'       => $item['slug'],
+            'capability' => $item['capability'],
+            'note'       => $this->item_note( $item['slug'], $type ),
+            'legacy'     => true,
+        );
+    }
+
+    private function mdg_items_for( $destination ) {
+        $items = array();
+        $seen_titles = array();
+
+        foreach ( $this->mdg_items as $item ) {
+            if ( $this->mdg_destination( $item ) !== $destination ) {
+                continue;
+            }
+
+            $title_key = sanitize_title( remove_accents( wp_strip_all_tags( (string) $item['title'] ) ) );
+            if ( $title_key && isset( $seen_titles[ $title_key ] ) ) {
+                continue;
+            }
+
+            if ( $title_key ) {
+                $seen_titles[ $title_key ] = true;
+            }
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    private function mdg_destination( $item ) {
+        $title = sanitize_title( remove_accents( wp_strip_all_tags( (string) ( $item['title'] ?? '' ) ) ) );
+        $slug  = sanitize_title( remove_accents( (string) ( $item['slug'] ?? '' ) ) );
+        $key   = $title . '-' . $slug;
+
+        if ( false !== strpos( $key, 'gider' ) || false !== strpos( $key, 'karlilik' ) || false !== strpos( $key, 'finans' ) ) {
+            return 'finance';
+        }
+        if ( false !== strpos( $key, 'pazarlama' ) || false !== strpos( $key, 'marketing' ) ) {
+            return 'marketing';
+        }
+        if ( false !== strpos( $key, 'crm' ) || false !== strpos( $key, 'kommo' ) ) {
+            return 'kommo';
+        }
+        if ( false !== strpos( $key, 'entegrasyon' ) || false !== strpos( $key, 'integration' ) || false !== strpos( $key, 'gelistirici' ) || false !== strpos( $key, 'developer' ) ) {
+            return 'system';
+        }
+        if ( false !== strpos( $key, 'satislar-ve-biletler' ) || false !== strpos( $key, 'satis-rapor' ) || false !== strpos( $key, 'musteri' ) || false !== strpos( $key, 'customer' ) || 'iadeler' === $title || false !== strpos( $key, 'refund' ) ) {
+            return 'sales';
+        }
+        if ( 'salonlar' === $title || 'etkinlikler' === $title ) {
+            return 'venue';
+        }
+
+        return 'mdg';
     }
 
     private function card( $title, $slug, $capability, $note ) {
@@ -473,6 +571,29 @@ class MMC_Navigation_Admin {
             : 'Okul Tanıtım eklentisi tarafından sağlanan mevcut ekran.';
     }
 
+    public function hub_admin_css() {
+        $page = $this->current_page();
+        $hubs = array(
+            'mmc-prep-region-hub',
+            'mmc-venue-event-hub',
+            'mmc-mdg-hub',
+            'mmc-sales-customer-hub',
+            'mmc-school-hub',
+            'mmc-marketing-hub',
+            'mmc-kommo-hub',
+            'mmc-finance-hub',
+            'mmc-system-hub',
+        );
+
+        if ( ! in_array( $page, $hubs, true ) ) {
+            return;
+        }
+
+        // Hub pages are navigation screens. Hide only routine success/update notices
+        // to keep mobile navigation compact; warnings and errors remain visible.
+        echo '<style>.wrap + .notice-success,.wrap + .updated,#wpbody-content > .notice-success,#wpbody-content > .updated{display:none!important}</style>';
+    }
+
     private function guard( $capability ) {
         if ( ! current_user_can( $capability ) ) {
             wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
@@ -495,6 +616,9 @@ class MMC_Navigation_Admin {
             'mmc-sales-prep'      => 'mmc-venue-event-hub',
             'mmc-sales'           => 'mmc-sales-customer-hub',
             'mmc-field'           => 'mmc-school-hub',
+            'mmc-marketing'       => 'mmc-marketing-hub',
+            'mmc-kommo'           => 'mmc-kommo-hub',
+            'mmc-finance'         => 'mmc-finance-hub',
             'mmc-roles'           => 'mmc-system-hub',
             'mmc-system'          => 'mmc-system-hub',
         );
@@ -509,15 +633,38 @@ class MMC_Navigation_Admin {
             'mmc-mdg-hub',
             'mmc-sales-customer-hub',
             'mmc-school-hub',
+            'mmc-marketing-hub',
+            'mmc-kommo-hub',
+            'mmc-finance-hub',
             'mmc-system-hub',
         ), true ) ) {
             return $page;
         }
 
+        foreach ( $this->mdg_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
+            }
+            $destination = $this->mdg_destination( $item );
+            $map = array(
+                'sales'     => 'mmc-sales-customer-hub',
+                'marketing' => 'mmc-marketing-hub',
+                'kommo'     => 'mmc-kommo-hub',
+                'finance'   => 'mmc-finance-hub',
+                'system'    => 'mmc-system-hub',
+                'venue'     => 'mmc-venue-event-hub',
+            );
+            return $map[ $destination ] ?? 'mmc-mdg-hub';
+        }
+
+        foreach ( $this->school_items as $item ) {
+            if ( $item['slug'] === $page && 'mad-okul-my-tasks' !== $page ) {
+                return 'mmc-school-hub';
+            }
+        }
+
         if ( 0 === strpos( $page, 'mdg-' ) ) {
-            return in_array( $page, array( 'mdg-reports', 'mdg-customers' ), true )
-                ? 'mmc-sales-customer-hub'
-                : 'mmc-mdg-hub';
+            return 'mmc-mdg-hub';
         }
 
         if ( 0 === strpos( $page, 'mad-okul' ) && 'mad-okul-my-tasks' !== $page ) {
