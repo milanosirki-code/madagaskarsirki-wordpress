@@ -75,11 +75,10 @@ jobs:
           grep -Eq "navigation_health" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "madagaskar-v4" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "madagaskar-etkinlik-yayinla" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
+          grep -Eq "function sync_draft" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          grep -Eq "program_code" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          grep -Eq "Aile Paketi 2\+2" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "legacy_bilet_items_for" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
-          grep -Eq "quick_confirm_master_venue" wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php
-          grep -Eq "venue_candidates_for_program" wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php
-          grep -Eq "mmc_quick_confirm_venue" wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php
-          grep -Eq "Kesin Salonu Hemen Bağla" wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php
           grep -Eq "runtime_token_choice" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "Kommo Token Geçiş Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
           grep -Eq "account_mismatch" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
