@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'Version:[[:space:]]*1\.3\.15' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.16' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
           grep -Eq "class MMC_Navigation_Admin" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-prep-region-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-sales-customer-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
@@ -53,6 +53,9 @@ jobs:
           grep -Eq "pipeline_catalog" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "discover_pipeline_selection" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "mmc_kommo_refresh_catalog" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
+          grep -Eq "install_program_pipeline" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "MMC PROGRAM PIPELINE KUR" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
+          grep -Eq "MMC Program Pipeline Şeması" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "MS_KOMMO_TOKEN" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           ! grep -Eq "remove_submenu_page\( .mmc-dashboard" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq 'Version:[[:space:]]*1\.7\.4' wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
@@ -66,10 +69,10 @@ jobs:
           mkdir -p dist
           (
             cd wp-content/plugins
-            zip -qr ../../dist/madagaskar-management-center-v1.3.15.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-management-center-v1.3.16.zip madagaskar-management-center
             zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
-          unzip -t dist/madagaskar-management-center-v1.3.15.zip
+          unzip -t dist/madagaskar-management-center-v1.3.16.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
 
       - name: Upload program-integrity packages
@@ -77,6 +80,6 @@ jobs:
         with:
           name: madagaskar-program-integrity-packages
           path: |
-            dist/madagaskar-management-center-v1.3.15.zip
+            dist/madagaskar-management-center-v1.3.16.zip
             dist/madagaskar-okul-tanitim-v1.7.4.zip
           if-no-files-found: error
