@@ -163,6 +163,50 @@ class MMC_Health_Service {
                     'Kommo tokenı MMC_KOMMO_TOKEN güvenli sabitinden okunuyor.'
                 );
             }
+
+            if ( ! empty( $kommo['connected'] ) ) {
+                $pipeline = MMC_Kommo_Service::pipeline_diagnostics();
+
+                if ( empty( $pipeline['configured'] ) ) {
+                    $detail = 'MMC Program Pipeline ID henüz tanımlanmadı; CRM program lead senkronu atlanır, AI kaynak ve mevcut müşteri/sipariş akışları çalışmaya devam eder.';
+                    if ( ! empty( $kommo['legacy_pipeline_id'] ) ) {
+                        $detail .= ' Legacy sipariş pipeline adayı: #' . (int) $kommo['legacy_pipeline_id'] . ' (otomatik kullanılmaz).';
+                    }
+                    $checks[] = self::check(
+                        'kommo_pipeline',
+                        'Kommo Program Pipeline',
+                        'info',
+                        $detail,
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kommo Ayarları'
+                    );
+                } elseif ( empty( $pipeline['valid'] ) ) {
+                    $checks[] = self::check(
+                        'kommo_pipeline',
+                        'Kommo Program Pipeline',
+                        'warning',
+                        'Tanımlı pipeline doğrulanamadı: ' . ( $pipeline['error'] ?: 'Kommo API yanıtı geçersiz.' ),
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kommo Ayarları'
+                    );
+                } else {
+                    $detail = 'Pipeline #' . (int) $pipeline['pipeline_id'];
+                    if ( ! empty( $pipeline['pipeline_name'] ) ) {
+                        $detail .= ' · ' . $pipeline['pipeline_name'];
+                    }
+                    if ( ! empty( $pipeline['status_id'] ) ) {
+                        $detail .= ' · Status #' . (int) $pipeline['status_id'] . ( false === $pipeline['status_valid'] ? ' (pipeline içinde bulunamadı)' : '' );
+                    }
+                    $checks[] = self::check(
+                        'kommo_pipeline',
+                        'Kommo Program Pipeline',
+                        false === $pipeline['status_valid'] ? 'warning' : 'ok',
+                        $detail,
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kommo Ayarları'
+                    );
+                }
+            }
         }
 
         $next = class_exists( 'MMC_Report_Service' ) ? MMC_Report_Service::next_run() : false;
