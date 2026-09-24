@@ -238,6 +238,19 @@ class MMC_MDG_Bridge_Service {
             'identity_matched' => 0,
             'sessions_mmc' => 0,
             'sessions_mdg' => 0,
+            'mmc_event_date' => '',
+            'mdg_event_dates' => array(),
+            'date_match' => false,
+            'mmc_venue_name' => '',
+            'mdg_venue_name' => '',
+            'venue_match' => false,
+            'province_match' => false,
+            'district_match' => false,
+            'session_times_mmc' => array(),
+            'session_times_mdg' => array(),
+            'session_time_match' => false,
+            'missing_session_times_in_mdg' => array(),
+            'extra_session_times_in_mdg' => array(),
             'sales' => array(),
         );
         if ( ! $result['available'] ) { return $result; }
@@ -260,21 +273,55 @@ class MMC_MDG_Bridge_Service {
         $result['event'] = $event;
 
         $mmc_event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program( $program_id ) : null;
+        $program = MMC_Program_Service::get_program( $program_id );
         $identity = self::mmc_identity( $program_id );
         $result['identity_expected'] = count($identity['rows']);
-        $result['sessions_mmc'] = $mmc_event && class_exists('MMC_Event_Service') ? count(MMC_Event_Service::sessions((int)$mmc_event->id)) : 0;
+
+        $mmc_sessions = $mmc_event && class_exists('MMC_Event_Service') ? (array)MMC_Event_Service::sessions((int)$mmc_event->id) : array();
+        $result['sessions_mmc'] = count($mmc_sessions);
+        $result['mmc_event_date'] = $mmc_event && ! empty($mmc_event->event_date) ? (string)$mmc_event->event_date : '';
+        $result['mmc_venue_name'] = self::selected_venue_name( $program_id );
+        $result['mdg_venue_name'] = (string)($event->venue_name ?? '');
+        $result['venue_match'] = $result['mmc_venue_name'] !== '' && self::same_text( $result['mmc_venue_name'], $result['mdg_venue_name'] );
+        $result['province_match'] = $program ? self::same_text( $program->province_name, $event->province_name ?? '' ) : false;
+        $result['district_match'] = $program ? ( ! $program->district_name || self::same_text( $program->district_name, $event->district ?? '' ) ) : false;
+
+        foreach ( $mmc_sessions as $session ) {
+            $local = substr( (string)$session->session_time, 0, 16 );
+            if ( $local ) { $result['session_times_mmc'][] = $local; }
+        }
+        $result['session_times_mmc'] = array_values(array_unique($result['session_times_mmc']));
+        sort($result['session_times_mmc']);
 
         global $wpdb;
         $sessions_table = MDG_DB::table('sessions');
         $types_table = MDG_DB::table('ticket_types');
         $legacy_rows = (array)$wpdb->get_results( $wpdb->prepare(
-            "SELECT s.id mdg_session_id,s.wc_product_id,s.tickera_event_id,t.wc_variation_id
+            "SELECT s.id mdg_session_id,s.start_at,s.wc_product_id,s.tickera_event_id,t.wc_variation_id
              FROM {$sessions_table} s
              LEFT JOIN {$types_table} t ON t.session_id=s.id AND t.is_active=1
              WHERE s.event_id=%d",
             (int)$event->id
         ) );
         $result['sessions_mdg'] = count( array_unique(array_map(function($r){ return (int)$r->mdg_session_id; }, $legacy_rows)) );
+
+        foreach ( $legacy_rows as $legacy ) {
+            $local = self::legacy_local_datetime( $legacy->start_at );
+            if ( $local ) {
+                $result['session_times_mdg'][] = $local;
+                $date = substr($local, 0, 10);
+                if ( $date ) { $result['mdg_event_dates'][$date] = true; }
+            }
+        }
+        $result['session_times_mdg'] = array_values(array_unique($result['session_times_mdg']));
+        sort($result['session_times_mdg']);
+        $result['mdg_event_dates'] = array_keys($result['mdg_event_dates']);
+        sort($result['mdg_event_dates']);
+        $result['date_match'] = $result['mmc_event_date'] !== '' && in_array($result['mmc_event_date'], $result['mdg_event_dates'], true);
+        $result['missing_session_times_in_mdg'] = array_values(array_diff($result['session_times_mmc'], $result['session_times_mdg']));
+        $result['extra_session_times_in_mdg'] = array_values(array_diff($result['session_times_mdg'], $result['session_times_mmc']));
+        $result['session_time_match'] = !$result['missing_session_times_in_mdg'] && !$result['extra_session_times_in_mdg']
+            && count($result['session_times_mmc']) === count($result['session_times_mdg']);
 
         foreach ( $identity['rows'] as $map ) {
             foreach ( $legacy_rows as $legacy ) {
@@ -325,6 +372,8 @@ class MMC_MDG_Bridge_Service {
         $mmc_items = array();
         $mdg_orders = array();
         $mmc_orders = array();
+        $mdg_tickets = 0;
+        $mmc_tickets = 0;
         $mdg_units = 0;
         $mmc_units = 0;
         $mdg_revenue_ex_tax = 0.0;
@@ -333,12 +382,14 @@ class MMC_MDG_Bridge_Service {
         foreach ( $mdg_rows as $row ) {
             $mdg_items[(int)$row->order_item_id] = true;
             $mdg_orders[(int)$row->order_id] = true;
+            $mdg_tickets += (int)$row->quantity;
             $mdg_units += (int)$row->units_total;
             $mdg_revenue_ex_tax += (float)$row->line_total;
         }
         foreach ( $mmc_rows as $row ) {
             $mmc_items[(int)$row->order_item_id] = true;
             $mmc_orders[(int)$row->order_id] = true;
+            $mmc_tickets += (int)$row->quantity;
             $mmc_units += (int)$row->units_total;
             $mmc_revenue += (float)$row->net_amount;
         }
@@ -346,7 +397,11 @@ class MMC_MDG_Bridge_Service {
         $missing_in_mmc = array_values(array_diff(array_keys($mdg_items),array_keys($mmc_items)));
         $extra_in_mmc = array_values(array_diff(array_keys($mmc_items),array_keys($mdg_items)));
         $has_sales = count($mdg_items) + count($mmc_items) > 0;
-        $ok = !$missing_in_mmc && !$extra_in_mmc && count($mdg_orders)===count($mmc_orders) && $mdg_units===$mmc_units;
+        $ok = !$missing_in_mmc
+            && !$extra_in_mmc
+            && count($mdg_orders) === count($mmc_orders)
+            && $mdg_tickets === $mmc_tickets
+            && $mdg_units === $mmc_units;
 
         return array(
             'has_sales'=>$has_sales,
@@ -355,12 +410,15 @@ class MMC_MDG_Bridge_Service {
             'mmc_orders'=>count($mmc_orders),
             'mdg_items'=>count($mdg_items),
             'mmc_items'=>count($mmc_items),
+            'mdg_tickets'=>$mdg_tickets,
+            'mmc_tickets'=>$mmc_tickets,
             'mdg_units'=>$mdg_units,
             'mmc_units'=>$mmc_units,
             'missing_in_mmc'=>$missing_in_mmc,
             'extra_in_mmc'=>$extra_in_mmc,
             'mdg_revenue_ex_tax'=>round($mdg_revenue_ex_tax,2),
             'mmc_revenue'=>round($mmc_revenue,2),
+            'revenue_diff'=>round($mmc_revenue-$mdg_revenue_ex_tax,2),
         );
     }
 
@@ -400,11 +458,21 @@ class MMC_MDG_Bridge_Service {
     }
 
     private static function legacy_local_date( $utc_datetime ) {
+        $local = self::legacy_local_datetime( $utc_datetime );
+        return $local ? substr( $local, 0, 10 ) : '';
+    }
+
+    private static function legacy_local_datetime( $utc_datetime ) {
         if ( class_exists('MDG_Sessions') && method_exists('MDG_Sessions','local_parts') ) {
             $parts = MDG_Sessions::local_parts( $utc_datetime );
-            return ! empty($parts[0]) ? (string)$parts[0] : '';
+            if ( ! empty($parts[0]) && ! empty($parts[1]) ) {
+                return (string)$parts[0] . ' ' . substr((string)$parts[1], 0, 5);
+            }
         }
-        return $utc_datetime ? substr( (string)$utc_datetime, 0, 10 ) : '';
+        if ( function_exists('get_date_from_gmt') && $utc_datetime ) {
+            return (string)get_date_from_gmt( (string)$utc_datetime, 'Y-m-d H:i' );
+        }
+        return $utc_datetime ? substr( (string)$utc_datetime, 0, 16 ) : '';
     }
 
     private static function same_text( $a, $b ) {
