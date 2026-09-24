@@ -213,9 +213,48 @@ class MMC_Venue_Service {
             $program_venue_id = (int) $created;
         }
 
-        $confirmed = self::confirm_venue( $program_venue_id );
-        if ( is_wp_error( $confirmed ) ) {
-            return $confirmed;
+        // Hızlı bağlantı, program yaşam döngüsünü geriye çekmez.
+        // Yalnız seçili/kesin salon ilişkisini kurar ve mevcut MMC etkinliğine bağlar.
+        $now = current_time( 'mysql' );
+        $wpdb->update(
+            $table,
+            array( 'is_selected' => 0, 'updated_at' => $now ),
+            array( 'program_id' => $program_id )
+        );
+
+        $current = self::get_program_venue( $program_venue_id );
+        $wpdb->update(
+            $table,
+            array(
+                'is_selected'       => 1,
+                'allocation_status' => 'approved',
+                'response_at'       => $current && ! empty( $current->response_at ) ? $current->response_at : $now,
+                'updated_at'        => $now,
+            ),
+            array( 'id' => $program_venue_id )
+        );
+
+        if ( class_exists( 'MMC_Event_Service' ) ) {
+            $event_result = MMC_Event_Service::ensure_event_for_program( $program_id, $program_venue_id );
+            if ( is_wp_error( $event_result ) ) {
+                return $event_result;
+            }
+        }
+
+        if ( class_exists( 'MMC_Program_Service' ) ) {
+            MMC_Program_Service::add_log(
+                $program_id,
+                'venue_quick_linked',
+                'program_venue',
+                $program_venue_id,
+                null,
+                array(
+                    'venue_id'     => $venue_id,
+                    'venue_source' => $source,
+                    'venue_name'   => $venue->venue_name,
+                ),
+                'Satış Hazırlığı ekranından kesin salon bağlantısı kuruldu; program durumu korunmuştur.'
+            );
         }
 
         return self::get_program_venue( $program_venue_id );
