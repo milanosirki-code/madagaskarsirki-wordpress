@@ -1,3 +1,61 @@
+# Madagaskar Management Center v1.3.16
+
+Bu sürüm **Kommo Program Pipeline Kurulum Merkezi** ekler. Kullanıcı açık onay vermeden Kommo'da hiçbir yazma işlemi yapılmaz.
+
+## v1.3.16 — Kommo Program Pipeline Kurulum Merkezi
+
+- Hedef pipeline adı: **MMC — Program Yönetimi**
+- MMC program yaşam döngüsü için 10 aşama:
+  1. Hazırlık
+  2. Bölge Planlandı
+  3. Salon/Tahsis Hazır
+  4. Etkinlik/Seans Hazır
+  5. Satış Hazır
+  6. Tanıtım/Saha Aktif
+  7. Operasyon Hazır
+  8. Gösteri Tamamlandı
+  9. Finans/Kapanış
+  10. Arşiv
+- Kurulum idempotenttir:
+  - aynı isimli MMC pipeline zaten varsa yeni kopya oluşturulmaz,
+  - yalnız eksik MMC aşamaları eklenir,
+  - tüm aşamalar mevcutsa Kommo'ya yazma yapılmaz.
+- Mevcut Satış, WooCommerce, Kurumsal Talepler ve diğer pipeline'lar değiştirilmez.
+- Pipeline kurulumu için:
+  - WordPress yetki kontrolü,
+  - nonce,
+  - onay checkbox'ı,
+  - tam **MMC PROGRAM PIPELINE KUR** onay metni,
+  - tarayıcı confirmation
+  birlikte gereklidir.
+- Kurulum tamamlandığında MMC:
+  - yeni pipeline ID'yi doğrular,
+  - 10/10 beklenen aşamayı yeniden okur,
+  - **Hazırlık** status ID'sini varsayılan program status olarak bağlar,
+  - `mmc_kommo_pipeline_id` ve `mmc_kommo_status_id` ayarlarını günceller.
+- Kurulum işlemi hiçbir program lead'i oluşturmaz; Kırıkkale veya başka bir programın CRM senkronu ayrıca manuel başlatılır.
+- Sağlık merkezinde yeni **MMC Program Pipeline Şeması** kontrolü:
+  - kurulmadıysa Bilgi,
+  - eksik aşama varsa Uyarı,
+  - 10/10 doğrulanırsa Sağlıklı
+  gösterir.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Kommo API yaklaşımı
+
+Kommo pipeline ve stage oluşturma işlemleri yalnız açık kullanıcı onayından sonra yapılır. Pipeline/stage katalog okuma çağrıları salt-okunur kalır. Sistem stage'leri Kommo tarafından ayrıca yönetilir; MMC yalnız program yaşam döngüsü için düzenlenebilir aşamaları oluşturur.
+
+## Güvenlik
+
+- Pipeline kurulumu plugin aktivasyonunda veya cron ile otomatik çalışmaz.
+- Mevcut pipeline ID'leri patch/delete edilmez.
+- Lead, müşteri veya sipariş kaydı oluşturulmaz.
+- WooCommerce/Tickera/PayTR/MDG/Okul Tanıtım verilerine yazma yoktur.
+- Kommo tokenı ekranda veya WordPress option alanında saklanmaz/gösterilmez.
+- Partial hata durumunda mevcut MMC pipeline silinmez; kurulum tekrar çalıştırıldığında eksik aşamalardan devam eder.
+
+---
+
 # Madagaskar Management Center v1.3.15
 
 Bu sürüm **Kommo Pipeline Keşif Merkezi** ekler. Kommo hesabındaki mevcut lead pipeline ve status'lar salt-okunur keşfedilir; MMC Program Pipeline/Status seçimi ID yazmak yerine ekrandan yapılır.
