@@ -578,51 +578,282 @@ class MMC_Kommo_Service {
         return true;
     }
 
+    public static function ai_transport_mode( $program_id ) {
+        $mode = sanitize_key( (string) get_option( 'mmc_kommo_ai_transport_' . absint( $program_id ), 'url' ) );
+        return in_array( $mode, array( 'url', 'text' ), true ) ? $mode : 'url';
+    }
+
+    public static function direct_text_source_state( $program_id ) {
+        $program_id = absint( $program_id );
+        $row = get_option( 'mmc_kommo_ai_text_source_' . $program_id, array() );
+        if ( ! is_array( $row ) ) {
+            $row = array();
+        }
+
+        return array(
+            'transport'            => self::ai_transport_mode( $program_id ),
+            'source_id'            => isset( $row['source_id'] ) ? sanitize_text_field( (string) $row['source_id'] ) : '',
+            'source_hash'          => isset( $row['source_hash'] ) ? sanitize_text_field( (string) $row['source_hash'] ) : '',
+            'source_name'          => isset( $row['source_name'] ) ? sanitize_text_field( (string) $row['source_name'] ) : '',
+            'lang'                 => isset( $row['lang'] ) ? sanitize_key( (string) $row['lang'] ) : '',
+            'available_function'   => isset( $row['available_function'] ) ? sanitize_key( (string) $row['available_function'] ) : '',
+            'created_at'           => isset( $row['created_at'] ) ? sanitize_text_field( (string) $row['created_at'] ) : '',
+            'legacy_url_source_id' => isset( $row['legacy_url_source_id'] ) ? sanitize_text_field( (string) $row['legacy_url_source_id'] ) : '',
+        );
+    }
+
+    public static function create_direct_text_source( $program_id ) {
+        global $wpdb;
+
+        $program_id = absint( $program_id );
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) {
+            return $profile;
+        }
+        if ( ! self::configured() ) {
+            return new WP_Error( 'mmc_kommo_not_configured', 'Kommo subdomain/token yapılandırılmadı.' );
+        }
+
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) {
+            return new WP_Error( 'mmc_kommo_program_missing', 'Program bulunamadı.' );
+        }
+
+        $state = self::direct_text_source_state( $program_id );
+        if ( ! empty( $state['source_id'] ) ) {
+            if ( hash_equals( (string) $state['source_hash'], (string) $profile->source_hash ) ) {
+                return array(
+                    'source_id' => $state['source_id'],
+                    'created'   => false,
+                    'message'   => 'Doğrudan metin kaynağı zaten güncel.',
+                );
+            }
+
+            return new WP_Error(
+                'mmc_kommo_ai_text_refresh_required',
+                'Bu program için doğrudan metin kaynağı zaten var ancak MMC verisi değişmiş. Kommo AI text source için dokümante edilmiş update/delete API kullanmadan otomatik kopya kaynak oluşturulmaz.'
+            );
+        }
+
+        $feature = sanitize_key( (string) get_option( 'mmc_kommo_ai_mode', 'suggested_reply' ) );
+        if ( ! in_array( $feature, array( 'suggested_reply', 'agent' ), true ) ) {
+            $feature = 'suggested_reply';
+        }
+
+        $text = self::build_source_text( $program_id );
+        $name = 'MMC | ' . $program->program_code . ' | ' . $program->province_name . ' / ' . ( $program->district_name ?: 'Genel' );
+        $payload = array(
+            'name'                => $name,
+            'lang'                => 'tr',
+            'text'                => $text,
+            'available_functions' => array( $feature ),
+        );
+
+        $response = self::api_request(
+            'https://airewriter.kommo.com/api/v2/sources/text',
+            'POST',
+            $payload
+        );
+        if ( is_wp_error( $response ) ) {
+            self::profile_error( $profile->id, 'ai_source_status', $response->get_error_message() );
+            return $response;
+        }
+
+        $source_id = isset( $response['id'] ) ? sanitize_text_field( (string) $response['id'] ) : '';
+        if ( '' === $source_id ) {
+            $error = new WP_Error( 'mmc_kommo_ai_text_id_missing', 'Kommo text source oluşturuldu ancak yanıtta source ID bulunamadı.' );
+            self::profile_error( $profile->id, 'ai_source_status', $error->get_error_message() );
+            return $error;
+        }
+
+        $state = array(
+            'source_id'            => $source_id,
+            'source_hash'          => (string) $profile->source_hash,
+            'source_name'          => $name,
+            'lang'                 => 'tr',
+            'available_function'   => $feature,
+            'created_at'           => current_time( 'mysql' ),
+            'legacy_url_source_id' => (string) $profile->ai_source_id,
+        );
+
+        update_option( 'mmc_kommo_ai_text_source_' . $program_id, $state, false );
+        update_option( 'mmc_kommo_ai_transport_' . $program_id, 'text', false );
+
+        $wpdb->update(
+            $wpdb->prefix . 'mmc_kommo_profiles',
+            array(
+                'ai_source_id'     => $source_id,
+                'ai_source_status' => 'synced',
+                'ai_synced_hash'   => (string) $profile->source_hash,
+                'last_synced_at'   => current_time( 'mysql' ),
+                'last_error'       => '',
+                'updated_at'       => current_time( 'mysql' ),
+            ),
+            array( 'id' => (int) $profile->id )
+        );
+
+        MMC_Program_Service::add_log(
+            $program_id,
+            'kommo_ai_text_source_added',
+            'program',
+            $program_id,
+            null,
+            array(
+                'source_id' => $source_id,
+                'feature'   => $feature,
+                'hash'      => (string) $profile->source_hash,
+            ),
+            'Kommo AI doğrudan metin kaynağı oluşturuldu ve MMC ana AI kaynağı olarak bağlandı.'
+        );
+
+        return array(
+            'source_id' => $source_id,
+            'created'   => true,
+            'message'   => 'Kommo AI doğrudan metin kaynağı oluşturuldu.',
+        );
+    }
+
     public static function sync_ai_source( $program_id ) {
         global $wpdb;
-        $profile = self::ensure_profile($program_id);
-        if ( is_wp_error($profile) ) return $profile;
-        if ( ! self::configured() ) return new WP_Error('mmc_kommo_not_configured','Kommo subdomain/token yapılandırılmadı.');
 
-        // Existing URL source: do not create duplicate stale sources. Official public docs
-        // describe reparsing URL sources but do not expose a documented AI-source refresh endpoint.
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) return $profile;
+        if ( ! self::configured() ) return new WP_Error( 'mmc_kommo_not_configured', 'Kommo subdomain/token yapılandırılmadı.' );
+
+        if ( 'text' === self::ai_transport_mode( $program_id ) ) {
+            $state = self::direct_text_source_state( $program_id );
+
+            if ( empty( $state['source_id'] ) ) {
+                $wpdb->update(
+                    $wpdb->prefix . 'mmc_kommo_profiles',
+                    array(
+                        'ai_source_status' => 'direct_pending',
+                        'updated_at'       => current_time( 'mysql' ),
+                    ),
+                    array( 'id' => (int) $profile->id )
+                );
+                return true;
+            }
+
+            if ( ! hash_equals( (string) $state['source_hash'], (string) $profile->source_hash ) ) {
+                $wpdb->update(
+                    $wpdb->prefix . 'mmc_kommo_profiles',
+                    array(
+                        'ai_source_status' => 'refresh_needed',
+                        'updated_at'       => current_time( 'mysql' ),
+                    ),
+                    array( 'id' => (int) $profile->id )
+                );
+                return true;
+            }
+
+            $wpdb->update(
+                $wpdb->prefix . 'mmc_kommo_profiles',
+                array(
+                    'ai_source_id'     => (string) $state['source_id'],
+                    'ai_source_status' => 'synced',
+                    'ai_synced_hash'   => (string) $state['source_hash'],
+                    'updated_at'       => current_time( 'mysql' ),
+                ),
+                array( 'id' => (int) $profile->id )
+            );
+            return true;
+        }
+
+        // Legacy URL transport remains available as a fallback/diagnostic path.
+        // Do not create duplicate stale URL sources when a source ID is already known.
         if ( $profile->ai_source_id ) {
             if ( $profile->ai_synced_hash !== $profile->source_hash ) {
-                $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
-                    'ai_source_status'=>'refresh_needed','updated_at'=>current_time('mysql')
-                ),array('id'=>(int)$profile->id));
+                $wpdb->update(
+                    $wpdb->prefix . 'mmc_kommo_profiles',
+                    array(
+                        'ai_source_status' => 'refresh_needed',
+                        'updated_at'       => current_time( 'mysql' ),
+                    ),
+                    array( 'id' => (int) $profile->id )
+                );
                 return true;
             }
             return true;
         }
 
-        $mode = get_option('mmc_kommo_ai_mode','suggested_reply');
-        if ( ! in_array($mode,array('suggested_reply','agent'),true) ) $mode='suggested_reply';
+        $mode = get_option( 'mmc_kommo_ai_mode', 'suggested_reply' );
+        if ( ! in_array( $mode, array( 'suggested_reply', 'agent' ), true ) ) $mode = 'suggested_reply';
+
         $response = self::api_request(
             'https://airewriter.kommo.com/api/v2/sources/url',
             'POST',
-            array('url'=>$profile->source_url,'with_nested'=>false,'available_functions'=>array($mode))
+            array(
+                'url'                 => $profile->source_url,
+                'with_nested'         => false,
+                'available_functions' => array( $mode ),
+            )
         );
-        if ( is_wp_error($response) ) {
-            self::profile_error($profile->id,'ai_source_status',$response->get_error_message());
+        if ( is_wp_error( $response ) ) {
+            self::profile_error( $profile->id, 'ai_source_status', $response->get_error_message() );
             return $response;
         }
-        $id = isset($response['id']) ? (string)$response['id'] : '';
-        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
-            'ai_source_id'=>$id,'ai_source_status'=>'synced','ai_synced_hash'=>$profile->source_hash,
-            'last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
-        ),array('id'=>(int)$profile->id));
-        MMC_Program_Service::add_log($program_id,'kommo_ai_source_added','program',$program_id,null,array('source_id'=>$id),'Kommo AI URL kaynağı eklendi.');
+
+        $id = isset( $response['id'] ) ? (string) $response['id'] : '';
+        $wpdb->update(
+            $wpdb->prefix . 'mmc_kommo_profiles',
+            array(
+                'ai_source_id'     => $id,
+                'ai_source_status' => 'synced',
+                'ai_synced_hash'   => $profile->source_hash,
+                'last_synced_at'   => current_time( 'mysql' ),
+                'last_error'       => '',
+                'updated_at'       => current_time( 'mysql' ),
+            ),
+            array( 'id' => (int) $profile->id )
+        );
+
+        MMC_Program_Service::add_log(
+            $program_id,
+            'kommo_ai_source_added',
+            'program',
+            $program_id,
+            null,
+            array( 'source_id' => $id ),
+            'Kommo AI URL kaynağı eklendi.'
+        );
         return true;
     }
 
     public static function mark_ai_refreshed( $program_id ) {
         global $wpdb;
-        $profile=self::ensure_profile($program_id); if(is_wp_error($profile))return $profile;
-        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
-            'ai_source_status'=>'synced','ai_synced_hash'=>$profile->source_hash,'last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
-        ),array('id'=>(int)$profile->id));
-        MMC_Program_Service::add_log($program_id,'kommo_ai_source_refreshed','program',$program_id,null,null,'Kommo AI URL kaynağı yeniden tarandı olarak işaretlendi.');
+
+        if ( 'text' === self::ai_transport_mode( $program_id ) ) {
+            return new WP_Error(
+                'mmc_kommo_ai_text_manual_refresh',
+                'Doğrudan metin taşıma modunda URL yeniden tarandı işareti kullanılmaz.'
+            );
+        }
+
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) return $profile;
+
+        $wpdb->update(
+            $wpdb->prefix . 'mmc_kommo_profiles',
+            array(
+                'ai_source_status' => 'synced',
+                'ai_synced_hash'   => $profile->source_hash,
+                'last_synced_at'   => current_time( 'mysql' ),
+                'last_error'       => '',
+                'updated_at'       => current_time( 'mysql' ),
+            ),
+            array( 'id' => (int) $profile->id )
+        );
+
+        MMC_Program_Service::add_log(
+            $program_id,
+            'kommo_ai_source_refreshed',
+            'program',
+            $program_id,
+            null,
+            null,
+            'Kommo AI URL kaynağı yeniden tarandı olarak işaretlendi.'
+        );
         return true;
     }
 

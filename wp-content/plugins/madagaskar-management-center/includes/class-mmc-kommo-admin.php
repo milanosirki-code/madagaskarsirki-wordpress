@@ -6,6 +6,7 @@ class MMC_Kommo_Admin {
         add_action('admin_menu',array($this,'menu'));
         add_action('admin_post_mmc_kommo_sync_now',array($this,'handle_sync_now'));
         add_action('admin_post_mmc_kommo_mark_refreshed',array($this,'handle_mark_refreshed'));
+        add_action('admin_post_mmc_kommo_create_text_source',array($this,'handle_create_text_source'));
         add_action('admin_post_mmc_kommo_save_settings',array($this,'handle_save_settings'));
         add_action('admin_post_mmc_kommo_test',array($this,'handle_test'));
         add_action('admin_post_mmc_kommo_refresh_catalog',array($this,'handle_refresh_catalog'));
@@ -41,6 +42,8 @@ class MMC_Kommo_Admin {
         $keywords=MMC_Kommo_Service::search_keywords($program->id);
         $source=MMC_Kommo_Service::build_source_text($program->id);
         $bridge=MMC_Kommo_Service::status_bridge_preview($program->id);
+        $ai_transport=MMC_Kommo_Service::ai_transport_mode($program->id);
+        $direct_text=MMC_Kommo_Service::direct_text_source_state($program->id);
         ?>
         <div class="mmc-panel mmc-hero-panel"><div><small><?php echo esc_html($program->program_code); ?></small><h2><?php echo esc_html($program->province_name.' / '.($program->district_name?:'Genel')); ?></h2></div><div><strong>Kommo:</strong> <?php echo MMC_Kommo_Service::configured()?'🟢 API yapılandırıldı':'🟡 API yapılandırma bekliyor'; ?></div></div>
 
@@ -86,17 +89,55 @@ class MMC_Kommo_Admin {
             $source_delivery=MMC_Kommo_Service::source_delivery_diagnostics($program->id);
             $source_last_hit=MMC_Kommo_Service::source_delivery_last_hit($program->id);
             ?>
-            <div class="mmc-panel"><h2>1. Kommo AI Kaynak URL'si</h2><p>Kommo AI bu sabit adresi kaynak olarak kullanır. İçerik her zaman MMC'deki güncel Program Dosyasından üretilir.</p><p><input style="width:100%" readonly value="<?php echo esc_attr($profile->source_url); ?>"></p><p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url($profile->source_url); ?>">Kaynağı Aç</a></p><?php if(!is_wp_error($source_delivery)): ?><p class="description"><strong>URL teslim durumu:</strong> semantik HTML · crawler-okunabilir · <?php echo esc_html($source_delivery['content_type']); ?> · dil <?php echo esc_html($source_delivery['content_language']); ?> · robots engeli yok · tokenlı adres.</p><?php endif; ?><?php if(!empty($source_last_hit['at'])): ?><p class="description"><strong>Son kaynak isteği:</strong> <?php echo esc_html($source_last_hit['at']); ?><?php if(!empty($source_last_hit['user_agent'])): ?> · UA: <code><?php echo esc_html($source_last_hit['user_agent']); ?></code><?php endif; ?></p><?php endif; ?><?php if('refresh_needed'===$profile->ai_source_status): ?><div class="notice notice-warning inline"><p>MMC verisi Kommo'ya son taratılan sürümden farklı. Kommo → Settings → Kommo AI içinde bu URL kaynağını <strong>yeniden tara/güncelle</strong>; sonra aşağıdaki butonla doğrulayın.</p></div><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_mark_refreshed"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_kommo_mark_refreshed_'.$program->id,'mmc_nonce'); ?><button class="button">Kommo'da Yeniden Tarandı Olarak İşaretle</button></form><?php endif; ?></div>
-            <div class="mmc-panel"><h2>2. Arama Kelimeleri</h2><p><?php echo esc_html(implode(' • ',$keywords)); ?></p><p class="description">Şehir/ilçe/salon ve Türkçe karakter varyasyonları program verisinden otomatik üretilir.</p></div>
+            <div class="mmc-panel">
+                <h2>1. Kommo AI Kaynak URL'si</h2>
+                <p><?php echo 'text'===$ai_transport?'URL kaynağı tanı/yedek amaçlı tutulur; aktif AI taşıma yöntemi doğrudan metindir.':'Kommo AI bu sabit adresi URL kaynağı olarak kullanabilir. İçerik her zaman MMC’deki güncel Program Dosyasından üretilir.'; ?></p>
+                <p><input style="width:100%" readonly value="<?php echo esc_attr($profile->source_url); ?>"></p>
+                <p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url($profile->source_url); ?>">Kaynağı Aç</a></p>
+                <?php if(!is_wp_error($source_delivery)): ?><p class="description"><strong>URL teslim durumu:</strong> semantik HTML · crawler-okunabilir · <?php echo esc_html($source_delivery['content_type']); ?> · dil <?php echo esc_html($source_delivery['content_language']); ?> · robots engeli yok · tokenlı adres.</p><?php endif; ?>
+                <?php if(!empty($source_last_hit['at'])): ?><p class="description"><strong>Son kaynak isteği:</strong> <?php echo esc_html($source_last_hit['at']); ?><?php if(!empty($source_last_hit['user_agent'])): ?> · UA: <code><?php echo esc_html($source_last_hit['user_agent']); ?></code><?php endif; ?></p><?php endif; ?>
+                <?php if('url'===$ai_transport && 'refresh_needed'===$profile->ai_source_status): ?>
+                    <div class="notice notice-warning inline"><p>MMC verisi Kommo’ya son taratılan URL sürümünden farklı. URL taşımasını kullanacaksanız Kommo’da yeniden tara/güncelle işlemi gerekir.</p></div>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_mark_refreshed"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_kommo_mark_refreshed_'.$program->id,'mmc_nonce'); ?><button class="button">Kommo'da Yeniden Tarandı Olarak İşaretle</button></form>
+                <?php endif; ?>
+            </div>
+
+            <div class="mmc-panel">
+                <h2>2. Doğrudan Metin Kaynağı</h2>
+                <?php if('text'===$ai_transport && !empty($direct_text['source_id'])): ?>
+                    <div class="notice notice-success inline"><p><strong>Aktif taşıma: Direct Text API</strong> · Source #<?php echo esc_html($direct_text['source_id']); ?> · <?php echo esc_html($direct_text['available_function']); ?> · oluşturma <?php echo esc_html($direct_text['created_at']); ?></p></div>
+                    <p><strong>Kaynak adı:</strong> <?php echo esc_html($direct_text['source_name']); ?></p>
+                    <p><strong>Hash:</strong> <code><?php echo esc_html(substr($direct_text['source_hash'],0,16)); ?></code></p>
+                    <?php if($direct_text['source_hash']!==$profile->source_hash): ?>
+                        <div class="notice notice-warning inline"><p>MMC Program Dosyası bu direct-text kaynağından sonra değişmiş. Dokümante edilmemiş bir update/delete endpoint kullanılmadığı için otomatik kopya kaynak oluşturulmadı; durum <strong>refresh_needed</strong> olarak tutulur.</p></div>
+                    <?php else: ?>
+                        <p class="description">MMC kaynağı ile Kommo direct-text hash’i eşleşiyor.</p>
+                    <?php endif; ?>
+                    <?php if(!empty($direct_text['legacy_url_source_id'])): ?><p class="description">Önceki URL source ID: <code>#<?php echo esc_html($direct_text['legacy_url_source_id']); ?></code>. Direct-text kaynağı Kommo’da görüldükten sonra eski hatalı URL kaynağı Kommo arayüzünden kaldırılabilir.</p><?php endif; ?>
+                <?php else: ?>
+                    <div class="notice notice-info inline"><p>URL crawler hatasını bypass etmek için MMC Program Dosyası, Kommo’nun resmî <code>/api/v2/sources/text</code> endpoint’ine doğrudan gönderilebilir. Bu işlem yalnız yeni bir text source oluşturur; mevcut URL kaynağını API ile silmez.</p></div>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Kommo’da yeni MMC direct-text bilgi kaynağı oluşturulsun mu?');">
+                        <input type="hidden" name="action" value="mmc_kommo_create_text_source">
+                        <input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+                        <?php wp_nonce_field('mmc_kommo_create_text_source_'.$program->id,'mmc_nonce'); ?>
+                        <p><label><input type="checkbox" name="confirm_create" value="1" required> Kommo’da bu program için yeni bir doğrudan metin bilgi kaynağı oluşturulacağını onaylıyorum.</label></p>
+                        <p><label>Onay metni: <input type="text" name="confirm_text" value="" placeholder="MMC TEXT SOURCE KUR" required></label></p>
+                        <button class="button button-primary">Direct Text Source Oluştur</button>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
 
-        <div class="mmc-panel"><h2>3. AI Kaynak Önizleme</h2><textarea readonly rows="22" style="width:100%;font-family:monospace"><?php echo esc_textarea($source); ?></textarea></div>
+        <div class="mmc-panel"><h2>3. Arama Kelimeleri</h2><p><?php echo esc_html(implode(' • ',$keywords)); ?></p><p class="description">Şehir/ilçe/salon ve Türkçe karakter varyasyonları program verisinden otomatik üretilir.</p></div>
+        </div>
 
-        <div class="mmc-panel"><h2>4. Senkronizasyon</h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_sync_now"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_kommo_sync_now_'.$program->id,'mmc_nonce'); ?><button class="button button-primary button-hero">Kommo Senkronunu Şimdi Çalıştır</button></form><?php if($profile->last_error): ?><p class="mmc-error"><strong>Son hata:</strong> <?php echo esc_html($profile->last_error); ?></p><?php endif; ?><p class="description">Program, etkinlik, seans, fiyat, salon veya satış entegrasyonu değiştiğinde senkron işi otomatik kuyruğa alınır.</p></div>
+        <div class="mmc-panel"><h2>4. AI Kaynak Önizleme</h2><textarea readonly rows="22" style="width:100%;font-family:monospace"><?php echo esc_textarea($source); ?></textarea></div>
 
-        <div class="mmc-panel"><h2>5. Onaylı WhatsApp Şablonları</h2><table class="widefat striped"><thead><tr><th>Şablon</th><th>Durum</th><th>Kommo/Meta Adı</th><th>Not</th><th></th></tr></thead><tbody><?php foreach($templates as $t): ?><tr><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_update_template"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><input type="hidden" name="template_id" value="<?php echo esc_attr($t->id); ?>"><?php wp_nonce_field('mmc_kommo_update_template_'.$t->id,'mmc_nonce'); ?><td><strong><?php echo esc_html($t->template_key); ?></strong></td><td><select name="status"><option value="expected" <?php selected($t->status,'expected'); ?>>Beklenen</option><option value="verified" <?php selected($t->status,'verified'); ?>>Doğrulandı</option><option value="inactive" <?php selected($t->status,'inactive'); ?>>Pasif</option><option value="error" <?php selected($t->status,'error'); ?>>Hata</option></select></td><td><input name="external_name" value="<?php echo esc_attr($t->external_name); ?>"></td><td><input name="notes" value="<?php echo esc_attr($t->notes); ?>"></td><td><button class="button button-small">Kaydet</button></td></form></tr><?php endforeach; ?></tbody></table></div>
+        <div class="mmc-panel"><h2>5. Senkronizasyon</h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_sync_now"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_kommo_sync_now_'.$program->id,'mmc_nonce'); ?><button class="button button-primary button-hero">Kommo Senkronunu Şimdi Çalıştır</button></form><?php if($profile->last_error): ?><p class="mmc-error"><strong>Son hata:</strong> <?php echo esc_html($profile->last_error); ?></p><?php endif; ?><p class="description">Program, etkinlik, seans, fiyat, salon veya satış entegrasyonu değiştiğinde senkron işi otomatik kuyruğa alınır.</p></div>
 
-        <div class="mmc-panel"><h2>6. Son Kommo Kuyruğu</h2><table class="widefat striped"><thead><tr><th>Tarih</th><th>İş</th><th>Durum</th><th>Deneme</th><th>Hata</th></tr></thead><tbody><?php if(!$queue): ?><tr><td colspan="5">Kuyruk boş.</td></tr><?php else: foreach($queue as $q): ?><tr><td><?php echo esc_html($q->created_at); ?></td><td><?php echo esc_html($q->job_type); ?></td><td><?php echo esc_html($q->status); ?></td><td><?php echo esc_html($q->attempts); ?></td><td><?php echo esc_html($q->last_error); ?></td></tr><?php endforeach; endif; ?></tbody></table></div>
+        <div class="mmc-panel"><h2>6. Onaylı WhatsApp Şablonları</h2><table class="widefat striped"><thead><tr><th>Şablon</th><th>Durum</th><th>Kommo/Meta Adı</th><th>Not</th><th></th></tr></thead><tbody><?php foreach($templates as $t): ?><tr><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_update_template"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><input type="hidden" name="template_id" value="<?php echo esc_attr($t->id); ?>"><?php wp_nonce_field('mmc_kommo_update_template_'.$t->id,'mmc_nonce'); ?><td><strong><?php echo esc_html($t->template_key); ?></strong></td><td><select name="status"><option value="expected" <?php selected($t->status,'expected'); ?>>Beklenen</option><option value="verified" <?php selected($t->status,'verified'); ?>>Doğrulandı</option><option value="inactive" <?php selected($t->status,'inactive'); ?>>Pasif</option><option value="error" <?php selected($t->status,'error'); ?>>Hata</option></select></td><td><input name="external_name" value="<?php echo esc_attr($t->external_name); ?>"></td><td><input name="notes" value="<?php echo esc_attr($t->notes); ?>"></td><td><button class="button button-small">Kaydet</button></td></form></tr><?php endforeach; ?></tbody></table></div>
+
+        <div class="mmc-panel"><h2>7. Son Kommo Kuyruğu</h2><table class="widefat striped"><thead><tr><th>Tarih</th><th>İş</th><th>Durum</th><th>Deneme</th><th>Hata</th></tr></thead><tbody><?php if(!$queue): ?><tr><td colspan="5">Kuyruk boş.</td></tr><?php else: foreach($queue as $q): ?><tr><td><?php echo esc_html($q->created_at); ?></td><td><?php echo esc_html($q->job_type); ?></td><td><?php echo esc_html($q->status); ?></td><td><?php echo esc_html($q->attempts); ?></td><td><?php echo esc_html($q->last_error); ?></td></tr><?php endforeach; endif; ?></tbody></table></div>
         <?php
     }
 
@@ -399,6 +440,21 @@ define('MMC_KOMMO_TOKEN', 'YENI_UZUN_OMURLU_TOKEN');</pre>
     }
 
     public function handle_sync_now(){ $this->guard('mmc_manage_kommo'); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_kommo_sync_now_'.$pid,'mmc_nonce'); MMC_Kommo_Service::sync_now($pid); wp_safe_redirect(add_query_arg(array('page'=>'mmc-kommo','program_id'=>$pid,'mmc_msg'=>'kommo_sync'),admin_url('admin.php'))); exit; }
+    public function handle_create_text_source(){
+        $this->guard('mmc_manage_kommo');
+        $pid=absint($_POST['program_id']??0);
+        check_admin_referer('mmc_kommo_create_text_source_'.$pid,'mmc_nonce');
+
+        $confirmed=!empty($_POST['confirm_create']);
+        $text=trim((string)wp_unslash($_POST['confirm_text']??''));
+        if(!$confirmed || 'MMC TEXT SOURCE KUR'!==$text){
+            $this->redirect($pid,new WP_Error('mmc_text_source_confirmation','Direct Text Source oluşturulmadı. Onay kutusunu işaretleyin ve MMC TEXT SOURCE KUR yazın.'),'text_source_created');
+        }
+
+        $r=MMC_Kommo_Service::create_direct_text_source($pid);
+        $this->redirect($pid,$r,'text_source_created');
+    }
+
     public function handle_mark_refreshed(){ $this->guard('mmc_manage_kommo'); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_kommo_mark_refreshed_'.$pid,'mmc_nonce'); $r=MMC_Kommo_Service::mark_ai_refreshed($pid); $this->redirect($pid,$r,'ai_refreshed'); }
     public function handle_update_template(){ $this->guard('mmc_manage_kommo'); $id=absint($_POST['template_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_kommo_update_template_'.$id,'mmc_nonce'); $r=MMC_Kommo_Service::update_template($id,sanitize_key($_POST['status']??''),wp_unslash($_POST['external_name']??''),wp_unslash($_POST['notes']??'')); $this->redirect($pid,$r,'template_saved'); }
     public function handle_save_settings(){
@@ -513,5 +569,5 @@ define('MMC_KOMMO_TOKEN', 'YENI_UZUN_OMURLU_TOKEN');</pre>
 
     private function redirect($pid,$r,$ok){$args=array('page'=>'mmc-kommo','program_id'=>$pid); if(is_wp_error($r))$args['mmc_error']=$r->get_error_message(); else $args['mmc_msg']=$ok; wp_safe_redirect(add_query_arg($args,admin_url('admin.php')));exit;}
     private function guard($cap){if(!(current_user_can($cap)||current_user_can('mmc_manage_programs')))wp_die('Bu işlemi yapma yetkiniz yok.');}
-    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){$m=array('kommo_sync'=>'Kommo senkron kuyruğu çalıştırıldı.','ai_refreshed'=>'AI kaynak yeniden tarandı olarak işaretlendi.','template_saved'=>'Şablon durumu güncellendi.','settings_saved'=>'Kommo ayarları kaydedildi.','connection_ok'=>'Kommo API bağlantısı başarılı.','catalog_refreshed'=>'Kommo pipeline/status listesi yenilendi.','program_pipeline_installed'=>'MMC Program Yönetimi pipeline ve aşamaları doğrulandı; Hazırlık varsayılan status olarak MMC’ye bağlandı.');$k=sanitize_key($_GET['mmc_msg']);echo '<div class="notice notice-success"><p>'.esc_html($m[$k]??'İşlem tamamlandı.').'</p></div>';}}
+    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){$m=array('kommo_sync'=>'Kommo senkron kuyruğu çalıştırıldı.','ai_refreshed'=>'AI kaynak yeniden tarandı olarak işaretlendi.','template_saved'=>'Şablon durumu güncellendi.','settings_saved'=>'Kommo ayarları kaydedildi.','connection_ok'=>'Kommo API bağlantısı başarılı.','catalog_refreshed'=>'Kommo pipeline/status listesi yenilendi.','program_pipeline_installed'=>'MMC Program Yönetimi pipeline ve aşamaları doğrulandı; Hazırlık varsayılan status olarak MMC’ye bağlandı.','text_source_created'=>'Kommo AI doğrudan metin kaynağı oluşturuldu ve MMC ana AI kaynağı olarak bağlandı.');$k=sanitize_key($_GET['mmc_msg']);echo '<div class="notice notice-success"><p>'.esc_html($m[$k]??'İşlem tamamlandı.').'</p></div>';}}
 }
