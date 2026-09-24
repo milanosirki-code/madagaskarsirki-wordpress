@@ -148,7 +148,10 @@ class MMC_Kommo_Admin {
         $pipeline=absint(get_option('mmc_kommo_pipeline_id',0));
         $status=absint(get_option('mmc_kommo_status_id',0));
         $mode=get_option('mmc_kommo_ai_mode','suggested_reply');
-        $diag=MMC_Kommo_Service::connection_diagnostics();
+        $force_token_retest=!empty($_GET['mmc_token_retest']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce']??'')),'mmc_kommo_token_retest');
+        $migration=MMC_Kommo_Service::token_migration_diagnostics($force_token_retest);
+        $token_retest_url=wp_nonce_url(add_query_arg('mmc_token_retest','1'),'mmc_kommo_token_retest');
+        $diag=MMC_Kommo_Service::connection_diagnostics($force_token_retest);
         $write_readiness=MMC_Kommo_Service::admin_write_readiness();
         $last_install=MMC_Kommo_Service::last_pipeline_install_result();
         $pipe=MMC_Kommo_Service::pipeline_diagnostics();
@@ -198,11 +201,71 @@ class MMC_Kommo_Admin {
                 </div>
             </div>
 
-            <?php if(!empty($diag['uses_legacy_token'])): ?>
-                <div class="notice notice-warning inline">
-                    <p><strong>Secret geçişi gerekli:</strong> Canlı Kommo bağlantısı legacy <code>MS_KOMMO_TOKEN</code> üzerinden çalışıyor. Yeni/yenilenmiş tokenı <code>wp-config.php</code> içine <code>MMC_KOMMO_TOKEN</code> olarak taşıdıktan sonra eski snippet içindeki tokenı kaldırın.</p>
+            <div style="margin:18px 0;padding:16px;border:1px solid #dcdcde;border-radius:8px;background:#fff">
+                <h3 style="margin-top:0">Kommo Token Geçiş Merkezi</h3>
+                <p>Token değerleri hiçbir zaman ekranda, veritabanında veya logda gösterilmez. Her kaynak ayrı ayrı Kommo <code>/account</code> çağrısıyla doğrulanır.</p>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:12px 0">
+                    <div style="border:1px solid #dcdcde;border-radius:6px;padding:12px">
+                        <strong>MMC_KOMMO_TOKEN</strong><br>
+                        <?php if(!empty($migration['mmc']['defined'])): ?>
+                            <span><?php echo !empty($migration['mmc']['connected'])?'🟢 Canlı':'🔴 Doğrulanamadı'; ?></span><br>
+                            <small><?php echo !empty($migration['mmc']['connected'])
+                                ? esc_html(($migration['mmc']['account_name']?:'Kommo').' · Account ID '.(int)$migration['mmc']['account_id'])
+                                : esc_html($migration['mmc']['error']?:'API doğrulaması başarısız.'); ?></small>
+                        <?php else: ?>
+                            <span>⚪ Tanımlı değil</span><br><small>wp-config.php içinde bekleniyor.</small>
+                        <?php endif; ?>
+                    </div>
+
+                    <div style="border:1px solid #dcdcde;border-radius:6px;padding:12px">
+                        <strong>MS_KOMMO_TOKEN (legacy)</strong><br>
+                        <?php if(!empty($migration['legacy']['defined'])): ?>
+                            <span><?php echo !empty($migration['legacy']['connected'])?'🟢 Canlı':'🔴 Doğrulanamadı'; ?></span><br>
+                            <small><?php echo !empty($migration['legacy']['connected'])
+                                ? esc_html(($migration['legacy']['account_name']?:'Kommo').' · Account ID '.(int)$migration['legacy']['account_id'])
+                                : esc_html($migration['legacy']['error']?:'API doğrulaması başarısız.'); ?></small>
+                        <?php else: ?>
+                            <span>⚪ Tanımlı değil</span><br><small>Legacy secret yok.</small>
+                        <?php endif; ?>
+                    </div>
+
+                    <div style="border:1px solid #dcdcde;border-radius:6px;padding:12px">
+                        <strong>Aktif Runtime Kaynağı</strong><br>
+                        <span><?php echo esc_html($migration['active_source']?:'Yok'); ?></span><br>
+                        <small><?php echo esc_html($migration['detail']); ?></small>
+                    </div>
                 </div>
-            <?php endif; ?>
+
+                <?php
+                $mig_state=(string)($migration['state']??'not_configured');
+                $mig_class='notice-info';
+                if('complete'===$mig_state)$mig_class='notice-success';
+                elseif('ready_to_remove_legacy'===$mig_state)$mig_class='notice-success';
+                elseif(in_array($mig_state,array('account_mismatch','mmc_invalid','legacy_invalid'),true))$mig_class='notice-error';
+                elseif(in_array($mig_state,array('legacy_only','fallback_legacy'),true))$mig_class='notice-warning';
+                ?>
+                <div class="notice <?php echo esc_attr($mig_class); ?> inline">
+                    <p><strong>Geçiş Durumu:</strong> <?php echo esc_html($migration['detail']); ?></p>
+                    <?php if('ready_to_remove_legacy'===$mig_state && !empty($migration['same_secret'])): ?>
+                        <p>İki sabit aynı secretı temsil ediyor ve aynı Kommo hesabına doğrulandı. Legacy tanımı kaldırdıktan sonra tekrar test edin.</p>
+                    <?php elseif('ready_to_remove_legacy'===$mig_state): ?>
+                        <p>Yeni token aynı canlı Kommo hesabına doğrulandı. Legacy tanımı kaldırılabilir; kaldırma sonrası tekrar test zorunludur.</p>
+                    <?php elseif('account_mismatch'===$mig_state): ?>
+                        <p><strong>Eski tokenı kaldırmayın.</strong> Yeni token farklı hesaba gidiyor; önce doğru Kommo tokenını düzeltin.</p>
+                    <?php elseif('fallback_legacy'===$mig_state): ?>
+                        <p><strong>Eski tokenı kaldırmayın.</strong> MMC güvenli fallback ile legacy tokenı kullanmaya devam ediyor.</p>
+                    <?php elseif('legacy_only'===$mig_state): ?>
+                        <p><strong>Adım 1:</strong> Mevcut veya yenilenmiş Kommo tokenını güvenli biçimde <code>wp-config.php</code> içine aşağıdaki adla ekleyin. Tokenı sohbet, snippet açıklaması veya WordPress option alanına yazmayın.</p>
+                        <pre style="background:#f6f7f7;padding:10px;overflow:auto"><code>define( 'MMC_KOMMO_TOKEN', 'KOMMO_TOKEN_DEGERINI_BURAYA_YAPISTIR' );</code></pre>
+                        <p>Bu satırı ekledikten sonra bu ekrana dönün ve <strong>Tokenları Yeniden Test Et</strong> düğmesine basın. Yeni kaynak yeşil olmadan <code>MS_KOMMO_TOKEN</code> tanımını kaldırmayın.</p>
+                    <?php endif; ?>
+                </div>
+
+                <p>
+                    <a class="button" href="<?php echo esc_url($token_retest_url); ?>">Tokenları Yeniden Test Et</a>
+                </p>
+            </div>
 
             <?php if(!$pipeline && !empty($diag['legacy_pipeline_id'])): ?>
                 <div class="notice notice-info inline">
