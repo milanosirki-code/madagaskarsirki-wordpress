@@ -1,3 +1,65 @@
+# Madagaskar Management Center v1.3.26
+
+Bu sürüm **salon bağlama işlemini Satış Hazırlığı ekranında tek adıma indirir**.
+
+## v1.3.26 — Hızlı Kesin Salon Bağlantısı
+
+- “Kesin salon bağlantısı eksik.” uyarısı görüldüğünde aynı ekranda **Kesin Salonu Hemen Bağla** alanı açılır.
+- Salon ana kaynağı yine **Madagaskar → Salonlar** ekranıdır; MMC ikinci salon ana kaydı oluşturmaz.
+- Liste yalnız programın ili içindeki salonları gösterir.
+- Aynı ilçedeki salonlar **Önerilen** grubunda en üstte gösterilir.
+- Seçilen salon programın salon adaylarına eklenir (zaten varsa mevcut kayıt kullanılır), kesin salon yapılır ve mevcut MMC etkinliğinin program_venue_id alanına bağlanır.
+- Hızlı bağlantı **program yaşam döngüsü durumunu geriye çekmez**. Örneğin “Satışa Hazırlanıyor” programı “Salon Kesinleşti” aşamasına dönmez.
+- Satışa açık ürün, WooCommerce siparişi, Tickera bileti/QR, PayTR ve MDG satış verisi değiştirilmez.
+- DB şeması değişmez; MMC_DB_VERSION **1.3.7** olarak kalır.
+
+---
+
+# Madagaskar Management Center v1.3.25
+
+Bu sürüm **tek Madagaskar yönetim menüsü** hedefini tamamlar. Mevcut MMC, MDG Bilet Yönetimi, Madagaskar V4 ve Okul Tanıtım sayfalarının callback/slug yapısı korunur; yalnız WordPress yönetim navigasyonu tek üst menü altında konsolide edilir.
+
+## v1.3.25 — Tek Madagaskar Menüsü
+
+- Canonical üst menü: `mmc-dashboard` → **Madagaskar**.
+- Aşağıdaki legacy üst menüler, ilgili eklenti aktifse admin menüden gizlenir:
+  - `mdg-dashboard` — Madagaskar Bilet Yönetimi
+  - `madagaskar-v4` — Madagaskar V4
+  - `mad-okul` — Okul Tanıtım
+  - `madagaskar-etkinlik-yayinla` — eski tekil Etkinlik Yayınla menüsü
+- Sayfalar silinmez ve callback'ler yeniden yazılmaz.
+- Eski `admin.php?page=...` URL'leri çalışmaya devam eder.
+- MMC devre dışı bırakılırsa legacy eklentilerin kendi üst menüleri otomatik geri gelir.
+- Yetki koruması:
+  - yalnız `mmc_view_dashboard` yetkisi olan kullanıcıda konsolidasyon uygulanır,
+  - bu yetkisi olmayan legacy kullanıcıların mevcut menü erişimi bozulmaz.
+- **Bilet Yönetimi** hub artık eski MDG çekirdeği olmasa bile V4 veya bilinen legacy etkinlik menüsü varsa görünür.
+- V4 ekranları işlevlerine göre dağıtılır:
+  - Genel Bakış / Erteleme-Aktarım → Bilet Yönetimi
+  - Satış Yönetimi / Biletlerim → Satış & Müşteri
+  - Entegrasyonlar / Geçiş Merkezi → Sistem & Yetkiler
+- Eski MDG ekranlarının mevcut dağılımı korunur:
+  - salon/etkinlik → Salon & Etkinlik
+  - satış/müşteri → Satış & Müşteri
+  - pazarlama → Pazarlama
+  - CRM/Kommo → Kommo & AI
+  - gider/kârlılık/finans → Finans
+  - entegrasyon/geliştirici → Sistem & Yetkiler
+- Okul Tanıtım ekranları **Okul Tanıtım & Saha** merkezinde kalır.
+- Legacy sayfa açıldığında WordPress sol menü vurgusu tekrar **Madagaskar** üst menüsüne ve doğru MMC hub'ına döner.
+- Bilinen üst menüleri salt-okunur kontrol etmek için `MMC_Navigation_Admin::navigation_health()` eklendi.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- WooCommerce siparişleri, Tickera biletleri/QR, PayTR, MDG order_map ve okul kayıtları değiştirilmez.
+- Menü birleştirme yalnız görünür navigasyon katmanıdır.
+- Eski plugin sayfalarının kayıtları ve doğrudan URL erişimi korunur.
+- Legacy kullanıcının MMC yetkisi yoksa eski menüler gizlenmez.
+- Kommo ve Direct Text Source davranışı değişmez.
+
+---
+
 # Madagaskar Management Center v1.3.24
 
 Bu sürüm **Kommo Token Geçiş Merkezi** ekler ve `MS_KOMMO_TOKEN → MMC_KOMMO_TOKEN` geçişini canlı bağlantıyı kesmeden doğrulanabilir hale getirir.

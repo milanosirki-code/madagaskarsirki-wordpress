@@ -157,6 +157,149 @@ class MMC_Venue_Service {
         return $id;
     }
 
+    /**
+     * Satış Hazırlığı gibi hızlı akışlardan mevcut ana salon kaydını
+     * programa ekler (gerekirse) ve tek işlemde kesin salon yapar.
+     * Yeni salon ana kaydı oluşturmaz.
+     */
+    public static function quick_confirm_master_venue( $program_id, $venue_id, $venue_source = '' ) {
+        global $wpdb;
+
+        $program_id = absint( $program_id );
+        $venue_id   = absint( $venue_id );
+        $source     = sanitize_key( $venue_source );
+
+        $program = class_exists( 'MMC_Program_Service' ) ? MMC_Program_Service::get_program( $program_id ) : null;
+        if ( ! $program || ! $venue_id ) {
+            return new WP_Error( 'mmc_quick_venue_missing', 'Program ve salon seçimi zorunludur.' );
+        }
+
+        if ( ! in_array( $source, array( 'mdg', 'legacy' ), true ) ) {
+            $source = self::primary_source();
+        }
+
+        $venue = self::master_venue( $venue_id, $source );
+        if ( ! $venue ) {
+            return new WP_Error( 'mmc_quick_venue_invalid', 'Seçilen salon ana kayıtta bulunamadı.' );
+        }
+
+        $table = $wpdb->prefix . 'mmc_program_venues';
+        $program_venue_id = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM $table WHERE program_id=%d AND venue_id=%d AND venue_source=%s ORDER BY id ASC LIMIT 1",
+            $program_id,
+            $venue_id,
+            $source
+        ) );
+
+        if ( ! $program_venue_id ) {
+            $event = class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
+            $date  = $event && ! empty( $event->event_date ) ? $event->event_date : $program->planned_date;
+
+            $created = self::add_program_venue(
+                $program_id,
+                array(
+                    'venue_id'       => $venue_id,
+                    'venue_source'   => $source,
+                    'priority_order' => 1,
+                    'requested_date' => $date,
+                    'notes'          => 'Satış Hazırlığı ekranından hızlı salon bağlantısı.',
+                )
+            );
+
+            if ( is_wp_error( $created ) ) {
+                return $created;
+            }
+
+            $program_venue_id = (int) $created;
+        }
+
+        // Hızlı bağlantı, program yaşam döngüsünü geriye çekmez.
+        // Yalnız seçili/kesin salon ilişkisini kurar ve mevcut MMC etkinliğine bağlar.
+        $now = current_time( 'mysql' );
+        $wpdb->update(
+            $table,
+            array( 'is_selected' => 0, 'updated_at' => $now ),
+            array( 'program_id' => $program_id )
+        );
+
+        $current = self::get_program_venue( $program_venue_id );
+        $wpdb->update(
+            $table,
+            array(
+                'is_selected'       => 1,
+                'allocation_status' => 'approved',
+                'response_at'       => $current && ! empty( $current->response_at ) ? $current->response_at : $now,
+                'updated_at'        => $now,
+            ),
+            array( 'id' => $program_venue_id )
+        );
+
+        if ( class_exists( 'MMC_Event_Service' ) ) {
+            $event_result = MMC_Event_Service::ensure_event_for_program( $program_id, $program_venue_id );
+            if ( is_wp_error( $event_result ) ) {
+                return $event_result;
+            }
+        }
+
+        if ( class_exists( 'MMC_Program_Service' ) ) {
+            MMC_Program_Service::add_log(
+                $program_id,
+                'venue_quick_linked',
+                'program_venue',
+                $program_venue_id,
+                null,
+                array(
+                    'venue_id'     => $venue_id,
+                    'venue_source' => $source,
+                    'venue_name'   => $venue->venue_name,
+                ),
+                'Satış Hazırlığı ekranından kesin salon bağlantısı kuruldu; program durumu korunmuştur.'
+            );
+        }
+
+        return self::get_program_venue( $program_venue_id );
+    }
+
+    /**
+     * Programın iline uyan salonları döndürür.
+     * Aynı ilçe eşleşmeleri ilk sırada gelir; böylece hızlı seçim ekranı
+     * yüzlerce salon yerine önce ilgili adayları gösterir.
+     */
+    public static function venue_candidates_for_program( $program_id ) {
+        $program = class_exists( 'MMC_Program_Service' ) ? MMC_Program_Service::get_program( absint( $program_id ) ) : null;
+        if ( ! $program ) {
+            return array();
+        }
+
+        $province_key = self::place_key( $program->province_name );
+        $district_key = self::place_key( $program->district_name );
+        $rows = array();
+
+        foreach ( (array) self::all_venues() as $venue ) {
+            if ( $province_key && self::place_key( $venue->province_name ) !== $province_key ) {
+                continue;
+            }
+
+            $venue->mmc_exact_district = $district_key && self::place_key( $venue->district_name ) === $district_key;
+            $rows[] = $venue;
+        }
+
+        usort( $rows, function( $a, $b ) {
+            $a_exact = ! empty( $a->mmc_exact_district ) ? 1 : 0;
+            $b_exact = ! empty( $b->mmc_exact_district ) ? 1 : 0;
+            if ( $a_exact !== $b_exact ) {
+                return $a_exact > $b_exact ? -1 : 1;
+            }
+
+            return strnatcasecmp(
+                (string) $a->district_name . '|' . (string) $a->venue_name,
+                (string) $b->district_name . '|' . (string) $b->venue_name
+            );
+        } );
+
+        return $rows;
+    }
+
     public static function get_program_venue( $id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'mmc_program_venues';
@@ -466,6 +609,19 @@ class MMC_Venue_Service {
             }
         }
         return true;
+    }
+
+    private static function place_key( $value ) {
+        $value = trim( (string) $value );
+        if ( function_exists( 'remove_accents' ) ) {
+            $value = remove_accents( $value );
+        }
+        if ( function_exists( 'mb_strtolower' ) ) {
+            $value = mb_strtolower( $value, 'UTF-8' );
+        } else {
+            $value = strtolower( $value );
+        }
+        return preg_replace( '/[^a-z0-9]+/u', '', $value );
     }
 
     private static function money( $value ) {
