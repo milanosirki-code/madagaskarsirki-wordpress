@@ -46,8 +46,8 @@ jobs:
           mkdir -p dist
           (
             cd wp-content/plugins
-            zip -qr ../../../dist/madagaskar-management-center-v1.3.6.zip madagaskar-management-center
-            zip -qr ../../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
+            zip -qr ../../dist/madagaskar-management-center-v1.3.6.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
           unzip -t dist/madagaskar-management-center-v1.3.6.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
