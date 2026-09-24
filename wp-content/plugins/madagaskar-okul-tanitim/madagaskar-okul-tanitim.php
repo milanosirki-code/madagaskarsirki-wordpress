@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.2
+ * Version: 1.7.3
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.2');
+define('MAD_OKUL_VERSION', '1.7.3');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -675,11 +675,19 @@ function mad_okul_route_page() {
     if (!current_user_can('manage_options')) return;
     global $wpdb;
     $table=mad_okul_table();
-    [$ils,$ilceler]=mad_okul_filter_options();
 
-    $il=sanitize_text_field($_GET['il'] ?? '');
-    $ilce=sanitize_text_field($_GET['ilce'] ?? '');
-    $durum=sanitize_text_field($_GET['durum'] ?? 'Bekliyor');
+    // Önce ili oku, sonra yalnız o ile ait ilçeleri getir.
+    $il=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['il'] ?? '')));
+    $ilce=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
+    [$ils,$ilceler]=mad_okul_filter_options($il);
+
+    // İl değiştiyse eski/uyumsuz ilçe seçimini taşımayalım.
+    if($ilce && !in_array($ilce,$ilceler,true)) $ilce='';
+
+    // Seçilen ilde tek ilçe varsa (ör. Kırıkkale/Merkez) otomatik seç.
+    if($il && !$ilce && count($ilceler)===1) $ilce=(string)$ilceler[0];
+
+    $durum=sanitize_text_field(wp_unslash($_GET['durum'] ?? 'Bekliyor'));
     $params=[]; $w=['1=1'];
     if($il){$w[]='il=%s';$params[]=$il;}
     if($ilce){$w[]='ilce=%s';$params[]=$ilce;}
@@ -692,22 +700,68 @@ function mad_okul_route_page() {
     }
 
     $selected=array_map('absint', $_POST['school_ids'] ?? []);
-    $start=sanitize_text_field($_POST['start_address'] ?? '');
+    $start=sanitize_text_field(wp_unslash($_POST['start_address'] ?? ''));
+
+    // Başlangıç salonunu önce Okul Tanıtım programından, yoksa MMC kesin salonundan otomatik doldur.
+    if(!$start && $il && $ilce){
+        $programs_table=Mad_Okul_Operations::programs_table();
+        $programs_exists=$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$programs_table));
+        if($programs_exists===$programs_table){
+            $p=$wpdb->get_row($wpdb->prepare(
+                "SELECT salon_adi,salon_adresi FROM $programs_table
+                 WHERE il=%s AND ilce=%s AND durum='Aktif'
+                 ORDER BY CASE WHEN etkinlik_tarihi IS NULL THEN 2 WHEN etkinlik_tarihi>=CURDATE() THEN 0 ELSE 1 END,
+                          ABS(DATEDIFF(COALESCE(etkinlik_tarihi,CURDATE()),CURDATE())), id DESC
+                 LIMIT 1",
+                $il,$ilce
+            ));
+            if($p) $start=trim($p->salon_adi.', '.$p->salon_adresi,', ');
+        }
+
+        if(!$start){
+            $mmc_programs=$wpdb->prefix.'mmc_programs';
+            $mmc_program_venues=$wpdb->prefix.'mmc_program_venues';
+            $mmc_venues=$wpdb->prefix.'mmc_venues';
+            $tables_ok=true;
+            foreach([$mmc_programs,$mmc_program_venues,$mmc_venues] as $t){
+                if($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$t))!==$t){$tables_ok=false;break;}
+            }
+            if($tables_ok){
+                $p=$wpdb->get_row($wpdb->prepare(
+                    "SELECT v.venue_name,v.address
+                     FROM $mmc_programs p
+                     INNER JOIN $mmc_program_venues pv ON pv.program_id=p.id
+                     INNER JOIN $mmc_venues v ON v.id=pv.venue_id
+                     WHERE p.province_name=%s AND p.district_name=%s
+                       AND pv.is_selected=1 AND pv.allocation_status='approved'
+                       AND p.status<>'cancelled'
+                     ORDER BY CASE WHEN p.planned_date IS NULL THEN 2 WHEN p.planned_date>=CURDATE() THEN 0 ELSE 1 END,
+                              ABS(DATEDIFF(COALESCE(p.planned_date,CURDATE()),CURDATE())), p.id DESC
+                     LIMIT 1",
+                    $il,$ilce
+                ));
+                if($p) $start=trim($p->venue_name.', '.$p->address,', ');
+            }
+        }
+    }
     ?>
     <div class="wrap mad-okul-wrap">
       <h1>Google Maps Rota Oluştur</h1>
       <p>İl/ilçe ve durum seçin, rotaya girecek okulları işaretleyin. Sistem seçilen noktaları Google Maps bağlantılarına böler.</p>
       <form method="get" class="mad-filter">
         <input type="hidden" name="page" value="mad-okul-route">
-        <select name="il"><option value="">İl Seç</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
-        <select name="ilce"><option value="">İlçe Seç</option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
+        <select name="il" id="mad-route-il"><option value="">İl Seç</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
+        <select name="ilce" id="mad-route-ilce" <?php disabled(!$il); ?>><option value=""><?php echo $il ? 'İlçe Seç' : 'Önce İl Seç'; ?></option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
         <select name="durum">
           <?php foreach(['Bekliyor','Adres Eksik','Atandı','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'] as $x): ?><option <?php selected($durum,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?>
         </select>
         <button class="button">Listeyi Getir</button>
       </form>
 
-      <?php if(!$il || !$ilce): ?><div class="notice notice-info inline"><p>Rota listesini görmek için önce il ve ilçe seçin.</p></div><?php endif; ?>
+      <?php if(!$il): ?><div class="notice notice-info inline"><p>Rota listesini görmek için önce il seçin.</p></div>
+      <?php elseif(!$ilceler): ?><div class="notice notice-warning inline"><p><?php echo esc_html($il); ?> için okul/ilçe kaydı bulunamadı. Önce MEBBİS listesini içe aktarın.</p></div>
+      <?php elseif(!$ilce): ?><div class="notice notice-info inline"><p><?php echo esc_html($il); ?> için ilçe seçin.</p></div>
+      <?php elseif(!$rows): ?><div class="notice notice-warning inline"><p><?php echo esc_html($il.' / '.$ilce); ?> için seçili durumda okul bulunamadı.</p></div><?php endif; ?>
 
       <form method="post">
         <?php wp_nonce_field('mad_okul_route'); ?>
@@ -757,8 +811,20 @@ function mad_okul_route_page() {
     </div>
     <script>
       document.addEventListener('change',function(e){
-        if(e.target.id!=='mad-all') return;
-        document.querySelectorAll('input[name="school_ids[]"]').forEach(x=>x.checked=e.target.checked);
+        if(e.target.id==='mad-all'){
+          document.querySelectorAll('input[name="school_ids[]"]').forEach(x=>x.checked=e.target.checked);
+          return;
+        }
+        if(e.target.id==='mad-route-il'){
+          const form=e.target.form;
+          const ilce=form ? form.querySelector('#mad-route-ilce') : null;
+          if(ilce) ilce.value='';
+          if(form) form.submit();
+          return;
+        }
+        if(e.target.id==='mad-route-ilce' && e.target.value && e.target.form){
+          e.target.form.submit();
+        }
       });
     </script>
     <?php
