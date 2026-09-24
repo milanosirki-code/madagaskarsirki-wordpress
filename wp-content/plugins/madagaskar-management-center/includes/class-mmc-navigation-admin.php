@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.13 snippet-aware admin navigation.
+ * MMC v1.3.25 unified admin navigation.
  *
  * Navigation only:
  * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
@@ -304,11 +304,21 @@ class MMC_Navigation_Admin {
     public function mdg_hub() {
         $this->guard( 'manage_woocommerce' );
 
-        $this->render_legacy_hub(
+        $cards = array(
+            $this->legacy_card(
+                array( 'title' => 'Aile Paketi 2+2', 'slug' => 'tools.php?page=mdg-family-package-22', 'capability' => 'manage_woocommerce' ),
+                'mdg'
+            ),
+        );
+        $cards[0]['note'] = 'Etkinlik bazında 2 yetişkin + 2 çocuk paketini açın ve fiyatını kaydedin.';
+        foreach ( $this->legacy_bilet_items_for( 'mdg' ) as $item ) {
+            $cards[] = $this->legacy_card( $item, 'mdg' );
+        }
+
+        $this->render_group_hub(
             'Bilet Yönetimi',
             'Madagaskar Bilet Yönetimi motorunun çekirdek etkinlik ve bilet operasyonları. Satış, finans, pazarlama, CRM ve entegrasyon araçları kendi merkezlerine ayrılmıştır.',
-            $this->legacy_bilet_items_for( 'mdg' ),
-            'mdg'
+            $cards
         );
     }
 

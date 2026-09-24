@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-aile-paketi-22/**'
       - 'wp-content/plugins/madagaskar-okul-tanitim/**'
       - 'wp-content/plugins/madagaskar-population-data/**'
       - '.github/workflows/madagaskar-plugins-ci.yml'
@@ -25,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
+          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-aile-paketi-22             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
           do
             test -d "$dir"
             find "$dir" -type f -name '*.php' -print0 | xargs -0 -n1 php -l
@@ -34,7 +35,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'Version:[[:space:]]*1\.3\.26' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.28' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.1\.2' wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
           grep -Eq "class MMC_Navigation_Admin" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-prep-region-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-sales-customer-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
@@ -47,7 +49,9 @@ jobs:
           grep -Eq "admin_menu_cleanup_js" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "tickera_status" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "WooCommerce → MDG → Tickera Zinciri" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
-          grep -Eq "MMC_Snippet_Inventory_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php\n          grep -Eq "Snippet Envanteri & Çakışma Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php\n          grep -Eq "MMC_Snippet_Inventory_Service::health_check" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
+          grep -Eq "MMC_Snippet_Inventory_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php
+          grep -Eq "Snippet Envanteri & Çakışma Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php
+          grep -Eq "MMC_Snippet_Inventory_Service::health_check" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "connection_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "pipeline_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "pipeline_catalog" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
@@ -71,11 +75,10 @@ jobs:
           grep -Eq "navigation_health" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "madagaskar-v4" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "madagaskar-etkinlik-yayinla" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
+          grep -Eq "function sync_draft" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          grep -Eq "program_code" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          grep -Eq "Aile Paketi 2\+2" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "legacy_bilet_items_for" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
-          grep -Eq "quick_confirm_master_venue" wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php
-          grep -Eq "venue_candidates_for_program" wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php
-          grep -Eq "mmc_quick_confirm_venue" wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php
-          grep -Eq "Kesin Salonu Hemen Bağla" wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php
           grep -Eq "runtime_token_choice" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "Kommo Token Geçiş Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
           grep -Eq "account_mismatch" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
@@ -103,10 +106,12 @@ jobs:
           mkdir -p dist
           (
             cd wp-content/plugins
-            zip -qr ../../dist/madagaskar-management-center-v1.3.26.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-management-center-v1.3.28.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-aile-paketi-22-v1.1.2.zip madagaskar-aile-paketi-22
             zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
-          unzip -t dist/madagaskar-management-center-v1.3.26.zip
+          unzip -t dist/madagaskar-management-center-v1.3.28.zip
+          unzip -t dist/madagaskar-aile-paketi-22-v1.1.2.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
 
       - name: Upload program-integrity packages
@@ -114,6 +119,7 @@ jobs:
         with:
           name: madagaskar-program-integrity-packages
           path: |
-            dist/madagaskar-management-center-v1.3.26.zip
+            dist/madagaskar-management-center-v1.3.28.zip
+            dist/madagaskar-aile-paketi-22-v1.1.2.zip
             dist/madagaskar-okul-tanitim-v1.7.4.zip
           if-no-files-found: error
