@@ -1,3 +1,36 @@
+# Madagaskar Management Center v1.3.12
+
+Bu sürüm **Kurulum & Sağlık ekranındaki Tickera doğrulamasını güçlendirir, aktif programın WooCommerce→MDG→Tickera zincirini ayrı kontrol eder ve eski MMC bildirim gürültüsünü temizler.**
+
+## v1.3.12 — Sağlık Kontrolü Doğrulama
+
+- Tickera artık yalnız `TC` sınıfına bakılarak değerlendirilmez.
+- Tickera doğrulamasında şu sinyaller birlikte kullanılır:
+  - aktif Tickera eklenti kaydı,
+  - `TC` / `TC_VERSION`,
+  - Tickera fonksiyon ve post-type sinyalleri,
+  - aktif programdaki gerçek `tickera_event_id` eşleşmeleri.
+- Aktif program için yeni **WooCommerce → MDG → Tickera Zinciri** sağlık satırı eklendi.
+- Bu zincirde MMC Program ID, MDG Event ID, satış nesnesi eşleşmesi, seans sayısı ve Tickera event ID'leri karşılaştırılır.
+- Kommo uyarı metni netleştirildi: API yapılandırılmadığında MMC çalışmaya devam eder, yalnız otomatik CRM/AI senkronu beklemede kalır.
+- Code Snippets aktifse `wp_snippets` tablosunda Madagaskar ilişkili aktif snippet adayları salt-okunur aranır; bulunursa snippet ID/adları sağlık ekranında gösterilir.
+- MMC sayfalarında yalnız bilinen iki operasyon dışı bildirim gizlenir:
+  - **Madagaskar V5 Finans Güncellemesi**
+  - **Tickera - Custom Forms Activation** reklam bildirimi
+- Gerçek warning/error bildirimleri görünmeye devam eder.
+- Veritabanı şeması değişmediği için `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- WooCommerce sipariş, ürün ve varyasyonlarına yazma yoktur.
+- Tickera event/bilet/QR verileri değiştirilmez.
+- PayTR akışına dokunulmaz.
+- MDG `events/sessions/ticket_types/order_map` tabloları salt okunur sağlık doğrulaması için kullanılır.
+- Code Snippets kayıtları yalnız okunur; otomatik pasife alma veya silme yapılmaz.
+- Kommo yapılandırması veya token değerleri değiştirilmez.
+
+---
+
 # Madagaskar Management Center v1.3.11
 
 Bu sürüm **Sistem & Yetkiler ve diğer gizlenmiş MMC ayrıntı ekranlarının WordPress erişim kaydını korur**. Sol menü sade kalır; kartlardan açılan ayrıntı sayfaları artık doğrudan erişilebilir.
