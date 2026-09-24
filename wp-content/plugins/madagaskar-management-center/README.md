@@ -1,3 +1,32 @@
+# Madagaskar Management Center v1.3.8
+
+Bu sürüm **MMC + Madagaskar Bilet Yönetimi + Okul Tanıtım yönetim ekranlarını tek Madagaskar üst menüsünde toplar**. Veri kaynakları ve çalışan motorlar ayrışık kalır; değişiklik yalnız yönetim navigasyonundadır.
+
+## v1.3.8 — Tek Yönetim Menüsü / Navigation Hub
+
+- WordPress yönetiminde MMC, MDG ve Okul Tanıtım için tek ana çatı **Madagaskar** olur.
+- MMC yetkisi olan yöneticilerde eski `mdg-dashboard` ve `mad-okul` üst menüleri gizlenir.
+- Eski MDG ve Okul Tanıtım sayfalarının slug, callback, form action ve veri tabloları değiştirilmez.
+- **Bilet Yönetimi** merkezi, o anda sisteme kayıtlı tüm `mdg-dashboard` alt sayfalarını dinamik olarak listeler; ek MDG modülleri varsa ayrıca görünür.
+- **Okul Tanıtım** merkezi, o anda sisteme kayıtlı tüm `mad-okul` alt sayfalarını dinamik olarak listeler.
+- Eski `mdg-*` ve `mad-okul*` ekranlarında WordPress sol menü vurgusu Madagaskar çatısında kalır.
+- Aktif MMC Program ID eski ekranlara taşınan bağlantılarda korunur.
+- **Görevlerim** menüsü saha personelinin ayrı yetki akışı için bağımsız bırakılır.
+- MMC yetkisi olmayan kullanıcıların eski menü erişimi değiştirilmez.
+- MMC devre dışı bırakılırsa eski MDG ve Okul Tanıtım üst menüleri otomatik olarak geri döner.
+- Bu sürümde veritabanı şeması değişmez; `MMC_DB_VERSION` 1.3.7 olarak kalır.
+
+## Güvenlik sınırları
+
+- WooCommerce siparişleri, ürünleri ve varyasyonları değiştirilmez.
+- Tickera event/bilet/QR kayıtlarına yazılmaz.
+- PayTR akışına müdahale edilmez.
+- MDG `events/sessions/ticket_types/order_map` tabloları navigasyon birleşiminden etkilenmez.
+- Okul Tanıtım okul, program, görev ve rota kayıtları taşınmaz veya yeniden yazılmaz.
+- Birleşim yalnız WordPress admin menü görünümünü değiştirir.
+
+---
+
 # Madagaskar Management Center v1.3.7
 
 Bu sürüm **MMC Program ID ile ilk Madagaskar Bilet Yönetimi motorunu kalıcı olarak birbirine bağlar**.
