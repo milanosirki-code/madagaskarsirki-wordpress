@@ -1,3 +1,24 @@
+# Madagaskar Management Center v1.3.27
+
+Bu sürüm **MMC programlarını eski MDG Etkinlik Yayınla ekranına yeniden veri girmeden aktarır**.
+
+## v1.3.27 — MMC → Etkinlik Yayınla Köprüsü
+
+- `mdg-publish?program_id=...` artık MMC program kimliğini kullanır.
+- Etkinlik Yayınla ekranının üstünde **MMC Programından Etkinlik Taslağı** paneli gösterilir.
+- Panelde aktif programlar seçilebilir; mevcut `program_id` otomatik seçili gelir.
+- Program özeti: program kodu, şehir/ilçe, tarih, kesin salon, seans sayısı ve bilet türü sayısı.
+- **MMC Programından Taslak Oluştur** işlemi kesin salonu mevcut MDG Salonlar ana kaydına bağlar; tarih, seans, ortak kapasite, aktif bilet türleri ve kendi site fiyatlarını taşır.
+- Aile paketi `AILE_2_2` kodu ve 4 kişi kapasite tüketimiyle aktarılır.
+- Yalnız MDG **taslak** etkinliği oluşturulur. Canlı WooCommerce ürünü, Tickera bileti/QR, PayTR ödemesi veya mevcut sipariş oluşturulmaz/değiştirilmez.
+- Aynı MMC programı ikinci kez çalıştırılırsa bridge/import_code kontrolüyle duplicate taslak üretilmez.
+- Aynı tarih + şehir/ilçe + salon + seans yapısında mevcut MDG etkinliği varsa yeni kayıt yerine mevcut kayıt bağlanır; birden fazla aday varsa işlem durur.
+- Oluşturulan MDG taslağı MMC Program ID ile `mmc_mdg_event_bridge` üzerinden eşleştirilir.
+- Görseller MMC'den zorla taşınmaz; kapak/galeri MDG taslak ekranında tamamlanır.
+- DB şeması değişmez; MMC_DB_VERSION **1.3.7** olarak kalır.
+
+---
+
 # Madagaskar Management Center v1.3.26
 
 Bu sürüm **salon bağlama işlemini Satış Hazırlığı ekranında tek adıma indirir**.
