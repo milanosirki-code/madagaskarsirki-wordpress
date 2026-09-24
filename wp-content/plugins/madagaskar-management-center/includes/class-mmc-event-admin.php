@@ -13,6 +13,7 @@ class MMC_Event_Admin {
         add_action( 'admin_post_mmc_update_sales_integration', array( $this, 'handle_update_integration' ) );
         add_action( 'admin_post_mmc_update_channel_price', array( $this, 'handle_update_channel_price' ) );
         add_action( 'admin_post_mmc_quick_confirm_venue', array( $this, 'handle_quick_confirm_venue' ) );
+        add_action( 'admin_post_mmc_sync_mdg_draft', array( $this, 'handle_sync_mdg_draft' ) );
     }
 
     public function menu() {
@@ -55,6 +56,20 @@ class MMC_Event_Admin {
             <div class="mmc-panel"><h2>Satış Hazırlık Kontrolü</h2><?php if($check['ready']): ?><p><strong>🟢 Etkinlik yapısı satış entegrasyonuna hazır.</strong></p><?php else: ?><p><strong>🟡 Eksikler:</strong></p><ul class="mmc-issues"><?php foreach($check['issues'] as $i): ?><li><?php echo esc_html($i); ?></li><?php endforeach; ?></ul><?php endif; ?>
                 <p><a class="button" href="<?php echo esc_url(add_query_arg(array('page'=>'mmc-sales-prep','program_id'=>$program->id),admin_url('admin.php'))); ?>">Satış Hazırlığına Git</a></p>
             </div>
+        </div>
+        <div class="mmc-panel"><h2>MDG Etkinlik Taslağı</h2>
+            <p>MMC programındaki kesin salon, tarih, seans, ortak kapasite ve gerçek Çocuk/Yetişkin bilet fiyatlarını MDG taslağına aktarır. Aile Paketi 2+2 sanal paket modülü tarafından yönetilir; burada üçüncü bir kapasite-4 bilet satırı oluşturulmaz.</p>
+            <?php if ( class_exists('MMC_MDG_Bridge_Service') && MMC_MDG_Bridge_Service::bridge_for_program($program->id) ): ?>
+                <p><a class="button" href="<?php echo esc_url(MMC_MDG_Bridge_Service::admin_url($program->id)); ?>">Bağlı MDG Taslağını Aç</a></p>
+            <?php endif; ?>
+            <?php if(current_user_can('mmc_manage_events')||current_user_can('mmc_manage_programs')): ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="mmc_sync_mdg_draft">
+                    <input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+                    <?php wp_nonce_field('mmc_sync_mdg_draft_'.$program->id,'mmc_nonce'); ?>
+                    <button class="button button-primary">MDG Taslağını Oluştur / Güncelle</button>
+                </form>
+            <?php endif; ?>
         </div>
         <div class="mmc-panel"><h2>2. Seanslar</h2>
             <?php if(current_user_can('mmc_manage_events')||current_user_can('mmc_manage_programs')): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-inline-form"><input type="hidden" name="action" value="mmc_add_session"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_add_session_'.$event->id,'mmc_nonce'); ?><label>Tarih/Saat <input type="datetime-local" name="session_time" value="<?php echo esc_attr($event->event_date ? $event->event_date.'T12:00':''); ?>" required></label><label>Kapasite <input type="number" min="1" name="capacity" required></label><label>Not <input name="notes"></label><button class="button button-primary">Seans Ekle</button></form><?php endif; ?>
@@ -162,6 +177,16 @@ class MMC_Event_Admin {
     public function handle_add_session(){ $this->guard_write('mmc_manage_events'); $eid=absint($_POST['event_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_add_session_'.$eid,'mmc_nonce'); $r=MMC_Event_Service::add_session($eid,wp_unslash($_POST['session_time']??''),absint($_POST['capacity']??0),wp_unslash($_POST['notes']??'')); $this->redirect('mmc-events',$pid,$r,'session_added'); }
     public function handle_delete_session(){ $this->guard_write('mmc_manage_events'); $sid=absint($_POST['session_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_delete_session_'.$sid,'mmc_nonce'); $r=MMC_Event_Service::delete_session($sid); $this->redirect('mmc-events',$pid,$r,'session_deleted'); }
     public function handle_update_ticket(){ $this->guard_write('mmc_manage_events'); $tid=absint($_POST['ticket_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_update_ticket_'.$tid,'mmc_nonce'); $r=MMC_Event_Service::update_ticket_type($tid,$_POST); $this->redirect('mmc-events',$pid,$r,'ticket_saved'); }
+    public function handle_sync_mdg_draft(){
+        $this->guard_write('mmc_manage_events');
+        $pid=absint($_POST['program_id']??0);
+        check_admin_referer('mmc_sync_mdg_draft_'.$pid,'mmc_nonce');
+        $r=class_exists('MMC_MDG_Draft_Sync_Service')
+            ? MMC_MDG_Draft_Sync_Service::sync($pid)
+            : new WP_Error('mmc_mdg_sync_missing','MDG taslak senkron servisi yüklenemedi.');
+        $this->redirect('mmc-events',$pid,$r,'mdg_draft_synced');
+    }
+
     public function handle_quick_confirm_venue(){
         $this->guard_write('mmc_manage_events');
         $pid = absint($_POST['program_id'] ?? 0);
@@ -187,5 +212,5 @@ class MMC_Event_Admin {
     private function age_label($t){ if(null!==$t->age_min&&null!==$t->age_max)return $t->age_min.'–'.$t->age_max; if(null!==$t->age_min)return $t->age_min.'+'; return 'Paket'; }
     private function guard($cap){ if(!current_user_can($cap))wp_die('Bu sayfayı görüntüleme yetkiniz yok.'); }
     private function guard_write($cap){ if(!(current_user_can($cap)||current_user_can('mmc_manage_programs')))wp_die('Bu işlemi yapma yetkiniz yok.'); }
-    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){ $map=array('event_created'=>'Etkinlik taslağı oluşturuldu.','event_saved'=>'Etkinlik güncellendi.','session_added'=>'Seans eklendi.','session_deleted'=>'Seans silindi.','ticket_saved'=>'Bilet türü güncellendi.','sales_ready'=>'Satış hazırlık görevleri açıldı.','integration_saved'=>'Kanal durumu güncellendi.','channel_price_saved'=>'Kanal fiyatı güncellendi.','venue_linked'=>'Salon programa bağlandı ve kesin salon olarak işaretlendi.'); $k=sanitize_key($_GET['mmc_msg']); echo '<div class="notice notice-success"><p>'.esc_html($map[$k]??'İşlem tamamlandı.').'</p></div>'; } }
+    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){ $map=array('event_created'=>'Etkinlik taslağı oluşturuldu.','event_saved'=>'Etkinlik güncellendi.','session_added'=>'Seans eklendi.','session_deleted'=>'Seans silindi.','ticket_saved'=>'Bilet türü güncellendi.','sales_ready'=>'Satış hazırlık görevleri açıldı.','integration_saved'=>'Kanal durumu güncellendi.','channel_price_saved'=>'Kanal fiyatı güncellendi.','venue_linked'=>'Salon programa bağlandı ve kesin salon olarak işaretlendi.','mdg_draft_synced'=>'MDG etkinlik taslağı programdan oluşturuldu veya güncellendi.'); $k=sanitize_key($_GET['mmc_msg']); echo '<div class="notice notice-success"><p>'.esc_html($map[$k]??'İşlem tamamlandı.').'</p></div>'; } }
 }
