@@ -164,6 +164,55 @@ class MMC_Health_Service {
                 );
             }
 
+            if ( ! empty( $kommo['connected'] ) && method_exists( 'MMC_Kommo_Service', 'program_pipeline_blueprint' ) ) {
+                $blueprint = MMC_Kommo_Service::program_pipeline_blueprint();
+                $mmc_pipeline = MMC_Kommo_Service::find_program_pipeline();
+
+                if ( is_wp_error( $mmc_pipeline ) ) {
+                    $checks[] = self::check(
+                        'kommo_mmc_pipeline_schema',
+                        'MMC Program Pipeline Şeması',
+                        'warning',
+                        'Kommo MMC pipeline şeması doğrulanamadı: ' . $mmc_pipeline->get_error_message(),
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kurulum Merkezi'
+                    );
+                } elseif ( ! $mmc_pipeline ) {
+                    $checks[] = self::check(
+                        'kommo_mmc_pipeline_schema',
+                        'MMC Program Pipeline Şeması',
+                        'info',
+                        'MMC — Program Yönetimi pipeline henüz kurulmadı. Mevcut satış/WooCommerce pipeline’ları değiştirilmez.',
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kurulum Merkezi'
+                    );
+                } else {
+                    $present = array();
+                    foreach ( (array) ( $mmc_pipeline['statuses'] ?? array() ) as $status_row ) {
+                        $present[] = remove_accents( strtolower( trim( (string) ( $status_row['name'] ?? '' ) ) ) );
+                    }
+
+                    $missing = array();
+                    foreach ( (array) $blueprint['stages'] as $stage ) {
+                        $key = remove_accents( strtolower( trim( (string) $stage['name'] ) ) );
+                        if ( ! in_array( $key, $present, true ) ) {
+                            $missing[] = $stage['name'];
+                        }
+                    }
+
+                    $checks[] = self::check(
+                        'kommo_mmc_pipeline_schema',
+                        'MMC Program Pipeline Şeması',
+                        $missing ? 'warning' : 'ok',
+                        $missing
+                            ? 'Pipeline #' . (int) $mmc_pipeline['id'] . ' bulundu; eksik MMC aşamaları: ' . implode( ', ', $missing ) . '.'
+                            : 'Pipeline #' . (int) $mmc_pipeline['id'] . ' · ' . count( $blueprint['stages'] ) . '/' . count( $blueprint['stages'] ) . ' MMC program aşaması doğrulandı.',
+                        admin_url( 'admin.php?page=mmc-kommo' ),
+                        'Kurulum Merkezi'
+                    );
+                }
+            }
+
             if ( ! empty( $kommo['connected'] ) ) {
                 $pipeline = MMC_Kommo_Service::pipeline_diagnostics();
 
