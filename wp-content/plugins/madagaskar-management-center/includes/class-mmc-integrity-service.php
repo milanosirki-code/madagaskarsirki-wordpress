@@ -238,17 +238,28 @@ class MMC_Integrity_Service {
 
         if ( empty($s['linked']) ) {
             $strong = array_values( array_filter( (array)$s['candidates'], function($row){ return ! empty($row['strong']); } ) );
-            $detail = $strong
-                ? count($strong) . ' güçlü MDG etkinlik adayı bulundu; Program ID henüz kalıcı bağlanmadı.'
-                : 'MMC Program ID ile MDG event_id arasında kalıcı köprü bulunamadı.';
-            $rows[] = self::row(
-                'mdg_bridge',
-                'MMC ↔ MDG Etkinlik Köprüsü',
-                'warning',
-                $detail,
-                $url,
-                1 === count($strong)
-            );
+            if ( ! empty($s['stale']) && ! empty($s['bridge']) ) {
+                $rows[] = self::row(
+                    'mdg_bridge',
+                    'MMC ↔ MDG Etkinlik Köprüsü',
+                    'critical',
+                    'Kayıtlı köprü MDG Event #' . (int)$s['bridge']->mdg_event_id . ' kaydını artık bulamıyor. Köprüyü yeniden kurun.',
+                    $url,
+                    1 === count($strong)
+                );
+            } else {
+                $detail = $strong
+                    ? count($strong) . ' güçlü MDG etkinlik adayı bulundu; Program ID henüz kalıcı bağlanmadı.'
+                    : 'MMC Program ID ile MDG event_id arasında kalıcı köprü bulunamadı.';
+                $rows[] = self::row(
+                    'mdg_bridge',
+                    'MMC ↔ MDG Etkinlik Köprüsü',
+                    'warning',
+                    $detail,
+                    $url,
+                    1 === count($strong)
+                );
+            }
             return $rows;
         }
 
