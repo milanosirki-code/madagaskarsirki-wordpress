@@ -1,3 +1,40 @@
+# Madagaskar Management Center v1.3.17
+
+Bu sürüm **Kommo Program Pipeline kurulumunun sessiz başarısızlıklarını teşhis eder** ve pipeline/stage yazma yetkisini kurulumdan önce salt-okunur doğrular.
+
+## v1.3.17 — Kommo Kurulum Ön Kontrol & Hata Tanı
+
+- Kommo `/account` yanıtındaki `current_user_id` okunur.
+- Mevcut tokenın bağlı olduğu kullanıcı, `GET /api/v4/users/{id}` üzerinden salt-okunur doğrulanır.
+- Kullanıcının `rights.is_admin` alanı görüntülenir:
+  - Yönetici doğrulandı → kurulum devam edebilir.
+  - Yönetici değil → pipeline kurulum düğmesi devre dışı bırakılır.
+  - Yetki endpoint'i doğrulanamazsa → durum açıkça "Doğrulanamadı" gösterilir; kurulum denemesi ayrıntılı hata kaydı üretir.
+- Kommo resmi API kuralı nedeniyle pipeline/stage oluşturma işlemleri yönetici yetkisine ihtiyaç duyar.
+- API 4xx/5xx hata mesajları artık endpoint yolu ile birlikte ayrıştırılır.
+- Validation error içeriği varsa güvenli/sade metin olarak kullanıcıya gösterilir.
+- Son pipeline kurulum denemesi WordPress option içinde yalnız güvenli teşhis bilgisiyle saklanır:
+  - tarih,
+  - başarı/hata,
+  - hata kodu,
+  - HTTP status,
+  - endpoint,
+  - pipeline/status ID.
+- Token, Authorization header veya API response secretları saklanmaz.
+- Kurulum POST yönlendirmesi aktif `program_id` değerini korur.
+- Böylece kullanıcı kurulumdan sonra aynı program ekranında kalır ve sonucu görür.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Admin ön kontrolü salt-okunur GET çağrısıdır.
+- Pipeline kurulumu yine yalnız açık checkbox + tam onay metni + nonce ile çalışır.
+- Mevcut Kommo pipeline'ları değiştirilmez.
+- Lead/sipariş/müşteri oluşturulmaz.
+- Token değeri hiçbir teşhis kaydına yazılmaz.
+
+---
+
 # Madagaskar Management Center v1.3.16
 
 Bu sürüm **Kommo Program Pipeline Kurulum Merkezi** ekler. Kullanıcı açık onay vermeden Kommo'da hiçbir yazma işlemi yapılmaz.
