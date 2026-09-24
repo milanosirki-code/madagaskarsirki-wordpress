@@ -467,6 +467,83 @@ class MMC_Kommo_Service {
         return array_merge( $cfg, $diag );
     }
 
+    public static function pipeline_diagnostics( $force = false ) {
+        $cfg = self::configuration_status();
+        $pipeline_id = (int) $cfg['pipeline_id'];
+        $status_id = (int) $cfg['status_id'];
+
+        if ( ! $pipeline_id ) {
+            return array(
+                'configured' => false,
+                'valid' => null,
+                'pipeline_id' => 0,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => '',
+            );
+        }
+
+        if ( ! $cfg['configured'] ) {
+            return array(
+                'configured' => true,
+                'valid' => false,
+                'pipeline_id' => $pipeline_id,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => 'Kommo API bağlantısı yapılandırılmadan pipeline doğrulanamaz.',
+            );
+        }
+
+        $cache_key = 'mmc_kommo_pipeline_' . md5( $cfg['subdomain'] . '|' . $pipeline_id . '|' . $status_id . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return $cached;
+            }
+        }
+
+        $r = self::api_request( self::crm_base() . '/leads/pipelines/' . $pipeline_id, 'GET' );
+        if ( is_wp_error( $r ) ) {
+            $out = array(
+                'configured' => true,
+                'valid' => false,
+                'pipeline_id' => $pipeline_id,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => $r->get_error_message(),
+            );
+            set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+            return $out;
+        }
+
+        $status_valid = null;
+        if ( $status_id ) {
+            $status_valid = false;
+            $statuses = $r['_embedded']['statuses'] ?? array();
+            foreach ( (array) $statuses as $row ) {
+                if ( (int) ( $row['id'] ?? 0 ) === $status_id ) {
+                    $status_valid = true;
+                    break;
+                }
+            }
+        }
+
+        $out = array(
+            'configured' => true,
+            'valid' => true,
+            'pipeline_id' => $pipeline_id,
+            'pipeline_name' => sanitize_text_field( $r['name'] ?? '' ),
+            'status_id' => $status_id,
+            'status_valid' => $status_valid,
+            'error' => '',
+        );
+        set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+        return $out;
+    }
+
     public static function configuration_status() {
         $subdomain = self::subdomain();
         $token_source = self::token_source();
