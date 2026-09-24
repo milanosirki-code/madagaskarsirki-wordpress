@@ -550,6 +550,190 @@ class MMC_Kommo_Service {
         return $out;
     }
 
+    public static function program_pipeline_blueprint() {
+        return array(
+            'name' => 'MMC — Program Yönetimi',
+            'stages' => array(
+                array( 'name'=>'Hazırlık',               'sort'=>10,  'color'=>'#d6eaff' ),
+                array( 'name'=>'Bölge Planlandı',        'sort'=>20,  'color'=>'#c1e0ff' ),
+                array( 'name'=>'Salon/Tahsis Hazır',     'sort'=>30,  'color'=>'#98cbff' ),
+                array( 'name'=>'Etkinlik/Seans Hazır',   'sort'=>40,  'color'=>'#fffeb2' ),
+                array( 'name'=>'Satış Hazır',            'sort'=>50,  'color'=>'#fffd7f' ),
+                array( 'name'=>'Tanıtım/Saha Aktif',     'sort'=>60,  'color'=>'#ffeab2' ),
+                array( 'name'=>'Operasyon Hazır',        'sort'=>70,  'color'=>'#ffdc7f' ),
+                array( 'name'=>'Gösteri Tamamlandı',     'sort'=>80,  'color'=>'#deff81' ),
+                array( 'name'=>'Finans/Kapanış',         'sort'=>90,  'color'=>'#87f2c0' ),
+                array( 'name'=>'Arşiv',                  'sort'=>100, 'color'=>'#e6e8ea' ),
+            ),
+        );
+    }
+
+    public static function find_program_pipeline( $force = false ) {
+        $blueprint = self::program_pipeline_blueprint();
+        $catalog = self::pipeline_catalog( $force );
+        if ( is_wp_error( $catalog ) ) {
+            return $catalog;
+        }
+
+        $target = self::normalize_pipeline_label( $blueprint['name'] );
+        foreach ( (array) $catalog as $pipeline ) {
+            if ( self::normalize_pipeline_label( $pipeline['name'] ?? '' ) === $target ) {
+                return $pipeline;
+            }
+        }
+
+        return null;
+    }
+
+    public static function install_program_pipeline() {
+        if ( ! self::configured() ) {
+            return new WP_Error( 'mmc_kommo_not_configured', 'Kommo API yapılandırılmadı.' );
+        }
+
+        $diag = self::connection_diagnostics( true );
+        if ( empty( $diag['connected'] ) ) {
+            return new WP_Error( 'mmc_kommo_not_connected', $diag['error'] ?: 'Kommo API bağlantısı doğrulanamadı.' );
+        }
+
+        $blueprint = self::program_pipeline_blueprint();
+        $pipeline = self::find_program_pipeline( true );
+        if ( is_wp_error( $pipeline ) ) {
+            return $pipeline;
+        }
+
+        $created_pipeline = false;
+
+        if ( ! $pipeline ) {
+            $payload = array(
+                array(
+                    'name'           => $blueprint['name'],
+                    'sort'           => 900,
+                    'is_main'        => false,
+                    'is_unsorted_on' => false,
+                ),
+            );
+
+            $response = self::api_request(
+                self::crm_base() . '/leads/pipelines',
+                'POST',
+                $payload
+            );
+            if ( is_wp_error( $response ) ) {
+                return $response;
+            }
+
+            $created_pipeline = true;
+            delete_transient( 'mmc_kommo_pipeline_catalog_' . md5( self::subdomain() . '|' . self::token_fingerprint() ) );
+            $pipeline = self::find_program_pipeline( true );
+            if ( is_wp_error( $pipeline ) ) {
+                return $pipeline;
+            }
+            if ( ! $pipeline || empty( $pipeline['id'] ) ) {
+                return new WP_Error(
+                    'mmc_kommo_pipeline_create_unverified',
+                    'Kommo pipeline oluşturma çağrısı tamamlandı ancak yeni MMC pipeline yeniden okunarak doğrulanamadı.'
+                );
+            }
+        }
+
+        $pipeline_id = absint( $pipeline['id'] );
+        $existing = array();
+        foreach ( (array) ( $pipeline['statuses'] ?? array() ) as $status ) {
+            $existing[ self::normalize_pipeline_label( $status['name'] ?? '' ) ] = $status;
+        }
+
+        $missing_payload = array();
+        foreach ( $blueprint['stages'] as $stage ) {
+            $key = self::normalize_pipeline_label( $stage['name'] );
+            if ( isset( $existing[ $key ] ) ) {
+                continue;
+            }
+            $missing_payload[] = array(
+                'name'  => $stage['name'],
+                'sort'  => (int) $stage['sort'],
+                'color' => $stage['color'],
+            );
+        }
+
+        $added_stage_count = 0;
+        if ( $missing_payload ) {
+            $response = self::api_request(
+                self::crm_base() . '/leads/pipelines/' . $pipeline_id . '/statuses',
+                'POST',
+                $missing_payload
+            );
+            if ( is_wp_error( $response ) ) {
+                return new WP_Error(
+                    'mmc_kommo_stage_create_failed',
+                    'MMC Program Pipeline oluşturuldu/bulundu ancak aşamalar tamamlanamadı: ' . $response->get_error_message(),
+                    array( 'pipeline_id'=>$pipeline_id )
+                );
+            }
+            $added_stage_count = count( $missing_payload );
+        }
+
+        $verified = self::pipeline_catalog( true );
+        if ( is_wp_error( $verified ) ) {
+            return $verified;
+        }
+
+        $final = null;
+        $target = self::normalize_pipeline_label( $blueprint['name'] );
+        foreach ( $verified as $row ) {
+            if ( self::normalize_pipeline_label( $row['name'] ?? '' ) === $target ) {
+                $final = $row;
+                break;
+            }
+        }
+
+        if ( ! $final ) {
+            return new WP_Error( 'mmc_kommo_pipeline_verify_failed', 'MMC Program Pipeline son doğrulamada bulunamadı.' );
+        }
+
+        $final_statuses = array();
+        foreach ( (array) $final['statuses'] as $status ) {
+            $final_statuses[ self::normalize_pipeline_label( $status['name'] ?? '' ) ] = $status;
+        }
+
+        $missing_names = array();
+        foreach ( $blueprint['stages'] as $stage ) {
+            if ( ! isset( $final_statuses[ self::normalize_pipeline_label( $stage['name'] ) ] ) ) {
+                $missing_names[] = $stage['name'];
+            }
+        }
+
+        if ( $missing_names ) {
+            return new WP_Error(
+                'mmc_kommo_pipeline_incomplete',
+                'Pipeline mevcut ancak bazı MMC aşamaları doğrulanamadı: ' . implode( ', ', $missing_names ),
+                array( 'pipeline_id'=>(int)$final['id'] )
+            );
+        }
+
+        $first = $final_statuses[ self::normalize_pipeline_label( 'Hazırlık' ) ] ?? null;
+        $default_status_id = $first ? absint( $first['id'] ) : 0;
+
+        update_option( 'mmc_kommo_pipeline_id', (int)$final['id'], false );
+        update_option( 'mmc_kommo_status_id', $default_status_id, false );
+
+        return array(
+            'pipeline_id'         => (int)$final['id'],
+            'pipeline_name'       => (string)$final['name'],
+            'default_status_id'   => $default_status_id,
+            'default_status_name' => $first ? (string)$first['name'] : '',
+            'created_pipeline'    => $created_pipeline,
+            'added_stage_count'   => $added_stage_count,
+            'stage_count'         => count( $blueprint['stages'] ),
+        );
+    }
+
+    private static function normalize_pipeline_label( $text ) {
+        $text = strtolower( remove_accents( wp_strip_all_tags( (string) $text ) ) );
+        $text = str_replace( array( '—', '–', '/', '\\' ), ' ', $text );
+        $text = preg_replace( '/[^a-z0-9]+/', ' ', $text );
+        return trim( preg_replace( '/\\s+/', ' ', $text ) );
+    }
+
     public static function pipeline_catalog( $force = false ) {
         $cfg = self::configuration_status();
 
