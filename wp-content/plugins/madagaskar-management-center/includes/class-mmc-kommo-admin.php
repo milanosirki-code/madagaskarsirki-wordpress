@@ -65,10 +65,90 @@ class MMC_Kommo_Admin {
 
     private function render_settings(){
         if(!current_user_can('mmc_manage_settings'))return;
-        $sub=MMC_Kommo_Service::subdomain(); $pipeline=absint(get_option('mmc_kommo_pipeline_id',0)); $status=absint(get_option('mmc_kommo_status_id',0)); $mode=get_option('mmc_kommo_ai_mode','suggested_reply');
+
+        $sub=MMC_Kommo_Service::subdomain();
+        $pipeline=absint(get_option('mmc_kommo_pipeline_id',0));
+        $status=absint(get_option('mmc_kommo_status_id',0));
+        $mode=get_option('mmc_kommo_ai_mode','suggested_reply');
+        $diag=MMC_Kommo_Service::connection_diagnostics();
+        $pipe=MMC_Kommo_Service::pipeline_diagnostics();
+
         ?>
-        <div class="mmc-panel"><h2>Kommo Entegrasyon Ayarları</h2><p><strong>Güvenlik:</strong> erişim tokenı WordPress veritabanına kaydedilmez. <code>wp-config.php</code> içinde <code>MMC_KOMMO_TOKEN</code> sabiti olarak tanımlanır.</p><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-form-grid"><input type="hidden" name="action" value="mmc_kommo_save_settings"><?php wp_nonce_field('mmc_kommo_save_settings','mmc_nonce'); ?><label>Kommo Subdomain <input name="subdomain" value="<?php echo esc_attr($sub); ?>" placeholder="ornekhesap"></label><label>Program Pipeline ID <input type="number" min="0" name="pipeline_id" value="<?php echo esc_attr($pipeline); ?>"></label><label>Varsayılan Status ID <input type="number" min="0" name="status_id" value="<?php echo esc_attr($status); ?>"></label><label>AI Kaynak Kullanımı <select name="ai_mode"><option value="suggested_reply" <?php selected($mode,'suggested_reply'); ?>>Suggested Reply</option><option value="agent" <?php selected($mode,'agent'); ?>>AI Agent</option></select></label><div><button class="button button-primary">Ayarları Kaydet</button></div></form><p>Token durumu: <strong><?php echo defined('MMC_KOMMO_TOKEN')&&MMC_KOMMO_TOKEN?'🟢 Tanımlı':'🟡 Tanımlı değil'; ?></strong></p><pre>define('MMC_KOMMO_SUBDOMAIN', 'hesabiniz');
-define('MMC_KOMMO_TOKEN', 'LONG_LIVED_TOKEN');</pre><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_kommo_test"><?php wp_nonce_field('mmc_kommo_test','mmc_nonce'); ?><button class="button">Kommo Bağlantısını Test Et</button></form></div>
+        <div class="mmc-panel">
+            <h2>Kommo Entegrasyon Ayarları</h2>
+            <p><strong>Güvenlik:</strong> erişim tokenı WordPress veritabanına kaydedilmez. MMC önce <code>MMC_KOMMO_TOKEN</code>, geçiş döneminde ise mevcut <code>MS_KOMMO_TOKEN</code> sabitini salt-okunur kullanabilir.</p>
+
+            <div class="mmc-cards">
+                <div class="mmc-card">
+                    <span>API Bağlantısı</span>
+                    <strong><?php echo !empty($diag['connected'])?'🟢 Bağlı':'🟡 Bekliyor'; ?></strong>
+                    <small><?php echo esc_html(!empty($diag['account_name'])?$diag['account_name']:($diag['error']?:'-')); ?></small>
+                </div>
+                <div class="mmc-card">
+                    <span>Subdomain</span>
+                    <strong><?php echo esc_html($diag['subdomain']?:'-'); ?></strong>
+                    <small><?php echo esc_html($diag['subdomain_source']?:'Kaynak yok'); ?></small>
+                </div>
+                <div class="mmc-card">
+                    <span>Token Kaynağı</span>
+                    <strong><?php echo esc_html($diag['token_source']?:'Tanımlı değil'); ?></strong>
+                    <small>Token değeri ekranda gösterilmez.</small>
+                </div>
+                <div class="mmc-card">
+                    <span>Program Pipeline</span>
+                    <strong><?php echo $pipeline?esc_html('#'.$pipeline):'Tanımlı değil'; ?></strong>
+                    <small><?php echo !empty($pipe['pipeline_name'])?esc_html($pipe['pipeline_name']):'MMC program lead senkronu için opsiyonel'; ?></small>
+                </div>
+            </div>
+
+            <?php if(!empty($diag['uses_legacy_token'])): ?>
+                <div class="notice notice-warning inline">
+                    <p><strong>Secret geçişi gerekli:</strong> Canlı Kommo bağlantısı legacy <code>MS_KOMMO_TOKEN</code> üzerinden çalışıyor. Yeni/yenilenmiş tokenı <code>wp-config.php</code> içine <code>MMC_KOMMO_TOKEN</code> olarak taşıdıktan sonra eski snippet içindeki tokenı kaldırın. MMC bu geçiş sırasında bağlantıyı kesmeden fallback yapar.</p>
+                </div>
+            <?php endif; ?>
+
+            <?php if(!$pipeline && !empty($diag['legacy_pipeline_id'])): ?>
+                <div class="notice notice-info inline">
+                    <p><strong>Legacy pipeline bulundu:</strong> <code>#<?php echo (int)$diag['legacy_pipeline_id']; ?></code>. Bu değer mevcut WooCommerce/Order kartları için kullanılıyor olabilir; MMC bunu Program Pipeline olarak otomatik kullanmaz.</p>
+                </div>
+            <?php endif; ?>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-form-grid">
+                <input type="hidden" name="action" value="mmc_kommo_save_settings">
+                <?php wp_nonce_field('mmc_kommo_save_settings','mmc_nonce'); ?>
+                <label>Kommo Subdomain
+                    <input name="subdomain" value="<?php echo esc_attr($sub); ?>" placeholder="milanosirki">
+                </label>
+                <label>Program Pipeline ID
+                    <input type="number" min="0" name="pipeline_id" value="<?php echo esc_attr($pipeline); ?>">
+                </label>
+                <label>Varsayılan Status ID
+                    <input type="number" min="0" name="status_id" value="<?php echo esc_attr($status); ?>">
+                </label>
+                <label>AI Kaynak Kullanımı
+                    <select name="ai_mode">
+                        <option value="suggested_reply" <?php selected($mode,'suggested_reply'); ?>>Suggested Reply</option>
+                        <option value="agent" <?php selected($mode,'agent'); ?>>AI Agent</option>
+                    </select>
+                </label>
+                <div><button class="button button-primary">Ayarları Kaydet</button></div>
+            </form>
+
+            <h3>Güvenli wp-config Geçiş Şablonu</h3>
+            <pre>define('MMC_KOMMO_SUBDOMAIN', '<?php echo esc_html($sub?:'milanosirki'); ?>');
+define('MMC_KOMMO_TOKEN', 'YENI_UZUN_OMURLU_TOKEN');</pre>
+            <p class="description">Eski tokenı buraya kopyalamak yerine Kommo'dan yeni/yenilenmiş uzun ömürlü token kullanılması önerilir. Tokenı sohbet, ekran görüntüsü veya veritabanı alanına yazmayın.</p>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="mmc_kommo_test">
+                <?php wp_nonce_field('mmc_kommo_test','mmc_nonce'); ?>
+                <button class="button">Kommo Bağlantısını Yeniden Test Et</button>
+            </form>
+
+            <?php if(!empty($diag['checked_at'])): ?>
+                <p class="description">Son canlı test: <?php echo esc_html($diag['checked_at']); ?></p>
+            <?php endif; ?>
+        </div>
         <?php
     }
 
@@ -76,7 +156,7 @@ define('MMC_KOMMO_TOKEN', 'LONG_LIVED_TOKEN');</pre><form method="post" action="
     public function handle_mark_refreshed(){ $this->guard('mmc_manage_kommo'); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_kommo_mark_refreshed_'.$pid,'mmc_nonce'); $r=MMC_Kommo_Service::mark_ai_refreshed($pid); $this->redirect($pid,$r,'ai_refreshed'); }
     public function handle_update_template(){ $this->guard('mmc_manage_kommo'); $id=absint($_POST['template_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_kommo_update_template_'.$id,'mmc_nonce'); $r=MMC_Kommo_Service::update_template($id,sanitize_key($_POST['status']??''),wp_unslash($_POST['external_name']??''),wp_unslash($_POST['notes']??'')); $this->redirect($pid,$r,'template_saved'); }
     public function handle_save_settings(){ $this->guard('mmc_manage_settings'); check_admin_referer('mmc_kommo_save_settings','mmc_nonce'); update_option('mmc_kommo_subdomain',sanitize_title(wp_unslash($_POST['subdomain']??'')),false); update_option('mmc_kommo_pipeline_id',absint($_POST['pipeline_id']??0),false); update_option('mmc_kommo_status_id',absint($_POST['status_id']??0),false); $mode=sanitize_key($_POST['ai_mode']??'suggested_reply'); update_option('mmc_kommo_ai_mode',in_array($mode,array('suggested_reply','agent'),true)?$mode:'suggested_reply',false); wp_safe_redirect(add_query_arg(array('page'=>'mmc-kommo','mmc_msg'=>'settings_saved'),admin_url('admin.php'))); exit; }
-    public function handle_test(){ $this->guard('mmc_manage_settings'); check_admin_referer('mmc_kommo_test','mmc_nonce'); $r=MMC_Kommo_Service::test_connection(); $args=array('page'=>'mmc-kommo'); if(is_wp_error($r))$args['mmc_error']=$r->get_error_message(); else $args['mmc_msg']='connection_ok'; wp_safe_redirect(add_query_arg($args,admin_url('admin.php'))); exit; }
+    public function handle_test(){ $this->guard('mmc_manage_settings'); check_admin_referer('mmc_kommo_test','mmc_nonce'); $r=MMC_Kommo_Service::connection_diagnostics(true); $args=array('page'=>'mmc-kommo'); if(empty($r['connected']))$args['mmc_error']=$r['error']?:'Kommo API bağlantısı doğrulanamadı.'; else $args['mmc_msg']='connection_ok'; wp_safe_redirect(add_query_arg($args,admin_url('admin.php'))); exit; }
 
     private function redirect($pid,$r,$ok){$args=array('page'=>'mmc-kommo','program_id'=>$pid); if(is_wp_error($r))$args['mmc_error']=$r->get_error_message(); else $args['mmc_msg']=$ok; wp_safe_redirect(add_query_arg($args,admin_url('admin.php')));exit;}
     private function guard($cap){if(!(current_user_can($cap)||current_user_can('mmc_manage_programs')))wp_die('Bu işlemi yapma yetkiniz yok.');}

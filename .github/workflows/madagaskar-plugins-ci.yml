@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'Version:[[:space:]]*1\.3\.13' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.14' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
           grep -Eq "class MMC_Navigation_Admin" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-prep-region-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-sales-customer-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
@@ -48,6 +48,9 @@ jobs:
           grep -Eq "tickera_status" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "WooCommerce → MDG → Tickera Zinciri" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "MMC_Snippet_Inventory_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php\n          grep -Eq "Snippet Envanteri & Çakışma Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php\n          grep -Eq "MMC_Snippet_Inventory_Service::health_check" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
+          grep -Eq "connection_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "pipeline_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "MS_KOMMO_TOKEN" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           ! grep -Eq "remove_submenu_page\( .mmc-dashboard" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq 'Version:[[:space:]]*1\.7\.4' wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
           grep -Eq 'Version:[[:space:]]*1\.3\.1' wp-content/plugins/madagaskar-population-data/madagaskar-population-data.php
@@ -60,10 +63,10 @@ jobs:
           mkdir -p dist
           (
             cd wp-content/plugins
-            zip -qr ../../dist/madagaskar-management-center-v1.3.13.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-management-center-v1.3.14.zip madagaskar-management-center
             zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
-          unzip -t dist/madagaskar-management-center-v1.3.13.zip
+          unzip -t dist/madagaskar-management-center-v1.3.14.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
 
       - name: Upload program-integrity packages
@@ -71,6 +74,6 @@ jobs:
         with:
           name: madagaskar-program-integrity-packages
           path: |
-            dist/madagaskar-management-center-v1.3.13.zip
+            dist/madagaskar-management-center-v1.3.14.zip
             dist/madagaskar-okul-tanitim-v1.7.4.zip
           if-no-files-found: error

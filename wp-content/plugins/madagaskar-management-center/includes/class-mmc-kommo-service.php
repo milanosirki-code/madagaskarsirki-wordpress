@@ -420,6 +420,165 @@ class MMC_Kommo_Service {
         return self::api_request(self::crm_base().'/account','GET');
     }
 
+    public static function connection_diagnostics( $force = false ) {
+        $cfg = self::configuration_status();
+
+        if ( ! $cfg['configured'] ) {
+            return array_merge( $cfg, array(
+                'connected' => false,
+                'http_ok' => false,
+                'account_id' => 0,
+                'account_name' => '',
+                'error' => 'Kommo subdomain veya token yapılandırılmadı.',
+                'checked_at' => '',
+            ) );
+        }
+
+        $cache_key = 'mmc_kommo_diag_' . md5( $cfg['subdomain'] . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return array_merge( $cfg, $cached );
+            }
+        }
+
+        $r = self::test_connection();
+        if ( is_wp_error( $r ) ) {
+            $diag = array(
+                'connected' => false,
+                'http_ok' => false,
+                'account_id' => 0,
+                'account_name' => '',
+                'error' => $r->get_error_message(),
+                'checked_at' => current_time( 'mysql' ),
+            );
+        } else {
+            $diag = array(
+                'connected' => true,
+                'http_ok' => true,
+                'account_id' => isset( $r['id'] ) ? absint( $r['id'] ) : 0,
+                'account_name' => sanitize_text_field( $r['name'] ?? '' ),
+                'error' => '',
+                'checked_at' => current_time( 'mysql' ),
+            );
+        }
+
+        set_transient( $cache_key, $diag, 10 * MINUTE_IN_SECONDS );
+        return array_merge( $cfg, $diag );
+    }
+
+    public static function pipeline_diagnostics( $force = false ) {
+        $cfg = self::configuration_status();
+        $pipeline_id = (int) $cfg['pipeline_id'];
+        $status_id = (int) $cfg['status_id'];
+
+        if ( ! $pipeline_id ) {
+            return array(
+                'configured' => false,
+                'valid' => null,
+                'pipeline_id' => 0,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => '',
+            );
+        }
+
+        if ( ! $cfg['configured'] ) {
+            return array(
+                'configured' => true,
+                'valid' => false,
+                'pipeline_id' => $pipeline_id,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => 'Kommo API bağlantısı yapılandırılmadan pipeline doğrulanamaz.',
+            );
+        }
+
+        $cache_key = 'mmc_kommo_pipeline_' . md5( $cfg['subdomain'] . '|' . $pipeline_id . '|' . $status_id . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return $cached;
+            }
+        }
+
+        $r = self::api_request( self::crm_base() . '/leads/pipelines/' . $pipeline_id, 'GET' );
+        if ( is_wp_error( $r ) ) {
+            $out = array(
+                'configured' => true,
+                'valid' => false,
+                'pipeline_id' => $pipeline_id,
+                'pipeline_name' => '',
+                'status_id' => $status_id,
+                'status_valid' => null,
+                'error' => $r->get_error_message(),
+            );
+            set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+            return $out;
+        }
+
+        $status_valid = null;
+        if ( $status_id ) {
+            $status_valid = false;
+            $statuses = $r['_embedded']['statuses'] ?? array();
+            foreach ( (array) $statuses as $row ) {
+                if ( (int) ( $row['id'] ?? 0 ) === $status_id ) {
+                    $status_valid = true;
+                    break;
+                }
+            }
+        }
+
+        $out = array(
+            'configured' => true,
+            'valid' => true,
+            'pipeline_id' => $pipeline_id,
+            'pipeline_name' => sanitize_text_field( $r['name'] ?? '' ),
+            'status_id' => $status_id,
+            'status_valid' => $status_valid,
+            'error' => '',
+        );
+        set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
+        return $out;
+    }
+
+    public static function configuration_status() {
+        $subdomain = self::subdomain();
+        $token_source = self::token_source();
+        $legacy_pipeline = defined( 'MS_KOMMO_PIPELINE_ID' ) ? absint( MS_KOMMO_PIPELINE_ID ) : 0;
+        $pipeline = absint( get_option( 'mmc_kommo_pipeline_id', 0 ) );
+        $status = absint( get_option( 'mmc_kommo_status_id', 0 ) );
+
+        return array(
+            'configured' => (bool) ( $subdomain && self::token() ),
+            'subdomain' => $subdomain,
+            'subdomain_source' => self::subdomain_source(),
+            'token_source' => $token_source,
+            'uses_legacy_token' => 'MS_KOMMO_TOKEN' === $token_source,
+            'pipeline_id' => $pipeline,
+            'status_id' => $status,
+            'legacy_pipeline_id' => $legacy_pipeline,
+            'legacy_bilet_field_id' => defined( 'MS_KOMMO_BILET_FIELD_ID' ) ? absint( MS_KOMMO_BILET_FIELD_ID ) : 0,
+        );
+    }
+
+    public static function token_source() {
+        if ( defined( 'MMC_KOMMO_TOKEN' ) && trim( (string) MMC_KOMMO_TOKEN ) !== '' ) {
+            return 'MMC_KOMMO_TOKEN';
+        }
+        if ( defined( 'MS_KOMMO_TOKEN' ) && trim( (string) MS_KOMMO_TOKEN ) !== '' ) {
+            return 'MS_KOMMO_TOKEN';
+        }
+        return '';
+    }
+
+    private static function token_fingerprint() {
+        $token = self::token();
+        return $token ? substr( hash( 'sha256', $token ), 0, 16 ) : 'none';
+    }
+
     private static function api_request( $url, $method='GET', $body=null ) {
         $token=self::token();
         if(!$token)return new WP_Error('mmc_kommo_not_configured','Kommo token bulunamadı.');
@@ -440,11 +599,50 @@ class MMC_Kommo_Service {
     }
 
     public static function configured() { return self::subdomain() && self::token(); }
+
     public static function subdomain() {
-        if(defined('MMC_KOMMO_SUBDOMAIN')&&MMC_KOMMO_SUBDOMAIN)return sanitize_title((string)MMC_KOMMO_SUBDOMAIN);
-        return sanitize_title((string)get_option('mmc_kommo_subdomain',''));
+        if ( defined( 'MMC_KOMMO_SUBDOMAIN' ) && MMC_KOMMO_SUBDOMAIN ) {
+            return sanitize_title( (string) MMC_KOMMO_SUBDOMAIN );
+        }
+
+        $option = sanitize_title( (string) get_option( 'mmc_kommo_subdomain', '' ) );
+        if ( $option ) {
+            return $option;
+        }
+
+        if ( defined( 'MS_KOMMO_BASE_URL' ) && MS_KOMMO_BASE_URL ) {
+            $host = wp_parse_url( (string) MS_KOMMO_BASE_URL, PHP_URL_HOST );
+            if ( $host && preg_match( '/^([a-z0-9-]+)\.kommo\.com$/i', $host, $m ) ) {
+                return sanitize_title( $m[1] );
+            }
+        }
+
+        return '';
     }
-    private static function token() { return defined('MMC_KOMMO_TOKEN') ? trim((string)MMC_KOMMO_TOKEN) : ''; }
+
+    public static function subdomain_source() {
+        if ( defined( 'MMC_KOMMO_SUBDOMAIN' ) && MMC_KOMMO_SUBDOMAIN ) {
+            return 'MMC_KOMMO_SUBDOMAIN';
+        }
+        if ( get_option( 'mmc_kommo_subdomain', '' ) ) {
+            return 'WordPress option';
+        }
+        if ( defined( 'MS_KOMMO_BASE_URL' ) && MS_KOMMO_BASE_URL ) {
+            return 'MS_KOMMO_BASE_URL';
+        }
+        return '';
+    }
+
+    private static function token() {
+        if ( defined( 'MMC_KOMMO_TOKEN' ) && trim( (string) MMC_KOMMO_TOKEN ) !== '' ) {
+            return trim( (string) MMC_KOMMO_TOKEN );
+        }
+        if ( defined( 'MS_KOMMO_TOKEN' ) && trim( (string) MS_KOMMO_TOKEN ) !== '' ) {
+            return trim( (string) MS_KOMMO_TOKEN );
+        }
+        return '';
+    }
+
     private static function crm_base(){ return 'https://'.self::subdomain().'.kommo.com/api/v4'; }
 
     private static function profile_error($id,$field,$message){
