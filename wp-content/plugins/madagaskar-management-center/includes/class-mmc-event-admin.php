@@ -12,7 +12,7 @@ class MMC_Event_Admin {
         add_action( 'admin_post_mmc_mark_sales_ready', array( $this, 'handle_sales_ready' ) );
         add_action( 'admin_post_mmc_update_sales_integration', array( $this, 'handle_update_integration' ) );
         add_action( 'admin_post_mmc_update_channel_price', array( $this, 'handle_update_channel_price' ) );
-        add_action( 'admin_post_mmc_quick_confirm_venue', array( $this, 'handle_quick_confirm_venue' ) );
+        add_action( 'admin_post_mmc_sync_mdg_draft', array( $this, 'handle_sync_mdg_draft' ) );
     }
 
     public function menu() {
@@ -56,6 +56,20 @@ class MMC_Event_Admin {
                 <p><a class="button" href="<?php echo esc_url(add_query_arg(array('page'=>'mmc-sales-prep','program_id'=>$program->id),admin_url('admin.php'))); ?>">Satış Hazırlığına Git</a></p>
             </div>
         </div>
+        <div class="mmc-panel"><h2>MDG Etkinlik Taslağı</h2>
+            <p>MMC programındaki salon, seans, kapasite ve fiyatları MDG taslağına aktarır. Satış ürünleri oluşturulmaz. Salon tahsisi onaylanmadıysa taslak hazırlık aşamasında kalır.</p>
+            <?php if ( class_exists('MMC_MDG_Bridge_Service') && MMC_MDG_Bridge_Service::bridge_for_program($program->id) ): ?>
+                <p><a class="button" href="<?php echo esc_url(MMC_MDG_Bridge_Service::admin_url($program->id)); ?>">Bağlı MDG Taslağını Aç</a></p>
+            <?php endif; ?>
+            <?php if(current_user_can('mmc_manage_events')||current_user_can('mmc_manage_programs')): ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="mmc_sync_mdg_draft">
+                    <input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+                    <?php wp_nonce_field('mmc_sync_mdg_draft_'.$program->id,'mmc_nonce'); ?>
+                    <button class="button button-primary">MDG Taslağını Oluştur / Güncelle</button>
+                </form>
+            <?php endif; ?>
+        </div>
         <div class="mmc-panel"><h2>2. Seanslar</h2>
             <?php if(current_user_can('mmc_manage_events')||current_user_can('mmc_manage_programs')): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-inline-form"><input type="hidden" name="action" value="mmc_add_session"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_add_session_'.$event->id,'mmc_nonce'); ?><label>Tarih/Saat <input type="datetime-local" name="session_time" value="<?php echo esc_attr($event->event_date ? $event->event_date.'T12:00':''); ?>" required></label><label>Kapasite <input type="number" min="1" name="capacity" required></label><label>Not <input name="notes"></label><button class="button button-primary">Seans Ekle</button></form><?php endif; ?>
             <table class="widefat striped"><thead><tr><th>Seans</th><th>Ortak kişi kapasitesi</th><th>Durum</th><th></th></tr></thead><tbody><?php if(!$sessions): ?><tr><td colspan="4">Henüz seans yok.</td></tr><?php else: foreach($sessions as $s): ?><tr><td><?php echo esc_html($s->session_time); ?></td><td><?php echo esc_html(number_format_i18n($s->capacity)); ?></td><td><?php echo esc_html($s->status); ?></td><td><?php if(current_user_can('mmc_manage_events')||current_user_can('mmc_manage_programs')): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Bu seans silinsin mi?');"><input type="hidden" name="action" value="mmc_delete_session"><input type="hidden" name="session_id" value="<?php echo esc_attr($s->id); ?>"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_delete_session_'.$s->id,'mmc_nonce'); ?><button class="button button-small">Sil</button></form><?php endif; ?></td></tr><?php endforeach; endif; ?></tbody></table>
@@ -74,111 +88,17 @@ class MMC_Event_Admin {
     private function render_sales($program){
         $event=MMC_Event_Service::event_for_program($program->id); if(!$event){echo '<div class="mmc-panel"><p>Önce Etkinlik & Seans modülünde etkinlik oluşturun.</p></div>';return;} $check=MMC_Event_Service::sales_readiness($event->id); $ints=MMC_Event_Service::integrations($event->id); $channels=MMC_Event_Service::integration_channels();
         ?><div class="mmc-panel mmc-hero-panel"><div><small><?php echo esc_html($program->program_code); ?></small><h2><?php echo esc_html($event->event_title); ?></h2></div><div><strong>Etkinlik:</strong> <?php echo esc_html(MMC_Event_Service::event_statuses()[$event->status]??$event->status); ?></div></div>
-        <div class="mmc-panel"><h2>1. Satışa Hazırlık Doğrulaması</h2>
-            <?php if($check['ready']): ?>
-                <p>🟢 Tarih, kesin salon, seans ve bilet yapısı hazır.</p>
-                <?php
-                $selected_venue = ! empty($event->program_venue_id) && class_exists('MMC_Venue_Service')
-                    ? MMC_Venue_Service::get_program_venue((int)$event->program_venue_id)
-                    : null;
-                if($selected_venue): ?>
-                    <p><strong>Kesin salon:</strong> <?php echo esc_html($selected_venue->venue_name.' — '.$selected_venue->district_name.' / '.$selected_venue->province_name); ?></p>
-                <?php endif; ?>
-                <?php if($event->status!=='sales_ready'&&$event->status!=='sales_open'&&current_user_can('mmc_manage_sales')): ?>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                        <input type="hidden" name="action" value="mmc_mark_sales_ready">
-                        <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-                        <input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
-                        <?php wp_nonce_field('mmc_mark_sales_ready_'.$event->id,'mmc_nonce'); ?>
-                        <button class="button button-primary button-hero">Satış Hazırlığını Başlat</button>
-                    </form>
-                <?php endif; ?>
-            <?php else: ?>
-                <p>🟡 Satış entegrasyonuna geçmeden önce:</p>
-                <ul><?php foreach($check['issues'] as $i): ?><li><?php echo esc_html($i); ?></li><?php endforeach; ?></ul>
-
-                <?php
-                $needs_venue = in_array('Kesin salon bağlantısı eksik.', (array)$check['issues'], true);
-                $venue_candidates = $needs_venue && class_exists('MMC_Venue_Service')
-                    ? MMC_Venue_Service::venue_candidates_for_program((int)$program->id)
-                    : array();
-
-                if($needs_venue): ?>
-                    <div class="mmc-panel" style="margin:16px 0 0;padding:16px;border-left:4px solid #2271b1;background:#f6fbff;">
-                        <h3 style="margin-top:0;">Kesin Salonu Hemen Bağla</h3>
-                        <p>Bu programın iline kayıtlı salonlardan seçin. Aynı ilçedeki salonlar listenin başında gösterilir; seçim aynı işlemde programa eklenir ve kesin salon yapılır.</p>
-
-                        <?php if($venue_candidates && (current_user_can('mmc_manage_events') || current_user_can('mmc_manage_programs'))): ?>
-                            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-inline-form">
-                                <input type="hidden" name="action" value="mmc_quick_confirm_venue">
-                                <input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
-                                <input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>">
-                                <?php wp_nonce_field('mmc_quick_confirm_venue_'.$program->id,'mmc_nonce'); ?>
-                                <label>Salon
-                                    <select name="venue_ref" required style="min-width:420px;max-width:100%;">
-                                        <option value="">Salon seçin</option>
-                                        <?php
-                                        $exact_open = false;
-                                        $other_open = false;
-                                        foreach($venue_candidates as $v):
-                                            $is_exact = ! empty($v->mmc_exact_district);
-                                            if($is_exact && !$exact_open):
-                                                if($other_open){ echo '</optgroup>'; $other_open=false; }
-                                                echo '<optgroup label="'.esc_attr('Önerilen — '.$program->district_name).'">';
-                                                $exact_open=true;
-                                            elseif(!$is_exact && !$other_open):
-                                                if($exact_open){ echo '</optgroup>'; $exact_open=false; }
-                                                echo '<optgroup label="'.esc_attr($program->province_name.' — diğer ilçeler').'">';
-                                                $other_open=true;
-                                            endif;
-                                            $source = ! empty($v->venue_source) ? sanitize_key($v->venue_source) : 'mdg';
-                                            $label = $v->venue_name.' — '.($v->district_name ?: $program->province_name);
-                                            if(!empty($v->address)){ $label .= ' · '.$v->address; }
-                                            ?>
-                                            <option value="<?php echo esc_attr($source.':'.$v->id); ?>"><?php echo esc_html($label); ?></option>
-                                        <?php endforeach;
-                                        if($exact_open || $other_open){ echo '</optgroup>'; }
-                                        ?>
-                                    </select>
-                                </label>
-                                <button class="button button-primary">Salonu Bağla ve Kesinleştir</button>
-                            </form>
-                        <?php elseif(!$venue_candidates): ?>
-                            <p><strong>Bu il için kayıtlı salon bulunamadı.</strong> Önce Madagaskar → Salonlar ekranından salonu ekleyin.</p>
-                            <p><a class="button" href="<?php echo esc_url(add_query_arg(array('page'=>'mdg-venues'),admin_url('admin.php'))); ?>">Salonlar Ekranını Aç</a></p>
-                        <?php else: ?>
-                            <p>Salon bağlamak için etkinlik/program yönetim yetkisi gerekiyor.</p>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
-            <?php endif; ?>
-        </div>
+        <div class="mmc-panel"><h2>1. Satışa Hazırlık Doğrulaması</h2><?php if($check['ready']): ?><p>🟢 Tarih, kesin salon, seans ve bilet yapısı hazır.</p><?php if($event->status!=='sales_ready'&&$event->status!=='sales_open'&&current_user_can('mmc_manage_sales')): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_mark_sales_ready"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_mark_sales_ready_'.$event->id,'mmc_nonce'); ?><button class="button button-primary button-hero">Satış Hazırlığını Başlat</button></form><?php endif; ?><?php else: ?><p>🟡 Satış entegrasyonuna geçmeden önce:</p><ul><?php foreach($check['issues'] as $i): ?><li><?php echo esc_html($i); ?></li><?php endforeach; ?></ul><?php endif; ?></div>
         <div class="mmc-panel"><h2>2. Biletinial Kanal Fiyatları</h2><p class="description">Ana bilet fiyatı kendi web sitemizin fiyatıdır. Biletinial fiyatı gerektiğinde ayrı tutulur.</p><table class="widefat striped"><thead><tr><th>Bilet</th><th>Kendi Site Fiyatı</th><th>Biletinial Fiyatı</th><th></th></tr></thead><tbody><?php foreach(MMC_Event_Service::channel_prices($event->id,'biletinial') as $cp): ?><tr><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_update_channel_price"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->id); ?>"><input type="hidden" name="ticket_type_id" value="<?php echo esc_attr($cp->ticket_type_id); ?>"><input type="hidden" name="channel" value="biletinial"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_update_channel_price_'.$cp->ticket_type_id,'mmc_nonce'); ?><td><?php echo esc_html($cp->ticket_name); ?></td><td><?php echo esc_html(number_format_i18n((float)$cp->primary_price,2)); ?> TL</td><td><input type="number" step="0.01" min="0" name="price" value="<?php echo esc_attr(null!==$cp->channel_price?$cp->channel_price:$cp->primary_price); ?>"> TL</td><td><button class="button button-small">Kaydet</button></td></form></tr><?php endforeach; ?></tbody></table></div>
         <div class="mmc-panel"><h2>3. Kanal Kontrol Listesi</h2><p>Bu sürüm canlı ürün/ödeme kaydı oluşturmaz. Dış sistemde hazırlanan kaydın ID/URL'sini doğrulayıp buraya bağlarız.</p><table class="widefat striped"><thead><tr><th>Kanal</th><th>Durum</th><th>Dış ID</th><th>URL</th><th>Not</th><th></th></tr></thead><tbody><?php foreach($ints as $r): ?><tr><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mmc_update_sales_integration"><input type="hidden" name="integration_id" value="<?php echo esc_attr($r->id); ?>"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>"><?php wp_nonce_field('mmc_update_integration_'.$r->id,'mmc_nonce'); ?><td><strong><?php echo esc_html($channels[$r->channel]??$r->channel); ?></strong></td><td><select name="status"><option value="pending" <?php selected($r->status,'pending'); ?>>Bekliyor</option><option value="prepared" <?php selected($r->status,'prepared'); ?>>Hazırlandı</option><option value="verified" <?php selected($r->status,'verified'); ?>>Doğrulandı</option><option value="live" <?php selected($r->status,'live'); ?>>Canlı</option><option value="error" <?php selected($r->status,'error'); ?>>Hata</option><option value="not_used" <?php selected($r->status,'not_used'); ?>>Kullanılmıyor</option></select></td><td><input name="external_id" value="<?php echo esc_attr($r->external_id); ?>" class="small-text"></td><td><input type="url" name="external_url" value="<?php echo esc_attr($r->external_url); ?>"></td><td><input name="notes" value="<?php echo esc_attr($r->notes); ?>"></td><td><button class="button button-small">Kaydet</button></td></form></tr><?php endforeach; ?></tbody></table><p class="description">WooCommerce + Tickera + PayTR “Doğrulandı/Canlı” olduğunda program otomatik “Satışta” durumuna geçer. Biletinial ikincil kanaldır.</p></div><?php
     }
 
     public function handle_ensure_event(){ $this->guard_write('mmc_manage_events'); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_ensure_event_'.$pid,'mmc_nonce'); $r=MMC_Event_Service::ensure_event_for_program($pid); $this->redirect('mmc-events',$pid,$r,'event_created'); }
+    public function handle_sync_mdg_draft(){ $this->guard_write('mmc_manage_events'); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_sync_mdg_draft_'.$pid,'mmc_nonce'); $r=MMC_MDG_Bridge_Service::sync_draft($pid); $this->redirect('mmc-events',$pid,$r,'mdg_draft_synced'); }
     public function handle_save_event(){ $this->guard_write('mmc_manage_events'); $eid=absint($_POST['event_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_save_event_'.$eid,'mmc_nonce'); $r=MMC_Event_Service::save_event($eid,$_POST); $this->redirect('mmc-events',$pid,$r,'event_saved'); }
     public function handle_add_session(){ $this->guard_write('mmc_manage_events'); $eid=absint($_POST['event_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_add_session_'.$eid,'mmc_nonce'); $r=MMC_Event_Service::add_session($eid,wp_unslash($_POST['session_time']??''),absint($_POST['capacity']??0),wp_unslash($_POST['notes']??'')); $this->redirect('mmc-events',$pid,$r,'session_added'); }
     public function handle_delete_session(){ $this->guard_write('mmc_manage_events'); $sid=absint($_POST['session_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_delete_session_'.$sid,'mmc_nonce'); $r=MMC_Event_Service::delete_session($sid); $this->redirect('mmc-events',$pid,$r,'session_deleted'); }
     public function handle_update_ticket(){ $this->guard_write('mmc_manage_events'); $tid=absint($_POST['ticket_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_update_ticket_'.$tid,'mmc_nonce'); $r=MMC_Event_Service::update_ticket_type($tid,$_POST); $this->redirect('mmc-events',$pid,$r,'ticket_saved'); }
-    public function handle_quick_confirm_venue(){
-        $this->guard_write('mmc_manage_events');
-        $pid = absint($_POST['program_id'] ?? 0);
-        check_admin_referer('mmc_quick_confirm_venue_'.$pid,'mmc_nonce');
-
-        $ref = sanitize_text_field(wp_unslash($_POST['venue_ref'] ?? ''));
-        if(!preg_match('/^(mdg|legacy):(\\d+)$/',$ref,$m)){
-            $this->redirect('mmc-sales-prep',$pid,new WP_Error('mmc_quick_venue_ref','Geçerli bir salon seçin.'),'venue_linked');
-        }
-
-        $result = class_exists('MMC_Venue_Service')
-            ? MMC_Venue_Service::quick_confirm_master_venue($pid,(int)$m[2],$m[1])
-            : new WP_Error('mmc_venue_service_missing','Salon servisi yüklenemedi.');
-
-        $this->redirect('mmc-sales-prep',$pid,$result,'venue_linked');
-    }
-
     public function handle_sales_ready(){ $this->guard_write('mmc_manage_sales'); $eid=absint($_POST['event_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_mark_sales_ready_'.$eid,'mmc_nonce'); $r=MMC_Event_Service::mark_sales_ready($eid); $this->redirect('mmc-sales-prep',$pid,$r,'sales_ready'); }
     public function handle_update_channel_price(){ $this->guard_write('mmc_manage_sales'); $tid=absint($_POST['ticket_type_id']??0); $eid=absint($_POST['event_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_update_channel_price_'.$tid,'mmc_nonce'); $r=MMC_Event_Service::update_channel_price($eid,$tid,wp_unslash($_POST['channel']??''),wp_unslash($_POST['price']??0),1); $this->redirect('mmc-sales-prep',$pid,$r,'channel_price_saved'); }
     public function handle_update_integration(){ $this->guard_write('mmc_manage_sales'); $id=absint($_POST['integration_id']??0); $pid=absint($_POST['program_id']??0); check_admin_referer('mmc_update_integration_'.$id,'mmc_nonce'); $r=MMC_Event_Service::update_integration($id,wp_unslash($_POST['status']??''),wp_unslash($_POST['external_id']??''),wp_unslash($_POST['external_url']??''),wp_unslash($_POST['notes']??'')); $this->redirect('mmc-sales-prep',$pid,$r,'integration_saved'); }
@@ -187,5 +107,5 @@ class MMC_Event_Admin {
     private function age_label($t){ if(null!==$t->age_min&&null!==$t->age_max)return $t->age_min.'–'.$t->age_max; if(null!==$t->age_min)return $t->age_min.'+'; return 'Paket'; }
     private function guard($cap){ if(!current_user_can($cap))wp_die('Bu sayfayı görüntüleme yetkiniz yok.'); }
     private function guard_write($cap){ if(!(current_user_can($cap)||current_user_can('mmc_manage_programs')))wp_die('Bu işlemi yapma yetkiniz yok.'); }
-    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){ $map=array('event_created'=>'Etkinlik taslağı oluşturuldu.','event_saved'=>'Etkinlik güncellendi.','session_added'=>'Seans eklendi.','session_deleted'=>'Seans silindi.','ticket_saved'=>'Bilet türü güncellendi.','sales_ready'=>'Satış hazırlık görevleri açıldı.','integration_saved'=>'Kanal durumu güncellendi.','channel_price_saved'=>'Kanal fiyatı güncellendi.','venue_linked'=>'Salon programa bağlandı ve kesin salon olarak işaretlendi.'); $k=sanitize_key($_GET['mmc_msg']); echo '<div class="notice notice-success"><p>'.esc_html($map[$k]??'İşlem tamamlandı.').'</p></div>'; } }
+    private function notice(){ if(!empty($_GET['mmc_error']))echo '<div class="notice notice-error"><p>'.esc_html(wp_unslash($_GET['mmc_error'])).'</p></div>'; if(!empty($_GET['mmc_msg'])){ $map=array('event_created'=>'Etkinlik taslağı oluşturuldu.','event_saved'=>'Etkinlik güncellendi.','session_added'=>'Seans eklendi.','session_deleted'=>'Seans silindi.','ticket_saved'=>'Bilet türü güncellendi.','sales_ready'=>'Satış hazırlık görevleri açıldı.','integration_saved'=>'Kanal durumu güncellendi.','channel_price_saved'=>'Kanal fiyatı güncellendi.','mdg_draft_synced'=>'MDG etkinlik taslağı programdan oluşturuldu veya güncellendi.'); $k=sanitize_key($_GET['mmc_msg']); echo '<div class="notice notice-success"><p>'.esc_html($map[$k]??'İşlem tamamlandı.').'</p></div>'; } }
 }

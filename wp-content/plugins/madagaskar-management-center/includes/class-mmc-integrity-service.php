@@ -373,10 +373,17 @@ class MMC_Integrity_Service {
             if ( ! $schedule_checks['sessions'] ) { $problems[] = 'SEANS SAATİ'; }
             $schedule_detail .= ' · UYUŞMAZLIK: ' . implode(' / ', $problems);
         }
+        $pending_venue_only = 'draft' === (string)($mdg_event->status ?? '')
+            && ! $s['mmc_venue_name']
+            && $schedule_checks['province'] && $schedule_checks['district']
+            && $schedule_checks['date'] && $schedule_checks['sessions'];
+        if ( $pending_venue_only ) {
+            $schedule_detail .= ' · Salon tahsisi bekleniyor; MDG taslağı satışa açılmamalı.';
+        }
         $rows[] = self::row(
             'mdg_schedule',
             'MDG Tarih / Salon / Seans',
-            $schedule_ok ? 'ok' : 'critical',
+            $schedule_ok ? 'ok' : ( $pending_venue_only ? 'warning' : 'critical' ),
             $schedule_detail,
             $url
         );

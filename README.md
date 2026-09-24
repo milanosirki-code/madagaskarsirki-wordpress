@@ -6,7 +6,8 @@ Madagaskar Sirki yönetim sisteminin kaynak kod deposu.
 
 Canlıya alınacak eklentilerin tek doğru kaynak klasörü:
 
-- `wp-content/plugins/madagaskar-management-center/` — **MMC 1.3.5**
+- `wp-content/plugins/madagaskar-management-center/` — **MMC 1.3.28**
+- `wp-content/plugins/madagaskar-aile-paketi-22/` — **Aile Paketi 2+2 v1.1.2**
 - `wp-content/plugins/madagaskar-okul-tanitim/` — **Okul Tanıtım 1.7.2**
 - `wp-content/plugins/madagaskar-population-data/` — **Nüfus ve Eğitim 1.3.1**
 
