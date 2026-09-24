@@ -1,20 +1,34 @@
-# Madagaskar Management Center v1.3.5
+# Madagaskar Management Center v1.3.7
 
-Bu sürüm **v1.3.4 üzerine küçük uyumluluk düzeltmesidir**.
+Bu sürüm **MMC Program ID ile ilk Madagaskar Bilet Yönetimi motorunu kalıcı olarak birbirine bağlar**.
 
-## Düzeltmeler
+## v1.3.7 — MDG Bilet Motoru Köprüsü
 
-- Eski program kayıtlarındaki `efeler` / `Efeler` gibi ilçe adı biçim farkları tek biçime çevrilir.
-- `mmc_programs` ve `mmc_program_target_districts` il/ilçe alanları bir kez normalize edilir.
-- Okul Tanıtım kaynak tespiti yenilenir.
-- Okul Tanıtım v1.7.2 ile birlikte MEBBİS'ten gelen `AYDIN / DİDİM` benzeri adlar `Aydın / Didim` biçiminde tutulur.
-- Hazırlık Dashboardunda aynı ilçenin iki kez görünmesi ve Okul Tanıtım eşleşmesinin yazım biçimi nedeniyle kaçırılması engellenir.
+- Yeni `mmc_mdg_event_bridge` tablosu eklendi.
+- Tek gerçek yönetim kimliği MMC `program_id` olarak korunur.
+- MMC Program → MMC Event → MDG Event → MDG Session → WooCommerce → Tickera → sipariş zinciri doğrulanır.
+- Eski Madagaskar satış tablolarına kolon eklenmez ve kayıt yazılmaz; köprü MMC tarafında tutulur.
+- Güvenli otomatik eşleştirme WooCommerce ürün/varyasyon ve Tickera event kimliklerinin ortaklığıyla yapılır.
+- Yalnız il/ilçe/tarih benzerliği otomatik bağlantı için yeterli kabul edilmez.
+- Bütünlük Merkezi artık MDG motor sürümünü, Program↔MDG Event bağını, satış nesnesi kimliklerini ve MDG↔MMC satış mutabakatını gösterir.
+- MDG ve MMC satış mutabakatında sipariş/sipariş-satırı/kapasite birimleri karşılaştırılır; aynı WooCommerce satışı iki kez gelir olarak yazılmaz.
+- Eski MDG `line_total` vergi hariç olabildiği için ciro farkı tek başına kritik hata sayılmaz.
+- MMC aktif program şeridi artık `mdg-*` yönetim ekranlarında da görünür.
+- Bütünlük Merkezi ve aktif program kısayollarına **MDG Bilet** bağlantısı eklendi.
+- Eşleşme kesin değilse Bütünlük Merkezi aday MDG etkinliklerini gösterir ve yönetici kontrollü manuel bağlama yapılabilir.
 
-Veritabanı şema sürümü değişmez: **1.3.3**.
+## Güvenlik sınırları
 
-## Kurulum sırası
+- MDG `events`, `sessions`, `ticket_types` ve `order_map` tabloları salt okunur kullanılır.
+- WooCommerce ürünleri, Tickera etkinlikleri ve siparişler köprü kurulurken değiştirilmez.
+- Bir MDG Event aynı anda iki farklı MMC Program ID ile bağlanamaz.
+- Otomatik backfill yalnız güçlü ve tekil WooCommerce/Tickera kimlik eşleşmesinde bağlantı kurar.
+- Belirsiz durumda sistem bağlantı oluşturmaz.
 
-1. Okul Tanıtım eklentisini **v1.7.2** sürümüne yükseltin.
-2. Madagaskar Management Center'ı **v1.3.5** sürümüne yükseltin.
-3. Hazırlık Dashboardunu yeniden açın.
-4. Aydın / Didim gibi bir hedefte okul sayısı ve Okul listesi kapsamını kontrol edin.
+## Güncelleme
+
+1. Eklentiyi v1.3.7 ile değiştirin.
+2. WordPress eklentiyi yüklediğinde MMC veritabanı şema sürümü **1.3.7** olur ve köprü tablosu oluşturulur.
+3. Madagaskar → Program Bütünlüğü ekranını açın.
+4. İlgili Program ID için **MDG Bilet Motoru**, **MMC ↔ MDG Etkinlik Köprüsü**, **MDG / WooCommerce / Tickera Kimliği** ve **MDG ↔ MMC Satış Mutabakatı** satırlarını kontrol edin.
+5. Tek güçlü aday varsa **MDG Bağını Kur** düğmesini kullanabilirsiniz; sürüm yükseltmesi sırasında güvenli eşleşmeler ayrıca otomatik backfill edilir.

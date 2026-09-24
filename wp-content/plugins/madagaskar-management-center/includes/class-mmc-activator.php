@@ -61,6 +61,7 @@ class MMC_Activator {
         $deposit_refunds = $wpdb->prefix . 'mmc_deposit_refunds';
         $financial_closures = $wpdb->prefix . 'mmc_financial_closures';
         $report_runs = $wpdb->prefix . 'mmc_report_runs';
+        $mdg_event_bridge = $wpdb->prefix . 'mmc_mdg_event_bridge';
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -886,6 +887,25 @@ class MMC_Activator {
             KEY close_status (close_status)
         ) $charset_collate;";
 
+        $sql_mdg_event_bridge = "CREATE TABLE $mdg_event_bridge (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            program_id bigint(20) unsigned NOT NULL,
+            mmc_event_id bigint(20) unsigned NOT NULL,
+            mdg_event_id bigint(20) unsigned NOT NULL,
+            match_method varchar(40) NOT NULL DEFAULT 'manual',
+            confidence smallint(3) unsigned NOT NULL DEFAULT 0,
+            is_active tinyint(1) NOT NULL DEFAULT 1,
+            notes text DEFAULT NULL,
+            linked_by bigint(20) unsigned DEFAULT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY program_id (program_id),
+            UNIQUE KEY mdg_event_id (mdg_event_id),
+            KEY mmc_event_id (mmc_event_id),
+            KEY is_active (is_active)
+        ) $charset_collate;";
+
         $sql_report_runs = "CREATE TABLE $report_runs (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             report_date date NOT NULL,
@@ -943,6 +963,7 @@ class MMC_Activator {
         dbDelta( $sql_deposit_refunds );
         dbDelta( $sql_financial_closures );
         dbDelta( $sql_report_runs );
+        dbDelta( $sql_mdg_event_bridge );
 
         update_option( 'mmc_db_version', MMC_DB_VERSION );
     }
