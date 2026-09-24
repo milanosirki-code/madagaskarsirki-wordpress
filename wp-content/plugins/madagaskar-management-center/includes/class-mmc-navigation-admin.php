@@ -36,7 +36,7 @@ class MMC_Navigation_Admin {
         $this->school_items = $this->capture_items( isset( $submenu['mad-okul'] ) ? $submenu['mad-okul'] : array() );
         $this->extra_legacy_items = $this->capture_known_top_level_items();
 
-        if ( $this->mdg_items || $this->v4_items || $this->extra_legacy_items ) {
+        if ( $this->mdg_items ) {
             remove_menu_page( 'mdg-dashboard' );
         }
         if ( $this->v4_items ) {
@@ -76,7 +76,7 @@ class MMC_Navigation_Admin {
             array( $this, 'venue_event_hub' )
         );
 
-        if ( $this->mdg_items ) {
+        if ( $this->mdg_items || $this->v4_items || $this->extra_legacy_items ) {
             add_submenu_page(
                 'mmc-dashboard',
                 'Bilet Yönetimi',
@@ -336,27 +336,6 @@ class MMC_Navigation_Admin {
         $cards = array(
             $this->card( 'MMC Okul / Saha', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef okul, saha planı ve ziyaret takibi.' ),
         );
-
-        foreach ( $this->v4_items as $item ) {
-            if ( $item['slug'] !== $page ) {
-                continue;
-            }
-            $destination = $this->v4_destination( $item );
-            $map = array(
-                'sales'  => 'mmc-sales-customer-hub',
-                'system' => 'mmc-system-hub',
-            );
-            return $map[ $destination ] ?? 'mmc-mdg-hub';
-        }
-
-        foreach ( $this->extra_legacy_items as $item ) {
-            if ( $item['slug'] !== $page ) {
-                continue;
-            }
-            return 'venue' === ( $item['destination'] ?? '' )
-                ? 'mmc-venue-event-hub'
-                : 'mmc-mdg-hub';
-        }
 
         foreach ( $this->school_items as $item ) {
             $cards[] = array(
@@ -860,6 +839,27 @@ class MMC_Navigation_Admin {
                 'venue'     => 'mmc-venue-event-hub',
             );
             return $map[ $destination ] ?? 'mmc-mdg-hub';
+        }
+
+        foreach ( $this->v4_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
+            }
+            $destination = $this->v4_destination( $item );
+            $map = array(
+                'sales'  => 'mmc-sales-customer-hub',
+                'system' => 'mmc-system-hub',
+            );
+            return $map[ $destination ] ?? 'mmc-mdg-hub';
+        }
+
+        foreach ( $this->extra_legacy_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
+            }
+            return 'venue' === ( $item['destination'] ?? '' )
+                ? 'mmc-venue-event-hub'
+                : 'mmc-mdg-hub';
         }
 
         foreach ( $this->school_items as $item ) {
