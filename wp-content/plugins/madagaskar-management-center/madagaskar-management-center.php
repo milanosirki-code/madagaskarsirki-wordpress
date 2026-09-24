@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Management Center
  * Description: Madagaskar Sirki program yaşam döngüsü, bölge veri ambarı, hazırlık analizi, görev, yetki ve değişiklik geçmişi için yönetim merkezi.
- * Version: 1.3.7
+ * Version: 1.3.8
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-management-center
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MMC_VERSION', '1.3.7' );
+define( 'MMC_VERSION', '1.3.8' );
 define( 'MMC_DB_VERSION', '1.3.7' );
 define( 'MMC_FILE', __FILE__ );
 define( 'MMC_DIR', plugin_dir_path( __FILE__ ) );
@@ -47,6 +47,7 @@ require_once MMC_DIR . 'includes/class-mmc-report-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-mdg-bridge-service.php';
 require_once MMC_DIR . 'includes/class-mmc-integrity-service.php';
 require_once MMC_DIR . 'includes/class-mmc-integrity-admin.php';
+require_once MMC_DIR . 'includes/class-mmc-navigation-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-admin.php';
 
 register_activation_hook( __FILE__, array( 'MMC_Activator', 'activate' ) );
@@ -139,6 +140,7 @@ add_action( 'plugins_loaded', function () {
         new MMC_Finance_Admin();
         new MMC_Report_Admin();
         new MMC_Integrity_Admin();
+        new MMC_Navigation_Admin();
     }
 } );
 
