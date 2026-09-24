@@ -1,3 +1,39 @@
+# Madagaskar Management Center v1.3.21
+
+Bu sürüm **Kommo AI URL bilgi kaynağının crawler tarafından parse edilebilmesini** düzeltir.
+
+## v1.3.21 — Kommo AI URL Kaynak Erişilebilirlik Düzeltmesi
+
+- Kommo AI bilgi kaynakları ekranında URL kaynağının **Hata / 0 alt bölüm** durumuna düşmesine yol açabilecek robots engeli kaldırıldı.
+- Tokenlı MMC kaynak endpoint'i artık:
+  - HTTP 200,
+  - `Content-Type: text/plain; charset=utf-8`,
+  - `Content-Language: tr`,
+  - `X-Content-Type-Options: nosniff`
+  ile servis edilir.
+- Kaynak endpoint'inde artık `X-Robots-Tag: noindex, nofollow, noarchive` gönderilmez.
+- URL hâlâ uzun, rastgele token içerir ve site navigasyonu/sitemap içinde yayınlanmaz.
+- Kommo & AI ekranında **URL teslim durumu** görünür:
+  - crawler-okunabilir,
+  - content type,
+  - dil,
+  - robots engeli,
+  - tokenlı adres bilgisi.
+- Mevcut source URL/token değişmez; Kommo'da yeni kaynak oluşturmak gerekmez.
+- Güncellemeden sonra Kommo'daki mevcut URL kaynağı **Update / yeniden tara** ile tekrar parse edilmelidir.
+- Kommo taraması başarıyla tamamlanmadan MMC'deki **Kommo'da Yeniden Tarandı Olarak İşaretle** düğmesine basılmamalıdır.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Kaynak URL tokenlı kalır.
+- Token URL sitemap/menu içinde yayınlanmaz.
+- Kaynak sadece doğrulanmış MMC Program Dosyası metnini verir.
+- Kommo token/secret davranışı değişmez.
+- CRM lead ve pipeline davranışı değişmez.
+
+---
+
 # Madagaskar Management Center v1.3.20
 
 Bu sürüm **otomatik Kommo program aşama senkronunu hızlandırır, geçici API hatalarında kontrollü retry ekler ve Program Bütünlüğü ekranında Kommo kart/aşama mutabakatını görünür hale getirir.**

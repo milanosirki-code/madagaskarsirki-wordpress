@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'Version:[[:space:]]*1\.3\.20' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.21' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
           grep -Eq "class MMC_Navigation_Admin" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-prep-region-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-sales-customer-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
@@ -63,6 +63,9 @@ jobs:
           grep -Eq "queue_health" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "is_retryable_error" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "FAST_CRON_HOOK" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "header_remove.*X-Robots-Tag" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "source_delivery_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          grep -Eq "crawler-okunabilir" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
           grep -Eq "Aşama .*→" wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-service.php
           grep -Eq "Son Kurulum Denemesi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
           grep -Eq "MMC PROGRAM PIPELINE KUR" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php
@@ -80,10 +83,10 @@ jobs:
           mkdir -p dist
           (
             cd wp-content/plugins
-            zip -qr ../../dist/madagaskar-management-center-v1.3.20.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-management-center-v1.3.21.zip madagaskar-management-center
             zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
-          unzip -t dist/madagaskar-management-center-v1.3.20.zip
+          unzip -t dist/madagaskar-management-center-v1.3.21.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
 
       - name: Upload program-integrity packages
@@ -91,6 +94,6 @@ jobs:
         with:
           name: madagaskar-program-integrity-packages
           path: |
-            dist/madagaskar-management-center-v1.3.20.zip
+            dist/madagaskar-management-center-v1.3.21.zip
             dist/madagaskar-okul-tanitim-v1.7.4.zip
           if-no-files-found: error
