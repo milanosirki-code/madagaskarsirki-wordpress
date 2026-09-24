@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.12 health-aware admin navigation.
+ * MMC v1.3.13 snippet-aware admin navigation.
  *
  * Navigation only:
  * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
@@ -147,6 +147,7 @@ class MMC_Navigation_Admin {
             'mmc-finance',
             'mmc-roles',
             'mmc-system',
+            'mmc-snippets',
         );
     }
 
@@ -379,6 +380,7 @@ class MMC_Navigation_Admin {
         $cards = array(
             $this->card( 'Yetkiler', 'mmc-roles', 'mmc_manage_settings', 'MMC rol ve yetki yönetimi.' ),
             $this->card( 'Kurulum & Sağlık', 'mmc-system', 'mmc_manage_settings', 'Eklenti, tablo, entegrasyon ve sistem sağlık kontrolleri.' ),
+            $this->card( 'Snippet Envanteri', 'mmc-snippets', 'mmc_manage_settings', 'Code Snippets kayıtlarını sınıflandırır; test, legacy ve çakışma adaylarını salt-okunur gösterir.' ),
         );
         foreach ( $this->mdg_items_for( 'system' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
@@ -655,6 +657,7 @@ class MMC_Navigation_Admin {
             'mmc-finance'         => 'mmc-finance-hub',
             'mmc-roles'           => 'mmc-system-hub',
             'mmc-system'          => 'mmc-system-hub',
+            'mmc-snippets'        => 'mmc-system-hub',
         );
 
         if ( isset( $groups[ $page ] ) ) {
