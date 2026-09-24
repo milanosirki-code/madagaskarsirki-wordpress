@@ -80,6 +80,9 @@ jobs:
           grep -Eq "mmc_create_mdg_draft" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-publish-admin.php
           grep -Eq "MMC_MDG_Draft_Sync_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
           grep -Eq "family_2_2.*continue" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
+          grep -Eq "sync_family_package_option" wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
+          grep -Eq "\{\{ADRES\}\}" wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php
+          grep -Eq "\{\{BILET_OZETI\}\}" wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php
           grep -Eq "mmc_sync_mdg_draft" wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php
           grep -Eq "Yayın İçeriği Excel" wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php
           grep -Eq "mmc_download_publish_content_template" wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php
