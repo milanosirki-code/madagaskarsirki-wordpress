@@ -1,3 +1,49 @@
+# Madagaskar Management Center v1.3.19
+
+Bu sürüm **MMC Program Yaşam Döngüsü → Kommo Status Köprüsü** ekler ve mevcut kartların sıradan senkronla yanlışlıkla tekrar **Hazırlık** aşamasına çekilmesini engeller.
+
+## v1.3.19 — Program Yaşam Döngüsü → Kommo Status Köprüsü
+
+- Kommo program kartının mevcut `pipeline_id` ve `status_id` değeri senkron öncesinde salt-okunur okunur.
+- MMC program durumları 10 Kommo program aşamasına konservatif olarak eşlenir:
+  - Hazırlık → Hazırlık
+  - Bölge Analizi / salon araştırması / tahsis bekleme → Bölge Planlandı
+  - Salon Kesinleşti / Salon Ödemeleri → Salon/Tahsis Hazır
+  - Etkinlik Hazırlığı → Etkinlik/Seans Hazır
+  - Satışa Hazırlanıyor / Satışta → Satış Hazır
+  - Tanıtım / Reklam → Tanıtım/Saha Aktif
+  - Operasyon Hazırlığı / Gösteri Günü → Operasyon Hazır
+  - Finansal Kapanış → Gösteri Tamamlandı
+  - Teminat İadesi Bekleniyor → Finans/Kapanış
+  - Tamamlandı → Arşiv
+  - İptal → otomatik status değişikliği yapılmaz; manuel yönetim
+- Mevcut Kommo kartı hedef aşamadan ilerideyse **geriye alınmaz**.
+- Kart MMC dışı bir status'taysa otomatik status değişikliği yapılmaz.
+- Kart beklenen MMC Program pipeline dışındaysa otomatik pipeline taşıması yapılmaz ve senkron hata verir.
+- Yeni program kartı, MMC durumuna karşılık gelen hedef aşamada oluşturulur.
+- Mevcut kartta status PATCH yalnız **ileri hareket gerekiyorsa** gönderilir.
+- Eski davranıştaki her senkron PATCH'inde varsayılan `Hazırlık` status'unu yeniden gönderme kaldırıldı.
+- Kommo & AI ekranına **Kommo Program Durum Köprüsü** paneli eklendi:
+  - MMC Program Durumu
+  - Kommo Mevcut Aşama
+  - Hedef Aşama
+  - Köprü Kararı
+  - ileri taşıma / aynı aşama / geriye alma engeli / manuel durum açıklaması
+- Kommo kart snapshot'ı kısa süre cache edilir; gerçek senkron sırasında zorunlu yeniden okunur.
+- Status hareketleri MMC log'una `kommo_program_status_advanced` olarak yazılır.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Normal senkron mevcut Kommo kartını geriye taşımaz.
+- Pipeline uyuşmazlığında otomatik taşıma yapılmaz.
+- İptal durumunda otomatik status hareketi yapılmaz.
+- Mevcut satış/WooCommerce/Kurumsal pipeline'larına dokunulmaz.
+- Lead kopyası oluşturulmaz; mevcut `kommo_lead_id` üzerinde güncelleme yapılır.
+- Token/secret davranışı değişmez.
+
+---
+
 # Madagaskar Management Center v1.3.18
 
 Bu sürüm **Kommo pipeline oluşturma isteğini resmi API şemasına uygun hale getirir.**
