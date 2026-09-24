@@ -480,6 +480,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => '',
             );
         }
@@ -492,6 +493,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => 'Kommo API bağlantısı yapılandırılmadan pipeline doğrulanamaz.',
             );
         }
@@ -513,6 +515,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => $r->get_error_message(),
             );
             set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
@@ -520,12 +523,14 @@ class MMC_Kommo_Service {
         }
 
         $status_valid = null;
+        $status_name = '';
         if ( $status_id ) {
             $status_valid = false;
             $statuses = $r['_embedded']['statuses'] ?? array();
             foreach ( (array) $statuses as $row ) {
                 if ( (int) ( $row['id'] ?? 0 ) === $status_id ) {
                     $status_valid = true;
+                    $status_name = sanitize_text_field( $row['name'] ?? '' );
                     break;
                 }
             }
@@ -538,10 +543,144 @@ class MMC_Kommo_Service {
             'pipeline_name' => sanitize_text_field( $r['name'] ?? '' ),
             'status_id' => $status_id,
             'status_valid' => $status_valid,
+            'status_name' => $status_name,
             'error' => '',
         );
         set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
         return $out;
+    }
+
+    public static function pipeline_catalog( $force = false ) {
+        $cfg = self::configuration_status();
+
+        if ( ! $cfg['configured'] ) {
+            return new WP_Error( 'mmc_kommo_not_configured', 'Kommo API yapılandırılmadı.' );
+        }
+
+        $cache_key = 'mmc_kommo_pipeline_catalog_' . md5( $cfg['subdomain'] . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return $cached;
+            }
+        }
+
+        $r = self::api_request( self::crm_base() . '/leads/pipelines?limit=250', 'GET' );
+        if ( is_wp_error( $r ) ) {
+            return $r;
+        }
+
+        $rows = isset( $r['_embedded']['pipelines'] ) && is_array( $r['_embedded']['pipelines'] )
+            ? $r['_embedded']['pipelines']
+            : array();
+
+        $catalog = array();
+
+        foreach ( $rows as $row ) {
+            $pipeline_id = absint( $row['id'] ?? 0 );
+            if ( ! $pipeline_id ) {
+                continue;
+            }
+
+            $statuses = array();
+            $raw_statuses = isset( $row['_embedded']['statuses'] ) && is_array( $row['_embedded']['statuses'] )
+                ? $row['_embedded']['statuses']
+                : array();
+
+            foreach ( $raw_statuses as $status ) {
+                $status_id = absint( $status['id'] ?? 0 );
+                if ( ! $status_id ) {
+                    continue;
+                }
+
+                $statuses[] = array(
+                    'id'          => $status_id,
+                    'name'        => sanitize_text_field( $status['name'] ?? '' ),
+                    'sort'        => isset( $status['sort'] ) ? (int) $status['sort'] : 0,
+                    'is_editable' => isset( $status['is_editable'] ) ? (bool) $status['is_editable'] : null,
+                );
+            }
+
+            usort( $statuses, function( $a, $b ) {
+                return (int) $a['sort'] <=> (int) $b['sort'];
+            } );
+
+            $catalog[] = array(
+                'id'          => $pipeline_id,
+                'name'        => sanitize_text_field( $row['name'] ?? '' ),
+                'sort'        => isset( $row['sort'] ) ? (int) $row['sort'] : 0,
+                'is_main'     => ! empty( $row['is_main'] ),
+                'is_unsorted' => ! empty( $row['is_unsorted_on'] ),
+                'statuses'    => $statuses,
+            );
+        }
+
+        usort( $catalog, function( $a, $b ) {
+            return (int) $a['sort'] <=> (int) $b['sort'];
+        } );
+
+        set_transient( $cache_key, $catalog, 10 * MINUTE_IN_SECONDS );
+        return $catalog;
+    }
+
+    public static function pipeline_catalog_index( $force = false ) {
+        $catalog = self::pipeline_catalog( $force );
+        if ( is_wp_error( $catalog ) ) {
+            return $catalog;
+        }
+
+        $index = array();
+        foreach ( $catalog as $pipeline ) {
+            $index[ (int) $pipeline['id'] ] = $pipeline;
+        }
+        return $index;
+    }
+
+    public static function discover_pipeline_selection( $pipeline_id = 0, $status_id = 0, $force = false ) {
+        $pipeline_id = absint( $pipeline_id );
+        $status_id   = absint( $status_id );
+
+        $index = self::pipeline_catalog_index( $force );
+        if ( is_wp_error( $index ) ) {
+            return $index;
+        }
+
+        if ( ! $pipeline_id ) {
+            return array(
+                'pipeline_valid' => false,
+                'status_valid'   => false,
+                'pipeline'       => null,
+                'status'         => null,
+            );
+        }
+
+        if ( empty( $index[ $pipeline_id ] ) ) {
+            return array(
+                'pipeline_valid' => false,
+                'status_valid'   => false,
+                'pipeline'       => null,
+                'status'         => null,
+            );
+        }
+
+        $pipeline = $index[ $pipeline_id ];
+        $matched_status = null;
+
+        if ( $status_id ) {
+            foreach ( (array) $pipeline['statuses'] as $status ) {
+                if ( (int) $status['id'] === $status_id ) {
+                    $matched_status = $status;
+                    break;
+                }
+            }
+        }
+
+        return array(
+            'pipeline_valid' => true,
+            'status_valid'   => $status_id ? (bool) $matched_status : true,
+            'pipeline'       => $pipeline,
+            'status'         => $matched_status,
+        );
     }
 
     public static function configuration_status() {

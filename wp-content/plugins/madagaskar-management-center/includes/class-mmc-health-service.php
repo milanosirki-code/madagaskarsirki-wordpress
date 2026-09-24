@@ -195,7 +195,8 @@ class MMC_Health_Service {
                         $detail .= ' · ' . $pipeline['pipeline_name'];
                     }
                     if ( ! empty( $pipeline['status_id'] ) ) {
-                        $detail .= ' · Status #' . (int) $pipeline['status_id'] . ( false === $pipeline['status_valid'] ? ' (pipeline içinde bulunamadı)' : '' );
+                        $status_label = ! empty( $pipeline['status_name'] ) ? $pipeline['status_name'] . ' ' : '';
+                        $detail .= ' · Status ' . $status_label . '#' . (int) $pipeline['status_id'] . ( false === $pipeline['status_valid'] ? ' (pipeline içinde bulunamadı)' : '' );
                     }
                     $checks[] = self::check(
                         'kommo_pipeline',
