@@ -423,6 +423,9 @@ class MMC_MDG_Bridge_Service {
      * Canlı WooCommerce/Tickera nesnesi oluşturmaz; yalnız MDG draft + seans + bilet katalog yapısını hazırlar.
      */
     public static function create_draft_from_program( $program_id ) {
+        if ( class_exists( 'MMC_MDG_Draft_Sync_Service' ) ) {
+            return MMC_MDG_Draft_Sync_Service::sync( $program_id );
+        }
         $program_id = absint( $program_id );
         $preview = self::publish_preview( $program_id );
         if ( ! empty( $preview['bridge'] ) ) {
