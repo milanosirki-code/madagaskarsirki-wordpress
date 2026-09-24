@@ -702,12 +702,24 @@ class MMC_Kommo_Service {
         $created_pipeline = false;
 
         if ( ! $pipeline ) {
+            $embedded_statuses = array();
+            foreach ( (array) $blueprint['stages'] as $stage ) {
+                $embedded_statuses[] = array(
+                    'name'  => $stage['name'],
+                    'sort'  => (int) $stage['sort'],
+                    'color' => $stage['color'],
+                );
+            }
+
             $payload = array(
                 array(
                     'name'           => $blueprint['name'],
                     'sort'           => 900,
                     'is_main'        => false,
                     'is_unsorted_on' => false,
+                    '_embedded'      => array(
+                        'statuses' => $embedded_statuses,
+                    ),
                 ),
             );
 
@@ -753,7 +765,7 @@ class MMC_Kommo_Service {
             );
         }
 
-        $added_stage_count = 0;
+        $added_stage_count = $created_pipeline ? count( (array) $blueprint['stages'] ) : 0;
         if ( $missing_payload ) {
             $response = self::api_request(
                 self::crm_base() . '/leads/pipelines/' . $pipeline_id . '/statuses',
@@ -767,7 +779,7 @@ class MMC_Kommo_Service {
                     array( 'pipeline_id'=>$pipeline_id )
                 );
             }
-            $added_stage_count = count( $missing_payload );
+            $added_stage_count += count( $missing_payload );
         }
 
         $verified = self::pipeline_catalog( true );
