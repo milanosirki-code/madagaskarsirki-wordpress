@@ -18,6 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  */
 class MMC_Kommo_Service {
     const CRON_HOOK = 'mmc_kommo_process_queue';
+    const FAST_CRON_HOOK = 'mmc_kommo_process_queue_fast';
 
     public static function hooks() {
         add_action( 'init', array( __CLASS__, 'register_rewrite' ) );
@@ -25,6 +26,7 @@ class MMC_Kommo_Service {
         add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_source' ) );
         add_filter( 'cron_schedules', array( __CLASS__, 'cron_schedules' ) );
         add_action( self::CRON_HOOK, array( __CLASS__, 'process_queue' ) );
+        add_action( self::FAST_CRON_HOOK, array( __CLASS__, 'process_queue' ) );
         add_action( 'mmc_program_logged', array( __CLASS__, 'on_program_log' ), 10, 7 );
 
         if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
@@ -297,7 +299,14 @@ class MMC_Kommo_Service {
         if ( ! $program_id || 0 === strpos( (string)$action, 'kommo_' ) ) return;
         $interesting = array('program','event','session','ticket_type','integration','program_venue','finance_entry');
         if ( ! in_array( $entity_type, $interesting, true ) ) return;
+
         self::enqueue_program_sync( $program_id, $action );
+
+        // Normal queue still has the 15-minute safety cron. For actual MMC changes,
+        // also request a near-term single run so status changes reach Kommo promptly.
+        if ( ! wp_next_scheduled( self::FAST_CRON_HOOK ) ) {
+            wp_schedule_single_event( time() + 30, self::FAST_CRON_HOOK );
+        }
     }
 
     public static function process_queue( $limit = 10 ) {
@@ -315,19 +324,127 @@ class MMC_Kommo_Service {
     private static function process_job( $job ) {
         global $wpdb;
         $table = $wpdb->prefix . 'mmc_kommo_queue';
-        $wpdb->update($table,array('status'=>'running','attempts'=>(int)$job->attempts+1,'updated_at'=>current_time('mysql')),array('id'=>(int)$job->id));
-        $result = 'ai_source_sync' === $job->job_type ? self::sync_ai_source((int)$job->program_id) : self::sync_program_lead((int)$job->program_id);
+        $attempt = (int) $job->attempts + 1;
+
+        $wpdb->update(
+            $table,
+            array(
+                'status'     => 'running',
+                'attempts'   => $attempt,
+                'updated_at' => current_time('mysql'),
+            ),
+            array('id'=>(int)$job->id)
+        );
+
+        $result = 'ai_source_sync' === $job->job_type
+            ? self::sync_ai_source((int)$job->program_id)
+            : self::sync_program_lead((int)$job->program_id);
+
         if ( is_wp_error($result) ) {
             $code = $result->get_error_code();
             $waiting = in_array($code,array('mmc_kommo_not_configured','mmc_kommo_pipeline_missing'),true);
+
+            if ( $waiting ) {
+                $wpdb->update($table,array(
+                    'status'=>'waiting_config',
+                    'last_error'=>$result->get_error_message(),
+                    'processed_at'=>current_time('mysql'),
+                    'updated_at'=>current_time('mysql')
+                ),array('id'=>(int)$job->id));
+                return;
+            }
+
+            if ( self::is_retryable_error( $result ) && $attempt < 4 ) {
+                $delay = self::retry_delay_seconds( $attempt );
+                $available = wp_date( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $delay );
+
+                $wpdb->update($table,array(
+                    'status'=>'queued',
+                    'available_at'=>$available,
+                    'last_error'=>$result->get_error_message(),
+                    'processed_at'=>null,
+                    'updated_at'=>current_time('mysql')
+                ),array('id'=>(int)$job->id));
+
+                if ( ! wp_next_scheduled( self::FAST_CRON_HOOK ) ) {
+                    wp_schedule_single_event( time() + min( $delay, 300 ), self::FAST_CRON_HOOK );
+                }
+                return;
+            }
+
             $wpdb->update($table,array(
-                'status'=>$waiting?'waiting_config':'error',
+                'status'=>'error',
                 'last_error'=>$result->get_error_message(),
-                'processed_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')
+                'processed_at'=>current_time('mysql'),
+                'updated_at'=>current_time('mysql')
             ),array('id'=>(int)$job->id));
             return;
         }
-        $wpdb->update($table,array('status'=>'done','last_error'=>'','processed_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')),array('id'=>(int)$job->id));
+
+        $wpdb->update($table,array(
+            'status'=>'done',
+            'last_error'=>'',
+            'processed_at'=>current_time('mysql'),
+            'updated_at'=>current_time('mysql')
+        ),array('id'=>(int)$job->id));
+    }
+
+    private static function is_retryable_error( $error ) {
+        if ( ! is_wp_error( $error ) ) return false;
+
+        $code = (string) $error->get_error_code();
+        if ( in_array( $code, array( 'http_request_failed', 'http_request_not_executed' ), true ) ) {
+            return true;
+        }
+
+        if ( 'mmc_kommo_api' === $code ) {
+            $data = $error->get_error_data();
+            $status = is_array( $data ) ? absint( $data['status'] ?? 0 ) : 0;
+            return 408 === $status || 429 === $status || $status >= 500;
+        }
+
+        return false;
+    }
+
+    private static function retry_delay_seconds( $attempt ) {
+        $delays = array(
+            1 => 5 * MINUTE_IN_SECONDS,
+            2 => 15 * MINUTE_IN_SECONDS,
+            3 => 30 * MINUTE_IN_SECONDS,
+        );
+        return isset( $delays[ (int) $attempt ] ) ? $delays[ (int) $attempt ] : 30 * MINUTE_IN_SECONDS;
+    }
+
+    public static function queue_health( $program_id ) {
+        global $wpdb;
+        $program_id = absint( $program_id );
+        $table = $wpdb->prefix . 'mmc_kommo_queue';
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT status,COUNT(*) total FROM $table WHERE program_id=%d GROUP BY status",
+            $program_id
+        ), OBJECT_K );
+
+        $counts = array(
+            'queued'=>0,'running'=>0,'waiting_config'=>0,'error'=>0,'done'=>0,
+        );
+        foreach ( $counts as $status => $zero ) {
+            if ( isset( $rows[ $status ] ) ) {
+                $counts[ $status ] = (int) $rows[ $status ]->total;
+            }
+        }
+
+        $latest = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM $table WHERE program_id=%d ORDER BY id DESC LIMIT 1",
+            $program_id
+        ) );
+
+        return array(
+            'counts' => $counts,
+            'latest' => $latest,
+            'pending' => $counts['queued'] + $counts['running'] + $counts['waiting_config'],
+            'errors' => $counts['error'],
+        );
     }
 
     public static function sync_now( $program_id ) {
