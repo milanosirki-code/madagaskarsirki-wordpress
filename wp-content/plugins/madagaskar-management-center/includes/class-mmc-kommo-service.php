@@ -384,34 +384,300 @@ class MMC_Kommo_Service {
         return true;
     }
 
+    public static function program_status_stage_map() {
+        return array(
+            'preparation'        => 'Hazırlık',
+            'region_analysis'    => 'Bölge Planlandı',
+            'venue_research'     => 'Bölge Planlandı',
+            'allocation_request' => 'Bölge Planlandı',
+            'allocation_pending' => 'Bölge Planlandı',
+            'venue_confirmed'    => 'Salon/Tahsis Hazır',
+            'venue_payment'      => 'Salon/Tahsis Hazır',
+            'event_setup'        => 'Etkinlik/Seans Hazır',
+            'sales_prep'         => 'Satış Hazır',
+            'sales_open'         => 'Satış Hazır',
+            'promotion'          => 'Tanıtım/Saha Aktif',
+            'operations'         => 'Operasyon Hazır',
+            'show_day'           => 'Operasyon Hazır',
+            'financial_close'    => 'Gösteri Tamamlandı',
+            'deposit_refund'     => 'Finans/Kapanış',
+            'completed'          => 'Arşiv',
+            'cancelled'          => null,
+        );
+    }
+
+    public static function status_bridge_preview( $program_id, $force = false ) {
+        $program_id = absint( $program_id );
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) {
+            return new WP_Error( 'mmc_kommo_program_missing', 'Program bulunamadı.' );
+        }
+
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) {
+            return $profile;
+        }
+
+        $pipeline_id = absint( get_option( 'mmc_kommo_pipeline_id', 0 ) );
+        if ( ! $pipeline_id ) {
+            return new WP_Error( 'mmc_kommo_pipeline_missing', 'Kommo Program pipeline ID tanımlanmadı.' );
+        }
+
+        $mapping = self::program_status_stage_map();
+        $desired_name = array_key_exists( (string) $program->status, $mapping )
+            ? $mapping[ (string) $program->status ]
+            : null;
+
+        if ( 'cancelled' === (string) $program->status ) {
+            return array(
+                'program_status'      => (string) $program->status,
+                'program_status_name' => MMC_Program_Service::statuses()['cancelled'] ?? 'İptal',
+                'pipeline_id'         => $pipeline_id,
+                'lead_id'             => absint( $profile->kommo_lead_id ),
+                'desired_stage'       => '',
+                'desired_status_id'   => 0,
+                'current_stage'       => '',
+                'current_status_id'   => 0,
+                'current_pipeline_id' => 0,
+                'action'              => 'manual_cancel',
+                'should_update'       => false,
+                'reason'              => 'İptal durumunda otomatik Kommo aşama değişikliği yapılmaz. Kart mevcut aşamasında korunur; iptal akışı ayrıca yönetilmelidir.',
+            );
+        }
+
+        if ( ! $desired_name ) {
+            return new WP_Error( 'mmc_kommo_stage_mapping_missing', 'MMC program durumu için Kommo aşama eşlemesi bulunamadı: ' . (string) $program->status );
+        }
+
+        $selection = self::discover_pipeline_selection( $pipeline_id, 0, $force );
+        if ( is_wp_error( $selection ) ) {
+            return $selection;
+        }
+        if ( empty( $selection['pipeline_valid'] ) || empty( $selection['pipeline'] ) ) {
+            return new WP_Error( 'mmc_kommo_pipeline_invalid', 'MMC Program pipeline Kommo hesabında doğrulanamadı.' );
+        }
+
+        $blueprint = self::program_pipeline_blueprint();
+        $stage_order = array();
+        foreach ( (array) $blueprint['stages'] as $index => $stage ) {
+            $stage_order[ self::normalize_pipeline_label( $stage['name'] ) ] = (int) $index;
+        }
+
+        $status_by_name = array();
+        $status_by_id = array();
+        foreach ( (array) $selection['pipeline']['statuses'] as $status ) {
+            $status_by_name[ self::normalize_pipeline_label( $status['name'] ?? '' ) ] = $status;
+            $status_by_id[ (int) ( $status['id'] ?? 0 ) ] = $status;
+        }
+
+        $desired_key = self::normalize_pipeline_label( $desired_name );
+        if ( empty( $status_by_name[ $desired_key ] ) ) {
+            return new WP_Error( 'mmc_kommo_desired_status_missing', 'Hedef Kommo aşaması pipeline içinde bulunamadı: ' . $desired_name );
+        }
+
+        $desired = $status_by_name[ $desired_key ];
+        $desired_index = $stage_order[ $desired_key ] ?? null;
+        $lead_id = absint( $profile->kommo_lead_id );
+
+        $out = array(
+            'program_status'      => (string) $program->status,
+            'program_status_name' => MMC_Program_Service::statuses()[ (string) $program->status ] ?? (string) $program->status,
+            'pipeline_id'         => $pipeline_id,
+            'lead_id'             => $lead_id,
+            'desired_stage'       => (string) $desired['name'],
+            'desired_status_id'   => (int) $desired['id'],
+            'desired_index'       => $desired_index,
+            'current_stage'       => '',
+            'current_status_id'   => 0,
+            'current_pipeline_id' => 0,
+            'current_index'       => null,
+            'action'              => $lead_id ? 'inspect' : 'create',
+            'should_update'       => ! $lead_id,
+            'reason'              => $lead_id ? 'Mevcut Kommo kartı okunacak.' : 'Yeni program kartı hedef MMC aşamasında oluşturulacak.',
+        );
+
+        if ( ! $lead_id ) {
+            return $out;
+        }
+
+        $lead = self::lead_snapshot( $lead_id, $force );
+        if ( is_wp_error( $lead ) ) {
+            return $lead;
+        }
+
+        $out['current_pipeline_id'] = absint( $lead['pipeline_id'] ?? 0 );
+        $out['current_status_id'] = absint( $lead['status_id'] ?? 0 );
+
+        if ( $out['current_pipeline_id'] !== $pipeline_id ) {
+            $out['action'] = 'pipeline_mismatch';
+            $out['should_update'] = false;
+            $out['reason'] = 'Kommo kartı beklenen MMC Program pipeline dışında. Otomatik pipeline taşıması yapılmaz.';
+            return $out;
+        }
+
+        $current = $status_by_id[ $out['current_status_id'] ] ?? null;
+        if ( ! $current ) {
+            $out['action'] = 'unknown_current_status';
+            $out['should_update'] = false;
+            $out['reason'] = 'Mevcut Kommo status pipeline kataloğunda bulunamadı; otomatik aşama değişikliği yapılmaz.';
+            return $out;
+        }
+
+        $out['current_stage'] = (string) $current['name'];
+        $current_key = self::normalize_pipeline_label( $current['name'] ?? '' );
+        $out['current_index'] = array_key_exists( $current_key, $stage_order ) ? $stage_order[ $current_key ] : null;
+
+        if ( null === $out['current_index'] || null === $desired_index ) {
+            $out['action'] = 'non_mmc_status';
+            $out['should_update'] = false;
+            $out['reason'] = 'Kart MMC yaşam döngüsü dışındaki bir status’ta. Otomatik değişiklik yapılmaz.';
+            return $out;
+        }
+
+        if ( $desired_index > $out['current_index'] ) {
+            $out['action'] = 'advance';
+            $out['should_update'] = true;
+            $out['reason'] = 'MMC program durumu daha ileri bir Kommo aşaması gerektiriyor.';
+        } elseif ( $desired_index === $out['current_index'] ) {
+            $out['action'] = 'stay';
+            $out['should_update'] = false;
+            $out['reason'] = 'Kommo kartı MMC program durumuyla aynı aşamada.';
+        } else {
+            $out['action'] = 'preserve_ahead';
+            $out['should_update'] = false;
+            $out['reason'] = 'Kommo kartı MMC program durumundan ileride; otomatik geriye alma engellendi.';
+        }
+
+        return $out;
+    }
+
+    private static function lead_snapshot( $lead_id, $force = false ) {
+        $lead_id = absint( $lead_id );
+        if ( ! $lead_id ) {
+            return new WP_Error( 'mmc_kommo_lead_missing', 'Kommo lead ID bulunamadı.' );
+        }
+
+        $cache_key = 'mmc_kommo_lead_' . $lead_id . '_' . md5( self::subdomain() . '|' . self::token_fingerprint() );
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return $cached;
+            }
+        }
+
+        $lead = self::api_request( self::crm_base() . '/leads/' . $lead_id, 'GET' );
+        if ( is_wp_error( $lead ) ) {
+            return $lead;
+        }
+
+        set_transient( $cache_key, $lead, 60 );
+        return $lead;
+    }
+
     public static function sync_program_lead( $program_id ) {
         global $wpdb;
-        $profile=self::ensure_profile($program_id); if(is_wp_error($profile))return $profile;
-        if ( ! self::configured() ) return new WP_Error('mmc_kommo_not_configured','Kommo subdomain/token yapılandırılmadı.');
-        $pipeline_id=absint(get_option('mmc_kommo_pipeline_id',0));
-        if(!$pipeline_id) return new WP_Error('mmc_kommo_pipeline_missing','Kommo Program pipeline ID tanımlanmadı; CRM program kaydı atlandı.');
-        $status_id=absint(get_option('mmc_kommo_status_id',0));
-        $program=MMC_Program_Service::get_program($program_id); if(!$program)return new WP_Error('mmc_kommo_program_missing','Program bulunamadı.');
-        $event=MMC_Event_Service::event_for_program($program_id);
-        $name='Madagaskar | '.$program->province_name.' / '.($program->district_name?:'Genel');
-        if($event&&$event->event_date)$name.=' | '.wp_date('d.m.Y',strtotime($event->event_date));
-        $lead=array('name'=>$name,'pipeline_id'=>$pipeline_id);
-        if($status_id)$lead['status_id']=$status_id;
-        if($profile->kommo_lead_id){
-            $lead['id']=(int)$profile->kommo_lead_id;
-            $response=self::api_request(self::crm_base().'/leads','PATCH',array($lead));
-        }else{
-            $response=self::api_request(self::crm_base().'/leads','POST',array($lead));
+
+        $profile = self::ensure_profile( $program_id );
+        if ( is_wp_error( $profile ) ) return $profile;
+        if ( ! self::configured() ) return new WP_Error( 'mmc_kommo_not_configured', 'Kommo subdomain/token yapılandırılmadı.' );
+
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) return new WP_Error( 'mmc_kommo_program_missing', 'Program bulunamadı.' );
+
+        $bridge = self::status_bridge_preview( $program_id, true );
+        if ( is_wp_error( $bridge ) ) {
+            self::profile_error( $profile->id, 'crm_status', $bridge->get_error_message() );
+            return $bridge;
         }
-        if(is_wp_error($response)){
-            self::profile_error($profile->id,'crm_status',$response->get_error_message()); return $response;
+
+        if ( 'pipeline_mismatch' === $bridge['action'] ) {
+            $error = new WP_Error( 'mmc_kommo_pipeline_mismatch', $bridge['reason'] );
+            self::profile_error( $profile->id, 'crm_status', $error->get_error_message() );
+            return $error;
         }
-        $lead_id=$profile->kommo_lead_id;
-        if(!$lead_id && isset($response['_embedded']['leads'][0]['id']))$lead_id=(string)$response['_embedded']['leads'][0]['id'];
-        $wpdb->update($wpdb->prefix.'mmc_kommo_profiles',array(
-            'kommo_lead_id'=>$lead_id,'crm_status'=>'synced','last_synced_at'=>current_time('mysql'),'last_error'=>'','updated_at'=>current_time('mysql')
-        ),array('id'=>(int)$profile->id));
-        MMC_Program_Service::add_log($program_id,'kommo_program_lead_synced','program',$program_id,null,array('lead_id'=>$lead_id),'Kommo program takip kaydı senkronlandı.');
+
+        $event = MMC_Event_Service::event_for_program( $program_id );
+        $name = 'Madagaskar | ' . $program->province_name . ' / ' . ( $program->district_name ?: 'Genel' );
+        if ( $event && $event->event_date ) {
+            $name .= ' | ' . wp_date( 'd.m.Y', strtotime( $event->event_date ) );
+        }
+
+        $lead = array( 'name' => $name );
+
+        if ( empty( $profile->kommo_lead_id ) ) {
+            $lead['pipeline_id'] = (int) $bridge['pipeline_id'];
+            if ( ! empty( $bridge['desired_status_id'] ) ) {
+                $lead['status_id'] = (int) $bridge['desired_status_id'];
+            }
+            $response = self::api_request( self::crm_base() . '/leads', 'POST', array( $lead ) );
+        } else {
+            $lead['id'] = (int) $profile->kommo_lead_id;
+
+            // Critical guard: ordinary sync never re-sends the default Hazırlık status.
+            // Status is patched only when the bridge authorizes a forward move.
+            if ( ! empty( $bridge['should_update'] ) && 'advance' === $bridge['action'] && ! empty( $bridge['desired_status_id'] ) ) {
+                $lead['status_id'] = (int) $bridge['desired_status_id'];
+            }
+
+            $response = self::api_request( self::crm_base() . '/leads', 'PATCH', array( $lead ) );
+        }
+
+        if ( is_wp_error( $response ) ) {
+            self::profile_error( $profile->id, 'crm_status', $response->get_error_message() );
+            return $response;
+        }
+
+        $lead_id = $profile->kommo_lead_id;
+        if ( ! $lead_id && isset( $response['_embedded']['leads'][0]['id'] ) ) {
+            $lead_id = (string) $response['_embedded']['leads'][0]['id'];
+        }
+
+        if ( $lead_id ) {
+            delete_transient( 'mmc_kommo_lead_' . absint( $lead_id ) . '_' . md5( self::subdomain() . '|' . self::token_fingerprint() ) );
+        }
+
+        $wpdb->update(
+            $wpdb->prefix . 'mmc_kommo_profiles',
+            array(
+                'kommo_lead_id'  => $lead_id,
+                'crm_status'      => 'synced',
+                'last_synced_at'  => current_time( 'mysql' ),
+                'last_error'      => '',
+                'updated_at'      => current_time( 'mysql' ),
+            ),
+            array( 'id' => (int) $profile->id )
+        );
+
+        $log_data = array(
+            'lead_id'        => $lead_id,
+            'program_status' => $bridge['program_status'],
+            'bridge_action'  => $bridge['action'],
+            'current_stage'  => $bridge['current_stage'],
+            'desired_stage'  => $bridge['desired_stage'],
+        );
+
+        MMC_Program_Service::add_log(
+            $program_id,
+            'kommo_program_lead_synced',
+            'program',
+            $program_id,
+            null,
+            $log_data,
+            'Kommo program takip kaydı senkronlandı; status köprüsü: ' . $bridge['action'] . '.'
+        );
+
+        if ( 'advance' === $bridge['action'] ) {
+            MMC_Program_Service::add_log(
+                $program_id,
+                'kommo_program_status_advanced',
+                'program',
+                $program_id,
+                $bridge['current_stage'],
+                $bridge['desired_stage'],
+                'Kommo kartı yalnız ileri yönde yeni MMC program aşamasına taşındı.'
+            );
+        }
+
         return true;
     }
 
