@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * MMC v1.3.11 safe hidden-page navigation.
+ * MMC v1.3.12 health-aware admin navigation.
  *
  * Navigation only:
  * - Existing MMC, MDG and Okul Tanıtım page slugs/callbacks stay intact.
@@ -602,17 +602,29 @@ class MMC_Navigation_Admin {
         }
 
         $hidden = wp_json_encode( $this->hidden_detail_pages() );
-        $is_hub = in_array( $this->current_page(), $this->hub_pages(), true ) ? 'true' : 'false';
+        $page = $this->current_page();
+        $is_hub = in_array( $page, $this->hub_pages(), true ) ? 'true' : 'false';
+        $is_mmc = 0 === strpos( $page, 'mmc-' ) ? 'true' : 'false';
 
         echo '<script>(function(){';
         echo 'var hidden=' . $hidden . ';';
         echo 'document.querySelectorAll("#toplevel_page_mmc-dashboard .wp-submenu a").forEach(function(a){';
         echo 'try{var u=new URL(a.href,window.location.href);var p=u.searchParams.get("page");if(hidden.indexOf(p)!==-1){var li=a.closest("li");if(li){li.style.display="none";}}}catch(e){}';
         echo '});';
+
         echo 'if(' . $is_hub . '){document.querySelectorAll("#wpbody-content .notice, #wpbody-content .updated").forEach(function(n){';
         echo 'if(n.classList.contains("notice-warning")||n.classList.contains("notice-error")){return;}';
         echo 'if(n.classList.contains("notice-success")||n.classList.contains("updated")){n.style.display="none";}';
         echo '});}';
+
+        // Hide only two known non-operational notices on MMC pages. Real warnings/errors remain visible.
+        echo 'if(' . $is_mmc . '){';
+        echo 'var phrases=["Madagaskar V5 Finans Güncellemesi","Complete \\"Tickera - Custom Forms\\" Activation Now","Complete \'Tickera - Custom Forms\' Activation Now"];';
+        echo 'document.querySelectorAll("#wpbody-content .notice,#wpbody-content .updated,#wpbody-content .error,#wpbody-content [class*=notice]").forEach(function(n){';
+        echo 'var t=(n.textContent||"").trim();if(!t){return;}';
+        echo 'for(var i=0;i<phrases.length;i++){if(t.indexOf(phrases[i])!==-1){n.style.display="none";break;}}';
+        echo '});';
+        echo '}';
         echo '})();</script>';
     }
 
