@@ -1,3 +1,33 @@
+# Madagaskar Management Center v1.3.15
+
+Bu sürüm **Kommo Pipeline Keşif Merkezi** ekler. Kommo hesabındaki mevcut lead pipeline ve status'lar salt-okunur keşfedilir; MMC Program Pipeline/Status seçimi ID yazmak yerine ekrandan yapılır.
+
+## v1.3.15 — Kommo Pipeline Keşif Merkezi
+
+- Kommo `/api/v4/leads/pipelines` endpoint'i salt-okunur taranır.
+- Pipeline listesi ve her pipeline içindeki status adları/ID'leri MMC ekranında gösterilir.
+- Liste 10 dakika cache edilir; **Pipeline Listesini Yenile** düğmesi manuel salt-okunur yenileme yapar.
+- MMC Program Pipeline artık dropdown üzerinden seçilebilir.
+- Varsayılan Program Status, seçilen pipeline'a ait status listesinden seçilir.
+- Pipeline değiştirildiğinde status dropdown'u tarayıcıda otomatik yenilenir.
+- Kaydetme sırasında seçilen pipeline Kommo hesabında yeniden doğrulanır.
+- Status seçilmişse gerçekten seçilen pipeline'a ait olduğu doğrulanır.
+- Geçersiz/eski pipeline veya başka pipeline'a ait status kaydedilmez.
+- Eski `MS_KOMMO_PIPELINE_ID` keşif listesinde **legacy sipariş pipeline adayı** olarak etiketlenir; otomatik seçilmez.
+- Sağlık ekranında seçili pipeline ve status isimleri ID'leriyle birlikte gösterilir.
+- Kommo hesabında hiçbir pipeline/status oluşturulmaz, güncellenmez veya silinmez.
+- Veritabanı şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Keşif ve doğrulama çağrıları GET/salt-okunurdur.
+- Token değeri ekranda veya WordPress option alanında tutulmaz.
+- Pipeline seçimi yalnız MMC'nin `mmc_kommo_pipeline_id` ve `mmc_kommo_status_id` WordPress ayarlarını değiştirir.
+- WooCommerce sipariş pipeline'ı ile MMC Program Pipeline otomatik birleştirilmez.
+- Lead, müşteri, sipariş, Tickera, PayTR, MDG ve Okul Tanıtım kayıtlarına yazma yoktur.
+
+---
+
 # Madagaskar Management Center v1.3.14
 
 Bu sürüm **mevcut çalışan Kommo entegrasyonunu MMC'ye güvenli biçimde köprüler ve canlı API/pipeline teşhisini sağlık merkezine taşır.**
