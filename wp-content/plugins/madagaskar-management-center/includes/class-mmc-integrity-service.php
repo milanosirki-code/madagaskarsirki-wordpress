@@ -278,6 +278,37 @@ class MMC_Integrity_Service {
             $url
         );
 
+        $schedule_checks = array(
+            'province' => ! empty($s['province_match']),
+            'district' => ! empty($s['district_match']),
+            'date' => ! empty($s['date_match']),
+            'venue' => ! empty($s['venue_match']),
+            'sessions' => ! empty($s['session_time_match']),
+        );
+        $schedule_ok = ! in_array(false, $schedule_checks, true);
+        $schedule_detail = 'Konum ' . ( $schedule_checks['province'] && $schedule_checks['district'] ? 'uyumlu' : 'farklı' ) .
+            ' · Tarih MMC ' . ( $s['mmc_event_date'] ?: '—' ) .
+            ' / MDG ' . ( $s['mdg_event_dates'] ? implode(',', (array)$s['mdg_event_dates']) : '—' ) .
+            ' · Salon MMC ' . ( $s['mmc_venue_name'] ?: '—' ) .
+            ' / MDG ' . ( $s['mdg_venue_name'] ?: '—' ) .
+            ' · Seans MMC [' . ( $s['session_times_mmc'] ? implode(', ', (array)$s['session_times_mmc']) : '—' ) .
+            '] / MDG [' . ( $s['session_times_mdg'] ? implode(', ', (array)$s['session_times_mdg']) : '—' ) . ']';
+        if ( ! $schedule_ok ) {
+            $problems = array();
+            if ( ! $schedule_checks['province'] || ! $schedule_checks['district'] ) { $problems[] = 'İL/İLÇE'; }
+            if ( ! $schedule_checks['date'] ) { $problems[] = 'TARİH'; }
+            if ( ! $schedule_checks['venue'] ) { $problems[] = 'SALON'; }
+            if ( ! $schedule_checks['sessions'] ) { $problems[] = 'SEANS SAATİ'; }
+            $schedule_detail .= ' · UYUŞMAZLIK: ' . implode(' / ', $problems);
+        }
+        $rows[] = self::row(
+            'mdg_schedule',
+            'MDG Tarih / Salon / Seans',
+            $schedule_ok ? 'ok' : 'critical',
+            $schedule_detail,
+            $url
+        );
+
         $expected = (int)$s['identity_expected'];
         $matched = (int)$s['identity_matched'];
         $identity_sev = $expected > 0 && $matched === $expected ? 'ok' : ( $expected > 0 ? 'critical' : 'warning' );
@@ -302,13 +333,16 @@ class MMC_Integrity_Service {
             );
         } else {
             $sales_ok = ! empty($sales['ok']);
-            $detail = 'MDG: ' . (int)$sales['mdg_orders'] . ' sipariş / ' . (int)$sales['mdg_units'] . ' kişi · ' .
-                      'MMC: ' . (int)$sales['mmc_orders'] . ' sipariş / ' . (int)$sales['mmc_units'] . ' kişi';
+            $detail = 'MDG: ' . (int)$sales['mdg_orders'] . ' sipariş / ' . (int)$sales['mdg_tickets'] . ' bilet / ' . (int)$sales['mdg_units'] . ' kişi / ' .
+                      number_format_i18n((float)$sales['mdg_revenue_ex_tax'],2) . ' TL · ' .
+                      'MMC: ' . (int)$sales['mmc_orders'] . ' sipariş / ' . (int)$sales['mmc_tickets'] . ' bilet / ' . (int)$sales['mmc_units'] . ' kişi / ' .
+                      number_format_i18n((float)$sales['mmc_revenue'],2) . ' TL';
             if ( ! $sales_ok ) {
                 $detail .= ' · MMC eksik satır: ' . count((array)$sales['missing_in_mmc']) .
                            ' · MMC fazla satır: ' . count((array)$sales['extra_in_mmc']);
             }
-            $detail .= ' · MDG satır toplamı KDV hariç olabilir; ciro farkı bu kontrolde kritik ölçüt değildir.';
+            $detail .= ' · Ciro farkı: ' . number_format_i18n((float)$sales['revenue_diff'],2) . ' TL' .
+                       ' · MDG line_total KDV hariç olabildiği için ciro farkı tek başına kritik ölçüt değildir.';
             $rows[] = self::row(
                 'mdg_sales_reconcile',
                 'MDG ↔ MMC Satış Mutabakatı',

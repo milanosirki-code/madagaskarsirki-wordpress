@@ -10,9 +10,9 @@ Bu sürüm **MMC Program ID ile ilk Madagaskar Bilet Yönetimi motorunu kalıcı
 - Eski Madagaskar satış tablolarına kolon eklenmez ve kayıt yazılmaz; köprü MMC tarafında tutulur.
 - Güvenli otomatik eşleştirme WooCommerce ürün/varyasyon ve Tickera event kimliklerinin ortaklığıyla yapılır.
 - Yalnız il/ilçe/tarih benzerliği otomatik bağlantı için yeterli kabul edilmez.
-- Bütünlük Merkezi artık MDG motor sürümünü, Program↔MDG Event bağını, satış nesnesi kimliklerini ve MDG↔MMC satış mutabakatını gösterir.
-- MDG ve MMC satış mutabakatında sipariş/sipariş-satırı/kapasite birimleri karşılaştırılır; aynı WooCommerce satışı iki kez gelir olarak yazılmaz.
-- Eski MDG `line_total` vergi hariç olabildiği için ciro farkı tek başına kritik hata sayılmaz.
+- Bütünlük Merkezi artık MDG motor sürümünü, Program↔MDG Event bağını, il/ilçe/tarih/salon/seans saatlerini, satış nesnesi kimliklerini ve MDG↔MMC satış mutabakatını gösterir.
+- MDG ve MMC satış mutabakatında sipariş, sipariş satırı, bilet adedi ve kapasite/kişi birimleri karşılaştırılır; aynı WooCommerce satışı iki kez gelir olarak yazılmaz.
+- MDG ve MMC ciro değerleri görünür biçimde karşılaştırılır; MDG `line_total` vergi hariç olabildiği için ciro farkı tek başına kritik hata sayılmaz.
 - MMC aktif program şeridi artık `mdg-*` yönetim ekranlarında da görünür.
 - Bütünlük Merkezi ve aktif program kısayollarına **MDG Bilet** bağlantısı eklendi.
 - Eşleşme kesin değilse Bütünlük Merkezi aday MDG etkinliklerini gösterir ve yönetici kontrollü manuel bağlama yapılabilir.
@@ -30,5 +30,5 @@ Bu sürüm **MMC Program ID ile ilk Madagaskar Bilet Yönetimi motorunu kalıcı
 1. Eklentiyi v1.3.7 ile değiştirin.
 2. WordPress eklentiyi yüklediğinde MMC veritabanı şema sürümü **1.3.7** olur ve köprü tablosu oluşturulur.
 3. Madagaskar → Program Bütünlüğü ekranını açın.
-4. İlgili Program ID için **MDG Bilet Motoru**, **MMC ↔ MDG Etkinlik Köprüsü**, **MDG / WooCommerce / Tickera Kimliği** ve **MDG ↔ MMC Satış Mutabakatı** satırlarını kontrol edin.
+4. İlgili Program ID için **MDG Bilet Motoru**, **MMC ↔ MDG Etkinlik Köprüsü**, **MDG Tarih / Salon / Seans**, **MDG / WooCommerce / Tickera Kimliği** ve **MDG ↔ MMC Satış Mutabakatı** satırlarını kontrol edin.
 5. Tek güçlü aday varsa **MDG Bağını Kur** düğmesini kullanabilirsiniz; sürüm yükseltmesi sırasında güvenli eşleşmeler ayrıca otomatik backfill edilir.
