@@ -480,6 +480,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => '',
             );
         }
@@ -492,6 +493,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => 'Kommo API bağlantısı yapılandırılmadan pipeline doğrulanamaz.',
             );
         }
@@ -513,6 +515,7 @@ class MMC_Kommo_Service {
                 'pipeline_name' => '',
                 'status_id' => $status_id,
                 'status_valid' => null,
+                'status_name' => '',
                 'error' => $r->get_error_message(),
             );
             set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
@@ -520,12 +523,14 @@ class MMC_Kommo_Service {
         }
 
         $status_valid = null;
+        $status_name = '';
         if ( $status_id ) {
             $status_valid = false;
             $statuses = $r['_embedded']['statuses'] ?? array();
             foreach ( (array) $statuses as $row ) {
                 if ( (int) ( $row['id'] ?? 0 ) === $status_id ) {
                     $status_valid = true;
+                    $status_name = sanitize_text_field( $row['name'] ?? '' );
                     break;
                 }
             }
@@ -538,6 +543,7 @@ class MMC_Kommo_Service {
             'pipeline_name' => sanitize_text_field( $r['name'] ?? '' ),
             'status_id' => $status_id,
             'status_valid' => $status_valid,
+            'status_name' => $status_name,
             'error' => '',
         );
         set_transient( $cache_key, $out, 10 * MINUTE_IN_SECONDS );
