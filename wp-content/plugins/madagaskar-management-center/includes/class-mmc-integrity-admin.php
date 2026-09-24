@@ -52,6 +52,19 @@ class MMC_Integrity_Admin {
         ?>
         <div class="wrap mmc-wrap">
             <h1>Program Bütünlük Merkezi</h1>
+            <?php
+            $integrity_msg = sanitize_key( wp_unslash( $_GET['mmc_integrity_msg'] ?? '' ) );
+            if ( $integrity_msg ) :
+                $is_error = false !== strpos( $integrity_msg, 'error' );
+                $message = '';
+                if ( 'mdg_bridge_ok' === $integrity_msg ) { $message = 'MDG Bilet Motoru köprüsü başarıyla kuruldu.'; }
+                elseif ( 'mdg_bridge_error' === $integrity_msg ) { $message = sanitize_text_field( rawurldecode( wp_unslash( $_GET['mmc_error'] ?? 'MDG köprüsü kurulamadı.' ) ) ); }
+                elseif ( 'bridge_ok' === $integrity_msg ) { $message = 'Okul Tanıtım / Rota köprüsü başarıyla kuruldu.'; }
+                elseif ( 'bridge_error' === $integrity_msg ) { $message = sanitize_text_field( rawurldecode( wp_unslash( $_GET['mmc_error'] ?? 'Okul köprüsü kurulamadı.' ) ) ); }
+                if ( $message ) :
+            ?>
+                <div class="notice <?php echo $is_error ? 'notice-error' : 'notice-success'; ?> is-dismissible"><p><?php echo esc_html($message); ?></p></div>
+            <?php endif; endif; ?>
             <p class="description">Tek gerçek kimlik <strong>MMC Program ID</strong>'dir. Hazırlık, salon, etkinlik, yayın, reklam, okul/rota, satış, Kommo, operasyon ve finans bağlantıları bu kimliğe göre doğrulanır.</p>
 
             <div class="mmc-panel">
@@ -130,7 +143,7 @@ class MMC_Integrity_Admin {
                 <h2>İlk Madagaskar Menüsü / Bilet Motoru Köprüsü</h2>
                 <?php if ( empty($mdg_status['available']) ) : ?>
                     <p>Madagaskar Bilet Yönetimi motoru aktif değil veya gerekli MDG tabloları bulunamadı.</p>
-                <?php elseif ( $bridge ) : ?>
+                <?php elseif ( ! empty($mdg_status['linked']) && $bridge ) : ?>
                     <p><strong>Bağlı:</strong> MMC Program ID <?php echo (int)$program_id; ?> → MMC Event #<?php echo (int)$bridge->mmc_event_id; ?> → MDG Event #<?php echo (int)$bridge->mdg_event_id; ?>.</p>
                     <p><a class="button" href="<?php echo esc_url(MMC_MDG_Bridge_Service::admin_url($program_id)); ?>">İlk Madagaskar Etkinliğini Aç</a></p>
                 <?php elseif ( $candidates ) : ?>
