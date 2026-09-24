@@ -146,21 +146,60 @@ class MMC_Health_Service {
                 );
             }
 
-            if ( ! empty( $kommo['uses_legacy_token'] ) ) {
-                $checks[] = self::check(
-                    'kommo_secret_source',
-                    'Kommo Secret Kaynağı',
-                    'warning',
-                    'Kommo bağlantısı legacy MS_KOMMO_TOKEN sabitinden çalışıyor. Canlı bağlantıyı kesmeden yeni/yenilenmiş tokenı wp-config.php içinde MMC_KOMMO_TOKEN olarak taşıyın; ardından eski snippet içindeki secretı kaldırın.',
-                    admin_url( 'admin.php?page=mmc-kommo' ),
-                    'Geçiş Bilgisi'
-                );
-            } elseif ( ! empty( $kommo['connected'] ) ) {
+            $token_migration = MMC_Kommo_Service::token_migration_diagnostics();
+            $token_state = (string) ( $token_migration['state'] ?? 'not_configured' );
+
+            if ( 'complete' === $token_state ) {
                 $checks[] = self::check(
                     'kommo_secret_source',
                     'Kommo Secret Kaynağı',
                     'ok',
-                    'Kommo tokenı MMC_KOMMO_TOKEN güvenli sabitinden okunuyor.'
+                    'Geçiş tamamlandı: MMC_KOMMO_TOKEN canlı ve legacy MS_KOMMO_TOKEN tanımlı değil.'
+                );
+            } elseif ( 'ready_to_remove_legacy' === $token_state ) {
+                $checks[] = self::check(
+                    'kommo_secret_source',
+                    'Kommo Secret Kaynağı',
+                    'warning',
+                    'MMC_KOMMO_TOKEN canlı ve aynı Kommo hesabına doğrulandı. Legacy MS_KOMMO_TOKEN artık kaldırılabilir; kaldırdıktan sonra yeniden test edin.',
+                    admin_url( 'admin.php?page=mmc-kommo' ),
+                    'Token Geçiş Merkezi'
+                );
+            } elseif ( 'fallback_legacy' === $token_state ) {
+                $checks[] = self::check(
+                    'kommo_secret_source',
+                    'Kommo Secret Kaynağı',
+                    'warning',
+                    'Yeni MMC_KOMMO_TOKEN doğrulanamadı; güvenli runtime fallback ile legacy MS_KOMMO_TOKEN kullanılmaya devam ediyor. Eski tokenı kaldırmayın.',
+                    admin_url( 'admin.php?page=mmc-kommo' ),
+                    'Token Geçiş Merkezi'
+                );
+            } elseif ( 'account_mismatch' === $token_state ) {
+                $checks[] = self::check(
+                    'kommo_secret_source',
+                    'Kommo Secret Kaynağı',
+                    'critical',
+                    'MMC_KOMMO_TOKEN ve MS_KOMMO_TOKEN farklı canlı Kommo hesaplarına bağlanıyor. Legacy tokenı kaldırmayın; yeni tokenı düzeltin.',
+                    admin_url( 'admin.php?page=mmc-kommo' ),
+                    'Token Geçiş Merkezi'
+                );
+            } elseif ( in_array( $token_state, array( 'mmc_invalid', 'legacy_invalid' ), true ) ) {
+                $checks[] = self::check(
+                    'kommo_secret_source',
+                    'Kommo Secret Kaynağı',
+                    'critical',
+                    $token_migration['detail'] ?? 'Kommo token doğrulaması başarısız.',
+                    admin_url( 'admin.php?page=mmc-kommo' ),
+                    'Token Geçiş Merkezi'
+                );
+            } elseif ( 'legacy_only' === $token_state ) {
+                $checks[] = self::check(
+                    'kommo_secret_source',
+                    'Kommo Secret Kaynağı',
+                    'warning',
+                    'Canlı bağlantı yalnız legacy MS_KOMMO_TOKEN üzerinden çalışıyor. MMC_KOMMO_TOKEN ekleyip canlı doğrulama yapmadan eski secretı kaldırmayın.',
+                    admin_url( 'admin.php?page=mmc-kommo' ),
+                    'Token Geçiş Merkezi'
                 );
             }
 

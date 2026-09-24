@@ -1737,13 +1737,205 @@ class MMC_Kommo_Service {
     }
 
     public static function token_source() {
-        if ( defined( 'MMC_KOMMO_TOKEN' ) && trim( (string) MMC_KOMMO_TOKEN ) !== '' ) {
-            return 'MMC_KOMMO_TOKEN';
+        $choice = self::runtime_token_choice();
+        return (string) ( $choice['source'] ?? '' );
+    }
+
+    public static function token_migration_diagnostics( $force = false ) {
+        $subdomain = self::subdomain();
+        $mmc_token = self::constant_token_value( 'MMC_KOMMO_TOKEN' );
+        $legacy_token = self::constant_token_value( 'MS_KOMMO_TOKEN' );
+
+        $mmc = self::probe_named_token( 'MMC_KOMMO_TOKEN', $mmc_token, $subdomain, $force );
+        $legacy = self::probe_named_token( 'MS_KOMMO_TOKEN', $legacy_token, $subdomain, $force );
+        $choice = self::runtime_token_choice( $force );
+
+        $same_secret = false;
+        if ( $mmc_token && $legacy_token ) {
+            $same_secret = hash_equals(
+                hash( 'sha256', $mmc_token ),
+                hash( 'sha256', $legacy_token )
+            );
         }
-        if ( defined( 'MS_KOMMO_TOKEN' ) && trim( (string) MS_KOMMO_TOKEN ) !== '' ) {
-            return 'MS_KOMMO_TOKEN';
+
+        $same_account = false;
+        if ( ! empty( $mmc['connected'] ) && ! empty( $legacy['connected'] ) ) {
+            $same_account = ! empty( $mmc['account_id'] )
+                && ! empty( $legacy['account_id'] )
+                && (int) $mmc['account_id'] === (int) $legacy['account_id'];
         }
+
+        $state = 'not_configured';
+        $detail = 'Kommo token sabiti tanımlı değil.';
+
+        if ( ! empty( $mmc['defined'] ) && ! empty( $mmc['connected'] ) && empty( $legacy['defined'] ) ) {
+            $state = 'complete';
+            $detail = 'Geçiş tamamlandı. MMC_KOMMO_TOKEN canlı ve legacy token tanımlı değil.';
+        } elseif ( ! empty( $mmc['defined'] ) && ! empty( $mmc['connected'] ) && ! empty( $legacy['defined'] ) ) {
+            if ( ! empty( $legacy['connected'] ) && ! $same_account ) {
+                $state = 'account_mismatch';
+                $detail = 'Her iki token da canlı ancak farklı Kommo hesaplarına bağlanıyor. Legacy tokenı kaldırmayın.';
+            } else {
+                $state = 'ready_to_remove_legacy';
+                $detail = 'MMC_KOMMO_TOKEN canlı. Legacy MS_KOMMO_TOKEN artık kaldırılabilir; kaldırdıktan sonra bağlantıyı yeniden test edin.';
+            }
+        } elseif ( ! empty( $mmc['defined'] ) && empty( $mmc['connected'] ) && ! empty( $legacy['connected'] ) ) {
+            $state = 'fallback_legacy';
+            $detail = 'MMC_KOMMO_TOKEN doğrulanamadı. Güvenli çalışma için runtime legacy MS_KOMMO_TOKEN üzerinden devam ediyor; eski tokenı kaldırmayın.';
+        } elseif ( ! empty( $mmc['defined'] ) && empty( $mmc['connected'] ) && empty( $legacy['connected'] ) ) {
+            $state = 'mmc_invalid';
+            $detail = 'MMC_KOMMO_TOKEN tanımlı ancak canlı API doğrulaması başarısız ve kullanılabilir legacy token yok.';
+        } elseif ( empty( $mmc['defined'] ) && ! empty( $legacy['connected'] ) ) {
+            $state = 'legacy_only';
+            $detail = 'Canlı bağlantı MS_KOMMO_TOKEN üzerinden çalışıyor. Önce aynı/yeni yetkili tokenı wp-config.php içinde MMC_KOMMO_TOKEN olarak tanımlayın.';
+        } elseif ( empty( $mmc['defined'] ) && ! empty( $legacy['defined'] ) ) {
+            $state = 'legacy_invalid';
+            $detail = 'MS_KOMMO_TOKEN tanımlı ancak canlı API doğrulaması başarısız.';
+        }
+
+        return array(
+            'state'         => $state,
+            'detail'        => $detail,
+            'active_source' => (string) ( $choice['source'] ?? '' ),
+            'same_secret'   => $same_secret,
+            'same_account'  => $same_account,
+            'mmc'           => $mmc,
+            'legacy'        => $legacy,
+            'checked_at'    => current_time( 'mysql' ),
+        );
+    }
+
+    private static function runtime_token_choice( $force = false ) {
+        static $request_cache = array();
+
+        $subdomain = self::subdomain();
+        $mmc_token = self::constant_token_value( 'MMC_KOMMO_TOKEN' );
+        $legacy_token = self::constant_token_value( 'MS_KOMMO_TOKEN' );
+        $cache_key = md5( $subdomain . '|' . ( $mmc_token ? hash( 'sha256', $mmc_token ) : '-' ) . '|' . ( $legacy_token ? hash( 'sha256', $legacy_token ) : '-' ) );
+
+        if ( ! $force && isset( $request_cache[ $cache_key ] ) ) {
+            return $request_cache[ $cache_key ];
+        }
+
+        if ( $mmc_token && $legacy_token ) {
+            $mmc = self::probe_named_token( 'MMC_KOMMO_TOKEN', $mmc_token, $subdomain, $force );
+            $legacy = self::probe_named_token( 'MS_KOMMO_TOKEN', $legacy_token, $subdomain, $force );
+
+            if ( ! empty( $mmc['connected'] ) && ! empty( $legacy['connected'] ) ) {
+                if ( ! empty( $mmc['account_id'] ) && ! empty( $legacy['account_id'] ) && (int) $mmc['account_id'] === (int) $legacy['account_id'] ) {
+                    return $request_cache[ $cache_key ] = array( 'source' => 'MMC_KOMMO_TOKEN', 'token' => $mmc_token, 'reason' => 'both_valid_same_account' );
+                }
+
+                return $request_cache[ $cache_key ] = array( 'source' => 'MS_KOMMO_TOKEN', 'token' => $legacy_token, 'reason' => 'account_mismatch_fallback' );
+            }
+
+            if ( ! empty( $mmc['connected'] ) ) {
+                return $request_cache[ $cache_key ] = array( 'source' => 'MMC_KOMMO_TOKEN', 'token' => $mmc_token, 'reason' => 'mmc_valid' );
+            }
+
+            if ( ! empty( $legacy['connected'] ) ) {
+                return $request_cache[ $cache_key ] = array( 'source' => 'MS_KOMMO_TOKEN', 'token' => $legacy_token, 'reason' => 'mmc_invalid_fallback' );
+            }
+
+            return $request_cache[ $cache_key ] = array( 'source' => 'MMC_KOMMO_TOKEN', 'token' => $mmc_token, 'reason' => 'both_invalid' );
+        }
+
+        if ( $mmc_token ) {
+            return $request_cache[ $cache_key ] = array( 'source' => 'MMC_KOMMO_TOKEN', 'token' => $mmc_token, 'reason' => 'mmc_only' );
+        }
+
+        if ( $legacy_token ) {
+            return $request_cache[ $cache_key ] = array( 'source' => 'MS_KOMMO_TOKEN', 'token' => $legacy_token, 'reason' => 'legacy_only' );
+        }
+
+        return $request_cache[ $cache_key ] = array( 'source' => '', 'token' => '', 'reason' => 'none' );
+    }
+
+    private static function constant_token_value( $source ) {
+        if ( 'MMC_KOMMO_TOKEN' === $source && defined( 'MMC_KOMMO_TOKEN' ) ) {
+            return trim( (string) MMC_KOMMO_TOKEN );
+        }
+
+        if ( 'MS_KOMMO_TOKEN' === $source && defined( 'MS_KOMMO_TOKEN' ) ) {
+            return trim( (string) MS_KOMMO_TOKEN );
+        }
+
         return '';
+    }
+
+    private static function probe_named_token( $source, $token, $subdomain, $force = false ) {
+        $out = array(
+            'source'          => $source,
+            'defined'         => '' !== (string) $token,
+            'connected'       => false,
+            'account_id'      => 0,
+            'account_name'    => '',
+            'current_user_id' => 0,
+            'error'           => '',
+        );
+
+        if ( ! $out['defined'] ) {
+            return $out;
+        }
+
+        if ( ! $subdomain ) {
+            $out['error'] = 'Kommo subdomain tanımlı değil.';
+            return $out;
+        }
+
+        $fingerprint = substr( hash( 'sha256', (string) $token ), 0, 16 );
+        $cache_key = 'mmc_kommo_token_probe_' . md5( $source . '|' . $subdomain . '|' . $fingerprint );
+
+        if ( ! $force ) {
+            $cached = get_transient( $cache_key );
+            if ( is_array( $cached ) ) {
+                return array_merge( $out, $cached );
+            }
+        }
+
+        $url = 'https://' . $subdomain . '.kommo.com/api/v4/account';
+        $r = wp_remote_get(
+            $url,
+            array(
+                'timeout' => 20,
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept'        => 'application/json',
+                ),
+            )
+        );
+
+        if ( is_wp_error( $r ) ) {
+            $probe = array(
+                'connected' => false,
+                'error'     => sanitize_text_field( $r->get_error_message() ),
+            );
+            set_transient( $cache_key, $probe, 5 * MINUTE_IN_SECONDS );
+            return array_merge( $out, $probe );
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $r );
+        $data = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+
+        if ( $code < 200 || $code >= 300 || ! is_array( $data ) ) {
+            $probe = array(
+                'connected' => false,
+                'error'     => 'Kommo API HTTP ' . $code . ' doğrulama hatası.',
+            );
+            set_transient( $cache_key, $probe, 5 * MINUTE_IN_SECONDS );
+            return array_merge( $out, $probe );
+        }
+
+        $probe = array(
+            'connected'       => true,
+            'account_id'      => isset( $data['id'] ) ? absint( $data['id'] ) : 0,
+            'account_name'    => sanitize_text_field( $data['name'] ?? '' ),
+            'current_user_id' => isset( $data['current_user_id'] ) ? absint( $data['current_user_id'] ) : 0,
+            'error'           => '',
+        );
+
+        set_transient( $cache_key, $probe, 10 * MINUTE_IN_SECONDS );
+        return array_merge( $out, $probe );
     }
 
     private static function token_fingerprint() {
@@ -1864,13 +2056,8 @@ class MMC_Kommo_Service {
     }
 
     private static function token() {
-        if ( defined( 'MMC_KOMMO_TOKEN' ) && trim( (string) MMC_KOMMO_TOKEN ) !== '' ) {
-            return trim( (string) MMC_KOMMO_TOKEN );
-        }
-        if ( defined( 'MS_KOMMO_TOKEN' ) && trim( (string) MS_KOMMO_TOKEN ) !== '' ) {
-            return trim( (string) MS_KOMMO_TOKEN );
-        }
-        return '';
+        $choice = self::runtime_token_choice();
+        return (string) ( $choice['token'] ?? '' );
     }
 
     private static function crm_base(){ return 'https://'.self::subdomain().'.kommo.com/api/v4'; }

@@ -1,3 +1,64 @@
+# Madagaskar Management Center v1.3.24
+
+Bu sürüm **Kommo Token Geçiş Merkezi** ekler ve `MS_KOMMO_TOKEN → MMC_KOMMO_TOKEN` geçişini canlı bağlantıyı kesmeden doğrulanabilir hale getirir.
+
+## v1.3.24 — Kommo Token Geçiş Merkezi
+
+- `MMC_KOMMO_TOKEN` ve legacy `MS_KOMMO_TOKEN` ayrı ayrı salt-okunur Kommo `/api/v4/account` çağrısıyla doğrulanır.
+- Token değerleri:
+  - ekranda gösterilmez,
+  - WordPress option/veritabanına kaydedilmez,
+  - loglara yazılmaz.
+- İki token aynı anda tanımlıysa güvenli runtime seçim yapılır:
+  - ikisi de canlı ve aynı Kommo hesabındaysa → `MMC_KOMMO_TOKEN` aktif olur,
+  - yeni token başarısız, legacy canlıysa → otomatik güvenli fallback ile `MS_KOMMO_TOKEN` kullanılır,
+  - iki token farklı canlı hesaplara gidiyorsa → legacy kaynak korunur ve hesap uyuşmazlığı kritik gösterilir,
+  - yalnız yeni token varsa → yeni token kullanılır,
+  - yalnız legacy varsa → legacy kullanılır.
+- Geçiş durumları:
+  - `legacy_only`
+  - `fallback_legacy`
+  - `ready_to_remove_legacy`
+  - `account_mismatch`
+  - `complete`
+  - invalid/not configured durumları.
+- **Kommo → Entegrasyon Ayarları** ekranına **Kommo Token Geçiş Merkezi** eklendi.
+- Ekranda yalnız güvenli metadata gösterilir:
+  - constant tanımlı mı,
+  - canlı mı,
+  - Kommo hesap adı ve Account ID,
+  - aktif runtime token kaynağı,
+  - geçiş kararı.
+- `Tokenları Yeniden Test Et` düğmesi iki kaynağı force-refresh ile yeniden doğrular.
+- Legacy-only durumda güvenli wp-config şablonu gösterilir:
+  - gerçek token değeri hiçbir zaman ekrana basılmaz.
+- Yeni token aynı hesaba doğrulanmadan eski tokenı kaldırma önerisi gösterilmez.
+- **Kurulum & Sağlık** ekranındaki Kommo Secret Kaynağı kontrolü artık geçiş durumunu anlayarak:
+  - Sağlıklı,
+  - Uyarı,
+  - Kritik
+  seviyelerini doğru üretir.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenli geçiş sırası
+
+1. Mevcut `MS_KOMMO_TOKEN` çalışırken bırakılır.
+2. Aynı veya yenilenmiş yetkili token `wp-config.php` içinde `MMC_KOMMO_TOKEN` olarak tanımlanır.
+3. **Tokenları Yeniden Test Et** çalıştırılır.
+4. Yeni token aynı Kommo hesabına yeşil doğrulanır.
+5. Sistem aktif runtime kaynağını `MMC_KOMMO_TOKEN` olarak gösterir.
+6. Ancak bundan sonra legacy `MS_KOMMO_TOKEN` tanımı/snippet'i kaldırılır.
+7. Tekrar test edilir; sonuç `complete` olmalıdır.
+
+## Güvenlik
+
+- Yanlış yeni token canlı sistemi otomatik kesmez; dual-token geçişte legacy fallback korunur.
+- Farklı hesaplara giden iki canlı token varsa yeni tokene otomatik geçilmez.
+- Secret/fingerprint kullanıcı arayüzünde gösterilmez.
+- CRM lead/pipeline/status, Direct Text Source, WooCommerce, Tickera, PayTR ve MDG satış zinciri değiştirilmez.
+
+---
+
 # Madagaskar Management Center v1.3.23
 
 Bu sürüm **Kommo Direct Text Source Bridge** ekler. Amaç, URL crawler/parsing hatasını tamamen bypass ederek MMC Program Dosyasını Kommo AI’ye doğrudan metin kaynağı olarak göndermektir.
