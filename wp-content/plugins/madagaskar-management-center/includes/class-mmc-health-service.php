@@ -21,13 +21,27 @@ class MMC_Health_Service {
             class_exists( 'WooCommerce' ) ? 'Kurulu ve aktif.' : 'Algılanmadı. Satış senkronu çalışmaz.'
         );
 
-        $tickera = class_exists( 'TC' ) || defined( 'TC_VERSION' );
+        $tickera = self::tickera_status();
         $checks[] = self::check(
             'tickera',
             'Tickera',
-            $tickera ? 'ok' : 'critical',
-            $tickera ? 'Kurulu ve aktif.' : 'Algılanmadı. QR / bilet üretimi çalışmaz.'
+            $tickera['detected'] ? 'ok' : ( $tickera['mapped'] ? 'warning' : 'critical' ),
+            $tickera['detail'],
+            $tickera['action_url'],
+            $tickera['action_label']
         );
+
+        $mapping = self::active_program_ticket_mapping();
+        if ( $mapping['program_id'] ) {
+            $checks[] = self::check(
+                'ticket_chain',
+                'WooCommerce → MDG → Tickera Zinciri',
+                $mapping['severity'],
+                $mapping['detail'],
+                $mapping['action_url'],
+                $mapping['action_label']
+            );
+        }
 
         $paytr = class_exists( 'MMC_Sales_Service' ) ? MMC_Sales_Service::paytr_gateway_status() : array( 'detected'=>false );
         $checks[] = self::check(
@@ -100,7 +114,9 @@ class MMC_Health_Service {
             'kommo',
             'Kommo API',
             $kommo_ok ? 'ok' : 'warning',
-            $kommo_ok ? 'API yapılandırıldı.' : 'MMC çalışır; ancak Kommo otomatik senkronu için API yapılandırması bekliyor.',
+            $kommo_ok
+                ? 'API yapılandırıldı; MMC otomatik Kommo senkronu çalışabilir.'
+                : 'Kommo API henüz yapılandırılmadı. MMC program yönetimi çalışır; ancak otomatik CRM / AI senkronu beklemede kalır.',
             admin_url( 'admin.php?page=mmc-kommo' ),
             'Kommo Ayarları'
         );
@@ -139,6 +155,192 @@ class MMC_Health_Service {
             }
         }
         return $out;
+    }
+
+    private static function tickera_status() {
+        if ( ! function_exists( 'get_plugins' ) || ! function_exists( 'is_plugin_active_for_network' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $signals = array();
+        if ( class_exists( 'TC' ) ) { $signals[] = 'TC sınıfı'; }
+        if ( defined( 'TC_VERSION' ) ) { $signals[] = 'TC_VERSION'; }
+        if ( function_exists( 'tc_get_ticket_count' ) ) { $signals[] = 'Tickera fonksiyonu'; }
+        if ( post_type_exists( 'tc_events' ) || post_type_exists( 'tc_tickets' ) ) { $signals[] = 'Tickera post type'; }
+
+        $plugins = get_plugins();
+        $active = (array) get_option( 'active_plugins', array() );
+        $active_names = array();
+
+        foreach ( $plugins as $basename => $data ) {
+            $is_active = in_array( $basename, $active, true ) || ( is_multisite() && is_plugin_active_for_network( $basename ) );
+            if ( ! $is_active ) { continue; }
+
+            $name = (string) ( $data['Name'] ?? '' );
+            $looks_tickera = false !== stripos( $name, 'Tickera' ) || false !== stripos( $basename, 'tickera' );
+            if ( $looks_tickera ) {
+                $active_names[] = $name ?: $basename;
+            }
+        }
+
+        if ( $active_names ) {
+            $signals[] = 'aktif eklenti';
+        }
+
+        $mapping = self::active_program_ticket_mapping();
+        $mapped = ! empty( $mapping['tickera_ids'] );
+
+        if ( $mapped ) {
+            $signals[] = 'aktif program mappingi';
+        }
+
+        $detected = ! empty( $signals ) && ( class_exists( 'TC' ) || defined( 'TC_VERSION' ) || function_exists( 'tc_get_ticket_count' ) || post_type_exists( 'tc_events' ) || post_type_exists( 'tc_tickets' ) || ! empty( $active_names ) );
+
+        if ( $detected ) {
+            $detail = 'Tickera algılandı';
+            if ( $active_names ) {
+                $detail .= ': ' . implode( ', ', array_slice( array_unique( $active_names ), 0, 3 ) );
+            }
+            if ( $mapped ) {
+                $detail .= sprintf( ' · aktif programda %d Tickera event ID eşleşmesi var.', count( $mapping['tickera_ids'] ) );
+            } else {
+                $detail .= '.';
+            }
+            return array(
+                'detected' => true,
+                'mapped' => $mapped,
+                'detail' => $detail,
+                'action_url' => '',
+                'action_label' => '',
+            );
+        }
+
+        if ( $mapped ) {
+            return array(
+                'detected' => false,
+                'mapped' => true,
+                'detail' => sprintf( 'Aktif programda %d Tickera event ID eşleşmesi var; ancak Tickera çalışma zamanı sınıfı/eklenti sinyali algılanmadı. Eklenti aktivasyonunu doğrulayın.', count( $mapping['tickera_ids'] ) ),
+                'action_url' => admin_url( 'plugins.php' ),
+                'action_label' => 'Eklentileri Aç',
+            );
+        }
+
+        return array(
+            'detected' => false,
+            'mapped' => false,
+            'detail' => 'Tickera çalışma zamanı veya aktif eklenti sinyali algılanmadı ve aktif programda Tickera event eşleşmesi bulunamadı. QR / bilet üretimini doğrulayın.',
+            'action_url' => admin_url( 'plugins.php' ),
+            'action_label' => 'Eklentileri Aç',
+        );
+    }
+
+    private static function active_program_ticket_mapping() {
+        $program_id = class_exists( 'MMC_Integrity_Service' ) ? MMC_Integrity_Service::active_program_id() : 0;
+        $out = array(
+            'program_id' => (int) $program_id,
+            'severity' => 'info',
+            'detail' => '',
+            'action_url' => '',
+            'action_label' => '',
+            'tickera_ids' => array(),
+        );
+
+        if ( ! $program_id || ! class_exists( 'MMC_MDG_Bridge_Service' ) ) {
+            return $out;
+        }
+
+        $status = MMC_MDG_Bridge_Service::status( $program_id );
+        if ( empty( $status['available'] ) ) {
+            $out['severity'] = 'warning';
+            $out['detail'] = 'Aktif program için eski MDG bilet motoru erişilebilir değil; WooCommerce / Tickera zinciri doğrulanamadı.';
+            $out['action_url'] = admin_url( 'admin.php?page=mmc-integrity&program_id=' . (int)$program_id );
+            $out['action_label'] = 'Bütünlüğü Aç';
+            return $out;
+        }
+
+        $tickera_ids = array();
+        global $wpdb;
+
+        if ( ! empty( $status['event'] ) && class_exists( 'MDG_DB' ) && method_exists( 'MDG_DB', 'table' ) ) {
+            $sessions_table = MDG_DB::table( 'sessions' );
+            $rows = (array) $wpdb->get_results( $wpdb->prepare(
+                "SELECT id,wc_product_id,tickera_event_id FROM {$sessions_table} WHERE event_id=%d ORDER BY id ASC",
+                (int) $status['event']->id
+            ) );
+            foreach ( $rows as $row ) {
+                if ( (int) $row->tickera_event_id ) {
+                    $tickera_ids[] = (int) $row->tickera_event_id;
+                }
+            }
+        }
+
+        $tickera_ids = array_values( array_unique( $tickera_ids ) );
+        $out['tickera_ids'] = $tickera_ids;
+
+        $identity_ok = ! empty( $status['linked'] )
+            && (int) $status['identity_expected'] > 0
+            && (int) $status['identity_expected'] === (int) $status['identity_matched'];
+
+        $session_ok = ! empty( $status['session_time_match'] )
+            && (int) $status['sessions_mmc'] === (int) $status['sessions_mdg'];
+
+        if ( $identity_ok && $session_ok && $tickera_ids ) {
+            $out['severity'] = 'ok';
+            $out['detail'] = sprintf(
+                'MMC Program #%d ↔ MDG Event #%d bağlı · satış nesnesi eşleşmesi %d/%d · seans %d/%d · Tickera event ID: %s.',
+                (int) $program_id,
+                ! empty( $status['event']->id ) ? (int) $status['event']->id : 0,
+                (int) $status['identity_matched'],
+                (int) $status['identity_expected'],
+                (int) $status['sessions_mdg'],
+                (int) $status['sessions_mmc'],
+                implode( ', ', $tickera_ids )
+            );
+        } else {
+            $out['severity'] = 'warning';
+            $out['detail'] = sprintf(
+                'Aktif program zinciri tam doğrulanamadı: köprü %s · satış nesnesi %d/%d · seans %d/%d · Tickera event eşleşmesi %d.',
+                ! empty( $status['linked'] ) ? 'bağlı' : 'eksik',
+                (int) $status['identity_matched'],
+                (int) $status['identity_expected'],
+                (int) $status['sessions_mdg'],
+                (int) $status['sessions_mmc'],
+                count( $tickera_ids )
+            );
+        }
+
+        $out['action_url'] = admin_url( 'admin.php?page=mmc-integrity&program_id=' . (int)$program_id );
+        $out['action_label'] = 'Bütünlüğü Aç';
+        return $out;
+    }
+
+    private static function active_madagaskar_snippets() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'snippets';
+        $exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( $exists !== $table ) {
+            return array();
+        }
+
+        $columns = (array) $wpdb->get_col( "DESC {$table}", 0 );
+        if ( ! in_array( 'name', $columns, true ) || ! in_array( 'code', $columns, true ) ) {
+            return array();
+        }
+
+        $where_active = in_array( 'active', $columns, true ) ? 'active=1 AND ' : '';
+        $like1 = '%' . $wpdb->esc_like( 'Madagaskar V5 Finans Güncellemesi' ) . '%';
+        $like2 = '%' . $wpdb->esc_like( 'Web geliri artık program tarihine göre' ) . '%';
+        $like3 = '%' . $wpdb->esc_like( 'Madagaskar' ) . '%';
+
+        $sql = $wpdb->prepare(
+            "SELECT id,name FROM {$table} WHERE {$where_active} ((name LIKE %s OR code LIKE %s OR code LIKE %s) OR name LIKE %s) ORDER BY id DESC LIMIT 25",
+            $like1,
+            $like1,
+            $like2,
+            $like3
+        );
+
+        return (array) $wpdb->get_results( $sql );
     }
 
     private static function database_tables() {
@@ -206,11 +408,25 @@ class MMC_Health_Service {
                 'MMC dışında aktif Madagaskar/Milano eklentileri bulundu: ' . implode( ', ', array_unique( $legacy ) ) . '. Aynı finans veya etkinlik verisini iki sistemin yazmadığını doğrulayın.'
             );
         } elseif ( $snippet_active ) {
+            $matches = self::active_madagaskar_snippets();
+            $detail = 'Code Snippets aktif.';
+            if ( $matches ) {
+                $names = array();
+                foreach ( $matches as $row ) {
+                    $names[] = '#' . (int)$row->id . ' ' . (string)$row->name;
+                }
+                $detail .= ' Aktif Madagaskar ilişkili snippet adayları: ' . implode( ' · ', array_slice( $names, 0, 8 ) ) . '. Çakışan eski finans/etkinlik snippet’lerini test sonrası pasife alın.';
+            } else {
+                $detail .= ' Aktif Madagaskar snippet adı otomatik tespit edilemedi; eski finans/etkinlik snippet’lerini manuel kontrol edin.';
+            }
+
             $out[] = self::check(
                 'code_snippets',
                 'Code Snippets',
                 'warning',
-                'Code Snippets aktif. Ekranda görünen “Madagaskar V5 Finans Güncellemesi” gibi eski snippet bildirimleri varsa, ilgili eski Madagaskar snippet’lerini tek tek kontrol edip MMC ile çakışanları test sonrası pasife alın.'
+                $detail,
+                admin_url( 'admin.php?page=snippets' ),
+                'Snippetleri Aç'
             );
         }
 
