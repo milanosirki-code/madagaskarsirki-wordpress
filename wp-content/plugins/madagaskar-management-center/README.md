@@ -1,3 +1,54 @@
+# Madagaskar Management Center v1.3.23
+
+Bu sürüm **Kommo Direct Text Source Bridge** ekler. Amaç, URL crawler/parsing hatasını tamamen bypass ederek MMC Program Dosyasını Kommo AI’ye doğrudan metin kaynağı olarak göndermektir.
+
+## v1.3.23 — Kommo Direct Text Source Bridge
+
+- Kommo’nun resmî `POST https://airewriter.kommo.com/api/v2/sources/text` endpoint’i kullanılır.
+- Gönderilen alanlar:
+  - `name`
+  - `lang`
+  - `text`
+  - `available_functions`
+- Authorization mevcut Kommo Bearer token ile yapılır.
+- Direct-text source **otomatik oluşturulmaz**.
+- Admin ekranında açık onay gerekir:
+  - checkbox,
+  - nonce,
+  - tam **MMC TEXT SOURCE KUR** onay metni,
+  - tarayıcı confirmation.
+- İlk başarılı kurulumda:
+  - yeni Kommo AI text source ID alınır,
+  - `mmc_kommo_profiles.ai_source_id` bu ID’ye bağlanır,
+  - `ai_synced_hash` MMC Program Dosyası hash’i ile eşitlenir,
+  - `ai_source_status = synced`,
+  - AI taşıma modu program bazında `text` olur.
+- Önceki URL source ID güvenli referans olarak tutulur; Kommo API ile otomatik silinmez.
+- Eski URL kaynağı Kommo arayüzünde hata durumunda kalıyorsa direct-text doğrulandıktan sonra kullanıcı tarafından kaldırılabilir.
+- Program verisi daha sonra değişirse:
+  - yeni text source kopyası otomatik oluşturulmaz,
+  - durum `refresh_needed` olur,
+  - dokümante edilmemiş update/delete endpoint kullanılmaz.
+- URL taşıma yöntemi fallback/tanı yolu olarak korunur.
+- Direct-text taşıma aktifken **Kommo’da Yeniden Tarandı Olarak İşaretle** URL işlemi kullanılmaz.
+- Program Bütünlüğü ekranında AI taşıma tipi:
+  - `url`
+  - `direct-text`
+  olarak görünür.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Mevcut CRM lead/pipeline/status köprüsüne dokunulmaz.
+- WooCommerce, Tickera, PayTR ve MDG satış zinciri değişmez.
+- Direct-text source yalnız açık kullanıcı onayıyla oluşturulur.
+- Token hiçbir option/log içine yazılmaz.
+- API yanıtından yalnız source ID ve güvenli metadata saklanır.
+- Eski URL source otomatik silinmez.
+- Aynı program için otomatik duplicate text source üretilmez.
+
+---
+
 # Madagaskar Management Center v1.3.22
 
 Bu sürüm **Kommo AI URL bilgi kaynağını semantik HTML web sayfası olarak sunar** ve crawler erişimini tanılamak için son kaynak isteğini kaydeder.
