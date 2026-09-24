@@ -1,3 +1,35 @@
+# Madagaskar Management Center v1.3.18
+
+Bu sürüm **Kommo pipeline oluşturma isteğini resmi API şemasına uygun hale getirir.**
+
+## v1.3.18 — Kommo Embedded Statuses Fix
+
+- v1.3.17 ile hata teşhisinde görülen:
+  - `Kommo API 400 [/api/v4/leads/pipelines]`
+  - `FieldMissing _embedded`
+  hatası giderildi.
+- Yeni `MMC — Program Yönetimi` pipeline oluşturulurken 10 MMC aşaması artık ilk pipeline POST isteğinin içinde:
+  - `_embedded.statuses`
+  alanı altında birlikte gönderilir.
+- Böylece Kommo'nun **Add pipelines** endpoint'inin zorunlu pipeline-stage yapısına uyulur.
+- Pipeline zaten varsa davranış değişmez:
+  - kopya pipeline oluşturulmaz,
+  - yalnız eksik MMC aşamaları `/statuses` endpoint'i üzerinden tamamlanır.
+- Oluşturma sonrası pipeline tekrar salt-okunur okunur ve 10/10 aşama doğrulanır.
+- Başarılı doğrulama sonrası **Hazırlık** status'u varsayılan MMC Program Status olur.
+- Kommo'nun resmi desteklediği stage renkleri kullanılmaya devam eder.
+- Son kurulum teşhis ekranı ve admin-rights ön kontrolü korunur.
+- Veritabanı şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Mevcut Satış, WooCommerce, Kurumsal Talepler ve diğer pipeline'lar değiştirilmez.
+- Otomatik kurulum yok; açık kullanıcı onayı gerekir.
+- Lead/müşteri/sipariş oluşturulmaz.
+- Token/Authorization verileri loglanmaz veya ekranda gösterilmez.
+
+---
+
 # Madagaskar Management Center v1.3.17
 
 Bu sürüm **Kommo Program Pipeline kurulumunun sessiz başarısızlıklarını teşhis eder** ve pipeline/stage yazma yetkisini kurulumdan önce salt-okunur doğrular.
