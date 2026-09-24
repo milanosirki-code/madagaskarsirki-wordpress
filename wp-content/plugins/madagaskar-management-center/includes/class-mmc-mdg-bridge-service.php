@@ -75,6 +75,10 @@ class MMC_MDG_Bridge_Service {
         $events = (array) $wpdb->get_results( "SELECT * FROM {$events_table} ORDER BY id DESC LIMIT 500" );
         $identity = self::mmc_identity( $program_id );
         $venue_name = self::selected_venue_name( $program_id );
+        $mmc_event = class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
+        $target_date = $mmc_event && ! empty( $mmc_event->event_date )
+            ? (string) $mmc_event->event_date
+            : (string) $program->planned_date;
         $out = array();
 
         foreach ( $events as $event ) {
@@ -115,7 +119,7 @@ class MMC_MDG_Bridge_Service {
 
             $province_match = self::same_text( $program->province_name, $event->province_name );
             $district_match = ! $program->district_name || self::same_text( $program->district_name, $event->district );
-            $date_match = ! empty($program->planned_date) && isset( $dates[(string)$program->planned_date] );
+            $date_match = $target_date !== '' && isset( $dates[$target_date] );
             $venue_match = $venue_name && self::same_text( $venue_name, $event->venue_name );
 
             $score = ( $variation_overlap * 500 ) + ( $product_overlap * 300 ) + ( $tickera_overlap * 200 );
@@ -501,11 +505,16 @@ class MMC_MDG_Bridge_Service {
         }
 
         $short = 'Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.';
-        $long  = ! empty( $event->notes ) ? (string) $event->notes : $short;
+        $long  = '';
+        $district_key = self::normalize_text( $program->district_name );
+        $title = 'Madagaskar Sirki — ' . $program->province_name;
+        if ( $program->district_name && 'merkez' !== $district_key ) {
+            $title .= ' / ' . $program->district_name;
+        }
         $data = array(
             'public_uuid'                   => wp_generate_uuid4(),
             'import_code'                   => $import_code,
-            'title'                         => (string) $event->event_title,
+            'title'                         => $title,
             'venue_id'                      => (int) $venue->id,
             'province_code'                 => (string) $venue->province_code,
             'province_name'                 => (string) $venue->province_name,
@@ -530,7 +539,7 @@ class MMC_MDG_Bridge_Service {
             'rules'                         => '',
             'organizer_name'                => 'Dünya Organizasyon Medya Turizm Eğitim Danışmanlık Reklam Seyahat Acenteliği Ltd. Şti.',
             'faq_json'                      => wp_json_encode( array() ),
-            'seo_title'                     => (string) $event->event_title,
+            'seo_title'                     => $title,
             'seo_description'               => $short,
             'status'                        => 'draft',
             'created_by'                    => get_current_user_id() ?: null,
