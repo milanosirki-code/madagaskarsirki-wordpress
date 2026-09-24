@@ -83,20 +83,21 @@ final class MMC_Publish_Content_Excel {
             ),
             'YAYIN_ICERIGI' => array(
                 array( 'alan', 'deger', 'aciklama' ),
-                array( 'short_description', 'Madagaskar Sirki {{YER}}’de! Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.', 'Kısa açıklama' ),
-                array( 'long_description', 'Madagaskar Sirki {{YER}} programı {{TARIH}} tarihinde {{SALON}}’nda. Seanslar: {{SEANSLAR}}. Çocuk bileti {{COCUK_FIYAT}} TL, yetişkin bileti {{YETISKIN_FIYAT}} TL, Aile Paketi 2+2 {{AILE_FIYATI}} TL. 0–2 yaş ücretsizdir.', 'Uzun açıklama' ),
-                array( 'rules', '0–2 yaş ücretsizdir. 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Oturma: {{OTURMA}}. Kapılar gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır.', 'Kurallar' ),
-                array( 'seo_title', 'Madagaskar Sirki {{YER}} | {{TARIH}} | Biletler', 'SEO başlığı' ),
-                array( 'seo_description', 'Madagaskar Sirki {{YER}} — {{TARIH}} — {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler madagaskarsirki.com’da.', 'SEO açıklaması' ),
+                array( 'short_description', 'Madagaskar Sirki {{YER}}’de! {{TARIH_UZUN}} günü {{SALON}}’nda {{SEANSLAR}} seanslarıyla. Uluslararası sanatçılar • Hayvansız modern sirk • Ailece eğlence.', 'Kısa açıklama' ),
+                array( 'long_description', '{{ETKINLIK_ADI}}, {{TARIH_UZUN}} günü {{SALON}}’nda seyircisiyle buluşuyor. Uluslararası sirk sanatçılarını aynı sahnede buluşturan gösteride akrobasi, denge, jonglörlük, hula hoop, palyaço ve görsel sahne performansları yer alır. Hayvan gösterisi içermeyen modern sirk programı yaklaşık 60 dakikalık aile eğlencesidir. Tarih: {{TARIH_UZUN}}. Seanslar: {{SEANSLAR}}. Salon: {{SALON}}. Adres: {{ADRES}}. Biletler: {{BILET_OZETI}}. Online bilet: {{BILET_LINKI}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Uzun açıklama' ),
+                array( 'rules', 'Oturma: {{OTURMA}}. Salon kapıları gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır. Gösteri süresi yaklaşık 60 dakikadır. 0–2 yaş ücretsizdir; 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Aile Paketi 2 yetişkin + 2 çocuktan oluşur. Biletler: {{BILET_OZETI}}. Salon: {{SALON}} — {{ADRES}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Kurallar' ),
+                array( 'seo_title', 'Madagaskar Sirki {{YER}} Biletleri | {{TARIH_UZUN}}', 'SEO başlığı' ),
+                array( 'seo_description', 'Madagaskar Sirki {{YER}}: {{TARIH_UZUN}}, {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler: {{BILET_OZETI}}.', 'SEO açıklaması' ),
                 array( 'video_url', '', 'İsteğe bağlı video URL’si' ),
             ),
             'SSS' => array(
                 array( 'sira', 'soru', 'cevap', 'aktif' ),
-                array( '1', 'Gösteri ne zaman ve nerede?', '{{TARIH}} tarihinde {{SALON}}, {{YER}}. Seanslar: {{SEANSLAR}}.', 'Evet' ),
-                array( '2', 'Bilet fiyatları nedir?', 'Çocuk {{COCUK_FIYAT}} TL, yetişkin {{YETISKIN_FIYAT}} TL, Aile Paketi 2+2 {{AILE_FIYATI}} TL. 0–2 yaş ücretsizdir.', 'Evet' ),
-                array( '3', 'Oturma düzeni nasıl?', '{{OTURMA}}. Kapılar gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır.', 'Evet' ),
-                array( '4', 'Çocuklar tek başına katılabilir mi?', 'Çocuklar etkinliğe yetişkin eşliğinde katılır.', 'Evet' ),
-                array( '5', '', '', 'Hayır' ),
+                array( '1', 'Gösteri ne zaman ve nerede?', '{{TARIH_UZUN}} tarihinde {{SALON}}, {{ADRES}}. Seanslar: {{SEANSLAR}}.', 'Evet' ),
+                array( '2', 'Bilet fiyatları nedir?', '{{BILET_OZETI}}. 0–2 yaş ücretsizdir.', 'Evet' ),
+                array( '3', 'Aile paketi nedir?', 'Aile Paketi 2 yetişkin + 2 çocuk için geçerlidir. Güncel fiyat: {{AILE_FIYATI}} TL.', 'Evet' ),
+                array( '4', 'Oturma düzeni nasıl?', '{{OTURMA}}. Kapılar gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır.', 'Evet' ),
+                array( '5', 'Çocuklar tek başına katılabilir mi?', 'Hayır. Çocuklar etkinliğe yetişkin eşliğinde katılır. Bilgi hattı: {{BILGI_HATTI}}.', 'Evet' ),
+                array( '6', '', '', 'Hayır' ),
             ),
             'DEGISKENLER' => array(
                 array( 'degisken', 'kaynak', 'aciklama' ),
@@ -104,14 +105,20 @@ final class MMC_Publish_Content_Excel {
                 array( '{{IL}}', 'MMC Program', 'İl' ),
                 array( '{{ILCE}}', 'MMC Program', 'İlçe' ),
                 array( '{{YER}}', 'MMC Program', 'İl / ilçe gösterimi' ),
-                array( '{{SALON}}', 'Kesin Salon', 'Salon adı' ),
                 array( '{{TARIH}}', 'MMC Etkinlik', 'Etkinlik tarihi' ),
+                array( '{{TARIH_UZUN}}', 'MMC Etkinlik', 'Uzun Türkçe tarih' ),
+                array( '{{SALON}}', 'Kesin Salon', 'Salon adı' ),
+                array( '{{ADRES}}', 'Kesin Salon', 'Salon açık adresi' ),
                 array( '{{SEANSLAR}}', 'MMC Seans', 'Seans saatleri' ),
+                array( '{{BILET_OZETI}}', 'MMC Bilet', 'Aktif bilet türleri ve fiyat özeti' ),
                 array( '{{COCUK_FIYAT}}', 'MMC Bilet', 'Çocuk kendi site fiyatı' ),
                 array( '{{YETISKIN_FIYAT}}', 'MMC Bilet', 'Yetişkin kendi site fiyatı' ),
                 array( '{{AILE_FIYATI}}', 'MMC Bilet', 'Aile Paketi 2+2 fiyatı' ),
                 array( '{{OTURMA}}', 'MMC Etkinlik', 'Oturma düzeni' ),
                 array( '{{KAPI_DK}}', 'MMC Etkinlik', 'Kapı açılış dakikası' ),
+                array( '{{BILGI_HATTI}}', 'Sistem', 'Dijital bilgi hattı' ),
+                array( '{{BILET_LINKI}}', 'Sistem', 'Resmî merkezî bilet sayfası' ),
+                array( '{{ETKINLIK_ADI}}', 'MMC Program', 'Kamuya açık etkinlik adı' ),
             ),
         );
 
@@ -203,25 +210,39 @@ final class MMC_Publish_Content_Excel {
         $times = array();
         foreach ( (array) $preview['sessions'] as $session ) { $times[] = mysql2date( 'H:i', $session->session_time ); }
         $prices = array( 'child' => '', 'adult' => '', 'family_2_2' => '' );
+        $ticket_summary = array();
         foreach ( (array) $preview['tickets'] as $ticket ) {
+            if ( ! (int) ( $ticket->is_active ?? 0 ) ) { continue; }
             $code = (string) $ticket->ticket_code;
-            if ( isset( $prices[ $code ] ) ) { $prices[ $code ] = number_format_i18n( (float) $ticket->price, 2 ); }
+            $price = number_format_i18n( (float) $ticket->price, 2 );
+            if ( isset( $prices[ $code ] ) ) { $prices[ $code ] = $price; }
+            $ticket_summary[] = sanitize_text_field( (string) $ticket->ticket_name ) . ' ' . $price . ' TL';
         }
         $district = trim( (string) $program->district_name );
         $place = (string) $program->province_name . ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ? ' / ' . $district : '' );
+        $date_short = $event && $event->event_date ? mysql2date( 'd.m.Y', $event->event_date ) : '';
+        $date_long = $event && $event->event_date ? date_i18n( 'j F Y l', strtotime( $event->event_date . ' 12:00:00' ) ) : '';
+        $event_name = 'Madagaskar Sirki — ' . (string) $program->province_name;
+        if ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ) { $event_name .= ' / ' . $district; }
         return array(
             '{{PROGRAM_KODU}}' => (string) $program->program_code,
             '{{IL}}' => (string) $program->province_name,
             '{{ILCE}}' => $district,
             '{{YER}}' => $place,
             '{{SALON}}' => $venue ? (string) $venue->venue_name : '',
-            '{{TARIH}}' => $event && $event->event_date ? mysql2date( 'd.m.Y', $event->event_date ) : '',
+            '{{ADRES}}' => $venue ? (string) $venue->address : '',
+            '{{TARIH}}' => $date_short,
+            '{{TARIH_UZUN}}' => $date_long,
             '{{SEANSLAR}}' => implode( ', ', $times ),
+            '{{BILET_OZETI}}' => implode( '; ', $ticket_summary ),
             '{{COCUK_FIYAT}}' => $prices['child'],
             '{{YETISKIN_FIYAT}}' => $prices['adult'],
             '{{AILE_FIYATI}}' => $prices['family_2_2'],
             '{{OTURMA}}' => 'numbered' === (string) ( $event->seating_mode ?? '' ) ? 'Numaralı oturma' : 'Numarasız / serbest oturma',
             '{{KAPI_DK}}' => (string) absint( $event->door_open_minutes ?? 30 ),
+            '{{BILGI_HATTI}}' => '0312 911 37 10',
+            '{{BILET_LINKI}}' => 'https://madagaskarsirki.com/bilet-al/',
+            '{{ETKINLIK_ADI}}' => $event_name,
         );
     }
 
