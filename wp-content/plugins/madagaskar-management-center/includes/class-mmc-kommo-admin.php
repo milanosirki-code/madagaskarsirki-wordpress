@@ -28,7 +28,7 @@ class MMC_Kommo_Admin {
                 <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-kommo"><label>Program <select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $p): ?><option value="<?php echo esc_attr($p->id); ?>" <?php selected($pid,$p->id); ?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.($p->district_name?:'Genel')); ?></option><?php endforeach; ?></select></label><button class="button button-primary">Aç</button></form>
             </div>
             <?php if($program)$this->render_program($program); ?>
-            <?php $this->render_settings(); ?>
+            <?php $this->render_settings($pid); ?>
         </div><?php
     }
 
@@ -65,7 +65,7 @@ class MMC_Kommo_Admin {
         <?php
     }
 
-    private function render_settings(){
+    private function render_settings($current_program_id=0){
         if(!current_user_can('mmc_manage_settings'))return;
 
         $sub=MMC_Kommo_Service::subdomain();
@@ -73,6 +73,8 @@ class MMC_Kommo_Admin {
         $status=absint(get_option('mmc_kommo_status_id',0));
         $mode=get_option('mmc_kommo_ai_mode','suggested_reply');
         $diag=MMC_Kommo_Service::connection_diagnostics();
+        $write_readiness=MMC_Kommo_Service::admin_write_readiness();
+        $last_install=MMC_Kommo_Service::last_pipeline_install_result();
         $pipe=MMC_Kommo_Service::pipeline_diagnostics();
         $catalog=MMC_Kommo_Service::pipeline_catalog();
         $catalog_error=is_wp_error($catalog)?$catalog->get_error_message():'';
@@ -194,6 +196,33 @@ class MMC_Kommo_Admin {
                 <h3 style="margin-top:0">MMC Program Pipeline Kurulum Merkezi</h3>
                 <p>Bu işlem yalnız <strong><?php echo esc_html($blueprint['name']); ?></strong> pipeline'ını ve aşağıdaki MMC program aşamalarını oluşturur/tamamlar. Mevcut satış, WooCommerce, Kurumsal Talepler ve diğer Kommo pipeline'larına dokunmaz.</p>
 
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0">
+                    <div style="border:1px solid #dcdcde;border-radius:6px;padding:10px">
+                        <strong>API Okuma</strong><br>
+                        <span><?php echo !empty($diag['connected'])?'🟢 Bağlı':'🔴 Bağlantı yok'; ?></span>
+                    </div>
+                    <div style="border:1px solid #dcdcde;border-radius:6px;padding:10px">
+                        <strong>Kommo Yazma Yetkisi Ön Kontrolü</strong><br>
+                        <?php if(true===$write_readiness['verified'] && true===$write_readiness['is_admin']): ?>
+                            <span>🟢 Yönetici doğrulandı<?php echo !empty($write_readiness['user_name'])?' · '.esc_html($write_readiness['user_name']):''; ?></span>
+                        <?php elseif(true===$write_readiness['verified'] && false===$write_readiness['is_admin']): ?>
+                            <span>🔴 Yönetici değil</span>
+                        <?php else: ?>
+                            <span>🟡 Doğrulanamadı</span>
+                        <?php endif; ?>
+                        <br><small><?php echo esc_html($write_readiness['detail']??''); ?></small>
+                    </div>
+                </div>
+
+                <?php if(!empty($last_install)): ?>
+                    <div class="notice <?php echo 'success'===($last_install['status']??'')?'notice-success':'notice-error'; ?> inline">
+                        <p><strong>Son Kurulum Denemesi:</strong>
+                            <?php echo esc_html($last_install['at']??''); ?> ·
+                            <?php echo esc_html($last_install['message']??''); ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+
                 <?php if($mmc_pipeline_error): ?>
                     <div class="notice notice-error inline"><p><?php echo esc_html($mmc_pipeline_error); ?></p></div>
                 <?php elseif($pipeline_ready): ?>
@@ -221,6 +250,7 @@ class MMC_Kommo_Admin {
                 <?php if(!$pipeline_ready): ?>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Kommo hesabında MMC Program Yönetimi pipeline kurulumunu başlatmak istediğinize emin misiniz?');">
                         <input type="hidden" name="action" value="mmc_kommo_install_program_pipeline">
+                        <input type="hidden" name="program_id" value="<?php echo (int)$current_program_id; ?>">
                         <?php wp_nonce_field('mmc_kommo_install_program_pipeline','mmc_nonce'); ?>
                         <p>
                             <label>
@@ -233,9 +263,12 @@ class MMC_Kommo_Admin {
                                 <input type="text" name="confirm_text" required placeholder="MMC PROGRAM PIPELINE KUR" style="min-width:280px">
                             </label>
                         </p>
-                        <button class="button button-primary">
+                        <button class="button button-primary" <?php disabled(true===$write_readiness['verified'] && false===$write_readiness['is_admin']); ?>>
                             <?php echo is_array($mmc_pipeline)?'Eksik MMC Aşamalarını Tamamla':'MMC Program Pipeline Kur'; ?>
                         </button>
+                        <?php if(true===$write_readiness['verified'] && false===$write_readiness['is_admin']): ?>
+                            <p class="description">Buton kapalıdır: Kommo pipeline/stage oluşturma yalnız yönetici yetkili kullanıcıyla çalışır.</p>
+                        <?php endif; ?>
                     </form>
                 <?php else: ?>
                     <p class="description">Kurulum idempotenttir: aynı isimli MMC pipeline bulunduğunda yeni kopya oluşturulmaz. Eksik aşama yoksa API yazma işlemi yapılmaz.</p>
@@ -387,23 +420,53 @@ define('MMC_KOMMO_TOKEN', 'YENI_UZUN_OMURLU_TOKEN');</pre>
         $this->guard('mmc_manage_settings');
         check_admin_referer('mmc_kommo_install_program_pipeline','mmc_nonce');
 
+        $program_id=absint($_POST['program_id']??0);
         $confirmed=!empty($_POST['confirm_install']);
         $text=trim((string)wp_unslash($_POST['confirm_text']??''));
 
+        $args=array('page'=>'mmc-kommo');
+        if($program_id)$args['program_id']=$program_id;
+
         if(!$confirmed || 'MMC PROGRAM PIPELINE KUR'!==$text){
-            wp_safe_redirect(add_query_arg(array(
-                'page'=>'mmc-kommo',
-                'mmc_error'=>'Kurulum yapılmadı. Onay kutusunu işaretleyin ve onay metnini tam olarak MMC PROGRAM PIPELINE KUR yazın.'
-            ),admin_url('admin.php')));
+            $message='Kurulum yapılmadı. Onay kutusunu işaretleyin ve onay metnini tam olarak MMC PROGRAM PIPELINE KUR yazın.';
+            MMC_Kommo_Service::record_pipeline_install_result('error',$message,array('program_id'=>$program_id));
+            $args['mmc_error']=$message;
+            wp_safe_redirect(add_query_arg($args,admin_url('admin.php')));
+            exit;
+        }
+
+        $readiness=MMC_Kommo_Service::admin_write_readiness(true);
+        if(true===$readiness['verified'] && false===$readiness['is_admin']){
+            $message='Kommo pipeline kurulumu durduruldu: tokenın bağlı olduğu Kommo kullanıcısı yönetici değil.';
+            MMC_Kommo_Service::record_pipeline_install_result('error',$message,array(
+                'program_id'=>$program_id,
+                'kommo_user_id'=>$readiness['user_id']??0
+            ));
+            $args['mmc_error']=$message;
+            wp_safe_redirect(add_query_arg($args,admin_url('admin.php')));
             exit;
         }
 
         $r=MMC_Kommo_Service::install_program_pipeline();
-        $args=array('page'=>'mmc-kommo');
 
         if(is_wp_error($r)){
-            $args['mmc_error']=$r->get_error_message();
+            $message=$r->get_error_message();
+            $data=$r->get_error_data();
+            MMC_Kommo_Service::record_pipeline_install_result('error',$message,array(
+                'program_id'=>$program_id,
+                'error_code'=>$r->get_error_code(),
+                'http_status'=>is_array($data)?($data['status']??''):'',
+                'endpoint'=>is_array($data)?($data['endpoint']??''):''
+            ));
+            $args['mmc_error']=$message;
         }else{
+            $message='MMC Program Yönetimi pipeline ve aşamaları doğrulandı; Hazırlık varsayılan status olarak MMC’ye bağlandı.';
+            MMC_Kommo_Service::record_pipeline_install_result('success',$message,array(
+                'program_id'=>$program_id,
+                'pipeline_id'=>$r['pipeline_id'],
+                'status_id'=>$r['default_status_id'],
+                'added_stage_count'=>$r['added_stage_count']
+            ));
             $args['mmc_msg']='program_pipeline_installed';
             $args['mmc_pipeline_id']=(int)$r['pipeline_id'];
             $args['mmc_status_id']=(int)$r['default_status_id'];
