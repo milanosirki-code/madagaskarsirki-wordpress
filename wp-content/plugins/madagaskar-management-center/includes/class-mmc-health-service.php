@@ -408,26 +408,26 @@ class MMC_Health_Service {
                 'MMC dışında aktif Madagaskar/Milano eklentileri bulundu: ' . implode( ', ', array_unique( $legacy ) ) . '. Aynı finans veya etkinlik verisini iki sistemin yazmadığını doğrulayın.'
             );
         } elseif ( $snippet_active ) {
-            $matches = self::active_madagaskar_snippets();
-            $detail = 'Code Snippets aktif.';
-            if ( $matches ) {
-                $names = array();
-                foreach ( $matches as $row ) {
-                    $names[] = '#' . (int)$row->id . ' ' . (string)$row->name;
-                }
-                $detail .= ' Aktif Madagaskar ilişkili snippet adayları: ' . implode( ' · ', array_slice( $names, 0, 8 ) ) . '. Çakışan eski finans/etkinlik snippet’lerini test sonrası pasife alın.';
+            if ( class_exists( 'MMC_Snippet_Inventory_Service' ) ) {
+                $health = MMC_Snippet_Inventory_Service::health_check();
+                $out[] = self::check(
+                    'code_snippets',
+                    'Code Snippets',
+                    $health['severity'],
+                    $health['detail'],
+                    admin_url( 'admin.php?page=mmc-snippets' ),
+                    'Snippet Envanteri'
+                );
             } else {
-                $detail .= ' Aktif Madagaskar snippet adı otomatik tespit edilemedi; eski finans/etkinlik snippet’lerini manuel kontrol edin.';
+                $out[] = self::check(
+                    'code_snippets',
+                    'Code Snippets',
+                    'info',
+                    'Code Snippets aktif. Ayrıntılı risk analizi için Snippet Envanteri servisi kullanılamadı.',
+                    admin_url( 'admin.php?page=snippets' ),
+                    'Snippetleri Aç'
+                );
             }
-
-            $out[] = self::check(
-                'code_snippets',
-                'Code Snippets',
-                'warning',
-                $detail,
-                admin_url( 'admin.php?page=snippets' ),
-                'Snippetleri Aç'
-            );
         }
 
         if ( $custom_forms && empty( $custom_forms['active'] ) ) {

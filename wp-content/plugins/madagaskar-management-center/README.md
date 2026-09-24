@@ -1,3 +1,38 @@
+# Madagaskar Management Center v1.3.13
+
+Bu sürüm **Code Snippets envanterini salt-okunur analiz eder ve gerçek riskleri genel “snippet var” uyarısından ayırır.**
+
+## v1.3.13 — Snippet Envanteri & Çakışma Merkezi
+
+- Sistem & Yetkiler içine yeni **Snippet Envanteri** ekranı eklendi.
+- Code Snippets tablosu salt-okunur taranır; hiçbir snippet otomatik kapatılmaz, silinmez veya değiştirilmez.
+- Her snippet için:
+  - aktif/pasif durumu,
+  - Üretim / Test-Tanı / Geçici / Legacy / İncele sınıfı,
+  - tanımladığı global fonksiyonlar,
+  - kullandığı WordPress/WooCommerce hook'ları,
+  - shortcode adları,
+  - kod hash'i,
+  - olası çakışmalar,
+  - koru / incele / pasife alma adayı önerisi
+  gösterilir.
+- Aktif snippet'lerde aynı global fonksiyon veya aynı shortcode adı tespit edilirse çakışma uyarısı üretilir.
+- Benzer işlev alanındaki aktif snippet'ler (Kommo, sosyal paylaşım, hukuk/iletişim, SEO, Bilet Al, Biletlerim, etkinlik vb.) inceleme adayı olarak birlikte gösterilir.
+- **test / diagnostic / debug / deneme** isimli aktif snippet'ler öncelikli uyarı adayıdır.
+- Eski **Madagaskar V5 Finans Güncellemesi** kodu tespit edilirse Legacy + uyarı olarak işaretlenir.
+- Sağlık ekranındaki Code Snippets satırı artık yalnız gerçek risk varsa **Uyarı** olur; risk yoksa **Sağlıklı** olabilir.
+- Veritabanı şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Snippet kodları yalnız okunur.
+- Otomatik deactivate/delete/update yoktur.
+- WooCommerce, Tickera, PayTR, QR, MDG ve Okul Tanıtım verilerine yazılmaz.
+- Kullanıcı snippet'i kapatmak isterse önce Code Snippets ekranında manuel olarak kodu doğrular.
+- Pasif eski sürümler için Export sonrası arşiv/Trash önerisi yalnız bilgi amaçlıdır.
+
+---
+
 # Madagaskar Management Center v1.3.12
 
 Bu sürüm **Kurulum & Sağlık ekranındaki Tickera doğrulamasını güçlendirir, aktif programın WooCommerce→MDG→Tickera zincirini ayrı kontrol eder ve eski MMC bildirim gürültüsünü temizler.**
