@@ -12,7 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  */
 class MMC_Navigation_Admin {
     private $mdg_items = array();
+    private $v4_items = array();
     private $school_items = array();
+    private $extra_legacy_items = array();
 
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'compact_navigation' ), 999999 );
@@ -30,13 +32,23 @@ class MMC_Navigation_Admin {
         global $submenu;
 
         $this->mdg_items    = $this->capture_items( isset( $submenu['mdg-dashboard'] ) ? $submenu['mdg-dashboard'] : array() );
+        $this->v4_items     = $this->capture_items( isset( $submenu['madagaskar-v4'] ) ? $submenu['madagaskar-v4'] : array() );
         $this->school_items = $this->capture_items( isset( $submenu['mad-okul'] ) ? $submenu['mad-okul'] : array() );
+        $this->extra_legacy_items = $this->capture_known_top_level_items();
 
         if ( $this->mdg_items ) {
             remove_menu_page( 'mdg-dashboard' );
         }
+        if ( $this->v4_items ) {
+            remove_menu_page( 'madagaskar-v4' );
+        }
         if ( $this->school_items ) {
             remove_menu_page( 'mad-okul' );
+        }
+        foreach ( $this->extra_legacy_items as $item ) {
+            if ( ! empty( $item['top_level'] ) ) {
+                remove_menu_page( $item['slug'] );
+            }
         }
 
         $this->register_hubs();
@@ -64,7 +76,7 @@ class MMC_Navigation_Admin {
             array( $this, 'venue_event_hub' )
         );
 
-        if ( $this->mdg_items ) {
+        if ( $this->mdg_items || $this->v4_items || $this->extra_legacy_items ) {
             add_submenu_page(
                 'mmc-dashboard',
                 'Bilet Yönetimi',
@@ -277,7 +289,7 @@ class MMC_Navigation_Admin {
             $this->card( 'Etkinlik & Seans', 'mmc-events', 'mmc_view_programs', 'MMC etkinliği, tarih ve bağımsız seans kayıtları.' ),
             $this->card( 'Satış Hazırlığı', 'mmc-sales-prep', 'mmc_view_programs', 'WooCommerce/Tickera satış nesneleri oluşturulmadan önce hazırlık kontrolü.' )
         );
-        foreach ( $this->mdg_items_for( 'venue' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'venue' ) as $item ) {
             $legacy = $this->legacy_card( $item, 'mdg' );
             $legacy['title'] = 'MDG ' . $legacy['title'] . ' (Legacy)';
             $cards[] = $legacy;
@@ -295,7 +307,7 @@ class MMC_Navigation_Admin {
         $this->render_legacy_hub(
             'Bilet Yönetimi',
             'Madagaskar Bilet Yönetimi motorunun çekirdek etkinlik ve bilet operasyonları. Satış, finans, pazarlama, CRM ve entegrasyon araçları kendi merkezlerine ayrılmıştır.',
-            $this->mdg_items_for( 'mdg' ),
+            $this->legacy_bilet_items_for( 'mdg' ),
             'mdg'
         );
     }
@@ -307,7 +319,7 @@ class MMC_Navigation_Admin {
             $this->card( 'Satış & Doluluk', 'mmc-sales', 'mmc_view_programs', 'MMC Program ID bazlı sipariş, bilet, kişi, ciro ve doluluk görünümü.' ),
         );
 
-        foreach ( $this->mdg_items_for( 'sales' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'sales' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
         }
 
@@ -347,7 +359,7 @@ class MMC_Navigation_Admin {
         $cards = array(
             $this->card( 'MMC Pazarlama', 'mmc-marketing', 'mmc_manage_marketing', 'Afiş, sosyal medya ve Meta reklam planı.' ),
         );
-        foreach ( $this->mdg_items_for( 'marketing' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'marketing' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
         }
         $this->render_group_hub( 'Pazarlama', 'MMC pazarlama planı ile eski MDG pazarlama araçları aynı merkezde.', $cards );
@@ -358,7 +370,7 @@ class MMC_Navigation_Admin {
         $cards = array(
             $this->card( 'MMC Kommo & AI', 'mmc-kommo', 'mmc_manage_kommo', 'MMC Program ID bazlı Kommo ve AI profil yönetimi.' ),
         );
-        foreach ( $this->mdg_items_for( 'kommo' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'kommo' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
         }
         $this->render_group_hub( 'Kommo & AI', 'MMC Kommo profili ile eski MDG CRM araçları aynı merkezde.', $cards );
@@ -369,7 +381,7 @@ class MMC_Navigation_Admin {
         $cards = array(
             $this->card( 'MMC Finans & Kapanış', 'mmc-finance', 'mmc_manage_finance', 'Program bazlı gelir, gider, fatura, teminat ve kapanış defteri.' ),
         );
-        foreach ( $this->mdg_items_for( 'finance' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'finance' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
         }
         $this->render_group_hub( 'Finans', 'MMC finans defteri ile eski MDG gider/kârlılık araçları aynı merkezde.', $cards );
@@ -382,7 +394,7 @@ class MMC_Navigation_Admin {
             $this->card( 'Kurulum & Sağlık', 'mmc-system', 'mmc_manage_settings', 'Eklenti, tablo, entegrasyon ve sistem sağlık kontrolleri.' ),
             $this->card( 'Snippet Envanteri', 'mmc-snippets', 'mmc_manage_settings', 'Code Snippets kayıtlarını sınıflandırır; test, legacy ve çakışma adaylarını salt-okunur gösterir.' ),
         );
-        foreach ( $this->mdg_items_for( 'system' ) as $item ) {
+        foreach ( $this->legacy_bilet_items_for( 'system' ) as $item ) {
             $cards[] = $this->legacy_card( $item, 'mdg' );
         }
         $this->render_group_hub( 'Sistem & Yetkiler', 'Rol, yetki, kurulum, sağlık, entegrasyon ve geliştirici araçları.', $cards );
@@ -445,6 +457,106 @@ class MMC_Navigation_Admin {
             'note'       => $this->item_note( $item['slug'], $type ),
             'legacy'     => true,
         );
+    }
+
+    private function capture_known_top_level_items() {
+        global $menu, $submenu;
+
+        $known = array(
+            'madagaskar-etkinlik-yayinla' => array(
+                'title' => 'Etkinlik Yayınla (Legacy)',
+                'destination' => 'venue',
+            ),
+        );
+
+        $items = array();
+        foreach ( $known as $slug => $meta ) {
+            $found = false;
+
+            foreach ( (array) $menu as $row ) {
+                if ( ! is_array( $row ) || empty( $row[2] ) || (string) $row[2] !== $slug ) {
+                    continue;
+                }
+
+                $items[] = array(
+                    'title'       => ! empty( $row[0] ) ? wp_strip_all_tags( (string) $row[0] ) : $meta['title'],
+                    'capability'  => ! empty( $row[1] ) ? (string) $row[1] : 'manage_woocommerce',
+                    'slug'        => $slug,
+                    'destination' => $meta['destination'],
+                    'top_level'   => true,
+                );
+                $found = true;
+                break;
+            }
+
+            if ( $found ) {
+                continue;
+            }
+
+            if ( ! empty( $submenu[ $slug ] ) ) {
+                foreach ( $this->capture_items( $submenu[ $slug ] ) as $row ) {
+                    $row['destination'] = $meta['destination'];
+                    $row['top_level'] = false;
+                    $items[] = $row;
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    private function legacy_bilet_items_for( $destination ) {
+        $items = array_merge(
+            $this->mdg_items_for( $destination ),
+            $this->v4_items_for( $destination ),
+            $this->extra_items_for( $destination )
+        );
+
+        $seen = array();
+        $out = array();
+        foreach ( $items as $item ) {
+            $key = (string) ( $item['slug'] ?? '' );
+            if ( '' === $key || isset( $seen[ $key ] ) ) {
+                continue;
+            }
+            $seen[ $key ] = true;
+            $out[] = $item;
+        }
+
+        return $out;
+    }
+
+    private function v4_items_for( $destination ) {
+        $items = array();
+        foreach ( $this->v4_items as $item ) {
+            if ( $this->v4_destination( $item ) === $destination ) {
+                $items[] = $item;
+            }
+        }
+        return $items;
+    }
+
+    private function extra_items_for( $destination ) {
+        $items = array();
+        foreach ( $this->extra_legacy_items as $item ) {
+            if ( ( $item['destination'] ?? 'mdg' ) === $destination ) {
+                $items[] = $item;
+            }
+        }
+        return $items;
+    }
+
+    private function v4_destination( $item ) {
+        $slug = (string) ( $item['slug'] ?? '' );
+
+        if ( in_array( $slug, array( 'mdg-v4-sales', 'mdg-v4-biletlerim' ), true ) ) {
+            return 'sales';
+        }
+        if ( in_array( $slug, array( 'mdg-v4-integrations', 'mdg-v4-migration' ), true ) ) {
+            return 'system';
+        }
+
+        return 'mdg';
     }
 
     private function mdg_items_for( $destination ) {
@@ -546,6 +658,13 @@ class MMC_Navigation_Admin {
             'mdg-reports'          => 'MDG order_map tabanlı satış raporları.',
             'mdg-customers'        => 'Sipariş, müşteri ve Tickera bilet listeleri.',
             'mdg-settings'         => 'MDG teknik ayarları.',
+            'madagaskar-v4'        => 'V4 geçiş merkezi genel görünümü; eski motoru otomatik kapatmaz.',
+            'mdg-v4-sales'         => 'V4 satış kapatma / açma ve geçiş dönemi satış kontrolleri.',
+            'mdg-v4-postpone'      => 'V4 erteleme eşleme, aktarım ve rollback araçları.',
+            'mdg-v4-biletlerim'    => 'V4 Biletlerim uyumluluk ve indirme bağlantısı testleri.',
+            'mdg-v4-integrations'  => 'V4 WooCommerce / Tickera / PayTR entegrasyon görünümü.',
+            'mdg-v4-migration'     => 'Eski eklentilerin geçiş ve kapatma envanteri.',
+            'madagaskar-etkinlik-yayinla' => 'Eski tekil Etkinlik Yayınla ekranı; callback ve URL korunur.',
             'mad-okul'             => 'Okul Tanıtım genel operasyon görünümü.',
             'mad-okul-list'        => 'Tüm okul kayıtları ve ziyaret durumları.',
             'mad-okul-import'      => 'MEBBİS okul listesi içe aktarma.',
@@ -630,6 +749,34 @@ class MMC_Navigation_Admin {
         echo '})();</script>';
     }
 
+    public static function navigation_health() {
+        global $menu;
+
+        $legacy = array(
+            'mdg-dashboard' => 'Madagaskar Bilet Yönetimi',
+            'madagaskar-v4' => 'Madagaskar V4',
+            'mad-okul' => 'Okul Tanıtım',
+            'madagaskar-etkinlik-yayinla' => 'Etkinlik Yayınla (Legacy)',
+        );
+
+        $visible = array();
+        foreach ( (array) $menu as $row ) {
+            if ( ! is_array( $row ) || empty( $row[2] ) ) {
+                continue;
+            }
+            $slug = (string) $row[2];
+            if ( isset( $legacy[ $slug ] ) ) {
+                $visible[] = $legacy[ $slug ] . ' [' . $slug . ']';
+            }
+        }
+
+        return array(
+            'unified' => empty( $visible ),
+            'remaining' => $visible,
+            'canonical_parent' => 'mmc-dashboard',
+        );
+    }
+
     private function guard( $capability ) {
         if ( ! current_user_can( $capability ) ) {
             wp_die( esc_html__( 'Bu sayfayı görüntüleme yetkiniz yok.', 'madagaskar-management-center' ) );
@@ -694,10 +841,43 @@ class MMC_Navigation_Admin {
             return $map[ $destination ] ?? 'mmc-mdg-hub';
         }
 
+        foreach ( $this->v4_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
+            }
+            $destination = $this->v4_destination( $item );
+            $map = array(
+                'sales'  => 'mmc-sales-customer-hub',
+                'system' => 'mmc-system-hub',
+            );
+            return $map[ $destination ] ?? 'mmc-mdg-hub';
+        }
+
+        foreach ( $this->extra_legacy_items as $item ) {
+            if ( $item['slug'] !== $page ) {
+                continue;
+            }
+            return 'venue' === ( $item['destination'] ?? '' )
+                ? 'mmc-venue-event-hub'
+                : 'mmc-mdg-hub';
+        }
+
         foreach ( $this->school_items as $item ) {
             if ( $item['slug'] === $page && 'mad-okul-my-tasks' !== $page ) {
                 return 'mmc-school-hub';
             }
+        }
+
+        if ( 0 === strpos( $page, 'mdg-v4-' ) || 'madagaskar-v4' === $page ) {
+            return in_array( $page, array( 'mdg-v4-sales', 'mdg-v4-biletlerim' ), true )
+                ? 'mmc-sales-customer-hub'
+                : ( in_array( $page, array( 'mdg-v4-integrations', 'mdg-v4-migration' ), true )
+                    ? 'mmc-system-hub'
+                    : 'mmc-mdg-hub' );
+        }
+
+        if ( 'madagaskar-etkinlik-yayinla' === $page ) {
+            return 'mmc-venue-event-hub';
         }
 
         if ( 0 === strpos( $page, 'mdg-' ) ) {
