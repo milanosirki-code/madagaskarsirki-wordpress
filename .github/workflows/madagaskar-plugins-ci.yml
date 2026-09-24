@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-aile-paketi-22/**'
       - 'wp-content/plugins/madagaskar-okul-tanitim/**'
       - 'wp-content/plugins/madagaskar-population-data/**'
       - '.github/workflows/madagaskar-plugins-ci.yml'
@@ -12,6 +13,7 @@ on:
       - main
     paths:
       - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-aile-paketi-22/**'
       - 'wp-content/plugins/madagaskar-okul-tanitim/**'
       - 'wp-content/plugins/madagaskar-population-data/**'
       - '.github/workflows/madagaskar-plugins-ci.yml'
@@ -25,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
+          for dir in             wp-content/plugins/madagaskar-management-center             wp-content/plugins/madagaskar-aile-paketi-22             wp-content/plugins/madagaskar-okul-tanitim             wp-content/plugins/madagaskar-population-data
           do
             test -d "$dir"
             find "$dir" -type f -name '*.php' -print0 | xargs -0 -n1 php -l
@@ -35,6 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           grep -Eq 'Version:[[:space:]]*1\.3\.29' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.1\.3' wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
+          grep -Eq "mmc_family_price_for_event" wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
+          grep -Eq "2 çocuk \+ 2 yetişkin" wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
           grep -Eq "class MMC_Navigation_Admin" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-prep-region-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "mmc-sales-customer-hub" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
@@ -114,9 +119,11 @@ jobs:
           (
             cd wp-content/plugins
             zip -qr ../../dist/madagaskar-management-center-v1.3.29.zip madagaskar-management-center
+            zip -qr ../../dist/madagaskar-aile-paketi-22-v1.1.3.zip madagaskar-aile-paketi-22
             zip -qr ../../dist/madagaskar-okul-tanitim-v1.7.4.zip madagaskar-okul-tanitim -x "madagaskar-okul-tanitim/data/schools.csv"
           )
           unzip -t dist/madagaskar-management-center-v1.3.29.zip
+          unzip -t dist/madagaskar-aile-paketi-22-v1.1.3.zip
           unzip -t dist/madagaskar-okul-tanitim-v1.7.4.zip
 
       - name: Upload program-integrity packages
