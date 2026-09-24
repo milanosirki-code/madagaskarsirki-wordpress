@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.3
+ * Version: 1.7.4
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.3');
+define('MAD_OKUL_VERSION', '1.7.4');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -120,6 +120,7 @@ function mad_okul_create_table() {
         latitude decimal(10,7) NULL,
         longitude decimal(10,7) NULL,
         program_id bigint(20) unsigned NOT NULL DEFAULT 0,
+        mmc_program_id bigint(20) unsigned DEFAULT NULL,
         assigned_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
         route_group varchar(50) NOT NULL DEFAULT '',
         route_order int unsigned NOT NULL DEFAULT 0,
@@ -132,7 +133,8 @@ function mad_okul_create_table() {
         UNIQUE KEY dedupe_hash (dedupe_hash),
         KEY il_ilce (il(40), ilce(40)),
         KEY durum (durum),
-        KEY program_assignment (program_id, assigned_user_id, route_group(20), route_order)
+        KEY program_assignment (program_id, assigned_user_id, route_group(20), route_order),
+        KEY mmc_program_id (mmc_program_id)
     ) $charset;";
     dbDelta($sql);
     $excluded = mad_okul_excluded_table();
@@ -675,10 +677,23 @@ function mad_okul_route_page() {
     if (!current_user_can('manage_options')) return;
     global $wpdb;
     $table=mad_okul_table();
+    $mmc_program_id=absint($_GET['mmc_program_id'] ?? $_POST['mmc_program_id'] ?? 0);
+    $mmc_ctx=null;
+    if($mmc_program_id && class_exists('Mad_Okul_Operations') && method_exists('Mad_Okul_Operations','mmc_program_context')){
+        $mmc_ctx=Mad_Okul_Operations::mmc_program_context($mmc_program_id);
+        if(!is_wp_error($mmc_ctx) && method_exists('Mad_Okul_Operations','ensure_mmc_bridge')){
+            Mad_Okul_Operations::ensure_mmc_bridge($mmc_program_id);
+        }
+    }
 
-    // Önce ili oku, sonra yalnız o ile ait ilçeleri getir.
-    $il=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['il'] ?? '')));
-    $ilce=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
+    // MMC Program ID varsa il/ilçe tek kaynaktan gelir; yoksa eski bağımsız filtre korunur.
+    if($mmc_ctx && !is_wp_error($mmc_ctx)){
+        $il=mad_okul_place_title($mmc_ctx->program->province_name);
+        $ilce=mad_okul_place_title($mmc_ctx->program->district_name);
+    } else {
+        $il=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['il'] ?? '')));
+        $ilce=mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
+    }
     [$ils,$ilceler]=mad_okul_filter_options($il);
 
     // İl değiştiyse eski/uyumsuz ilçe seçimini taşımayalım.
@@ -702,7 +717,12 @@ function mad_okul_route_page() {
     $selected=array_map('absint', $_POST['school_ids'] ?? []);
     $start=sanitize_text_field(wp_unslash($_POST['start_address'] ?? ''));
 
-    // Başlangıç salonunu önce Okul Tanıtım programından, yoksa MMC kesin salonundan otomatik doldur.
+    // MMC program bağlamında kesin salon doğrudan ana programdan gelir.
+    if(!$start && $mmc_ctx && !is_wp_error($mmc_ctx) && !empty($mmc_ctx->venue)){
+        $start=trim($mmc_ctx->venue->venue_name.', '.$mmc_ctx->venue->address,', ');
+    }
+
+    // Geriye uyumluluk: önce Okul Tanıtım programı, yoksa MMC kesin salonu.
     if(!$start && $il && $ilce){
         $programs_table=Mad_Okul_Operations::programs_table();
         $programs_exists=$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$programs_table));
@@ -748,10 +768,18 @@ function mad_okul_route_page() {
     <div class="wrap mad-okul-wrap">
       <h1>Google Maps Rota Oluştur</h1>
       <p>İl/ilçe ve durum seçin, rotaya girecek okulları işaretleyin. Sistem seçilen noktaları Google Maps bağlantılarına böler.</p>
+      <?php if($mmc_ctx && !is_wp_error($mmc_ctx)): ?>
+        <div class="notice notice-info inline"><p><strong>Aktif MMC Programı:</strong> <?php echo esc_html($mmc_ctx->program->program_code.' · '.$il.' / '.$ilce); ?> · MMC ID <?php echo (int)$mmc_program_id; ?></p></div>
+      <?php endif; ?>
       <form method="get" class="mad-filter">
         <input type="hidden" name="page" value="mad-okul-route">
-        <select name="il" id="mad-route-il"><option value="">İl Seç</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
-        <select name="ilce" id="mad-route-ilce" <?php disabled(!$il); ?>><option value=""><?php echo $il ? 'İlçe Seç' : 'Önce İl Seç'; ?></option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
+        <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
+        <?php if($mmc_program_id): ?>
+          <input type="hidden" name="il" value="<?php echo esc_attr($il); ?>">
+          <input type="hidden" name="ilce" value="<?php echo esc_attr($ilce); ?>">
+        <?php endif; ?>
+        <select name="il" id="mad-route-il" <?php disabled($mmc_program_id); ?>><option value="">İl Seç</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
+        <select name="ilce" id="mad-route-ilce" <?php disabled(!$il || $mmc_program_id); ?>><option value=""><?php echo $il ? 'İlçe Seç' : 'Önce İl Seç'; ?></option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
         <select name="durum">
           <?php foreach(['Bekliyor','Adres Eksik','Atandı','Ziyaret Edildi','Afiş Bırakıldı','Görüşüldü','Tekrar Gidilecek'] as $x): ?><option <?php selected($durum,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?>
         </select>
@@ -765,6 +793,7 @@ function mad_okul_route_page() {
 
       <form method="post">
         <?php wp_nonce_field('mad_okul_route'); ?>
+        <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
         <div class="mad-route-start">
           <label><strong>Başlangıç / Gösteri Salonu</strong><input type="text" name="start_address" value="<?php echo esc_attr($start); ?>" placeholder="Örn. Porsuk Kapalı Spor Salonu, Eskişehir"></label>
         </div>
@@ -788,6 +817,9 @@ function mad_okul_route_page() {
       if ($_SERVER['REQUEST_METHOD']==='POST' && $selected) {
           check_admin_referer('mad_okul_route');
           $ids=implode(',',array_map('absint',$selected));
+          if($mmc_program_id){
+              $wpdb->query("UPDATE $table SET mmc_program_id=".absint($mmc_program_id).",updated_at='".esc_sql(current_time('mysql'))."' WHERE id IN ($ids)");
+          }
           $chosen=$wpdb->get_results("SELECT * FROM $table WHERE id IN ($ids) ORDER BY FIELD(id,$ids)");
           if ($chosen) {
               echo '<div class="mad-routes"><h2>Oluşturulan Rotalar</h2>';
