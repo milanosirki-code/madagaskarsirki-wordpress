@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Management Center
  * Description: Madagaskar Sirki program yaşam döngüsü, bölge veri ambarı, hazırlık analizi, görev, yetki ve değişiklik geçmişi için yönetim merkezi.
- * Version: 1.3.6
+ * Version: 1.3.7
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-management-center
  */
@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MMC_VERSION', '1.3.6' );
-define( 'MMC_DB_VERSION', '1.3.3' );
+define( 'MMC_VERSION', '1.3.7' );
+define( 'MMC_DB_VERSION', '1.3.7' );
 define( 'MMC_FILE', __FILE__ );
 define( 'MMC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MMC_URL', plugin_dir_url( __FILE__ ) );
@@ -44,6 +44,7 @@ require_once MMC_DIR . 'includes/class-mmc-health-service.php';
 require_once MMC_DIR . 'includes/class-mmc-dashboard-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-report-service.php';
 require_once MMC_DIR . 'includes/class-mmc-report-admin.php';
+require_once MMC_DIR . 'includes/class-mmc-mdg-bridge-service.php';
 require_once MMC_DIR . 'includes/class-mmc-integrity-service.php';
 require_once MMC_DIR . 'includes/class-mmc-integrity-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-admin.php';
@@ -68,6 +69,9 @@ add_action( 'plugins_loaded', function () {
         }
         if ( class_exists( 'MMC_Finance_Service' ) ) {
             MMC_Finance_Service::backfill_existing_programs();
+        }
+        if ( class_exists( 'MMC_MDG_Bridge_Service' ) ) {
+            MMC_MDG_Bridge_Service::backfill_existing_programs();
         }
     }
 
