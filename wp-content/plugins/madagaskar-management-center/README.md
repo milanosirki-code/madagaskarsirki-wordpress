@@ -1,3 +1,51 @@
+# Madagaskar Management Center v1.3.22
+
+Bu sürüm **Kommo AI URL bilgi kaynağını semantik HTML web sayfası olarak sunar** ve crawler erişimini tanılamak için son kaynak isteğini kaydeder.
+
+## v1.3.22 — Kommo AI Semantik HTML Kaynağı
+
+- v1.3.21 sonrasında tokenlı URL tarayıcıda erişilebilir olmasına rağmen Kommo kaynak satırında **Hata / 0 alt bölüm** durumu devam ettiği için parser uyumluluğu güçlendirildi.
+- Aynı tokenlı kaynak URL değişmeden korunur; Kommo'da yeni kaynak oluşturmak gerekmez.
+- Kaynak yanıtı artık:
+  - `Content-Type: text/html; charset=utf-8`
+  - `Content-Language: tr`
+  - geçerli `<!doctype html>`
+  - `<html lang="tr">`
+  - `<title>`, `<h1>`, `<h2>`, `<p>`, `<ul>/<li>`
+  gibi semantik HTML yapılarıyla servis edilir.
+- Mevcut MMC Program Dosyası metni tek doğruluk kaynağı olmaya devam eder; HTML çıktı bu metinden güvenli biçimde üretilir.
+- Başlıklar, madde işaretleri ve anahtar/değer satırları crawler'ın daha kolay bölümlemesi için HTML yapısına dönüştürülür.
+- Robots engeli yoktur; tokenlı URL site menüsü veya sitemap içine eklenmez.
+- Kaynak endpoint'ine gelen son istek:
+  - tarih/saat,
+  - User-Agent,
+  - Accept başlığı
+  ile güvenli teşhis amacıyla WordPress option içinde tutulur.
+- IP adresi ve token değeri loglanmaz.
+- Kommo & AI ekranında:
+  - **semantik HTML**
+  - content type
+  - robots durumu
+  - son kaynak isteği zamanı ve User-Agent
+  görünür.
+- Böylece yeniden tarama sonrası:
+  - Kommo crawler isteği endpoint'e ulaşıyor mu,
+  - yoksa istek WordPress/WAF katmanına hiç gelmiyor mu
+  ayrıştırılabilir.
+- Kommo taraması başarılı olmadan **Kommo'da Yeniden Tarandı Olarak İşaretle** kullanılmamalıdır.
+- DB şeması değişmez; `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+## Güvenlik
+
+- Kaynak URL/token değişmez.
+- Token sitemap, menü veya genel sayfalarda yayınlanmaz.
+- HTML yalnız MMC'nin doğrulanmış Program Dosyası içeriğini verir.
+- Kullanıcı kaynak metninden gelen tüm HTML karakterleri escape edilir.
+- Script, iframe veya üçüncü taraf kaynak eklenmez.
+- CRM Lead/Pipeline ve WooCommerce/Tickera davranışı değişmez.
+
+---
+
 # Madagaskar Management Center v1.3.21
 
 Bu sürüm **Kommo AI URL bilgi kaynağının crawler tarafından parse edilebilmesini** düzeltir.
