@@ -1,3 +1,46 @@
+# Madagaskar Management Center v1.3.9
+
+Bu sürüm **tek Madagaskar menüsünü sadeleştirir ve ayrıntılı ekranları iş merkezleri altında toplar**. İşlevsel sayfalar, slug'lar, callback'ler, form action'lar ve veri tabloları korunur.
+
+## v1.3.9 — Sade Yönetim Menüsü
+
+Görünür ana menü başlıkları:
+- Kontrol Paneli
+- Programlar
+- Hazırlık & Bölge
+- Salon & Etkinlik
+- Bilet Yönetimi
+- Satış & Müşteri
+- Okul Tanıtım & Saha
+- Pazarlama
+- Kommo & AI
+- Operasyon
+- Finans
+- Raporlar
+- Program Bütünlüğü
+- Sistem & Yetkiler
+
+Ayrıntılı sayfalar ilgili merkez içinde kart olarak gösterilir:
+- Hazırlık & Bölge → Program Hazırlığı, Bölge Veri Ambarı, Nüfus ve Eğitim Verisi, İş Akışı
+- Salon & Etkinlik → Salonlar, Salon & Tahsis, Etkinlik & Seans, Satış Hazırlığı
+- Bilet Yönetimi → mevcut MDG üretim/etkinlik araçları
+- Satış & Müşteri → MMC Satış & Doluluk + MDG Satış Raporları + Müşteri/Bilet Listeleri
+- Okul Tanıtım & Saha → MMC Okul/Saha + mevcut Okul Tanıtım/MEBBİS/rota/görev ekranları
+- Sistem & Yetkiler → Yetkiler + Kurulum & Sağlık
+
+## Güvenlik
+
+- Bu sürüm yalnız WordPress yönetim navigasyonunu değiştirir.
+- WooCommerce, Tickera, PayTR, QR ve MDG satış motoruna yazma yapılmaz.
+- `mdg_events`, `mdg_sessions`, `mdg_ticket_types`, `mdg_order_map` değiştirilmez.
+- Okul Tanıtım veri tabloları ve saha görev kayıtları taşınmaz.
+- Gizlenen ayrıntı sayfaları doğrudan URL ve mevcut callback'leriyle çalışmaya devam eder.
+- MMC yetkisi olmayan kullanıcıların eski menü davranışı değiştirilmez.
+- Saha personelinin bağımsız **Görevlerim** menüsü korunur.
+- Veritabanı şeması değişmediği için `MMC_DB_VERSION` **1.3.7** olarak kalır.
+
+---
+
 # Madagaskar Management Center v1.3.8
 
 Bu sürüm **MMC + Madagaskar Bilet Yönetimi + Okul Tanıtım yönetim ekranlarını tek Madagaskar üst menüsünde toplar**. Veri kaynakları ve çalışan motorlar ayrışık kalır; değişiklik yalnız yönetim navigasyonundadır.
