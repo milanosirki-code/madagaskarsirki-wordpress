@@ -75,6 +75,10 @@ class MMC_MDG_Bridge_Service {
         $events = (array) $wpdb->get_results( "SELECT * FROM {$events_table} ORDER BY id DESC LIMIT 500" );
         $identity = self::mmc_identity( $program_id );
         $venue_name = self::selected_venue_name( $program_id );
+        $mmc_event = class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
+        $target_date = $mmc_event && ! empty( $mmc_event->event_date )
+            ? (string) $mmc_event->event_date
+            : (string) $program->planned_date;
         $out = array();
 
         foreach ( $events as $event ) {
@@ -115,7 +119,7 @@ class MMC_MDG_Bridge_Service {
 
             $province_match = self::same_text( $program->province_name, $event->province_name );
             $district_match = ! $program->district_name || self::same_text( $program->district_name, $event->district );
-            $date_match = ! empty($program->planned_date) && isset( $dates[(string)$program->planned_date] );
+            $date_match = $target_date !== '' && isset( $dates[$target_date] );
             $venue_match = $venue_name && self::same_text( $venue_name, $event->venue_name );
 
             $score = ( $variation_overlap * 500 ) + ( $product_overlap * 300 ) + ( $tickera_overlap * 200 );
@@ -338,6 +342,300 @@ class MMC_MDG_Bridge_Service {
         return $result;
     }
 
+    /**
+     * MDG Etkinlik Yayınla ekranı için MMC program özetini hazırlar.
+     * Bu metot veri yazmaz; yalnız köprü oluşturma öncesi doğrulama yapar.
+     */
+    public static function publish_preview( $program_id ) {
+        $program_id = absint( $program_id );
+        $program = class_exists( 'MMC_Program_Service' ) ? MMC_Program_Service::get_program( $program_id ) : null;
+        $event = $program && class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
+        $sessions = $event && class_exists( 'MMC_Event_Service' ) ? (array) MMC_Event_Service::sessions( (int) $event->id ) : array();
+        $tickets = $event && class_exists( 'MMC_Event_Service' ) ? (array) MMC_Event_Service::ticket_types( (int) $event->id ) : array();
+        $active_tickets = array_values( array_filter( $tickets, function( $ticket ) {
+            return (int) ( $ticket->is_active ?? 0 ) === 1;
+        } ) );
+
+        $venue = null;
+        if ( $event && ! empty( $event->program_venue_id ) && class_exists( 'MMC_Venue_Service' ) ) {
+            $venue = MMC_Venue_Service::get_program_venue( (int) $event->program_venue_id );
+        }
+
+        $mdg_venue = $venue ? self::resolve_mdg_venue( $venue ) : null;
+        $bridge = self::bridge_for_program( $program_id );
+        $errors = array();
+
+        if ( ! $program ) { $errors[] = 'MMC program kaydı bulunamadı.'; }
+        if ( $program && 'cancelled' === (string) $program->status ) { $errors[] = 'İptal edilmiş program MDG taslağına aktarılamaz.'; }
+        if ( ! $event ) { $errors[] = 'MMC etkinlik kaydı bulunamadı.'; }
+        if ( $event && empty( $event->event_date ) ) { $errors[] = 'Etkinlik tarihi eksik.'; }
+        if ( ! $venue ) { $errors[] = 'Kesin salon bağlantısı eksik.'; }
+        if ( $venue && ! $mdg_venue ) { $errors[] = 'Kesin salon MDG Salonlar ana kaydında eşleştirilemedi.'; }
+        if ( ! $sessions ) { $errors[] = 'En az bir MMC seansı gerekli.'; }
+        foreach ( $sessions as $session ) {
+            if ( empty( $session->session_time ) || (int) $session->capacity < 1 ) {
+                $errors[] = 'Seans tarihi/saat veya kapasite eksik.';
+                break;
+            }
+        }
+        if ( ! $active_tickets ) { $errors[] = 'En az bir aktif MMC bilet türü gerekli.'; }
+        if ( ! self::legacy_available() || ! class_exists( 'MDG_Venues' ) || ! class_exists( 'MDG_Sessions' ) ) {
+            $errors[] = 'Madagaskar Bilet Yönetimi motoru aktif/erişilebilir değil.';
+        }
+
+        return array(
+            'program'        => $program,
+            'event'          => $event,
+            'venue'          => $venue,
+            'mdg_venue'      => $mdg_venue,
+            'sessions'       => $sessions,
+            'tickets'        => $active_tickets,
+            'bridge'         => $bridge,
+            'ready'          => empty( $errors ),
+            'errors'         => array_values( array_unique( $errors ) ),
+        );
+    }
+
+    /**
+     * Etkinlik Yayınla ekranında gösterilecek MMC programlarını döndürür.
+     * İptal programları liste dışıdır; eksikleri olan programlar UI'da uyarı ile gösterilebilir.
+     */
+    public static function publish_programs() {
+        if ( ! class_exists( 'MMC_Program_Service' ) ) { return array(); }
+        $rows = array();
+        foreach ( (array) MMC_Program_Service::all_programs() as $program ) {
+            if ( 'cancelled' === (string) $program->status ) { continue; }
+            $preview = self::publish_preview( (int) $program->id );
+            if ( empty( $preview['event'] ) ) { continue; }
+            $rows[] = $preview;
+        }
+        usort( $rows, function( $a, $b ) {
+            $ad = ! empty( $a['event']->event_date ) ? (string) $a['event']->event_date : '9999-12-31';
+            $bd = ! empty( $b['event']->event_date ) ? (string) $b['event']->event_date : '9999-12-31';
+            if ( $ad === $bd ) { return (int) $a['program']->id <=> (int) $b['program']->id; }
+            return strcmp( $ad, $bd );
+        } );
+        return $rows;
+    }
+
+    /**
+     * MMC programından güvenli MDG taslağı oluşturur.
+     * Canlı WooCommerce/Tickera nesnesi oluşturmaz; yalnız MDG draft + seans + bilet katalog yapısını hazırlar.
+     */
+    public static function create_draft_from_program( $program_id ) {
+        $program_id = absint( $program_id );
+        $preview = self::publish_preview( $program_id );
+        if ( ! empty( $preview['bridge'] ) ) {
+            $existing = self::get_mdg_event( (int) $preview['bridge']->mdg_event_id );
+            if ( $existing ) { return (int) $existing->id; }
+        }
+        if ( empty( $preview['ready'] ) ) {
+            return new WP_Error( 'mmc_mdg_publish_not_ready', implode( ' ', (array) $preview['errors'] ) );
+        }
+
+        // Aynı yapıya sahip mevcut MDG etkinliği varsa ikinci kayıt üretme.
+        $exact = array_values( array_filter( self::candidates( $program_id ), function( $row ) use ( $preview ) {
+            return ! empty( $row['province_match'] )
+                && ! empty( $row['district_match'] )
+                && ! empty( $row['date_match'] )
+                && ! empty( $row['venue_match'] )
+                && (int) $row['session_count'] === count( $preview['sessions'] );
+        } ) );
+        if ( 1 === count( $exact ) ) {
+            $linked = self::link( $program_id, (int) $exact[0]['event_id'], 'structure', 90 );
+            return is_wp_error( $linked ) ? $linked : (int) $exact[0]['event_id'];
+        }
+        if ( count( $exact ) > 1 ) {
+            return new WP_Error( 'mmc_mdg_publish_ambiguous', 'Aynı tarih/salon yapısında birden fazla MDG etkinliği bulundu; yeni taslak oluşturulmadı.' );
+        }
+
+        global $wpdb;
+        $program = $preview['program'];
+        $event = $preview['event'];
+        $venue = $preview['mdg_venue'];
+        $duration = max( 15, min( 360, (int) ( $venue->default_duration ?? 60 ) ) );
+        $now = class_exists( 'MDG_DB' ) && method_exists( 'MDG_DB', 'now' ) ? MDG_DB::now() : current_time( 'mysql' );
+        $import_code = substr( 'MMC-' . (string) $program->program_code, 0, 80 );
+
+        $events_table = MDG_DB::table( 'events' );
+        $existing_import = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$events_table} WHERE import_code=%s LIMIT 1",
+            $import_code
+        ) );
+        if ( $existing_import ) {
+            $linked = self::link( $program_id, (int) $existing_import->id, 'import_code', 100 );
+            return is_wp_error( $linked ) ? $linked : (int) $existing_import->id;
+        }
+
+        $session_rows = array();
+        foreach ( $preview['sessions'] as $session ) {
+            $local_start = substr( (string) $session->session_time, 0, 19 );
+            $start_utc = function_exists( 'get_gmt_from_date' )
+                ? get_gmt_from_date( $local_start, 'Y-m-d H:i:s' )
+                : $local_start;
+            try {
+                $start_dt = new DateTimeImmutable( $start_utc, new DateTimeZone( 'UTC' ) );
+                $end_utc = $start_dt->modify( '+' . $duration . ' minutes' )->format( 'Y-m-d H:i:s' );
+            } catch ( Exception $e ) {
+                return new WP_Error( 'mmc_mdg_session_time', 'Seans tarihi MDG biçimine dönüştürülemedi.' );
+            }
+            $session_rows[] = array(
+                'start_at'       => $start_utc,
+                'end_at'         => $end_utc,
+                'capacity_total' => max( 1, (int) $session->capacity ),
+            );
+        }
+
+        $ticket_rows = array();
+        foreach ( $preview['tickets'] as $ticket ) {
+            $code = self::mdg_ticket_code( (string) $ticket->ticket_code );
+            $label = (string) $ticket->ticket_name;
+            if ( 'COCUK' === $code && isset( $ticket->age_min, $ticket->age_max ) ) {
+                $label = 'Çocuk ' . (int) $ticket->age_min . '–' . (int) $ticket->age_max . ' Yaş';
+            } elseif ( 'YETISKIN' === $code && isset( $ticket->age_min ) ) {
+                $label = 'Yetişkin ' . (int) $ticket->age_min . ' Yaş ve üzeri';
+            }
+            $ticket_rows[] = array(
+                'code'           => $code,
+                'label'          => $label,
+                'price'          => number_format( (float) $ticket->price, 2, '.', '' ),
+                'capacity_units' => max( 1, (int) $ticket->capacity_units ),
+                'sort_order'     => (int) ( $ticket->sort_order ?? 10 ),
+            );
+        }
+
+        $short = 'Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.';
+        $long  = '';
+        $district_key = self::normalize_text( $program->district_name );
+        $title = 'Madagaskar Sirki — ' . $program->province_name;
+        if ( $program->district_name && 'merkez' !== $district_key ) {
+            $title .= ' / ' . $program->district_name;
+        }
+        $data = array(
+            'public_uuid'                   => wp_generate_uuid4(),
+            'import_code'                   => $import_code,
+            'title'                         => $title,
+            'venue_id'                      => (int) $venue->id,
+            'province_code'                 => (string) $venue->province_code,
+            'province_name'                 => (string) $venue->province_name,
+            'district'                      => (string) $venue->district,
+            'venue_name'                    => (string) $venue->name,
+            'venue_address'                 => (string) $venue->address,
+            'venue_latitude'                => null !== $venue->latitude ? $venue->latitude : null,
+            'venue_longitude'               => null !== $venue->longitude ? $venue->longitude : null,
+            'venue_maps_url'                => (string) $venue->maps_url,
+            'venue_qr_attachment_id'        => ! empty( $venue->location_qr_attachment_id ) ? (int) $venue->location_qr_attachment_id : null,
+            'venue_default_capacity'        => (int) $venue->default_capacity,
+            'venue_default_duration'        => $duration,
+            'short_description'             => $short,
+            'long_description'              => $long,
+            'hero_attachment_id'            => null,
+            'gallery_attachment_ids'        => wp_json_encode( array() ),
+            'video_url'                     => null,
+            'age_info'                      => '0–2 yaş ücretsiz; 3–12 yaş çocuk; 13 yaş ve üzeri yetişkin.',
+            'show_duration'                 => $duration,
+            'doors_open_before'             => max( 0, min( 180, (int) $event->door_open_minutes ) ),
+            'seating_type'                  => in_array( (string) $event->seating_mode, array( 'free', 'numbered' ), true ) ? (string) $event->seating_mode : 'free',
+            'rules'                         => '',
+            'organizer_name'                => 'Dünya Organizasyon Medya Turizm Eğitim Danışmanlık Reklam Seyahat Acenteliği Ltd. Şti.',
+            'faq_json'                      => wp_json_encode( array() ),
+            'seo_title'                     => $title,
+            'seo_description'               => $short,
+            'status'                        => 'draft',
+            'created_by'                    => get_current_user_id() ?: null,
+            'created_at'                    => $now,
+            'updated_at'                    => $now,
+        );
+
+        $wpdb->query( 'START TRANSACTION' );
+        try {
+            if ( false === $wpdb->insert( $events_table, $data ) ) {
+                throw new Exception( 'MDG etkinlik taslağı oluşturulamadı.' );
+            }
+            $mdg_event_id = (int) $wpdb->insert_id;
+
+            $structure = MDG_Sessions::replace_draft_structure( $mdg_event_id, $session_rows, $ticket_rows );
+            if ( is_wp_error( $structure ) ) {
+                throw new Exception( $structure->get_error_message() );
+            }
+
+            $linked = self::link( $program_id, $mdg_event_id, 'mmc_publish', 100 );
+            if ( is_wp_error( $linked ) ) {
+                throw new Exception( $linked->get_error_message() );
+            }
+
+            $audit = MDG_DB::table( 'audit_log' );
+            if ( self::table_exists( $audit ) ) {
+                $wpdb->insert( $audit, array(
+                    'user_id'     => get_current_user_id(),
+                    'action_key'  => 'event.draft.created_from_mmc',
+                    'object_type' => 'event',
+                    'object_id'   => $mdg_event_id,
+                    'context'     => wp_json_encode( array(
+                        'program_id'   => $program_id,
+                        'program_code' => (string) $program->program_code,
+                        'session_count'=> count( $session_rows ),
+                        'ticket_count' => count( $ticket_rows ),
+                    ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+                    'created_at'  => $now,
+                ) );
+            }
+
+            $wpdb->query( 'COMMIT' );
+        } catch ( Throwable $e ) {
+            $wpdb->query( 'ROLLBACK' );
+            return new WP_Error( 'mmc_mdg_publish_create', $e->getMessage() ?: 'MDG taslağı oluşturulurken hata oluştu.' );
+        }
+
+        MMC_Program_Service::add_log(
+            $program_id,
+            'mdg_draft_created_from_program',
+            'mdg_event',
+            $mdg_event_id,
+            null,
+            array(
+                'program_code' => (string) $program->program_code,
+                'venue'        => (string) $venue->name,
+                'sessions'     => count( $session_rows ),
+                'tickets'      => count( $ticket_rows ),
+            ),
+            'MMC programı Etkinlik Yayınla için MDG taslağına aktarıldı.'
+        );
+
+        return $mdg_event_id;
+    }
+
+    private static function resolve_mdg_venue( $program_venue ) {
+        if ( ! $program_venue || ! class_exists( 'MDG_Venues' ) ) { return null; }
+
+        if ( 'mdg' === (string) ( $program_venue->venue_source ?? '' ) ) {
+            $venue = MDG_Venues::get( (int) $program_venue->venue_id );
+            if ( $venue && (int) $venue->is_active === 1 ) { return $venue; }
+        }
+
+        foreach ( (array) MDG_Venues::all( true ) as $candidate ) {
+            if ( self::same_text( $candidate->province_name ?? '', $program_venue->province_name ?? '' )
+                && self::same_text( $candidate->district ?? '', $program_venue->district_name ?? '' )
+                && self::same_text( $candidate->name ?? '', $program_venue->venue_name ?? '' ) ) {
+                return $candidate;
+            }
+        }
+        return null;
+    }
+
+    private static function mdg_ticket_code( $code ) {
+        $code = sanitize_key( $code );
+        $map = array(
+            'child'       => 'COCUK',
+            'adult'       => 'YETISKIN',
+            'family_2_2'  => 'AILE_2_2',
+        );
+        if ( isset( $map[ $code ] ) ) { return $map[ $code ]; }
+        $raw = strtoupper( remove_accents( $code ) );
+        $raw = preg_replace( '/[^A-Z0-9_]+/', '_', $raw );
+        return substr( trim( $raw, '_' ) ?: 'BILET', 0, 40 );
+    }
+
     public static function backfill_existing_programs() {
         if ( ! self::legacy_available() || ! self::table_exists(self::table()) ) { return; }
         global $wpdb;
@@ -446,6 +744,16 @@ class MMC_MDG_Bridge_Service {
     }
 
     private static function selected_venue_name( $program_id ) {
+        if ( class_exists( 'MMC_Event_Service' ) && class_exists( 'MMC_Venue_Service' ) ) {
+            $event = MMC_Event_Service::event_for_program( absint( $program_id ) );
+            if ( $event && ! empty( $event->program_venue_id ) ) {
+                $venue = MMC_Venue_Service::get_program_venue( (int) $event->program_venue_id );
+                if ( $venue && ! empty( $venue->venue_name ) ) {
+                    return (string) $venue->venue_name;
+                }
+            }
+        }
+
         global $wpdb;
         $pv = $wpdb->prefix . 'mmc_program_venues';
         $v = $wpdb->prefix . 'mmc_venues';
