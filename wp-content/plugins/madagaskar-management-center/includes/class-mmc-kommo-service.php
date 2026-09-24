@@ -356,7 +356,7 @@ class MMC_Kommo_Service {
 
             if ( self::is_retryable_error( $result ) && $attempt < 4 ) {
                 $delay = self::retry_delay_seconds( $attempt );
-                $available = wp_date( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $delay );
+                $available = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $delay );
 
                 $wpdb->update($table,array(
                     'status'=>'queued',
