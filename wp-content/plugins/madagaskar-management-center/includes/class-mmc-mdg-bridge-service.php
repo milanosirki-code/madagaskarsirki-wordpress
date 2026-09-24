@@ -230,6 +230,7 @@ class MMC_MDG_Bridge_Service {
             'available' => self::legacy_available(),
             'version' => self::engine_version(),
             'linked' => false,
+            'stale' => false,
             'bridge' => null,
             'event' => null,
             'candidates' => array(),
@@ -249,6 +250,8 @@ class MMC_MDG_Bridge_Service {
         $event = self::get_mdg_event( (int)$bridge->mdg_event_id );
         if ( ! $event ) {
             $result['bridge'] = $bridge;
+            $result['stale'] = true;
+            $result['candidates'] = self::candidates( $program_id );
             return $result;
         }
 
