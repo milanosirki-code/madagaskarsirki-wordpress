@@ -7,17 +7,25 @@ class MMC_Integrity_Service {
         $page = sanitize_key( wp_unslash( $_REQUEST['page'] ?? '' ) );
         if ( 0 !== strpos( $page, 'mmc-' ) && 0 !== strpos( $page, 'mad-okul' ) ) { return; }
 
-        $program_id = absint( $_REQUEST['mmc_program_id'] ?? $_REQUEST['program_id'] ?? 0 );
+        $program_id = self::request_program_id();
         if ( $program_id && MMC_Program_Service::get_program( $program_id ) ) {
             update_user_meta( get_current_user_id(), 'mmc_active_program_id', $program_id );
         }
     }
 
     public static function active_program_id() {
-        $program_id = absint( $_REQUEST['mmc_program_id'] ?? $_REQUEST['program_id'] ?? 0 );
+        $program_id = self::request_program_id();
         if ( $program_id && MMC_Program_Service::get_program( $program_id ) ) { return $program_id; }
         $saved = absint( get_user_meta( get_current_user_id(), 'mmc_active_program_id', true ) );
         return $saved && MMC_Program_Service::get_program( $saved ) ? $saved : 0;
+    }
+
+    private static function request_program_id() {
+        $page = sanitize_key( wp_unslash( $_REQUEST['page'] ?? '' ) );
+        if ( 0 === strpos( $page, 'mad-okul' ) ) {
+            return absint( $_REQUEST['mmc_program_id'] ?? 0 );
+        }
+        return absint( $_REQUEST['program_id'] ?? $_REQUEST['mmc_program_id'] ?? 0 );
     }
 
     public static function maybe_redirect_to_context() {
@@ -131,9 +139,26 @@ class MMC_Integrity_Service {
                 ) );
             }
         }
-        $sales_sev = $mapping_mismatch ? 'critical' : ( $expected && $mapped >= $expected ? 'ok' : 'warning' );
-        $sales_detail = $event ? ( 'Eşleştirme ' . $mapped . '/' . $expected . ( $mapping_mismatch ? ' · farklı event_id kullanan kayıt var' : '' ) ) : 'Önce etkinlik oluşturulmalı.';
-        $out[] = self::row( 'sales', 'WooCommerce / Tickera / Satış', $sales_sev, $sales_detail, self::url( 'mmc-sales', $program_id ) );
+        $publish_sev = $mapping_mismatch ? 'critical' : ( $expected && $mapped >= $expected ? 'ok' : 'warning' );
+        $publish_detail = $event ? ( 'Event durumu: ' . $event->status . ' · satış nesnesi eşleştirmesi ' . $mapped . '/' . $expected . ( $mapping_mismatch ? ' · farklı event_id kullanan kayıt var' : '' ) ) : 'Önce etkinlik oluşturulmalı.';
+        $out[] = self::row( 'publish', 'Etkinlik Yayın / WooCommerce / Tickera', $publish_sev, $publish_detail, self::url( 'mmc-events', $program_id ) );
+
+        $orders = 0; $net_revenue = 0.0;
+        if ( self::table_exists( $wpdb->prefix . 'mmc_sales_ledger' ) ) {
+            $sales_row = $wpdb->get_row( $wpdb->prepare(
+                "SELECT COUNT(DISTINCT external_order_id) orders_count,COALESCE(SUM(net_amount),0) net_revenue
+                 FROM {$wpdb->prefix}mmc_sales_ledger WHERE program_id=%d",
+                $program_id
+            ) );
+            if ( $sales_row ) { $orders=(int)$sales_row->orders_count; $net_revenue=(float)$sales_row->net_revenue; }
+        }
+        $sales_open = $event && 'sales_open' === (string)$event->status;
+        $out[] = self::row(
+            'sales', 'Satış & Doluluk',
+            $sales_open ? 'ok' : 'warning',
+            ( $event ? 'Event: '.$event->status.' · ' : '' ) . $orders . ' sipariş · ' . number_format_i18n( $net_revenue, 2 ) . ' TL net ciro · program_id=' . $program_id,
+            self::url( 'mmc-sales', $program_id )
+        );
 
         $meta = self::one_where( 'mmc_meta_plans', 'program_id', $program_id );
         $marketing_items = self::count_where( 'mmc_marketing_items', 'program_id', $program_id );
