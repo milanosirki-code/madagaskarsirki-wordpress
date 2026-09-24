@@ -102,16 +102,21 @@ class MMC_MDG_Publish_Admin {
             $mdg_event = MMC_MDG_Bridge_Service::get_mdg_event( (int) $preview['bridge']->mdg_event_id );
             if ( $mdg_event ) {
                 $url = add_query_arg(
-                    array(
-                        'page'       => 'mdg-publish',
-                        'edit'       => (int) $mdg_event->id,
-                        'program_id' => (int) $program_id,
-                    ),
+                    'draft' === (string) $mdg_event->status
+                        ? array(
+                            'page'       => 'mdg-publish',
+                            'edit'       => (int) $mdg_event->id,
+                            'program_id' => (int) $program_id,
+                        )
+                        : array(
+                            'page'       => 'mdg-live-events',
+                            'program_id' => (int) $program_id,
+                        ),
                     admin_url( 'admin.php' )
                 );
                 echo '<div style="padding:10px 12px;background:#edfaef;border-left:4px solid #00a32a;margin-top:10px;">';
                 echo '<strong>✓ Bu MMC programı MDG etkinliğine bağlı.</strong> ';
-                echo '<a class="button button-small" href="' . esc_url( $url ) . '">Bağlı Taslağı / Etkinliği Aç</a>';
+                echo '<a class="button button-small" href="' . esc_url( $url ) . '">' . esc_html( 'draft' === (string) $mdg_event->status ? 'Bağlı Taslağı Aç' : 'Bağlı Etkinliği Aç' ) . '</a>';
                 echo '</div>';
                 echo '</div>';
                 return;
@@ -192,7 +197,7 @@ class MMC_MDG_Publish_Admin {
                 array(
                     'page'          => 'mdg-publish',
                     'program_id'    => absint( $program_id ),
-                    'mmc_mdg_error' => rawurlencode( (string) $message ),
+                    'mmc_mdg_error' => (string) $message,
                 ),
                 admin_url( 'admin.php' )
             )
