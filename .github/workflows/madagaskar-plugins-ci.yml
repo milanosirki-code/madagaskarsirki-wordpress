@@ -49,7 +49,9 @@ jobs:
           grep -Eq "admin_menu_cleanup_js" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
           grep -Eq "tickera_status" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "WooCommerce → MDG → Tickera Zinciri" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
-          grep -Eq "MMC_Snippet_Inventory_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php\n          grep -Eq "Snippet Envanteri & Çakışma Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php\n          grep -Eq "MMC_Snippet_Inventory_Service::health_check" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
+          grep -Eq "MMC_Snippet_Inventory_Service" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php
+          grep -Eq "Snippet Envanteri & Çakışma Merkezi" wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php
+          grep -Eq "MMC_Snippet_Inventory_Service::health_check" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "connection_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "pipeline_diagnostics" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           grep -Eq "pipeline_catalog" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
