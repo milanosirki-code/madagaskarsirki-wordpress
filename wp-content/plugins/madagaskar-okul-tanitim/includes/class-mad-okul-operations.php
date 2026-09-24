@@ -7,6 +7,131 @@ final class Mad_Okul_Operations {
         return $wpdb->prefix . 'mad_okul_programlar';
     }
 
+    public static function mmc_program_context($mmc_program_id) {
+        global $wpdb;
+        $mmc_program_id=absint($mmc_program_id);
+        $programs=$wpdb->prefix.'mmc_programs';
+        $program_venues=$wpdb->prefix.'mmc_program_venues';
+        $venues=$wpdb->prefix.'mmc_venues';
+        if(!$mmc_program_id || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$programs))!==$programs){
+            return new WP_Error('mad_okul_mmc_missing','MMC program tablosu bulunamadı.');
+        }
+        $program=$wpdb->get_row($wpdb->prepare("SELECT * FROM $programs WHERE id=%d LIMIT 1",$mmc_program_id));
+        if(!$program) return new WP_Error('mad_okul_mmc_program_missing','MMC programı bulunamadı.');
+
+        $venue=null;
+        if($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$program_venues))===$program_venues && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$venues))===$venues){
+            $venue=$wpdb->get_row($wpdb->prepare(
+                "SELECT pv.*,v.venue_name,v.address,v.province_name,v.district_name
+                 FROM $program_venues pv INNER JOIN $venues v ON v.id=pv.venue_id
+                 WHERE pv.program_id=%d AND pv.is_selected=1
+                 ORDER BY (pv.allocation_status='approved') DESC,pv.id DESC LIMIT 1",
+                $mmc_program_id
+            ));
+        }
+        return (object)['program'=>$program,'venue'=>$venue];
+    }
+
+    public static function bridge_status($mmc_program_id) {
+        global $wpdb;
+        $ctx=self::mmc_program_context($mmc_program_id);
+        if(is_wp_error($ctx)) return $ctx;
+        $table=self::programs_table();
+        $linked=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE mmc_program_id=%d LIMIT 1",absint($mmc_program_id)));
+        if($linked){
+            $same_il=mad_okul_place_title($linked->il)===mad_okul_place_title($ctx->program->province_name);
+            $same_ilce=mad_okul_place_title($linked->ilce)===mad_okul_place_title($ctx->program->district_name);
+            if(!$same_il || !$same_ilce){
+                return ['linked'=>false,'ambiguous'=>true,'detail'=>'Bağlı eski okul programının il/ilçesi MMC programıyla uyuşmuyor.'];
+            }
+            return ['linked'=>true,'ambiguous'=>false,'legacy_program_id'=>(int)$linked->id,'detail'=>'MMC ID '.absint($mmc_program_id).' ↔ Okul Tanıtım legacy #'.(int)$linked->id.' bağlı.'];
+        }
+
+        $candidates=self::legacy_candidates($ctx->program);
+        if(count($candidates)>1){
+            return ['linked'=>false,'ambiguous'=>true,'detail'=>count($candidates).' eski okul programı aynı bölgeyle eşleşiyor; otomatik bağlama için tarih/salon ayrımı gerekiyor.'];
+        }
+        if(count($candidates)===1){
+            return ['linked'=>false,'ambiguous'=>false,'legacy_program_id'=>(int)$candidates[0]->id,'detail'=>'Eşleşebilecek eski okul programı #'.(int)$candidates[0]->id.' bulundu; bağlantı henüz kaydedilmedi.'];
+        }
+        return ['linked'=>false,'ambiguous'=>false,'detail'=>'Bu MMC programına bağlı eski Okul Tanıtım programı yok; güvenli uyumluluk kaydı oluşturulabilir.'];
+    }
+
+    public static function ensure_mmc_bridge($mmc_program_id) {
+        global $wpdb;
+        $mmc_program_id=absint($mmc_program_id);
+        $ctx=self::mmc_program_context($mmc_program_id);
+        if(is_wp_error($ctx)) return $ctx;
+        $table=self::programs_table();
+        $now=current_time('mysql');
+        $linked=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE mmc_program_id=%d LIMIT 1",$mmc_program_id));
+
+        $payload=[
+            'program_adi'=>$ctx->program->program_code.' — '.$ctx->program->province_name.' / '.($ctx->program->district_name ?: 'Genel'),
+            'il'=>mad_okul_place_title($ctx->program->province_name),
+            'ilce'=>mad_okul_place_title($ctx->program->district_name),
+            'etkinlik_tarihi'=>$ctx->program->planned_date ?: null,
+            'durum'=>'Aktif',
+            'updated_at'=>$now,
+        ];
+        if($ctx->venue){
+            $payload['salon_adi']=(string)$ctx->venue->venue_name;
+            $payload['salon_adresi']=(string)$ctx->venue->address;
+        }
+
+        if(!$linked){
+            $candidates=self::legacy_candidates($ctx->program);
+            if(count($candidates)>1){
+                return new WP_Error('mad_okul_bridge_ambiguous','Birden fazla eski Okul Tanıtım programı aynı MMC programıyla eşleşiyor. Otomatik onarım durduruldu.');
+            }
+            if(count($candidates)===1){
+                $linked=$candidates[0];
+                $payload['mmc_program_id']=$mmc_program_id;
+                $wpdb->update($table,$payload,['id'=>(int)$linked->id]);
+            }else{
+                $payload['mmc_program_id']=$mmc_program_id;
+                if(!isset($payload['salon_adi'])) $payload['salon_adi']='';
+                if(!isset($payload['salon_adresi'])) $payload['salon_adresi']='';
+                $payload['created_at']=$now;
+                $wpdb->insert($table,$payload);
+                $linked=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d",(int)$wpdb->insert_id));
+            }
+        }else{
+            $wpdb->update($table,$payload,['id'=>(int)$linked->id]);
+        }
+
+        $linked=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE mmc_program_id=%d LIMIT 1",$mmc_program_id));
+        if(!$linked) return new WP_Error('mad_okul_bridge_failed','Okul Tanıtım köprüsü oluşturulamadı.');
+
+        $schools=mad_okul_table();
+        if($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$schools))===$schools){
+            $wpdb->query($wpdb->prepare(
+                "UPDATE $schools SET mmc_program_id=%d,updated_at=%s WHERE program_id=%d",
+                $mmc_program_id,$now,(int)$linked->id
+            ));
+        }
+        return $linked;
+    }
+
+    public static function mmc_id_for_legacy($legacy_program_id) {
+        global $wpdb;
+        return (int)$wpdb->get_var($wpdb->prepare("SELECT mmc_program_id FROM ".self::programs_table()." WHERE id=%d",absint($legacy_program_id)));
+    }
+
+    private static function legacy_candidates($mmc_program) {
+        global $wpdb;
+        $rows=$wpdb->get_results("SELECT * FROM ".self::programs_table()." WHERE mmc_program_id IS NULL OR mmc_program_id=0 ORDER BY id DESC");
+        $matches=[];
+        $province=mad_okul_place_title($mmc_program->province_name);
+        $district=mad_okul_place_title($mmc_program->district_name);
+        foreach((array)$rows as $row){
+            if(mad_okul_place_title($row->il)!==$province || mad_okul_place_title($row->ilce)!==$district) continue;
+            if($mmc_program->planned_date && $row->etkinlik_tarihi && $row->etkinlik_tarihi!==$mmc_program->planned_date) continue;
+            $matches[]=$row;
+        }
+        return $matches;
+    }
+
     public static function activate() {
         global $wpdb;
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -14,6 +139,7 @@ final class Mad_Okul_Operations {
         $charset = $wpdb->get_charset_collate();
         dbDelta("CREATE TABLE $table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            mmc_program_id bigint(20) unsigned DEFAULT NULL,
             program_adi varchar(190) NOT NULL,
             il varchar(100) NOT NULL,
             ilce varchar(100) NOT NULL,
@@ -26,6 +152,7 @@ final class Mad_Okul_Operations {
             created_at datetime NOT NULL,
             updated_at datetime NOT NULL,
             PRIMARY KEY (id),
+            UNIQUE KEY mmc_program_id (mmc_program_id),
             KEY il_ilce (il(40), ilce(40)),
             KEY durum (durum)
         ) $charset;");
@@ -114,27 +241,32 @@ final class Mad_Okul_Operations {
         if (!current_user_can('manage_options')) return;
         global $wpdb;
         $programs = self::programs();
+        $mmc_program_id = absint($_GET['mmc_program_id'] ?? 0);
         $program_id = absint($_GET['program_id'] ?? 0);
+        if($mmc_program_id){
+            $bridge=self::ensure_mmc_bridge($mmc_program_id);
+            if(!is_wp_error($bridge)) $program_id=(int)$bridge->id;
+        }
         $program = $program_id ? $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::programs_table().' WHERE id=%d', $program_id)) : null;
         $users = get_users(['role__in'=>['mad_tanitim_elemani','administrator'],'orderby'=>'display_name']);
         $schools = $program ? $wpdb->get_results($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE il=%s AND ilce=%s ORDER BY CASE WHEN route_order>0 THEN 0 ELSE 1 END, route_order, kurum_adi', $program->il, $program->ilce)) : [];
         ?>
         <div class="wrap mad-okul-wrap"><h1>Görev Dağıtımı</h1>
           <?php if (!empty($_GET['assigned'])): ?><div class="notice notice-success is-dismissible"><p><?php echo absint($_GET['assigned']); ?> okul personele atandı.</p></div><?php endif; ?>
-          <form method="get" class="mad-filter"><input type="hidden" name="page" value="mad-okul-assign"><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $p): ?><option value="<?php echo (int)$p->id; ?>" <?php selected($program_id,$p->id); ?>><?php echo esc_html($p->program_adi); ?></option><?php endforeach; ?></select><button class="button">Okulları Getir</button></form>
+          <form method="get" class="mad-filter"><input type="hidden" name="page" value="mad-okul-assign"><?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><strong>MMC Program ID <?php echo (int)$mmc_program_id; ?> · <?php echo esc_html($program ? $program->program_adi : ''); ?></strong><?php else: ?><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $p): ?><option value="<?php echo (int)$p->id; ?>" <?php selected($program_id,$p->id); ?>><?php echo esc_html($p->program_adi); ?></option><?php endforeach; ?></select><button class="button">Okulları Getir</button><?php endif; ?></form>
           <?php if ($program): ?>
           <p><strong><?php echo esc_html($program->salon_adi); ?></strong> başlangıç noktası · <?php echo count($schools); ?> kurum</p>
           <p>
             <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_schools&program_id='.(int)$program->id),'mad_okul_geocode_schools_'.$program->id)); ?>">Eksik Okul Koordinatlarını Bul</a>
             <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_sort_route&program_id='.(int)$program->id),'mad_okul_sort_route_'.$program->id)); ?>">Salondan Yakından Uzağa Sırala</a>
             <a class="button button-primary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_driving_route&program_id='.(int)$program->id),'mad_okul_driving_route_'.$program->id)); ?>">Gerçek Sürüş Mesafesine Göre Sırala</a>
-            <a class="button" href="<?php echo esc_url(add_query_arg(['page'=>'mad-okul-route-plan','program_id'=>(int)$program->id],admin_url('admin.php'))); ?>">Rota Planı / PDF</a>
+            <a class="button" href="<?php echo esc_url(add_query_arg(array_filter(['page'=>'mad-okul-route-plan','program_id'=>(int)$program->id,'mmc_program_id'=>$mmc_program_id]),admin_url('admin.php'))); ?>">Rota Planı / PDF</a>
           </p>
           <?php if(isset($_GET['geo'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['geo']); ?> okul koordinatlandırıldı. Kalan: <?php echo absint($_GET['remaining'] ?? 0); ?>.</p></div><?php endif; ?>
           <?php if(isset($_GET['sorted'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['sorted']); ?> okul salona kuş uçuşu mesafesine göre sıralandı.</p></div><?php endif; ?>
           <?php if(isset($_GET['driving'])): ?><div class="notice notice-success inline"><p><?php echo absint($_GET['driving']); ?> okul gerçek sürüş mesafesine göre sıralandı.</p></div><?php endif; ?>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="mad_okul_assign_tasks"><input type="hidden" name="program_id" value="<?php echo (int)$program->id; ?>"><?php wp_nonce_field('mad_okul_assign_tasks'); ?>
+            <input type="hidden" name="action" value="mad_okul_assign_tasks"><input type="hidden" name="program_id" value="<?php echo (int)$program->id; ?>"><?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?><?php wp_nonce_field('mad_okul_assign_tasks'); ?>
             <p><label>Tanıtım elemanı <select name="assigned_user_id" required><option value="">Seçin</option><?php foreach($users as $u): ?><option value="<?php echo (int)$u->ID; ?>"><?php echo esc_html($u->display_name); ?></option><?php endforeach; ?></select></label> <label>Rota grubu <input name="route_group" value="A" size="6"></label></p>
             <table class="widefat striped"><thead><tr><th><input type="checkbox" id="mad-assign-all"></th><th>Sıra</th><th>Kurum</th><th>Adres</th></tr></thead><tbody><?php foreach($schools as $i=>$s): ?><tr><td><input type="checkbox" name="school_ids[]" value="<?php echo (int)$s->id; ?>"></td><td><?php echo $i+1; ?></td><td><?php echo esc_html($s->kurum_adi); ?></td><td><?php echo esc_html($s->adres); ?></td></tr><?php endforeach; ?></tbody></table>
             <p><button class="button button-primary">Seçilen Okulları Ata</button></p>
@@ -148,10 +280,11 @@ final class Mad_Okul_Operations {
         check_admin_referer('mad_okul_assign_tasks');
         global $wpdb;
         $ids = array_values(array_filter(array_map('absint', $_POST['school_ids'] ?? [])));
-        $uid = absint($_POST['assigned_user_id'] ?? 0); $pid = absint($_POST['program_id'] ?? 0);
+        $uid = absint($_POST['assigned_user_id'] ?? 0); $pid = absint($_POST['program_id'] ?? 0); $mmc_program_id=absint($_POST['mmc_program_id'] ?? 0);
         $group = sanitize_text_field($_POST['route_group'] ?? 'A');
-        foreach ($ids as $order=>$id) $wpdb->update(mad_okul_table(), ['program_id'=>$pid,'assigned_user_id'=>$uid,'route_group'=>$group,'route_order'=>$order+1,'durum'=>'Atandı','updated_at'=>current_time('mysql')], ['id'=>$id]);
-        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-assign','program_id'=>$pid,'assigned'=>count($ids)], admin_url('admin.php'))); exit;
+        foreach ($ids as $order=>$id) $wpdb->update(mad_okul_table(), ['program_id'=>$pid,'mmc_program_id'=>$mmc_program_id ?: null,'assigned_user_id'=>$uid,'route_group'=>$group,'route_order'=>$order+1,'durum'=>'Atandı','updated_at'=>current_time('mysql')], ['id'=>$id]);
+        $args=['page'=>'mad-okul-assign','program_id'=>$pid,'assigned'=>count($ids)]; if($mmc_program_id)$args['mmc_program_id']=$mmc_program_id;
+        wp_safe_redirect(add_query_arg($args, admin_url('admin.php'))); exit;
     }
 
     private static function directions_url($destination) {
