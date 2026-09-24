@@ -105,7 +105,6 @@ final class MMC_Publish_Content_Excel {
                 array( '{{IL}}', 'MMC Program', 'İl' ),
                 array( '{{ILCE}}', 'MMC Program', 'İlçe' ),
                 array( '{{YER}}', 'MMC Program', 'İl / ilçe gösterimi' ),
-                array( '{{SALON}}', 'Kesin Salon', 'Salon adı' ),
                 array( '{{TARIH}}', 'MMC Etkinlik', 'Etkinlik tarihi' ),
                 array( '{{TARIH_UZUN}}', 'MMC Etkinlik', 'Uzun Türkçe tarih' ),
                 array( '{{SALON}}', 'Kesin Salon', 'Salon adı' ),
