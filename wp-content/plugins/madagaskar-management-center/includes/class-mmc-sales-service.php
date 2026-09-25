@@ -407,9 +407,9 @@ class MMC_Sales_Service {
     public static function mapping_coverage( $event_id ) {
         global $wpdb;
         $sessions = MMC_Event_Service::sessions( $event_id );
-        $tickets  = array_filter( MMC_Event_Service::ticket_types( $event_id ), function($t){ return (int)$t->is_active===1; } );
+        $tickets  = array_filter( MMC_Event_Service::ticket_types( $event_id ), function($t){ return (int)$t->is_active===1 && (string)$t->ticket_code!=='family_2_2'; } );
         $required = count($sessions) * count($tickets);
-        $mapped = (int)$wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_mappings WHERE event_id=%d AND is_active=1 AND wc_product_id IS NOT NULL AND wc_product_id>0", absint($event_id) ) );
+        $mapped = (int)$wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_mappings m JOIN {$wpdb->prefix}mmc_ticket_types t ON t.id=m.ticket_type_id WHERE m.event_id=%d AND m.is_active=1 AND m.wc_product_id>0 AND t.ticket_code<>'family_2_2'", absint($event_id) ) );
         return array( 'required'=>$required, 'mapped'=>$mapped, 'complete'=>$required>0 && $mapped >= $required );
     }
 

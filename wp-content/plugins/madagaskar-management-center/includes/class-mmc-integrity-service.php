@@ -397,6 +397,7 @@ class MMC_Integrity_Service {
             $identity_sev,
             'Satış eşleştirmesi ' . $matched . '/' . $expected .
             ' · MMC seans ' . (int)$s['sessions_mmc'] . ' · MDG seans ' . (int)$s['sessions_mdg'] .
+            ( !empty($s['sales_source_event_id']) && (int)$s['sales_source_event_id'] !== (int)$s['event']->id ? ' · içerik MDG #' . (int)$s['event']->id . ' · satış MDG #' . (int)$s['sales_source_event_id'] : '' ) .
             ( $expected && $matched !== $expected ? ' · ÜRÜN/VARYASYON/TICKERA EŞLEŞMESİ FARKLI' : '' ),
             $url
         );
