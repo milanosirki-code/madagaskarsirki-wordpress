@@ -12,7 +12,6 @@ final class Mad_Okul_Operations {
         $mmc_program_id=absint($mmc_program_id);
         $programs=$wpdb->prefix.'mmc_programs';
         $program_venues=$wpdb->prefix.'mmc_program_venues';
-        $venues=$wpdb->prefix.'mmc_venues';
         if(!$mmc_program_id || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$programs))!==$programs){
             return new WP_Error('mad_okul_mmc_missing','MMC program tablosu bulunamadı.');
         }
@@ -20,16 +19,30 @@ final class Mad_Okul_Operations {
         if(!$program) return new WP_Error('mad_okul_mmc_program_missing','MMC programı bulunamadı.');
 
         $venue=null;
-        if($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$program_venues))===$program_venues && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$venues))===$venues){
-            $venue=$wpdb->get_row($wpdb->prepare(
-                "SELECT pv.*,v.venue_name,v.address,v.province_name,v.district_name
-                 FROM $program_venues pv INNER JOIN $venues v ON v.id=pv.venue_id
-                 WHERE pv.program_id=%d AND pv.is_selected=1 AND pv.allocation_status='approved'
-                 ORDER BY pv.id DESC LIMIT 1",
-                $mmc_program_id
-            ));
+        $manual=false;
+        if(class_exists('MMC_Venue_Service') && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$program_venues))===$program_venues){
+            $approved_id=(int)$wpdb->get_var($wpdb->prepare("SELECT id FROM $program_venues WHERE program_id=%d AND is_selected=1 AND allocation_status='approved' ORDER BY id DESC LIMIT 1",$mmc_program_id));
+            if($approved_id) $venue=MMC_Venue_Service::get_program_venue($approved_id);
+            if(!$venue){
+                $table=self::programs_table();
+                $manual_id=(int)$wpdb->get_var($wpdb->prepare("SELECT route_program_venue_id FROM $table WHERE mmc_program_id=%d LIMIT 1",$mmc_program_id));
+                if($manual_id){
+                    $candidate=MMC_Venue_Service::get_program_venue($manual_id);
+                    if(self::venue_matches_program($candidate,$program)){
+                        $venue=$candidate;
+                        $manual=true;
+                    }
+                }
+            }
         }
-        return (object)['program'=>$program,'venue'=>$venue];
+        return (object)['program'=>$program,'venue'=>$venue,'manual'=>$manual];
+    }
+
+    private static function venue_matches_program($venue,$program){
+        return $venue && $program && (int)$venue->program_id===(int)$program->id
+            && !empty($venue->venue_name) && !empty($venue->address)
+            && mad_okul_place_title($venue->province_name)===mad_okul_place_title($program->province_name)
+            && mad_okul_place_title($venue->district_name)===mad_okul_place_title($program->district_name);
     }
 
     public static function bridge_status($mmc_program_id) {
@@ -77,16 +90,22 @@ final class Mad_Okul_Operations {
         if($ctx->venue){
             $payload['salon_adi']=(string)$ctx->venue->venue_name;
             $payload['salon_adresi']=(string)$ctx->venue->address;
+            $payload['salon_maps_url']=esc_url_raw($ctx->venue->maps_url ?? '');
             // MMC salon tablosu koordinat tutmuyor. Eski ilçe merkezi koordinatını
             // yeni salon için devralmayın; kesin adresle yeniden geocode edilsin.
             if(!$linked || $linked->salon_adi!==$payload['salon_adi'] || $linked->salon_adresi!==$payload['salon_adresi']){
                 $payload['latitude']=null;
                 $payload['longitude']=null;
             }
+            if(is_numeric($ctx->venue->latitude ?? null) && is_numeric($ctx->venue->longitude ?? null)){
+                $payload['latitude']=(float)$ctx->venue->latitude;
+                $payload['longitude']=(float)$ctx->venue->longitude;
+            }
         }else{
             // MMC'de kesin salon yoksa eski ilçe merkezini salon konumu gibi göstermeyin.
             $payload['salon_adi']='';
             $payload['salon_adresi']='';
+            $payload['salon_maps_url']='';
             $payload['latitude']=null;
             $payload['longitude']=null;
         }
@@ -157,6 +176,8 @@ final class Mad_Okul_Operations {
             ilce varchar(100) NOT NULL,
             salon_adi varchar(190) NOT NULL,
             salon_adresi text NOT NULL,
+            salon_maps_url text NULL,
+            route_program_venue_id bigint(20) unsigned DEFAULT NULL,
             etkinlik_tarihi date NULL,
             latitude decimal(10,7) NULL,
             longitude decimal(10,7) NULL,
@@ -180,6 +201,7 @@ final class Mad_Okul_Operations {
     public static function boot() {
         add_action('admin_menu', [__CLASS__, 'menus'], 20);
         add_action('admin_post_mad_okul_save_program', [__CLASS__, 'save_program']);
+        add_action('admin_post_mad_okul_route_venue_link', [__CLASS__, 'route_venue_link']);
         add_action('admin_post_mad_okul_assign_tasks', [__CLASS__, 'assign_tasks']);
         add_action('admin_post_mad_okul_task_status', [__CLASS__, 'task_status']);
         add_action('admin_post_mad_okul_save_settings', [__CLASS__, 'save_settings']);
@@ -206,6 +228,10 @@ final class Mad_Okul_Operations {
         if (!current_user_can('manage_options')) return;
         $mmc_program_id=absint($_GET['mmc_program_id'] ?? 0);
         $mmc_program=$mmc_program_id ? self::ensure_mmc_bridge($mmc_program_id) : null;
+        $mmc_ctx=$mmc_program_id ? self::mmc_program_context($mmc_program_id) : null;
+        global $wpdb;
+        $pv_table=$wpdb->prefix.'mmc_program_venues';
+        $venue_links=$mmc_program_id && class_exists('MMC_Venue_Service') ? $wpdb->get_col($wpdb->prepare("SELECT id FROM $pv_table WHERE program_id=%d ORDER BY id DESC",$mmc_program_id)) : [];
         $programs = self::programs();
         ?>
         <div class="wrap mad-okul-wrap">
@@ -213,10 +239,24 @@ final class Mad_Okul_Operations {
           <p class="description">Gösteri salonu rota planının başlangıç noktasıdır.</p>
           <?php if($mmc_program_id): ?>
             <?php if(is_wp_error($mmc_program)): ?><div class="notice notice-error inline"><p><?php echo esc_html($mmc_program->get_error_message()); ?></p></div>
-            <?php else: ?><div class="notice notice-info inline"><p><strong>Aktif MMC programı:</strong> <?php echo esc_html($mmc_program->program_adi); ?>. Kesin salon ve adres MMC üzerinden yönetilir. <a href="<?php echo esc_url(add_query_arg(['page'=>'mmc-venue-flow','program_id'=>$mmc_program_id],admin_url('admin.php'))); ?>">Salon bağlantısını aç</a></p></div><?php endif; ?>
+            <?php else: ?><div class="notice notice-info inline"><p><strong>Aktif MMC programı:</strong> <?php echo esc_html($mmc_program->program_adi); ?>. Salon ve adres MMC üzerinden yönetilir. <a href="<?php echo esc_url(add_query_arg(['page'=>'mmc-venue-flow','program_id'=>$mmc_program_id],admin_url('admin.php'))); ?>">Salon bağlantısını aç</a></p></div>
+            <?php if(isset($_GET['venue_linked'])): ?><div class="notice notice-success inline"><p>Rota başlangıç salonu programa bağlandı.</p></div><?php endif; ?>
+            <h2>Rota başlangıç salonu</h2>
+            <p>Programa bağlı salonu seçin. Bu bağlantı yalnızca Okul Rotası için kullanılır; MMC salon tahsisini onaylamaz.</p>
+            <?php if($mmc_ctx && !is_wp_error($mmc_ctx) && $mmc_ctx->venue): ?><p><strong>Mevcut başlangıç:</strong> <?php echo esc_html($mmc_ctx->venue->venue_name.' — '.$mmc_ctx->venue->address); ?><?php echo $mmc_ctx->manual ? ' (rota bağlantısı)' : ' (onaylı salon)'; ?></p><?php endif; ?>
+            <?php if($venue_links): ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+              <input type="hidden" name="action" value="mad_okul_route_venue_link"><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>">
+              <?php wp_nonce_field('mad_okul_route_venue_link_'.$mmc_program_id); ?>
+              <label for="route-program-venue">Programa bağlı salon</label>
+              <select id="route-program-venue" name="program_venue_id" required><option value="">Salon seçin</option>
+              <?php foreach($venue_links as $venue_link_id): $candidate=MMC_Venue_Service::get_program_venue($venue_link_id); if(!self::venue_matches_program($candidate,$mmc_ctx->program)) continue; ?>
+                <option value="<?php echo (int)$venue_link_id; ?>" <?php selected((int)$mmc_program->route_program_venue_id,(int)$venue_link_id); ?>><?php echo esc_html($candidate->venue_name.' — '.$candidate->address.' ('.$candidate->allocation_status.')'); ?></option>
+              <?php endforeach; ?></select> <button class="button button-primary">Rotaya Bağla</button>
+            </form><?php else: ?><div class="notice notice-warning inline"><p>Bu programa bağlı salon bulunamadı. Önce MMC Salon ekranından salonu programa ekleyin.</p></div><?php endif; ?>
+            <?php endif; ?><?php endif; ?>
           <?php endif; ?>
           <h2>Bağımsız okul programı oluştur</h2>
-          <p class="description">MMC programı için burada tekrar kayıt açmayın; yukarıdaki Salon bağlantısını kullanın.</p>
+          <p class="description">MMC programı için burada tekrar kayıt açmayın; yukarıdaki rota salonu seçimini kullanın.</p>
           <?php if (!empty($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>Program kaydedildi.</p></div><?php endif; ?>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-program-form">
             <input type="hidden" name="action" value="mad_okul_save_program">
@@ -231,11 +271,28 @@ final class Mad_Okul_Operations {
           <h2>Kayıtlı Programlar</h2>
           <table class="widefat striped"><thead><tr><th>Program</th><th>İl / İlçe</th><th>Salon</th><th>Tarih</th><th>Koordinat</th><th>Harita</th></tr></thead><tbody>
           <?php foreach ($programs as $p): ?>
-            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo $p->salon_adi ? esc_html($p->salon_adi) : 'Kesin salon bekleniyor'; ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><?php if($p->latitude && $p->longitude): echo esc_html($p->latitude.', '.$p->longitude); elseif($p->salon_adi && $p->salon_adresi): ?><a class="button button-small" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_program&program_id='.(int)$p->id),'mad_okul_geocode_program_'.$p->id)); ?>">Koordinat Bul</a><?php else: ?>Kesin salon bekleniyor<?php endif; ?></td><td><?php if($p->salon_adi): ?><a target="_blank" href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a><?php else: ?>—<?php endif; ?></td></tr>
+            <tr><td><?php echo esc_html($p->program_adi); ?></td><td><?php echo esc_html($p->il.' / '.$p->ilce); ?></td><td><?php echo $p->salon_adi ? esc_html($p->salon_adi) : 'Rota salonu bekleniyor'; ?><br><small><?php echo esc_html($p->salon_adresi); ?></small></td><td><?php echo esc_html($p->etkinlik_tarihi ?: '-'); ?></td><td><?php if($p->latitude && $p->longitude): echo esc_html($p->latitude.', '.$p->longitude); elseif($p->salon_adi && $p->salon_adresi): ?><a class="button button-small" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_program&program_id='.(int)$p->id),'mad_okul_geocode_program_'.$p->id)); ?>">Koordinat Bul</a><?php else: ?>Salon bekleniyor<?php endif; ?></td><td><?php if($p->salon_adi): ?><a target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($p->salon_maps_url ?: 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($p->salon_adi.', '.$p->salon_adresi)); ?>">Maps</a><?php else: ?>—<?php endif; ?></td></tr>
           <?php endforeach; ?>
           </tbody></table>
         </div>
         <?php
+    }
+
+    public static function route_venue_link(){
+        if(!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+        $program_id=absint($_POST['mmc_program_id'] ?? 0);
+        check_admin_referer('mad_okul_route_venue_link_'.$program_id);
+        $ctx=self::mmc_program_context($program_id);
+        $venue_id=absint($_POST['program_venue_id'] ?? 0);
+        $venue=$venue_id && class_exists('MMC_Venue_Service') ? MMC_Venue_Service::get_program_venue($venue_id) : null;
+        if(is_wp_error($ctx) || !self::venue_matches_program($venue,$ctx->program ?? null)) wp_die('Salon bu MMC programına veya il/ilçesine bağlı değil.');
+        $bridge=self::ensure_mmc_bridge($program_id);
+        if(is_wp_error($bridge)) wp_die(esc_html($bridge->get_error_message()));
+        global $wpdb;
+        if(false===$wpdb->update(self::programs_table(),['route_program_venue_id'=>$venue_id],['id'=>(int)$bridge->id])) wp_die('Salon bağlantısı kaydedilemedi.');
+        self::ensure_mmc_bridge($program_id);
+        wp_safe_redirect(add_query_arg(['page'=>'mad-okul-programs','mmc_program_id'=>$program_id,'venue_linked'=>1],admin_url('admin.php')));
+        exit;
     }
 
     public static function save_program() {
@@ -276,7 +333,7 @@ final class Mad_Okul_Operations {
           <form method="get" class="mad-filter"><input type="hidden" name="page" value="mad-okul-assign"><?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><strong>MMC Program ID <?php echo (int)$mmc_program_id; ?> · <?php echo esc_html($program ? $program->program_adi : ''); ?></strong><?php else: ?><select name="program_id" required><option value="">Program seçin</option><?php foreach($programs as $p): ?><option value="<?php echo (int)$p->id; ?>" <?php selected($program_id,$p->id); ?>><?php echo esc_html($p->program_adi); ?></option><?php endforeach; ?></select><button class="button">Okulları Getir</button><?php endif; ?></form>
           <?php if ($program): ?>
           <p><strong><?php echo esc_html($program->salon_adi ?: 'Kesin salon bekleniyor'); ?></strong> başlangıç noktası · <?php echo count($schools); ?> kurum</p>
-          <?php if(!$program->salon_adi || !$program->salon_adresi): ?><div class="notice notice-warning inline"><p>Yakından uzağa sıralama ve sürüş rotası için önce MMC’de kesin salonu bağlayın. <?php if($mmc_program_id): ?><a href="<?php echo esc_url(add_query_arg(['page'=>'mmc-venue-flow','program_id'=>$mmc_program_id],admin_url('admin.php'))); ?>">Salon bağlantısını aç</a><?php endif; ?></p></div><?php endif; ?>
+          <?php if(!$program->salon_adi || !$program->salon_adresi): ?><div class="notice notice-warning inline"><p>Rota için önce programın başlangıç salonunu bağlayın. <?php if($mmc_program_id): ?><a href="<?php echo esc_url(add_query_arg(['page'=>'mad-okul-programs','mmc_program_id'=>$mmc_program_id],admin_url('admin.php'))); ?>">Program ve Salonlar</a><?php endif; ?></p></div><?php endif; ?>
           <p>
             <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=mad_okul_geocode_schools&program_id='.(int)$program->id),'mad_okul_geocode_schools_'.$program->id)); ?>">Eksik Okul Koordinatlarını Bul</a>
             <?php if($program->latitude && $program->longitude): ?>
