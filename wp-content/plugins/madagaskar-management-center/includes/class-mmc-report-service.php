@@ -217,13 +217,17 @@ class MMC_Report_Service {
         if('verified'!==$woo['status'] || $woo['orders_count']!==$day['orders_count'] || abs($woo['net_revenue']-$day['net_revenue'])>0.01){
             $urgent[]=array('level'=>'critical','program_id'=>0,'program_code'=>'SATIŞ SİSTEMİ','location'=>'WooCommerce / MMC','message'=>'WooCommerce doğrudan satış doğrulaması ile MMC defteri eşleşmiyor; satış, doluluk ve fatura kararlarında MMC sıfırını kullanmayın.','date'=>$report_date);
         }
+        $event_sales=array();
+        foreach(($woo['events']??array()) as $sold){$event_sales[sanitize_title($sold['name'])]=(int)$sold['ticket_count'];}
+        $urgent_events=array();
         foreach($legacy_events as $legacy){
             if($legacy['date']<$morning->format('Y-m-d') || $legacy['date']>$morning->modify('+2 days')->format('Y-m-d')){continue;}
             if(!$legacy['program_id']){
-                $urgent[]=array('level'=>'high','program_id'=>0,'program_code'=>'MDG #'.$legacy['id'],'location'=>$legacy['name'],'message'=>($legacy['shadow_program']?'Aynı tarih ve konumda '.$legacy['shadow_program'].' var; satıştaki MDG etkinliği farklı köprüye bağlı. ':'').'Yaklaşan gösteri MMC satış/doluluk ve operasyon listesine bağlı değil; saha hazırlığını MDG kaydıyla doğrulayın.','date'=>$legacy['date']);
+                $urgent_events[]=array('level'=>'high','program_id'=>0,'program_code'=>'MDG #'.$legacy['id'],'location'=>$legacy['name'],'message'=>($legacy['shadow_program']?'Aynı tarih ve konumda '.$legacy['shadow_program'].' var; satıştaki MDG etkinliği farklı köprüye bağlı. ':'').'Yaklaşan gösteri MMC satış/doluluk ve operasyon listesine bağlı değil; saha hazırlığını MDG kaydıyla doğrulayın.','date'=>$legacy['date'],'paid_tickets'=>$event_sales[sanitize_title($legacy['name'])]??0);
             }
         }
-        $alerts=array_slice(array_merge($urgent,$alerts),0,20);
+        usort($urgent_events,function($a,$b){return ($b['paid_tickets']<=>$a['paid_tickets']) ?: strcmp($a['date'],$b['date']);});
+        $alerts=array_slice(array_merge($urgent,$urgent_events,$alerts),0,20);
         $priorities = array_slice( $alerts, 0, 3 );
         if ( count( $priorities ) < 3 ) {
             $extra = self::fallback_priorities( 3 - count( $priorities ) );
