@@ -534,10 +534,25 @@ final class Mad_Okul_Operations {
         if (!current_user_can('mad_okul_field_access')) return;
         global $wpdb; $uid = get_current_user_id();
         $rows = $wpdb->get_results($wpdb->prepare('SELECT s.*,p.program_adi,p.salon_adi,p.salon_adresi,p.etkinlik_tarihi FROM '.mad_okul_table().' s LEFT JOIN '.self::programs_table().' p ON p.id=s.program_id WHERE s.assigned_user_id=%d ORDER BY p.etkinlik_tarihi DESC,s.route_group,s.route_order', $uid));
+        $mmc_tasks=[];
+        if(class_exists('MMC_Field_Service')){
+            $targets=$wpdb->prefix.'mmc_program_target_schools';
+            $schools=$wpdb->prefix.'mmc_schools';
+            $programs=$wpdb->prefix.'mmc_programs';
+            $mmc_tasks=$wpdb->get_results($wpdb->prepare(
+                "SELECT t.id,t.program_id,t.status,t.assigned_name,s.school_name,s.address,s.district_name,s.province_name,p.program_code,p.planned_date
+                 FROM $targets t INNER JOIN $schools s ON s.id=t.school_id INNER JOIN $programs p ON p.id=t.program_id
+                 WHERE t.assigned_user_id=%d AND t.status<>'skipped' ORDER BY p.planned_date DESC,s.school_name LIMIT 500",$uid));
+        }
         $route_links=self::grouped_route_links($rows);
         ?><div class="wrap mad-okul-wrap"><h1>Tanıtım Görevlerim</h1><p class="description">Görev sırasına göre ilerleyin ve ziyaret sonucunu kaydedin.</p>
+        <?php if($mmc_tasks): ?><h2>MMC Program Saha Görevlerim (<?php echo count($mmc_tasks); ?>)</h2><p>Ziyaret ve tabela fotoğrafı, yöneticinizin verdiği süreli MMC saha portalı bağlantısından kaydedilir. Bu liste size atanmış program hedeflerini gösterir.</p>
+        <table class="widefat striped"><thead><tr><th>Program</th><th>Okul</th><th>Durum</th><th>Yol Tarifi</th></tr></thead><tbody>
+        <?php foreach($mmc_tasks as $task): $destination=trim($task->school_name.', '.$task->address.', '.$task->district_name.', '.$task->province_name,', '); ?>
+        <tr><td><?php echo esc_html($task->program_code); ?><br><small><?php echo esc_html($task->planned_date); ?></small></td><td><strong><?php echo esc_html($task->school_name); ?></strong><br><?php echo esc_html($task->address); ?></td><td><?php echo esc_html(MMC_Field_Service::target_statuses()[$task->status] ?? $task->status); ?></td><td><a class="button" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url(self::directions_url($destination)); ?>">Yol Tarifi</a></td></tr>
+        <?php endforeach; ?></tbody></table><?php endif; ?>
         <?php if($route_links): ?><div class="mad-upload-box"><h2>Hazır Google Maps Rotalarım</h2><?php foreach($route_links as $link): ?><a class="button button-primary" target="_blank" href="<?php echo esc_url($link['url']); ?>"><?php echo esc_html(($link['row']->program_adi ?: 'Program').' · Grup '.($link['row']->route_group ?: 'A').' · Bölüm '.$link['part'].' ('.$link['count'].' okul)'); ?></a> <?php endforeach; ?></div><?php endif; ?>
-        <table class="widefat striped"><thead><tr><th>Rota</th><th>Okul</th><th>Program</th><th>İşlem</th></tr></thead><tbody><?php foreach($rows as $r): $dest=$r->kurum_adi.', '.$r->adres.', '.$r->ilce.', '.$r->il; ?><tr><td><?php echo esc_html($r->route_group.'-'.$r->route_order); ?></td><td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><?php echo esc_html($r->adres); ?><br><span class="mad-status"><?php echo esc_html($r->durum); ?></span></td><td><?php echo esc_html($r->program_adi ?: '-'); ?><br><small><?php echo esc_html($r->salon_adi ?: ''); ?></small></td><td><a class="button button-primary" target="_blank" href="<?php echo esc_url(self::directions_url($dest)); ?>">Yol Tarifi</a><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:8px"><input type="hidden" name="action" value="mad_okul_task_status"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>"><?php wp_nonce_field('mad_okul_task_status_'.$r->id); ?><select name="durum"><option>Ziyaret Edildi</option><option>Afiş Bırakıldı</option><option>Görüşüldü</option><option>Tekrar Gidilecek</option><option>Olumsuz</option></select><input name="notlar" placeholder="Kısa not"><button class="button">Kaydet</button></form></td></tr><?php endforeach; ?></tbody></table></div><?php
+        <?php if($rows): ?><h2>Okul Tanıtım Rota Görevlerim</h2><table class="widefat striped"><thead><tr><th>Rota</th><th>Okul</th><th>Program</th><th>İşlem</th></tr></thead><tbody><?php foreach($rows as $r): $dest=$r->kurum_adi.', '.$r->adres.', '.$r->ilce.', '.$r->il; ?><tr><td><?php echo esc_html($r->route_group.'-'.$r->route_order); ?></td><td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><?php echo esc_html($r->adres); ?><br><span class="mad-status"><?php echo esc_html($r->durum); ?></span></td><td><?php echo esc_html($r->program_adi ?: '-'); ?><br><small><?php echo esc_html($r->salon_adi ?: ''); ?></small></td><td><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url(self::directions_url($dest)); ?>">Yol Tarifi</a><?php if($r->mmc_program_id): ?><p>MMC ziyareti için süreli saha portalı bağlantısını kullanın.</p><?php else: ?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:8px"><input type="hidden" name="action" value="mad_okul_task_status"><input type="hidden" name="id" value="<?php echo (int)$r->id; ?>"><?php wp_nonce_field('mad_okul_task_status_'.$r->id); ?><select name="durum"><option>Ziyaret Edildi</option><option>Afiş Bırakıldı</option><option>Görüşüldü</option><option>Tekrar Gidilecek</option><option>Olumsuz</option></select><input name="notlar" placeholder="Kısa not"><button class="button">Kaydet</button></form><?php endif; ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div><?php
     }
 
     public static function task_status() {
@@ -545,6 +560,8 @@ final class Mad_Okul_Operations {
         $id=absint($_POST['id'] ?? 0); check_admin_referer('mad_okul_task_status_'.$id); global $wpdb;
         $owner=(int)$wpdb->get_var($wpdb->prepare('SELECT assigned_user_id FROM '.mad_okul_table().' WHERE id=%d',$id));
         if ($owner!==get_current_user_id() && !current_user_can('manage_options')) wp_die('Bu görev size ait değil');
+        $mmc_program_id=(int)$wpdb->get_var($wpdb->prepare('SELECT mmc_program_id FROM '.mad_okul_table().' WHERE id=%d',$id));
+        if($mmc_program_id) wp_die('MMC programı ziyaretini süreli Saha Portalı bağlantısından tabela fotoğrafıyla kaydedin.');
         $wpdb->update(mad_okul_table(),['durum'=>sanitize_text_field($_POST['durum'] ?? 'Ziyaret Edildi'),'notlar'=>sanitize_textarea_field($_POST['notlar'] ?? ''),'son_ziyaret'=>current_time('Y-m-d'),'updated_at'=>current_time('mysql')],['id'=>$id]);
         wp_safe_redirect(add_query_arg(['page'=>'mad-okul-my-tasks','updated'=>1],admin_url('admin.php'))); exit;
     }
