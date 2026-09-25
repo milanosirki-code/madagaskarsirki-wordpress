@@ -253,7 +253,7 @@ final class Mad_Okul_Operations {
                 <option value="<?php echo (int)$venue_link_id; ?>" <?php selected((int)$mmc_program->route_program_venue_id,(int)$venue_link_id); ?>><?php echo esc_html($candidate->venue_name.' — '.$candidate->address.' ('.$candidate->allocation_status.')'); ?></option>
               <?php endforeach; ?></select> <button class="button button-primary">Rotaya Bağla</button>
             </form><?php else: ?><div class="notice notice-warning inline"><p>Bu programa bağlı salon bulunamadı. Önce MMC Salon ekranından salonu programa ekleyin.</p></div><?php endif; ?>
-            <?php endif; ?><?php endif; ?>
+            <?php endif; ?>
           <?php endif; ?>
           <h2>Bağımsız okul programı oluştur</h2>
           <p class="description">MMC programı için burada tekrar kayıt açmayın; yukarıdaki rota salonu seçimini kullanın.</p>
