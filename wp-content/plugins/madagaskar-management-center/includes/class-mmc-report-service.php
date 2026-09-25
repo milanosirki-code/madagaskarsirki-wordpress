@@ -265,6 +265,7 @@ class MMC_Report_Service {
                     $result['orders_count']++;
                     $result['net_revenue'] += max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
                     $order_events = array();
+                    $order_amounts = array();
                     foreach ( $order->get_items('line_item') as $item_id=>$item ) {
                         $quantity = max(0,(int)$item->get_quantity()-(method_exists($order,'get_qty_refunded_for_item')?abs((int)$order->get_qty_refunded_for_item($item_id)):0));
                         $result['ticket_count'] += $quantity;
@@ -276,10 +277,16 @@ class MMC_Report_Service {
                             $events[$key] = array('name'=>$match?$match['name']:(string)$item->get_name(), 'program_id'=>$match?$match['program_id']:0, 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0);
                         }
                         $events[$key]['ticket_count'] += $quantity;
-                        $events[$key]['net_revenue'] += max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0));
+                        $order_amounts[$key] = ($order_amounts[$key]??0) + max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0));
                         $order_events[$key] = true;
                     }
-                    foreach (array_keys($order_events) as $key) { $events[$key]['orders_count']++; }
+                    $allocated = 0.0; $keys = array_keys($order_events); $weight_total = array_sum($order_amounts);
+                    foreach ($keys as $index=>$key) {
+                        $events[$key]['orders_count']++;
+                        $order_net = max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
+                        $portion = $index===count($keys)-1 ? $order_net-$allocated : ($weight_total>0 ? round($order_net*$order_amounts[$key]/$weight_total,2) : 0);
+                        $events[$key]['net_revenue'] += $portion; $allocated += $portion;
+                    }
                 }
                 if (count($orders)<100) { break; }
                 if ($page===50) { throw new RuntimeException('Sipariş tarama sınırı aşıldı; kısmi sonuç kullanılmaz.'); }
@@ -291,6 +298,7 @@ class MMC_Report_Service {
         $result['status']='verified';
         $result['message']='Ödenmiş siparişler okundu.';
         $result['net_revenue']=round($result['net_revenue'],2);
+        foreach($events as &$event){$event['net_revenue']=round($event['net_revenue'],2);}unset($event);
         $result['events']=array_values($events);
         return $result;
     }
