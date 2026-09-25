@@ -276,7 +276,7 @@ class MMC_Report_Service {
                             $events[$key] = array('name'=>$match?$match['name']:(string)$item->get_name(), 'program_id'=>$match?$match['program_id']:0, 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0);
                         }
                         $events[$key]['ticket_count'] += $quantity;
-                        $events[$key]['net_revenue'] += max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0)-(method_exists($order,'get_tax_refunded_for_item')?abs((float)$order->get_tax_refunded_for_item($item_id)):0));
+                        $events[$key]['net_revenue'] += max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0));
                         $order_events[$key] = true;
                     }
                     foreach (array_keys($order_events) as $key) { $events[$key]['orders_count']++; }
