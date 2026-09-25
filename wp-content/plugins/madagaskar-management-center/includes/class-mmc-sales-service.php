@@ -98,6 +98,13 @@ class MMC_Sales_Service {
         }
 
         $table = $wpdb->prefix . 'mmc_sales_mappings';
+        if ( $active && $wc_variation_id ) {
+            $owner = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT program_id FROM $table WHERE wc_variation_id=%d AND is_active=1 AND program_id<>%d LIMIT 1",
+                $wc_variation_id, (int) $event->program_id
+            ) );
+            if ( $owner ) return new WP_Error( 'mmc_sales_variation_conflict', 'WooCommerce varyasyonu başka bir MMC programına bağlı: #' . $owner );
+        }
         $existing = $wpdb->get_var( $wpdb->prepare(
             "SELECT id FROM $table WHERE event_id=%d AND session_id=%d AND ticket_type_id=%d LIMIT 1",
             $event_id, $session_id, $ticket_type_id
@@ -132,51 +139,73 @@ class MMC_Sales_Service {
         return $mapping_id;
     }
 
-    public static function import_legacy_mdg_event( $event_id, $legacy_event_id ) {
+    /** Validate every session and product identity before importing a live MDG sales source. */
+    public static function legacy_import_preview( $event_id, $legacy_event_id ) {
         global $wpdb;
-        if ( ! class_exists( 'MDG_DB' ) ) return new WP_Error( 'mmc_legacy_missing', 'Eski Madagaskar Bilet Yönetimi (MDG_DB) algılanmadı.' );
-        $event = MMC_Event_Service::get_event( $event_id );
-        if ( ! $event ) return new WP_Error( 'mmc_legacy_event', 'MMC etkinliği bulunamadı.' );
-        $legacy_event_id = absint( $legacy_event_id );
-        if ( ! $legacy_event_id ) return new WP_Error( 'mmc_legacy_id', 'Eski MDG etkinlik ID zorunludur.' );
-
-        $legacy_sessions_table = MDG_DB::table( 'sessions' );
-        $legacy_types_table    = MDG_DB::table( 'ticket_types' );
-        $legacy_sessions = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $legacy_sessions_table WHERE event_id=%d ORDER BY start_at ASC,id ASC", $legacy_event_id ) );
-        if ( ! $legacy_sessions ) return new WP_Error( 'mmc_legacy_sessions', 'Eski MDG etkinliğinde seans bulunamadı.' );
-
-        $mmc_sessions = MMC_Event_Service::sessions( $event_id );
-        $mmc_types    = MMC_Event_Service::ticket_types( $event_id );
-        $type_by_code = array();
-        foreach ( $mmc_types as $t ) $type_by_code[ sanitize_key( $t->ticket_code ) ] = $t;
-
-        $session_by_local = array();
-        foreach ( $mmc_sessions as $s ) $session_by_local[ substr( (string)$s->session_time, 0, 16 ) ] = $s;
-
-        $imported = 0; $warnings = array();
-        foreach ( $legacy_sessions as $ls ) {
-            // Eski MDG start_at UTC tutuluyorsa WordPress yerel saatine dönüştür; eşleşmezse ham değeri de dene.
-            $local = function_exists( 'get_date_from_gmt' ) ? get_date_from_gmt( (string)$ls->start_at, 'Y-m-d H:i' ) : substr( (string)$ls->start_at, 0, 16 );
-            $ms = $session_by_local[ $local ] ?? ( $session_by_local[ substr( (string)$ls->start_at, 0, 16 ) ] ?? null );
-            if ( ! $ms ) { $warnings[] = 'Seans eşleşmedi: ' . $local; continue; }
-
-            $legacy_types = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $legacy_types_table WHERE session_id=%d AND is_active=1 ORDER BY sort_order ASC,id ASC", (int)$ls->id ) );
-            foreach ( $legacy_types as $lt ) {
-                $code = sanitize_key( $lt->code );
-                $mt = $type_by_code[ $code ] ?? null;
-                if ( ! $mt ) { $warnings[] = 'Bilet türü eşleşmedi: ' . $lt->code; continue; }
-                $r = self::save_mapping( $event_id, $ms->id, $mt->id, array(
-                    'wc_product_id'          => (int)$ls->wc_product_id,
-                    'wc_variation_id'        => (int)$lt->wc_variation_id,
-                    'tickera_event_id'       => (int)$ls->tickera_event_id,
-                    'tickera_ticket_type_id' => 0,
-                    'is_active'              => 1,
-                ) );
-                if ( is_wp_error( $r ) ) $warnings[] = $r->get_error_message(); else $imported++;
+        $errors=array(); $rows=array();
+        $event=MMC_Event_Service::get_event(absint($event_id));
+        $legacy=class_exists('MMC_MDG_Bridge_Service') ? MMC_MDG_Bridge_Service::get_mdg_event(absint($legacy_event_id)) : null;
+        if(!$event || !$legacy || !class_exists('MDG_DB')){
+            return array('ready'=>false,'errors'=>array('MMC veya MDG etkinliği bulunamadı.'),'rows'=>array());
+        }
+        $program=MMC_Program_Service::get_program((int)$event->program_id);
+        if(!$program || 'draft'===(string)$legacy->status){$errors[]='Taslak MDG etkinliğinden canlı satış kimliği alınamaz.';}
+        if($program && (sanitize_title((string)$program->province_name)!==sanitize_title((string)$legacy->province_name)
+            || sanitize_title((string)$program->district_name)!==sanitize_title((string)$legacy->district))){$errors[]='İl veya ilçe uyuşmuyor.';}
+        $mmc_sessions=array();
+        foreach((array)MMC_Event_Service::sessions((int)$event->id) as $session){
+            $mmc_sessions[substr((string)$session->session_time,0,16)]=$session;
+        }
+        $tickets=array();
+        foreach((array)MMC_Event_Service::ticket_types((int)$event->id) as $ticket){
+            if((int)$ticket->is_active){$tickets[sanitize_key((string)$ticket->ticket_code)]=$ticket;}
+        }
+        $sessions_table=MDG_DB::table('sessions'); $types_table=MDG_DB::table('ticket_types');
+        $legacy_sessions=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$sessions_table} WHERE event_id=%d ORDER BY start_at,id",absint($legacy_event_id)));
+        if(count($legacy_sessions)!==count($mmc_sessions)){$errors[]='Seans sayısı uyuşmuyor.';}
+        $used_sessions=array();
+        foreach($legacy_sessions as $session){
+            $local=get_date_from_gmt((string)$session->start_at,'Y-m-d H:i');
+            $target=$mmc_sessions[$local]??null;
+            if(!$target){$errors[]='MMC seansı bulunamadı: '.$local;continue;}
+            $used_sessions[$local]=true;
+            $product_id=(int)$session->wc_product_id;
+            if(!$product_id || !function_exists('wc_get_product') || !wc_get_product($product_id)){$errors[]='WooCommerce ana ürün bulunamadı: '.$local;continue;}
+            $types=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$types_table} WHERE session_id=%d AND is_active=1",(int)$session->id));
+            foreach($types as $type){
+                $code=sanitize_key((string)$type->code);
+                $ticket=$tickets[$code]??null;
+                if(!$ticket){$errors[]='MMC bilet kodu bulunamadı: '.$code;continue;}
+                $variation_id=(int)$type->wc_variation_id;
+                $variation=$variation_id?wc_get_product($variation_id):null;
+                if(!$variation || !method_exists($variation,'get_parent_id') || (int)$variation->get_parent_id()!==$product_id){$errors[]='Ürün/varyasyon uyuşmuyor: '.$local.' '.$code;continue;}
+                $existing=$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_sales_mappings WHERE event_id=%d AND session_id=%d AND ticket_type_id=%d LIMIT 1",(int)$event->id,(int)$target->id,(int)$ticket->id));
+                if($existing && (int)$existing->is_active && (int)$existing->wc_variation_id && (int)$existing->wc_variation_id!==$variation_id){$errors[]='Mevcut MMC eşleştirmesi farklı: '.$local.' '.$code;}
+                $other=$wpdb->get_var($wpdb->prepare("SELECT program_id FROM {$wpdb->prefix}mmc_sales_mappings WHERE is_active=1 AND wc_variation_id=%d AND program_id<>%d LIMIT 1",$variation_id,(int)$event->program_id));
+                if($other){$errors[]='Varyasyon başka bir programa bağlı: '.$variation_id;}
+                $rows[]=array('session_id'=>(int)$target->id,'ticket_type_id'=>(int)$ticket->id,'time'=>$local,'ticket_name'=>(string)$ticket->ticket_name,'product_id'=>$product_id,'variation_id'=>$variation_id,'tickera_event_id'=>(int)$session->tickera_event_id);
             }
         }
-        MMC_Program_Service::add_log( $event->program_id, 'legacy_sales_mappings_imported', 'event', $event_id, null, array( 'legacy_event_id'=>$legacy_event_id, 'imported'=>$imported, 'warnings'=>$warnings ), 'Eski MDG satış eşleştirmeleri içe aktarıldı.' );
-        return array( 'imported'=>$imported, 'warnings'=>$warnings );
+        if(count($used_sessions)!==count($mmc_sessions)){$errors[]='MMC seanslarından biri MDG kaydında yok.';}
+        if(!$rows){$errors[]='Aktarılabilir bilet türü bulunamadı.';}
+        return array('ready'=>!$errors,'errors'=>array_values(array_unique($errors)),'rows'=>$rows,'legacy_title'=>(string)$legacy->title,'legacy_status'=>(string)$legacy->status);
+    }
+
+    public static function import_legacy_mdg_event( $event_id, $legacy_event_id ) {
+        $preview=self::legacy_import_preview($event_id,$legacy_event_id);
+        if(!$preview['ready']){return new WP_Error('mmc_legacy_unsafe',implode(' ',(array)$preview['errors']));}
+        $event=MMC_Event_Service::get_event($event_id);
+        $imported=0;
+        foreach($preview['rows'] as $row){
+            $saved=self::save_mapping($event_id,$row['session_id'],$row['ticket_type_id'],array(
+                'wc_product_id'=>$row['product_id'],'wc_variation_id'=>$row['variation_id'],
+                'tickera_event_id'=>$row['tickera_event_id'],'is_active'=>1,
+            ));
+            if(is_wp_error($saved)){return $saved;}
+            $imported++;
+        }
+        MMC_Program_Service::add_log($event->program_id,'legacy_sales_mappings_imported','event',$event_id,null,array('legacy_event_id'=>absint($legacy_event_id),'imported'=>$imported),'Canlı MDG satış kimlikleri doğrulanarak MMC eşleştirmesine alındı.');
+        return array('imported'=>$imported,'warnings'=>array());
     }
 
     public static function on_order_status_changed( $order_id, $from, $to, $order = null ) {
