@@ -174,6 +174,7 @@ class MMC_Sales_Service {
             $types=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$types_table} WHERE session_id=%d AND is_active=1",(int)$session->id));
             foreach($types as $type){
                 $code=sanitize_key((string)$type->code);
+                $code=array('cocuk'=>'child','yetiskin'=>'adult','aile_2_2'=>'family_2_2')[$code]??$code;
                 $ticket=$tickets[$code]??null;
                 if(!$ticket){$errors[]='MMC bilet kodu bulunamadı: '.$code;continue;}
                 $variation_id=(int)$type->wc_variation_id;
