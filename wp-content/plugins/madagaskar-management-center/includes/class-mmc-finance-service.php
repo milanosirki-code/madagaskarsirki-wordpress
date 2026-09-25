@@ -372,6 +372,13 @@ class MMC_Finance_Service {
 
     public static function readiness( $program_id ) {
         $s=self::summary($program_id); $blockers=array();
+        $event=class_exists('MMC_Event_Service')?MMC_Event_Service::event_for_program($program_id):null;
+        if(!$event || !$event->event_date)$blockers[]='Etkinlik tarihi doğrulanmadı.';
+        elseif($event->event_date>current_time('Y-m-d'))$blockers[]='Gösteri tarihi henüz gelmedi; finansal kapanış gösteriden sonra yapılır.';
+        if($event && class_exists('MMC_Sales_Service')){
+            $coverage=MMC_Sales_Service::mapping_coverage($event->id);
+            if(!$coverage['complete'])$blockers[]='Satış eşleştirmesi eksik ('.$coverage['mapped'].'/'.$coverage['required'].'); web gelirinin tamlığı doğrulanamaz.';
+        }
         if($s['pending_finance']>0)$blockers[]=$s['pending_finance'].' gelir/gider kaydı planlandı/bekliyor durumunda.';
         if($s['unpaid_deposits']>0)$blockers[]=$s['unpaid_deposits'].' salon teminatı henüz yatırılmamış / ödeme bekliyor.';
         if($s['pending_invoices']>0)$blockers[]=$s['pending_invoices'].' satış faturası henüz sonuçlandırılmadı.';

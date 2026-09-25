@@ -18,6 +18,8 @@ class MMC_Report_Admin {
         $runs = MMC_Report_Service::recent_runs( 30 );
         $next = MMC_Report_Service::next_run();
         $view = !empty($_GET['run_id']) ? MMC_Report_Service::get_run( absint($_GET['run_id']) ) : null;
+        $preview_date = isset($_GET['preview_date']) ? sanitize_text_field(wp_unslash($_GET['preview_date'])) : '';
+        $preview = preg_match('/^\d{4}-\d{2}-\d{2}$/', $preview_date) ? MMC_Report_Service::snapshot($preview_date) : null;
         ?>
         <div class="wrap mmc-wrap"><h1>Gece Rapor Motoru</h1>
         <?php $this->notice(); ?>
@@ -46,6 +48,8 @@ class MMC_Report_Admin {
         </div>
         <?php endif; ?>
 
+        <div class="mmc-panel"><h2>E-posta göndermeden rapor önizle</h2><form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>"><input type="hidden" name="page" value="mmc-night-reports"><input type="date" name="preview_date" value="<?php echo esc_attr($preview_date?:MMC_Report_Service::yesterday_date()); ?>" required><button class="button">WooCommerce ve MDG ile yeniden doğrula</button></form></div>
+        <?php if($preview): ?><div class="mmc-panel"><h2><?php echo esc_html($preview_date); ?> — Güncel önizleme (gönderilmedi)</h2><div style="border:1px solid #ddd;background:#fff;padding:10px;overflow:auto"><?php echo wp_kses_post(MMC_Report_Service::render_html($preview)); ?></div></div><?php endif; ?>
         <div class="mmc-panel"><h2>Rapor Geçmişi</h2><div class="mmc-table-scroll"><table class="widefat striped"><thead><tr><th>Rapor Tarihi</th><th>Oluşturma</th><th>Gönderim</th><th>Alıcı</th><th>Durum</th><th>Tetik</th><th></th></tr></thead><tbody>
         <?php if(!$runs): ?><tr><td colspan="7">Henüz rapor üretilmedi.</td></tr><?php else: foreach($runs as $r): ?><tr><td><strong><?php echo esc_html(wp_date('d.m.Y',strtotime($r->report_date))); ?></strong></td><td><?php echo esc_html($r->generated_at); ?></td><td><?php echo esc_html($r->sent_at?:'—'); ?></td><td><?php echo esc_html($r->recipient); ?></td><td><?php echo esc_html($r->status); ?><?php if($r->error_message): ?><br><small class="mmc-text-danger"><?php echo esc_html($r->error_message); ?></small><?php endif; ?></td><td><?php echo esc_html($r->trigger_type); ?></td><td><a class="button button-small" href="<?php echo esc_url(add_query_arg(array('page'=>'mmc-night-reports','run_id'=>$r->id),admin_url('admin.php'))); ?>">Görüntüle</a></td></tr><?php endforeach; endif; ?>
         </tbody></table></div></div>

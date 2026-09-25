@@ -438,11 +438,15 @@ class MMC_Health_Service {
         $tickera_ids = array();
         global $wpdb;
 
-        if ( ! empty( $status['event'] ) && class_exists( 'MDG_DB' ) && method_exists( 'MDG_DB', 'table' ) ) {
+        $sales_source_id = (int)($status['sales_source_event_id'] ?? 0);
+        if ( ! $sales_source_id && ! empty($status['event']->id) ) {
+            $sales_source_id = (int)$status['event']->id;
+        }
+        if ( $sales_source_id && class_exists( 'MDG_DB' ) && method_exists( 'MDG_DB', 'table' ) ) {
             $sessions_table = MDG_DB::table( 'sessions' );
             $rows = (array) $wpdb->get_results( $wpdb->prepare(
                 "SELECT id,wc_product_id,tickera_event_id FROM {$sessions_table} WHERE event_id=%d ORDER BY id ASC",
-                (int) $status['event']->id
+                $sales_source_id
             ) );
             foreach ( $rows as $row ) {
                 if ( (int) $row->tickera_event_id ) {
@@ -466,7 +470,7 @@ class MMC_Health_Service {
             $out['detail'] = sprintf(
                 'MMC Program #%d ↔ MDG Event #%d bağlı · satış nesnesi eşleşmesi %d/%d · seans %d/%d · Tickera event ID: %s.',
                 (int) $program_id,
-                ! empty( $status['event']->id ) ? (int) $status['event']->id : 0,
+                $sales_source_id,
                 (int) $status['identity_matched'],
                 (int) $status['identity_expected'],
                 (int) $status['sessions_mdg'],

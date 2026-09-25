@@ -347,7 +347,19 @@ class MMC_Navigation_Admin {
             $this->card( 'MMC Okul / Saha', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef okul, saha planı ve ziyaret takibi.' ),
         );
 
-        foreach ( $this->school_items as $item ) {
+        $school_order = array(
+            'mad-okul-list', 'mad-okul-programs', 'mad-okul-route',
+            'mad-okul-assign', 'mad-okul-route-plan', 'mad-okul',
+            'mad-okul-import', 'mad-okul-missing', 'mad-okul-rural',
+            'mad-okul-settings',
+        );
+        $school_items = $this->school_items;
+        usort( $school_items, static function ( $a, $b ) use ( $school_order ) {
+            $a_pos = array_search( $a['slug'], $school_order, true );
+            $b_pos = array_search( $b['slug'], $school_order, true );
+            return ( false === $a_pos ? 999 : $a_pos ) <=> ( false === $b_pos ? 999 : $b_pos );
+        } );
+        foreach ( $school_items as $item ) {
             $cards[] = array(
                 'title'      => $item['title'],
                 'slug'       => $item['slug'],
@@ -359,7 +371,7 @@ class MMC_Navigation_Admin {
 
         $this->render_group_hub(
             'Okul Tanıtım & Saha',
-            'MMC saha hedefleri ile mevcut Okul Tanıtım, MEBBİS, rota ve görev araçları tek merkezde. Legacy okul verileri taşınmaz veya yeniden yazılmaz.',
+            'Pursaklar akışı: hedef okulları kontrol edin, kesin salonu bağlayın, rota ve görev dağıtımını hazırlayın. MEBBİS aktarımı ve harita ayarları destek araçlarıdır.',
             $cards
         );
     }
@@ -630,6 +642,9 @@ class MMC_Navigation_Admin {
     }
 
     private function legacy_url( $slug, $program_id = 0 ) {
+        if ( 'mdg-publish' === $slug && $program_id && class_exists('MMC_MDG_Bridge_Service') ) {
+            return MMC_MDG_Bridge_Service::admin_url($program_id);
+        }
         if ( preg_match( '#^https?://#i', $slug ) ) {
             return $slug;
         }
@@ -640,7 +655,9 @@ class MMC_Navigation_Admin {
 
         $args = array( 'page' => $slug );
         if ( $program_id ) {
-            $args['program_id'] = $program_id;
+            // School tools resolve MMC programs via mmc_program_id; program_id
+            // names a different row in their legacy program table.
+            $args[ 0 === strpos( $slug, 'mad-okul' ) ? 'mmc_program_id' : 'program_id' ] = $program_id;
         }
 
         return add_query_arg( $args, admin_url( 'admin.php' ) );
@@ -681,7 +698,7 @@ class MMC_Navigation_Admin {
             'mad-okul-missing'     => 'Adresi eksik kurumların kontrolü.',
             'mad-okul-rural'       => 'Kırsal olarak ayrılan okul kayıtları.',
             'mad-okul-route'       => 'Google Maps rota görünümü.',
-            'mad-okul-programs'    => 'Legacy okul programı ve salon kayıtları.',
+            'mad-okul-programs'    => 'Salon konumunu kontrol edin. MMC programında kesin salon MMC Salon ekranından bağlanır.',
             'mad-okul-assign'      => 'Saha personeli görev dağıtımı.',
             'mad-okul-settings'    => 'Harita ve rota servis ayarları.',
             'mad-okul-route-plan'  => 'Rota planı ve PDF çıktıları.',

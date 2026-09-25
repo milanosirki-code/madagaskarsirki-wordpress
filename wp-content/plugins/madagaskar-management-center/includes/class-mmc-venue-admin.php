@@ -8,6 +8,8 @@ class MMC_Venue_Admin {
         add_action( 'admin_menu', array( $this, 'menu' ), 20 );
         add_action( 'admin_post_mmc_add_venue', array( $this, 'handle_add_venue' ) );
         add_action( 'admin_post_mmc_add_program_venue', array( $this, 'handle_add_program_venue' ) );
+        add_action( 'admin_post_mmc_direct_confirm_venue', array( $this, 'handle_direct_confirm_venue' ) );
+        add_action( 'admin_post_mmc_reconcile_venue_status', array( $this, 'handle_reconcile_venue_status' ) );
         add_action( 'admin_post_mmc_update_allocation', array( $this, 'handle_update_allocation' ) );
         add_action( 'admin_post_mmc_generate_allocation_letter', array( $this, 'handle_generate_letter' ) );
         add_action( 'admin_post_mmc_confirm_venue', array( $this, 'handle_confirm_venue' ) );
@@ -27,6 +29,16 @@ class MMC_Venue_Admin {
         <div class="wrap mmc-wrap">
             <h1>Salonlar</h1>
             <?php $this->notice(); ?>
+            <div class="mmc-panel" style="border-left:4px solid #2271b1;">
+                <h2>Program İçin Salonu Hemen Seç</h2>
+                <p>Telefonla kesinleştirdiğiniz kayıtlı salonu doğrudan programa bağlayın. Tahsis dilekçesi gerekiyorsa sonraki ekranda ikinci yolu kullanın.</p>
+                <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="mmc-inline-form">
+                    <input type="hidden" name="page" value="mmc-venue-flow">
+                    <label>Program <select name="program_id" required><option value="">Program seçin</option>
+                    <?php foreach ((array)MMC_Program_Service::all_programs() as $p) : ?><option value="<?php echo esc_attr($p->id); ?>"><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name); ?></option><?php endforeach; ?>
+                    </select></label><button class="button button-primary">Salon Seçimine Git</button>
+                </form>
+            </div>
             <?php if ( $using_mdg ) : ?>
                 <div class="notice notice-success inline"><p><strong>Tek salon kaynağı aktif:</strong> Bu ekran salon bilgilerini doğrudan <strong>Madagaskar → Salonlar</strong> kayıtlarından okur. MMC ikinci bir salon ana kaydı oluşturmaz.</p></div>
                 <p><a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=mdg-venues' ) ); ?>">Madagaskar → Salonlar Ekranını Aç</a></p>
@@ -61,7 +73,7 @@ class MMC_Venue_Admin {
         $program = $program_id ? MMC_Program_Service::get_program( $program_id ) : null;
         ?>
         <div class="wrap mmc-wrap">
-            <h1>Salon Araştırması & Tahsis</h1>
+            <h1>Salon Seçimi & Tahsis</h1>
             <?php $this->notice(); ?>
             <div class="mmc-panel">
                 <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="mmc-inline-form">
@@ -91,6 +103,8 @@ class MMC_Venue_Admin {
             return strnatcasecmp( $a->district_name . '|' . $a->venue_name, $b->district_name . '|' . $b->venue_name );
         } );
         $rows = MMC_Venue_Service::venues_for_program( $program->id );
+        $selected_venue = null;
+        foreach ($rows as $venue_row) { if ((int)$venue_row->is_selected === 1) { $selected_venue = $venue_row; break; } }
         $statuses = MMC_Venue_Service::allocation_statuses();
         $finance = MMC_Venue_Service::finance_entries_for_program( $program->id );
         $detail_id = absint( $_GET['pv_id'] ?? 0 );
@@ -101,9 +115,41 @@ class MMC_Venue_Admin {
             <div><strong>Aşama:</strong> <?php echo esc_html( MMC_Program_Service::statuses()[ $program->status ] ?? $program->status ); ?></div>
         </div>
 
+        <?php if ($selected_venue) : ?>
+        <div class="notice notice-success inline"><p><strong>Mevcut kesin salon:</strong> <?php echo esc_html($selected_venue->venue_name.' — '.$selected_venue->district_name); ?>.
+        <a href="<?php echo esc_url(add_query_arg(array('page'=>'mmc-events','program_id'=>$program->id),admin_url('admin.php'))); ?>">Etkinlik ve seanslara geç</a></p></div>
+        <?php if (in_array($program->status,array('preparation','region_analysis','venue_research','allocation_request','allocation_pending'),true) && $selected_venue->allocation_status === 'approved' && (current_user_can('mmc_manage_venues') || current_user_can('mmc_manage_programs'))) : ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="mmc_reconcile_venue_status"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+            <?php wp_nonce_field('mmc_reconcile_venue_status_'.$program->id,'mmc_nonce'); ?>
+            <p><button class="button">Program Aşamasını Kesin Salonla Eşitle</button></p>
+        </form>
+        <?php endif; endif; ?>
+
+        <?php if ( current_user_can('mmc_manage_venues') || current_user_can('mmc_manage_programs') ) : ?>
+        <div class="mmc-panel" style="border-left:4px solid #2271b1;">
+            <h2>1. Kayıtlı Salonu Seç ve Kesinleştir</h2>
+            <p>Salonla telefonla görüştüyseniz ve tarih için kesin teyit aldıysanız mevcut salon kaydını seçin. Program ve etkinlik aynı salona bağlanır; dilekçe zorunlu değildir.</p>
+            <?php $direct_venues = MMC_Venue_Service::venue_candidates_for_program($program->id); ?>
+            <?php if ($direct_venues) : ?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mmc-inline-form" onsubmit="return confirm('Seçilen salon bu program için kesin salon olacak. Tarih ve salon teyidini aldınız mı?');">
+                <input type="hidden" name="action" value="mmc_direct_confirm_venue"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+                <?php wp_nonce_field('mmc_direct_confirm_venue_'.$program->id,'mmc_nonce'); ?>
+                <label>Salon <select name="venue_ref" required><option value="">Salon seçin</option>
+                <?php foreach ($direct_venues as $v) : $source = sanitize_key($v->venue_source ?? MMC_Venue_Service::primary_source()); ?>
+                    <option value="<?php echo esc_attr($source.':'.$v->id); ?>"><?php echo esc_html(($v->mmc_exact_district ? '★ Aynı ilçe — ' : '').$v->venue_name.' · '.$v->district_name.' / '.$v->province_name); ?></option>
+                <?php endforeach; ?></select></label>
+                <label><input type="checkbox" name="venue_confirmed" value="1" required> Salon ve gösteri tarihini telefonla veya doğrudan teyit ettim.</label>
+                <button class="button button-primary">Salonu Kesinleştir ve Etkinliğe Bağla</button>
+            </form>
+            <?php else : ?><p>Bu ilde kayıtlı salon yok. Önce <a href="<?php echo esc_url(admin_url('admin.php?page=mdg-venues')); ?>">salon kaydı oluşturun</a>.</p><?php endif; ?>
+        </div>
+        <?php endif; ?>
+
         <?php if ( current_user_can( 'mmc_manage_venues' ) || current_user_can( 'mmc_manage_programs' ) ) : ?>
         <div class="mmc-panel">
-            <h2>1. Salon Alternatifi Ekle</h2>
+            <h2>2. Tahsis Dilekçesiyle İlerle</h2>
+            <p>Salon henüz kesinleşmediyse alternatif ekleyin, dilekçeyi hazırlayın ve tahsis cevabından sonra kesinleştirin.</p>
             <?php if ( ! $venues ) : ?><p>Bu il için kayıtlı salon bulunamadı. <a href="<?php echo esc_url( admin_url( 'admin.php?page=mdg-venues' ) ); ?>">Madagaskar → Salonlar</a> ekranından salon ekleyin.</p><?php else : ?>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mmc-form-grid">
                 <input type="hidden" name="action" value="mmc_add_program_venue"><input type="hidden" name="program_id" value="<?php echo esc_attr( $program->id ); ?>"><input type="hidden" name="venue_source" value="<?php echo esc_attr( MMC_Venue_Service::primary_source() ); ?>">
@@ -125,7 +171,7 @@ class MMC_Venue_Admin {
         <?php endif; ?>
 
         <div class="mmc-panel">
-            <h2>2. Salon Alternatifleri ve Tahsis Durumu</h2>
+            <h2>Salon Alternatifleri ve Tahsis Durumu</h2>
             <table class="widefat striped"><thead><tr><th>Salon</th><th>Tarih / Seans</th><th>Tahsis</th><th>Kira</th><th>Teminat</th><th>Seçim</th><th></th></tr></thead><tbody>
             <?php if ( ! $rows ) : ?><tr><td colspan="7">Henüz salon alternatifi eklenmedi.</td></tr><?php else : foreach ( $rows as $r ) : ?>
                 <tr>
@@ -165,7 +211,7 @@ class MMC_Venue_Admin {
                 </form>
                 <div class="mmc-action-row">
                     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="mmc_generate_allocation_letter"><input type="hidden" name="program_venue_id" value="<?php echo esc_attr( $detail->id ); ?>"><?php wp_nonce_field( 'mmc_generate_letter_' . $detail->id, 'mmc_nonce' ); ?><button class="button">Tahsis Dilekçesini Hazırla / Yenile</button></form>
-                    <?php if ( 'approved' === $detail->allocation_status || $detail->response_reference ) : ?>
+                    <?php if ( ! $detail->is_selected && ( 'approved' === $detail->allocation_status || $detail->response_reference ) ) : ?>
                     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('Bu salon programın kesin salonu olarak işaretlenecek; kira ve teminat finans kayıtları açılacak. Onaylıyor musunuz?');"><input type="hidden" name="action" value="mmc_confirm_venue"><input type="hidden" name="program_venue_id" value="<?php echo esc_attr( $detail->id ); ?>"><?php wp_nonce_field( 'mmc_confirm_venue_' . $detail->id, 'mmc_nonce' ); ?><button class="button button-primary">Salonu Kesinleştir</button></form>
                     <?php endif; ?>
                 </div>
@@ -208,6 +254,28 @@ class MMC_Venue_Admin {
         $id = MMC_Venue_Service::add_program_venue( $pid, wp_unslash( $_POST ) );
         if ( is_wp_error( $id ) ) wp_die( esc_html( $id->get_error_message() ) );
         wp_safe_redirect( add_query_arg( array( 'page'=>'mmc-venue-flow','program_id'=>$pid,'pv_id'=>$id,'mmc_msg'=>'program_venue_added' ), admin_url('admin.php') ) ); exit;
+    }
+
+    public function handle_direct_confirm_venue() {
+        $this->guard_any(array('mmc_manage_venues','mmc_manage_programs'));
+        $pid = absint($_POST['program_id'] ?? 0);
+        check_admin_referer('mmc_direct_confirm_venue_'.$pid,'mmc_nonce');
+        if (empty($_POST['venue_confirmed'])) wp_die('Salon ve gösteri tarihi teyidi zorunludur.');
+        $ref = sanitize_text_field(wp_unslash($_POST['venue_ref'] ?? ''));
+        if (!preg_match('/^(mdg|legacy):(\d+)$/',$ref,$parts)) wp_die('Geçerli bir salon seçin.');
+        $result = MMC_Venue_Service::quick_confirm_master_venue($pid,(int)$parts[2],$parts[1]);
+        if (is_wp_error($result)) wp_die(esc_html($result->get_error_message()));
+        MMC_Program_Service::add_log($pid,'venue_phone_confirmed','program_venue',(int)$result->id,null,array('confirmation'=>'direct','venue_id'=>(int)$parts[2]),'Salon doğrudan teyit edilerek programa bağlandı.');
+        wp_safe_redirect(add_query_arg(array('page'=>'mmc-venue-flow','program_id'=>$pid,'pv_id'=>(int)$result->id,'mmc_msg'=>'direct_venue_confirmed'),admin_url('admin.php'))); exit;
+    }
+
+    public function handle_reconcile_venue_status() {
+        $this->guard_any(array('mmc_manage_venues','mmc_manage_programs'));
+        $pid = absint($_POST['program_id'] ?? 0);
+        check_admin_referer('mmc_reconcile_venue_status_'.$pid,'mmc_nonce');
+        $result = MMC_Venue_Service::reconcile_confirmed_venue_status($pid);
+        if (is_wp_error($result)) wp_die(esc_html($result->get_error_message()));
+        wp_safe_redirect(add_query_arg(array('page'=>'mmc-venue-flow','program_id'=>$pid,'mmc_msg'=>'venue_status_reconciled'),admin_url('admin.php'))); exit;
     }
 
     public function handle_update_allocation() {
@@ -258,6 +326,8 @@ class MMC_Venue_Admin {
             'allocation_updated' => 'Tahsis dosyası güncellendi.',
             'letter_generated' => 'Tahsis dilekçesi taslağı hazırlandı.',
             'venue_confirmed' => 'Salon kesinleştirildi; kira/teminat ve sonraki görevler otomatik açıldı.',
+            'direct_venue_confirmed' => 'Salon doğrudan teyit edilerek programa ve etkinliğe bağlandı.',
+            'venue_status_reconciled' => 'Program aşaması mevcut onaylı kesin salon kaydıyla eşitlendi.',
             'finance_updated' => 'Salon finans kaydı güncellendi.',
         );
         if ( isset( $map[$msg] ) ) echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $map[$msg] ) . '</p></div>';

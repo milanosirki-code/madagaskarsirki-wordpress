@@ -218,7 +218,7 @@ class MMC_Admin {
 
         <div class="mmc-panel">
             <h2>Sonraki adım</h2>
-            <p>Tanıtım havzası ve temel veri kapsaması yeterliyse <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-venue-flow', 'program_id'=>$program->id ), admin_url( 'admin.php' ) ) ); ?>">Salon Araştırması & Tahsise Geç</a></p>
+            <p>Tanıtım havzası ve temel veri kapsaması yeterliyse <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-venue-flow', 'program_id'=>$program->id ), admin_url( 'admin.php' ) ) ); ?>">Salon Seçimi & Tahsise Geç</a></p>
         </div>
         <?php
     }
