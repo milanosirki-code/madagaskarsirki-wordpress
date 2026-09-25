@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.6
+ * Version: 1.7.7
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.6');
+define('MAD_OKUL_VERSION', '1.7.7');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -752,8 +752,8 @@ function mad_okul_route_page() {
     $selected=array_map('absint', $_POST['school_ids'] ?? []);
     $start=sanitize_text_field(wp_unslash($_POST['start_address'] ?? ''));
 
-    // MMC program bağlamında kesin salon doğrudan ana programdan gelir.
-    if(!$start && $mmc_ctx && !is_wp_error($mmc_ctx) && !empty($mmc_ctx->venue)){
+    // MMC programında doğrulanmış rota salonu her zaman başlangıç kaynağıdır.
+    if($mmc_ctx && !is_wp_error($mmc_ctx) && !empty($mmc_ctx->venue)){
         $start=trim($mmc_ctx->venue->venue_name.', '.$mmc_ctx->venue->address,', ');
     }
 
@@ -808,7 +808,7 @@ function mad_okul_route_page() {
         if(!$selected){
             $route_error='Rotaya eklenecek en az bir okul seçin.';
         }elseif(!$start){
-            $route_error='Kesin salon henüz bağlı değil. Önce başlangıç salonunun tam adresini girin veya MMC’de kesin salonu bağlayın.';
+            $route_error='Rota başlangıç salonu bağlı değil. Program ve Salonlar menüsünde bu programa bağlı salonu seçin.';
         }else{
             $ids=implode(',',$selected);
             if($mmc_program_id && $mmc_ctx && !is_wp_error($mmc_ctx)){
