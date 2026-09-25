@@ -248,12 +248,13 @@ class MMC_Report_Service {
 
     /** Read paid WooCommerce orders via CRUD, including HPOS stores, without changing orders. */
     private static function woocommerce_sales( $date ) {
-        $result = array( 'status'=>'unavailable', 'message'=>'WooCommerce API kullanılamıyor.', 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0, 'events'=>array() );
+        $result = array( 'status'=>'unavailable', 'message'=>'WooCommerce API kullanılamıyor.', 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0, 'events'=>array(), 'invoice_coverage'=>array('tracked'=>0,'pending'=>0,'issued'=>0,'untracked'=>0) );
         if ( ! function_exists( 'wc_get_orders' ) ) { return $result; }
         $start = new DateTimeImmutable( $date . ' 00:00:00', wp_timezone() );
         $end = $start->modify( '+1 day' );
         $range = $start->getTimestamp() . '...' . ( $end->getTimestamp() - 1 );
         $events = array();
+        $paid_order_ids = array();
         $catalog = self::mdg_product_catalog();
         try {
             for ( $page=1; $page<=50; $page++ ) {
@@ -263,6 +264,7 @@ class MMC_Report_Service {
                     $paid = $order->get_date_paid();
                     if ( ! $paid || $paid->getTimestamp()<$start->getTimestamp() || $paid->getTimestamp()>=$end->getTimestamp() ) { continue; }
                     $result['orders_count']++;
+                    $paid_order_ids[] = (int)$order->get_id();
                     $result['net_revenue'] += max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
                     $order_events = array();
                     $order_amounts = array();
@@ -295,12 +297,32 @@ class MMC_Report_Service {
             $result['message'] = 'WooCommerce sipariş sorgusu tamamlanamadı (' . esc_html(get_class($e)) . ', satır ' . (int)$e->getLine() . ').';
             return $result;
         }
+        $result['invoice_coverage']=self::invoice_coverage($paid_order_ids);
         $result['status']='verified';
         $result['message']='Ödenmiş siparişler okundu.';
         $result['net_revenue']=round($result['net_revenue'],2);
         foreach($events as &$event){$event['net_revenue']=round($event['net_revenue'],2);}unset($event);
         $result['events']=array_values($events);
         return $result;
+    }
+
+    /** Count only invoice records explicitly tracked for the paid orders in this report. */
+    private static function invoice_coverage( $order_ids ) {
+        global $wpdb;
+        $coverage=array('tracked'=>0,'pending'=>0,'issued'=>0,'untracked'=>count($order_ids));
+        if(!$order_ids){return $coverage;}
+        $table=$wpdb->prefix.'mmc_invoices';
+        $placeholders=implode(',',array_fill(0,count($order_ids),'%d'));
+        $sql=$wpdb->prepare("SELECT source_id,status FROM {$table} WHERE source_type='woo_order' AND source_id IN ({$placeholders})",$order_ids);
+        $found=array();
+        foreach((array)$wpdb->get_results($sql) as $row){$found[(int)$row->source_id][(string)$row->status]=true;}
+        $coverage['tracked']=count($found);
+        foreach($found as $statuses){
+            if(isset($statuses['issued'])){$coverage['issued']++;}
+            elseif(isset($statuses['pending'])){$coverage['pending']++;}
+        }
+        $coverage['untracked']=max(0,count($order_ids)-count($found));
+        return $coverage;
     }
 
     /** Use the MDG product and variation identities to group legacy sales. */
@@ -474,6 +496,7 @@ class MMC_Report_Service {
     </tr></table>
     <p><strong>Fatura:</strong> <?php echo $verified&&$woo['orders_count']===$d['orders_count']?esc_html($s['pending_invoices']).' MMC defterinde bekleyen':'WooCommerce ile fatura kuyruğu mutabık değil; ayrıca doğrulayın (MMC: '.esc_html($s['pending_invoices']).')'; ?> · <strong>MMC defteri:</strong> <?php echo esc_html($d['orders_count'].' sipariş / '.$d['ticket_count'].' bilet / '.$money($d['net_revenue'])); ?> · <strong>Operasyon:</strong> <?php echo esc_html($s['open_operations']); ?> zorunlu açık/problem · <strong>Görev:</strong> <?php echo esc_html($s['open_tasks']); ?> açık, <?php echo esc_html($s['overdue_tasks']); ?> gecikmiş.</p>
 
+    <?php if($verified): $ic=$woo['invoice_coverage']; ?><p><strong>Fatura izleme kapsamı (bu günün ödenmiş siparişleri):</strong> <?php echo esc_html($ic['tracked']); ?> takipte · <?php echo esc_html($ic['pending']); ?> bekleyen · <?php echo esc_html($ic['issued']); ?> kesilmiş olarak işaretli · <strong><?php echo esc_html($ic['untracked']); ?> takip kaydı yok.</strong> Faturanın harici portaldaki gerçek durumu burada doğrulanmaz.</p><?php endif; ?>
     <h2>2. WooCommerce Doğrudan Satış Doğrulaması</h2>
     <?php if(!$verified): ?><p style="color:#b91c1c">WooCommerce doğrulaması başarısız: <?php echo esc_html($woo['message']??'Kaynak kullanılamıyor.'); ?>. MMC satış sıfırı gerçek satış olarak yorumlanamaz.</p><?php else: ?>
     <p><strong><?php echo esc_html($woo['orders_count']); ?> ödenmiş sipariş · <?php echo esc_html($woo['ticket_count']); ?> ürün adedi · <?php echo esc_html($money($woo['net_revenue'])); ?></strong> · MMC farkı: <?php echo esc_html($woo['orders_count']-$d['orders_count']); ?> sipariş, <?php echo esc_html($money($woo['net_revenue']-$d['net_revenue'])); ?>. Tarih ölçütü: WooCommerce ödeme zamanı, site yerel saati. İade tutarı düşülür; ürün adedi aile paketinde kişi sayısı değildir.</p>
@@ -532,6 +555,8 @@ class MMC_Report_Service {
         $lines[]='REFUND_ORDERS=UNVERIFIED';
         $lines[]='REFUND_AMOUNT=UNVERIFIED';
         $lines[]='PENDING_INVOICES='.('verified'===$w['status']&&$w['orders_count']===$d['orders_count']?$s['pending_invoices']:'UNVERIFIED');
+        $lines[]='INVOICE_TRACKING_UNTRACKED='.('verified'===$w['status']?$w['invoice_coverage']['untracked']:'UNVERIFIED');
+        $lines[]='INVOICE_TRACKING_PENDING='.('verified'===$w['status']?$w['invoice_coverage']['pending']:'UNVERIFIED');
         foreach($s['mdg_upcoming_events']??array() as $e){$lines[]='MDG_UPCOMING|'.$e['date'].'|'.$e['name'].'|mmc='.$e['program_id'];}
         $lines[]='OPEN_OPERATIONS='.$s['open_operations'];
         $lines[]='OPEN_TASKS='.$s['open_tasks'];
