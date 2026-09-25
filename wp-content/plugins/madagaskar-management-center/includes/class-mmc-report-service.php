@@ -266,7 +266,7 @@ class MMC_Report_Service {
                     $result['net_revenue'] += max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
                     $order_events = array();
                     foreach ( $order->get_items('line_item') as $item_id=>$item ) {
-                        $quantity = max(0,(int)$item->get_quantity()-abs((int)$order->get_qty_refunded_for_item($item_id)));
+                        $quantity = max(0,(int)$item->get_quantity()-(method_exists($order,'get_qty_refunded_for_item')?abs((int)$order->get_qty_refunded_for_item($item_id)):0));
                         $result['ticket_count'] += $quantity;
                         $product_id = (int)$item->get_product_id();
                         $variation_id = (int)$item->get_variation_id();
@@ -276,7 +276,7 @@ class MMC_Report_Service {
                             $events[$key] = array('name'=>$match?$match['name']:(string)$item->get_name(), 'program_id'=>$match?$match['program_id']:0, 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0);
                         }
                         $events[$key]['ticket_count'] += $quantity;
-                        $events[$key]['net_revenue'] += max(0,(float)$item->get_total()+(float)$item->get_total_tax()-abs((float)$order->get_total_refunded_for_item($item_id))-abs((float)$order->get_tax_refunded_for_item($item_id)));
+                        $events[$key]['net_revenue'] += max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0)-(method_exists($order,'get_tax_refunded_for_item')?abs((float)$order->get_tax_refunded_for_item($item_id)):0));
                         $order_events[$key] = true;
                     }
                     foreach (array_keys($order_events) as $key) { $events[$key]['orders_count']++; }
@@ -285,7 +285,7 @@ class MMC_Report_Service {
                 if ($page===50) { throw new RuntimeException('Sipariş tarama sınırı aşıldı; kısmi sonuç kullanılmaz.'); }
             }
         } catch ( Throwable $e ) {
-            $result['message'] = 'WooCommerce sipariş sorgusu tamamlanamadı.';
+            $result['message'] = 'WooCommerce sipariş sorgusu tamamlanamadı (' . esc_html(get_class($e)) . ', satır ' . (int)$e->getLine() . ').';
             return $result;
         }
         $result['status']='verified';
