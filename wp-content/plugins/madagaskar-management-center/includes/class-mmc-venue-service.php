@@ -153,7 +153,9 @@ class MMC_Venue_Service {
 
         $id = (int) $wpdb->insert_id;
         MMC_Program_Service::add_log( $program_id, 'venue_candidate_added', 'program_venue', $id, null, array( 'venue_id' => $venue_id, 'venue_source' => $source ), 'Salon alternatifi eklendi.' );
-        MMC_Program_Service::set_status( $program_id, 'venue_research', 'Salon araştırması başladı.' );
+        if ( empty($data['preserve_program_status']) ) {
+            MMC_Program_Service::set_status( $program_id, 'venue_research', 'Salon araştırması başladı.' );
+        }
         return $id;
     }
 
@@ -182,6 +184,9 @@ class MMC_Venue_Service {
         if ( ! $venue ) {
             return new WP_Error( 'mmc_quick_venue_invalid', 'Seçilen salon ana kayıtta bulunamadı.' );
         }
+        if ( self::place_key($venue->province_name) !== self::place_key($program->province_name) ) {
+            return new WP_Error('mmc_quick_venue_province','Salonun ili programın iliyle uyuşmuyor.');
+        }
 
         $table = $wpdb->prefix . 'mmc_program_venues';
         $program_venue_id = (int) $wpdb->get_var( $wpdb->prepare(
@@ -190,6 +195,11 @@ class MMC_Venue_Service {
             $venue_id,
             $source
         ) );
+        $existing_event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program($program_id) : null;
+        if ($existing_event && in_array((string)$existing_event->status,array('sales_open','closed'),true)
+            && (int)$existing_event->program_venue_id !== $program_venue_id) {
+            return new WP_Error('mmc_quick_venue_live','Satışa açılmış etkinliğin salonu otomatik değiştirilemez. Önce satış bağlantılarını kontrol edin.');
+        }
 
         if ( ! $program_venue_id ) {
             $event = class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
@@ -203,6 +213,7 @@ class MMC_Venue_Service {
                     'priority_order' => 1,
                     'requested_date' => $date,
                     'notes'          => 'Satış Hazırlığı ekranından hızlı salon bağlantısı.',
+                    'preserve_program_status' => true,
                 )
             );
 
