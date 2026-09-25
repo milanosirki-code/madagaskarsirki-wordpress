@@ -201,7 +201,29 @@ class MMC_Report_Service {
             );
         }
 
+        foreach($legacy_events as &$legacy){
+            $legacy['shadow_program']='';
+            if($legacy['program_id']){continue;}
+            foreach($programs as $program){
+                if($program['event_date']===$legacy['date'] && sanitize_title($program['location'])===sanitize_title($legacy['province'].' / '.$legacy['district'])){
+                    $legacy['shadow_program']=$program['program_code']; break;
+                }
+            }
+        }
+        unset($legacy);
         $alerts = MMC_Dashboard_Service::critical_alerts( 20 );
+        $morning=(new DateTimeImmutable($report_date.' 00:00:00',wp_timezone()))->modify('+1 day');
+        $urgent=array();
+        if('verified'!==$woo['status'] || $woo['orders_count']!==$day['orders_count'] || abs($woo['net_revenue']-$day['net_revenue'])>0.01){
+            $urgent[]=array('level'=>'critical','program_id'=>0,'program_code'=>'SATIŞ SİSTEMİ','location'=>'WooCommerce / MMC','message'=>'WooCommerce doğrudan satış doğrulaması ile MMC defteri eşleşmiyor; satış, doluluk ve fatura kararlarında MMC sıfırını kullanmayın.','date'=>$report_date);
+        }
+        foreach($legacy_events as $legacy){
+            if($legacy['date']<$morning->format('Y-m-d') || $legacy['date']>$morning->modify('+2 days')->format('Y-m-d')){continue;}
+            if(!$legacy['program_id']){
+                $urgent[]=array('level'=>'high','program_id'=>0,'program_code'=>'MDG #'.$legacy['id'],'location'=>$legacy['name'],'message'=>($legacy['shadow_program']?'Aynı tarih ve konumda '.$legacy['shadow_program'].' var; satıştaki MDG etkinliği farklı köprüye bağlı. ':'').'Yaklaşan gösteri MMC satış/doluluk ve operasyon listesine bağlı değil; saha hazırlığını MDG kaydıyla doğrulayın.','date'=>$legacy['date']);
+            }
+        }
+        $alerts=array_slice(array_merge($urgent,$alerts),0,20);
         $priorities = array_slice( $alerts, 0, 3 );
         if ( count( $priorities ) < 3 ) {
             $extra = self::fallback_priorities( 3 - count( $priorities ) );
@@ -343,14 +365,14 @@ class MMC_Report_Service {
         global $wpdb;
         if ( ! class_exists('MMC_MDG_Bridge_Service') || ! MMC_MDG_Bridge_Service::legacy_available() ) { return array(); }
         $events=MDG_DB::table('events'); $sessions=MDG_DB::table('sessions');
-        $rows=$wpdb->get_results("SELECT e.id,e.title,e.status,s.start_at FROM {$events} e JOIN {$sessions} s ON s.event_id=e.id WHERE s.start_at IS NOT NULL ORDER BY s.start_at ASC LIMIT 500", ARRAY_A);
+        $rows=$wpdb->get_results("SELECT e.id,e.title,e.status,e.province_name,e.district,s.start_at FROM {$events} e JOIN {$sessions} s ON s.event_id=e.id WHERE s.start_at IS NOT NULL ORDER BY s.start_at ASC LIMIT 500", ARRAY_A);
         $out=array(); $cutoff=(new DateTimeImmutable($date.' 00:00:00',wp_timezone()))->modify('+31 days')->format('Y-m-d');
         foreach((array)$rows as $r){
             if(in_array((string)$r['status'],array('draft','cancelled','archived'),true)){continue;}
             $local=get_date_from_gmt((string)$r['start_at'],'Y-m-d');
             if($local<$date||$local>$cutoff){continue;}
             $key=(int)$r['id'];
-            if(!isset($out[$key])){$out[$key]=array('id'=>$key,'name'=>(string)$r['title'],'date'=>$local,'program_id'=>MMC_MDG_Bridge_Service::program_for_mdg_event($key));}
+            if(!isset($out[$key])){$out[$key]=array('id'=>$key,'name'=>(string)$r['title'],'date'=>$local,'program_id'=>MMC_MDG_Bridge_Service::program_for_mdg_event($key),'province'=>(string)$r['province_name'],'district'=>(string)$r['district']);}
         }
         return array_values($out);
     }
@@ -517,7 +539,7 @@ class MMC_Report_Service {
     </tbody></table>
 
     <h2>5. Yaklaşan MDG Etkinlikleri (aktif turne)</h2>
-    <?php if(empty($s['mdg_upcoming_events'])): ?><p>MDG etkinlikleri doğrulanamadı veya yaklaşan etkinlik yok.</p><?php else: ?><table style="width:100%"><thead><tr><th style="text-align:left">Etkinlik</th><th>Tarih</th><th>MMC</th></tr></thead><tbody><?php foreach($s['mdg_upcoming_events'] as $e): ?><tr><td><?php echo esc_html($e['name']); ?></td><td><?php echo esc_html($e['date']); ?></td><td><?php echo esc_html($e['program_id']?'#'.$e['program_id']:'Bağlı değil'); ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
+    <?php if(empty($s['mdg_upcoming_events'])): ?><p>MDG etkinlikleri doğrulanamadı veya yaklaşan etkinlik yok.</p><?php else: ?><table style="width:100%"><thead><tr><th style="text-align:left">Etkinlik</th><th>Tarih</th><th>MMC</th></tr></thead><tbody><?php foreach($s['mdg_upcoming_events'] as $e): ?><tr><td><?php echo esc_html($e['name']); ?></td><td><?php echo esc_html($e['date']); ?></td><td><?php echo esc_html($e['program_id']?'#'.$e['program_id']:($e['shadow_program']?'Aynı konum/tarih: '.$e['shadow_program'].'; farklı MDG kaydı':'Bağlı değil')); ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
     <h2>6. Kritik Riskler</h2>
     <?php if(!$s['critical_alerts']): ?><p>Kritik/yüksek uyarı yok.</p><?php else: ?><ul><?php foreach($s['critical_alerts'] as $a): ?><li><strong><?php echo esc_html($a['program_code'].' · '.$a['location']); ?>:</strong> <?php echo esc_html($a['message']); ?></li><?php endforeach; ?></ul><?php endif; ?>
 
@@ -557,7 +579,7 @@ class MMC_Report_Service {
         $lines[]='PENDING_INVOICES='.('verified'===$w['status']&&$w['orders_count']===$d['orders_count']?$s['pending_invoices']:'UNVERIFIED');
         $lines[]='INVOICE_TRACKING_UNTRACKED='.('verified'===$w['status']?$w['invoice_coverage']['untracked']:'UNVERIFIED');
         $lines[]='INVOICE_TRACKING_PENDING='.('verified'===$w['status']?$w['invoice_coverage']['pending']:'UNVERIFIED');
-        foreach($s['mdg_upcoming_events']??array() as $e){$lines[]='MDG_UPCOMING|'.$e['date'].'|'.$e['name'].'|mmc='.$e['program_id'];}
+        foreach($s['mdg_upcoming_events']??array() as $e){$lines[]='MDG_UPCOMING|'.$e['date'].'|'.$e['name'].'|mmc='.$e['program_id'].'|same_date_program='.($e['shadow_program']??'');}
         $lines[]='OPEN_OPERATIONS='.$s['open_operations'];
         $lines[]='OPEN_TASKS='.$s['open_tasks'];
         $lines[]='OVERDUE_TASKS='.$s['overdue_tasks'];
