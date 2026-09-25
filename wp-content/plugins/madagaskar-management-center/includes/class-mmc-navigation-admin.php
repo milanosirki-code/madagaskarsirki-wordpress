@@ -642,6 +642,9 @@ class MMC_Navigation_Admin {
     }
 
     private function legacy_url( $slug, $program_id = 0 ) {
+        if ( 'mdg-publish' === $slug && $program_id && class_exists('MMC_MDG_Bridge_Service') ) {
+            return MMC_MDG_Bridge_Service::admin_url($program_id);
+        }
         if ( preg_match( '#^https?://#i', $slug ) ) {
             return $slug;
         }
