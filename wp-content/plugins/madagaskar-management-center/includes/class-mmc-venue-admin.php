@@ -9,6 +9,7 @@ class MMC_Venue_Admin {
         add_action( 'admin_post_mmc_add_venue', array( $this, 'handle_add_venue' ) );
         add_action( 'admin_post_mmc_add_program_venue', array( $this, 'handle_add_program_venue' ) );
         add_action( 'admin_post_mmc_direct_confirm_venue', array( $this, 'handle_direct_confirm_venue' ) );
+        add_action( 'admin_post_mmc_reconcile_venue_status', array( $this, 'handle_reconcile_venue_status' ) );
         add_action( 'admin_post_mmc_update_allocation', array( $this, 'handle_update_allocation' ) );
         add_action( 'admin_post_mmc_generate_allocation_letter', array( $this, 'handle_generate_letter' ) );
         add_action( 'admin_post_mmc_confirm_venue', array( $this, 'handle_confirm_venue' ) );
@@ -102,6 +103,8 @@ class MMC_Venue_Admin {
             return strnatcasecmp( $a->district_name . '|' . $a->venue_name, $b->district_name . '|' . $b->venue_name );
         } );
         $rows = MMC_Venue_Service::venues_for_program( $program->id );
+        $selected_venue = null;
+        foreach ($rows as $venue_row) { if ((int)$venue_row->is_selected === 1) { $selected_venue = $venue_row; break; } }
         $statuses = MMC_Venue_Service::allocation_statuses();
         $finance = MMC_Venue_Service::finance_entries_for_program( $program->id );
         $detail_id = absint( $_GET['pv_id'] ?? 0 );
@@ -111,6 +114,17 @@ class MMC_Venue_Admin {
             <div><small><?php echo esc_html( $program->program_code ); ?></small><h2><?php echo esc_html( $program->province_name . ' / ' . ( $program->district_name ?: 'Genel' ) ); ?></h2></div>
             <div><strong>Aşama:</strong> <?php echo esc_html( MMC_Program_Service::statuses()[ $program->status ] ?? $program->status ); ?></div>
         </div>
+
+        <?php if ($selected_venue) : ?>
+        <div class="notice notice-success inline"><p><strong>Mevcut kesin salon:</strong> <?php echo esc_html($selected_venue->venue_name.' — '.$selected_venue->district_name); ?>.
+        <a href="<?php echo esc_url(add_query_arg(array('page'=>'mmc-events','program_id'=>$program->id),admin_url('admin.php'))); ?>">Etkinlik ve seanslara geç</a></p></div>
+        <?php if (in_array($program->status,array('preparation','region_analysis','venue_research','allocation_request','allocation_pending'),true) && $selected_venue->allocation_status === 'approved' && (current_user_can('mmc_manage_venues') || current_user_can('mmc_manage_programs'))) : ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="mmc_reconcile_venue_status"><input type="hidden" name="program_id" value="<?php echo esc_attr($program->id); ?>">
+            <?php wp_nonce_field('mmc_reconcile_venue_status_'.$program->id,'mmc_nonce'); ?>
+            <p><button class="button">Program Aşamasını Kesin Salonla Eşitle</button></p>
+        </form>
+        <?php endif; endif; ?>
 
         <?php if ( current_user_can('mmc_manage_venues') || current_user_can('mmc_manage_programs') ) : ?>
         <div class="mmc-panel" style="border-left:4px solid #2271b1;">
@@ -197,7 +211,7 @@ class MMC_Venue_Admin {
                 </form>
                 <div class="mmc-action-row">
                     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="mmc_generate_allocation_letter"><input type="hidden" name="program_venue_id" value="<?php echo esc_attr( $detail->id ); ?>"><?php wp_nonce_field( 'mmc_generate_letter_' . $detail->id, 'mmc_nonce' ); ?><button class="button">Tahsis Dilekçesini Hazırla / Yenile</button></form>
-                    <?php if ( 'approved' === $detail->allocation_status || $detail->response_reference ) : ?>
+                    <?php if ( ! $detail->is_selected && ( 'approved' === $detail->allocation_status || $detail->response_reference ) ) : ?>
                     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('Bu salon programın kesin salonu olarak işaretlenecek; kira ve teminat finans kayıtları açılacak. Onaylıyor musunuz?');"><input type="hidden" name="action" value="mmc_confirm_venue"><input type="hidden" name="program_venue_id" value="<?php echo esc_attr( $detail->id ); ?>"><?php wp_nonce_field( 'mmc_confirm_venue_' . $detail->id, 'mmc_nonce' ); ?><button class="button button-primary">Salonu Kesinleştir</button></form>
                     <?php endif; ?>
                 </div>
@@ -255,6 +269,15 @@ class MMC_Venue_Admin {
         wp_safe_redirect(add_query_arg(array('page'=>'mmc-venue-flow','program_id'=>$pid,'pv_id'=>(int)$result->id,'mmc_msg'=>'direct_venue_confirmed'),admin_url('admin.php'))); exit;
     }
 
+    public function handle_reconcile_venue_status() {
+        $this->guard_any(array('mmc_manage_venues','mmc_manage_programs'));
+        $pid = absint($_POST['program_id'] ?? 0);
+        check_admin_referer('mmc_reconcile_venue_status_'.$pid,'mmc_nonce');
+        $result = MMC_Venue_Service::reconcile_confirmed_venue_status($pid);
+        if (is_wp_error($result)) wp_die(esc_html($result->get_error_message()));
+        wp_safe_redirect(add_query_arg(array('page'=>'mmc-venue-flow','program_id'=>$pid,'mmc_msg'=>'venue_status_reconciled'),admin_url('admin.php'))); exit;
+    }
+
     public function handle_update_allocation() {
         $this->guard_any( array( 'mmc_manage_venues', 'mmc_manage_programs' ) );
         $id = absint( $_POST['program_venue_id'] ?? 0 );
@@ -304,6 +327,7 @@ class MMC_Venue_Admin {
             'letter_generated' => 'Tahsis dilekçesi taslağı hazırlandı.',
             'venue_confirmed' => 'Salon kesinleştirildi; kira/teminat ve sonraki görevler otomatik açıldı.',
             'direct_venue_confirmed' => 'Salon doğrudan teyit edilerek programa ve etkinliğe bağlandı.',
+            'venue_status_reconciled' => 'Program aşaması mevcut onaylı kesin salon kaydıyla eşitlendi.',
             'finance_updated' => 'Salon finans kaydı güncellendi.',
         );
         if ( isset( $map[$msg] ) ) echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $map[$msg] ) . '</p></div>';

@@ -113,8 +113,13 @@ class MMC_Venue_Service {
         if ( ! $program_id || ! $venue_id ) {
             return new WP_Error( 'mmc_program_venue_missing', 'Program ve salon seçimi zorunludur.' );
         }
-        if ( ! self::master_venue( $venue_id, $source ) ) {
+        $program = MMC_Program_Service::get_program($program_id);
+        $master = self::master_venue( $venue_id, $source );
+        if ( ! $program || ! $master ) {
             return new WP_Error( 'mmc_program_venue_invalid', 'Seçilen salon ana kayıtta bulunamadı.' );
+        }
+        if ( self::place_key($master->province_name) !== self::place_key($program->province_name) ) {
+            return new WP_Error('mmc_program_venue_province','Salonun ili programın iliyle uyuşmuyor.');
         }
 
         $exists = $wpdb->get_var( $wpdb->prepare(
@@ -154,7 +159,7 @@ class MMC_Venue_Service {
         $id = (int) $wpdb->insert_id;
         MMC_Program_Service::add_log( $program_id, 'venue_candidate_added', 'program_venue', $id, null, array( 'venue_id' => $venue_id, 'venue_source' => $source ), 'Salon alternatifi eklendi.' );
         if ( empty($data['preserve_program_status']) ) {
-            MMC_Program_Service::set_status( $program_id, 'venue_research', 'Salon araştırması başladı.' );
+            self::advance_program_venue_status($program_id,'venue_research','Salon araştırması başladı.');
         }
         return $id;
     }
@@ -253,6 +258,7 @@ class MMC_Venue_Service {
         }
 
         if ( class_exists( 'MMC_Program_Service' ) ) {
+            self::advance_program_venue_status($program_id,'venue_confirmed','Salon doğrudan teyit edilerek kesinleşti.');
             MMC_Program_Service::add_log(
                 $program_id,
                 'venue_quick_linked',
@@ -389,6 +395,9 @@ class MMC_Venue_Service {
         if ( ! isset( $allowed[ $status ] ) ) {
             $status = $row->allocation_status;
         }
+        if ( (int)$row->is_selected === 1 && 'approved' !== $status ) {
+            return new WP_Error('mmc_selected_venue_status','Kesin salonun tahsis durumunu önce başka bir salona geçmeden düşüremezsiniz.');
+        }
 
         $update = array(
             'requested_date'      => self::date_or_null( $data['requested_date'] ?? $row->requested_date ),
@@ -415,9 +424,9 @@ class MMC_Venue_Service {
         MMC_Program_Service::add_log( $row->program_id, 'venue_allocation_updated', 'program_venue', $id, $row->allocation_status, $status, 'Salon tahsis durumu güncellendi.' );
 
         if ( in_array( $status, array( 'sent', 'pending' ), true ) ) {
-            MMC_Program_Service::set_status( $row->program_id, 'allocation_pending', 'Salon tahsis cevabı bekleniyor.' );
+            self::advance_program_venue_status($row->program_id,'allocation_pending','Salon tahsis cevabı bekleniyor.');
         } elseif ( 'prepared' === $status ) {
-            MMC_Program_Service::set_status( $row->program_id, 'allocation_request', 'Salon tahsis dilekçesi hazırlandı.' );
+            self::advance_program_venue_status($row->program_id,'allocation_request','Salon tahsis dilekçesi hazırlandı.');
         }
 
         return true;
@@ -475,8 +484,10 @@ class MMC_Venue_Service {
             $doc_id = (int) $wpdb->insert_id;
         }
 
-        $wpdb->update( $wpdb->prefix . 'mmc_program_venues', array( 'allocation_status' => 'prepared', 'updated_at' => $now ), array( 'id' => $row->id ) );
-        MMC_Program_Service::set_status( $row->program_id, 'allocation_request', 'Salon tahsis dilekçesi hazırlandı.' );
+        if ('approved' !== $row->allocation_status) {
+            $wpdb->update( $wpdb->prefix . 'mmc_program_venues', array( 'allocation_status' => 'prepared', 'updated_at' => $now ), array( 'id' => $row->id ) );
+        }
+        self::advance_program_venue_status($row->program_id,'allocation_request','Salon tahsis dilekçesi hazırlandı.');
         MMC_Program_Service::add_log( $row->program_id, 'allocation_letter_generated', 'document', $doc_id, null, null, 'Salon tahsis dilekçesi üretildi.' );
         return $doc_id;
     }
@@ -517,8 +528,27 @@ class MMC_Venue_Service {
             MMC_Event_Service::ensure_event_for_program( $row->program_id, $row->id );
         }
 
-        MMC_Program_Service::set_status( $row->program_id, 'venue_confirmed', 'Salon kesinleşti; finans ve etkinlik hazırlık görevleri açıldı.' );
+        self::advance_program_venue_status($row->program_id,'venue_confirmed','Salon kesinleşti; finans ve etkinlik hazırlık görevleri açıldı.');
         MMC_Program_Service::add_log( $row->program_id, 'venue_confirmed', 'program_venue', $row->id, null, array( 'venue_id' => $row->venue_id, 'venue_name' => $row->venue_name ), 'Salon kesinleştirildi.' );
+        return true;
+    }
+
+    public static function reconcile_confirmed_venue_status($program_id) {
+        $program_id = absint($program_id);
+        $program = MMC_Program_Service::get_program($program_id);
+        if (!$program) { return new WP_Error('mmc_venue_program_missing','Program bulunamadı.'); }
+        $selected = null;
+        foreach ((array)self::venues_for_program($program_id) as $venue) {
+            if ((int)$venue->is_selected === 1) { $selected = $venue; break; }
+        }
+        if (!$selected || $selected->allocation_status !== 'approved') {
+            return new WP_Error('mmc_venue_not_confirmed','Program için onaylanmış kesin salon bulunamadı.');
+        }
+        $event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program($program_id) : null;
+        if ($event && (int)$event->program_venue_id !== (int)$selected->id) {
+            return new WP_Error('mmc_venue_event_mismatch','Etkinliğin salon bağlantısı kesin salonla uyuşmuyor.');
+        }
+        self::advance_program_venue_status($program_id,'venue_confirmed','Mevcut onaylı kesin salon kaydıyla program aşaması eşitlendi.');
         return true;
     }
 
@@ -620,6 +650,17 @@ class MMC_Venue_Service {
             }
         }
         return true;
+    }
+
+    private static function advance_program_venue_status($program_id,$status,$note) {
+        $program = MMC_Program_Service::get_program($program_id);
+        if (!$program || in_array($program->status,array('cancelled','completed'),true)) { return; }
+        $steps = array('preparation','region_analysis','venue_research','allocation_request','allocation_pending','venue_confirmed');
+        $current = array_search($program->status,$steps,true);
+        $target = array_search($status,$steps,true);
+        if ($current !== false && $target !== false && $current < $target) {
+            MMC_Program_Service::set_status($program_id,$status,$note);
+        }
     }
 
     private static function place_key( $value ) {
