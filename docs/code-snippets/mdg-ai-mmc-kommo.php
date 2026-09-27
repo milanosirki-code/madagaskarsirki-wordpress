@@ -1,0 +1,339 @@
+<?php
+/**
+ * Madagaskar AI — MMC Kommo Güvenli Köprü
+ *
+ * Secret/token değerlerini hiçbir ability döndürmez.
+ * AI kaynak yazma işlemleri, eski family_2_2 / "2 yetişkin + 2 çocuk"
+ * kuralı tespit edilirse bloke edilir.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+if ( ! function_exists( 'mdg_ai_kommo_can_run' ) ) {
+    function mdg_ai_kommo_can_run( $input = null ) {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return new WP_Error( 'mdg_ai_kommo_forbidden', 'Yönetici yetkisi gerekir.' );
+        }
+        if ( ! class_exists( 'MMC_Kommo_Service' ) || ! class_exists( 'MMC_Program_Service' ) ) {
+            return new WP_Error( 'mdg_ai_kommo_missing', 'MMC Kommo servisi kullanılamıyor.' );
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_program' ) ) {
+    function mdg_ai_kommo_program( $program_id ) {
+        $program=MMC_Program_Service::get_program(absint($program_id));
+        return $program?:new WP_Error('mdg_ai_kommo_program_missing','Program bulunamadı.');
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_safe_profile' ) ) {
+    function mdg_ai_kommo_safe_profile( $profile ) {
+        if(!$profile)return array();
+        return array(
+            'id'=>(int)$profile->id,
+            'program_id'=>(int)$profile->program_id,
+            'event_id'=>(int)$profile->event_id,
+            'source_hash'=>(string)$profile->source_hash,
+            'ai_synced_hash'=>(string)$profile->ai_synced_hash,
+            'search_keywords'=>(string)$profile->search_keywords,
+            'ai_source_status'=>(string)$profile->ai_source_status,
+            'ai_source_id'=>(string)$profile->ai_source_id,
+            'crm_status'=>(string)$profile->crm_status,
+            'kommo_lead_id'=>(string)$profile->kommo_lead_id,
+            'last_synced_at'=>(string)($profile->last_synced_at?:''),
+            'last_error'=>(string)($profile->last_error?:''),
+            'created_at'=>(string)$profile->created_at,
+            'updated_at'=>(string)$profile->updated_at
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
+    function mdg_ai_kommo_source_guard( $program_id ) {
+        $program=mdg_ai_kommo_program($program_id);
+        if(is_wp_error($program))return $program;
+
+        $text=MMC_Kommo_Service::build_source_text($program_id);
+        $issues=array();
+
+        if(false!==stripos(remove_accents($text),'2 yetiskin + 2 cocuk')){
+            $issues[]='Kommo kaynak metninde eski "2 yetişkin + 2 çocuk" aile paketi kuralı bulunuyor.';
+        }
+
+        if(class_exists('MMC_Event_Service')){
+            $event=MMC_Event_Service::event_for_program($program_id);
+            if($event){
+                foreach((array)MMC_Event_Service::ticket_types($event->id) as $ticket){
+                    if((string)$ticket->ticket_code==='family_2_2' && !empty($ticket->is_active)){
+                        $issues[]='Aktif MMC bilet türünde legacy family_2_2 kodu bulunuyor.';
+                        break;
+                    }
+                }
+            }
+        }
+
+        return array(
+            'safe'=>empty($issues),
+            'issues'=>$issues,
+            'source_hash'=>hash('sha256',$text),
+            'source_text'=>$text,
+            'transport'=>MMC_Kommo_Service::ai_transport_mode($program_id),
+            'keywords'=>MMC_Kommo_Service::search_keywords($program_id)
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_config' ) ) {
+    function mdg_ai_kommo_config( $input = array() ) {
+        $cfg=MMC_Kommo_Service::configuration_status();
+        return array(
+            'configured'=>!empty($cfg['configured']),
+            'subdomain'=>(string)($cfg['subdomain']??''),
+            'subdomain_source'=>(string)($cfg['subdomain_source']??''),
+            'token_source'=>(string)($cfg['token_source']??''),
+            'uses_legacy_token'=>!empty($cfg['uses_legacy_token']),
+            'pipeline_id'=>(int)($cfg['pipeline_id']??0),
+            'status_id'=>(int)($cfg['status_id']??0),
+            'legacy_pipeline_id'=>(int)($cfg['legacy_pipeline_id']??0),
+            'legacy_bilet_field_id'=>(int)($cfg['legacy_bilet_field_id']??0)
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_connection' ) ) {
+    function mdg_ai_kommo_connection( $input = array() ) {
+        $force=!empty($input['force']);
+        return MMC_Kommo_Service::connection_diagnostics($force);
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_pipeline' ) ) {
+    function mdg_ai_kommo_pipeline( $input = array() ) {
+        $force=!empty($input['force']);
+        return array(
+            'pipeline'=>MMC_Kommo_Service::pipeline_diagnostics($force),
+            'blueprint'=>MMC_Kommo_Service::program_pipeline_blueprint(),
+            'last_install'=>MMC_Kommo_Service::last_pipeline_install_result()
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_program_status' ) ) {
+    function mdg_ai_kommo_program_status( $input ) {
+        $program_id=absint($input['program_id']??0);
+        $program=mdg_ai_kommo_program($program_id);
+        if(is_wp_error($program))return $program;
+
+        return array(
+            'program_id'=>$program_id,
+            'profile'=>mdg_ai_kommo_safe_profile(MMC_Kommo_Service::get_profile($program_id)),
+            'queue'=>json_decode(wp_json_encode(MMC_Kommo_Service::queue_health($program_id)),true),
+            'transport'=>MMC_Kommo_Service::ai_transport_mode($program_id),
+            'direct_text_state'=>MMC_Kommo_Service::direct_text_source_state($program_id)
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_source_check' ) ) {
+    function mdg_ai_kommo_source_check( $input ) {
+        $program_id=absint($input['program_id']??0);
+        return mdg_ai_kommo_source_guard($program_id);
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_stage_preview' ) ) {
+    function mdg_ai_kommo_stage_preview( $input ) {
+        $program_id=absint($input['program_id']??0);
+        $program=mdg_ai_kommo_program($program_id);
+        if(is_wp_error($program))return $program;
+
+        $result=MMC_Kommo_Service::status_bridge_preview($program_id,!empty($input['force']));
+        if(is_wp_error($result))return $result;
+        return array('program_id'=>$program_id,'preview'=>$result);
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_sync_lead' ) ) {
+    function mdg_ai_kommo_sync_lead( $input ) {
+        $program_id=absint($input['program_id']??0);
+        $program=mdg_ai_kommo_program($program_id);
+        if(is_wp_error($program))return $program;
+
+        $preview=MMC_Kommo_Service::status_bridge_preview($program_id,true);
+        if(is_wp_error($preview))return $preview;
+        if(in_array((string)($preview['action']??''),array('pipeline_mismatch','unknown_current_status','non_mmc_status','manual_cancel'),true)){
+            return new WP_Error('mdg_ai_kommo_lead_guard','Kommo aşama güvenlik kapısı yazmaya izin vermiyor: '.(string)($preview['reason']??''));
+        }
+
+        $result=MMC_Kommo_Service::sync_program_lead($program_id);
+        if(is_wp_error($result))return $result;
+
+        return array(
+            'synced'=>true,
+            'preview_before'=>$preview,
+            'profile'=>mdg_ai_kommo_safe_profile(MMC_Kommo_Service::get_profile($program_id))
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_create_text_source' ) ) {
+    function mdg_ai_kommo_create_text_source( $input ) {
+        $program_id=absint($input['program_id']??0);
+        $guard=mdg_ai_kommo_source_guard($program_id);
+        if(is_wp_error($guard))return $guard;
+        if(empty($guard['safe'])){
+            return new WP_Error('mdg_ai_kommo_source_blocked',implode(' ',$guard['issues']));
+        }
+
+        $result=MMC_Kommo_Service::create_direct_text_source($program_id);
+        if(is_wp_error($result))return $result;
+
+        return array(
+            'created_or_current'=>true,
+            'result'=>$result,
+            'profile'=>mdg_ai_kommo_safe_profile(MMC_Kommo_Service::get_profile($program_id)),
+            'direct_text_state'=>MMC_Kommo_Service::direct_text_source_state($program_id)
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_sync_ai_source' ) ) {
+    function mdg_ai_kommo_sync_ai_source( $input ) {
+        $program_id=absint($input['program_id']??0);
+        $guard=mdg_ai_kommo_source_guard($program_id);
+        if(is_wp_error($guard))return $guard;
+        if(empty($guard['safe'])){
+            return new WP_Error('mdg_ai_kommo_source_blocked',implode(' ',$guard['issues']));
+        }
+
+        $result=MMC_Kommo_Service::sync_ai_source($program_id);
+        if(is_wp_error($result))return $result;
+
+        return array(
+            'synced_or_marked'=>true,
+            'profile'=>mdg_ai_kommo_safe_profile(MMC_Kommo_Service::get_profile($program_id)),
+            'transport'=>MMC_Kommo_Service::ai_transport_mode($program_id)
+        );
+    }
+}
+
+add_action('wp_abilities_api_categories_init',function(){
+    if(function_exists('wp_register_ability_category')){
+        wp_register_ability_category('madagaskar-kommo',array(
+            'label'=>'Madagaskar Kommo',
+            'description'=>'Kommo bağlantı tanısı, program lead aşama köprüsü ve güvenlik kapılı AI kaynak senkronu.'
+        ));
+    }
+});
+
+add_action('wp_abilities_api_init',function(){
+    if(!function_exists('wp_register_ability'))return;
+
+    $read=array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'public'=>true);
+    $inspect=array('annotations'=>array('readonly'=>false,'destructive'=>false,'idempotent'=>true),'public'=>true);
+    $external=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>true),'public'=>true);
+
+    wp_register_ability('madagaskar/kommo-configuration',array(
+        'label'=>'Kommo Yapılandırma Durumunu Getir',
+        'description'=>'Subdomain, secret kaynağı türü ve pipeline/status kimliklerini getirir; token değerini asla döndürmez.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array()),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_config',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$read
+    ));
+
+    wp_register_ability('madagaskar/kommo-connection-diagnostics',array(
+        'label'=>'Kommo Bağlantısını Denetle',
+        'description'=>'Kommo hesabına salt-okunur bağlantı testi yapar ve hesap/pipeline tanı bilgilerini döndürür; secret değerini döndürmez.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('force'=>array('type'=>'boolean'))),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_connection',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$read
+    ));
+
+    wp_register_ability('madagaskar/kommo-pipeline-diagnostics',array(
+        'label'=>'Kommo Pipeline Yapısını Denetle',
+        'description'=>'Yapılandırılmış pipeline/status ile MMC program aşama blueprint uyumunu salt-okunur denetler.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('force'=>array('type'=>'boolean'))),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_pipeline',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$read
+    ));
+
+    wp_register_ability('madagaskar/kommo-program-status',array(
+        'label'=>'Program Kommo Durumunu Getir',
+        'description'=>'Program profilinin CRM/AI durumunu, kuyruk sağlığını ve AI taşıma modunu getirir; kaynak tokenı ve tokenlı URL gösterilmez.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_program_status',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$read
+    ));
+
+    wp_register_ability('madagaskar/kommo-source-consistency-check',array(
+        'label'=>'Kommo AI Kaynak Metnini Denetle',
+        'description'=>'Programdan üretilecek Kommo AI metnini önizler ve legacy family_2_2 / 2+2 aile paketi kuralı varsa senkronun güvenli olmadığını işaretler.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_source_check',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$read
+    ));
+
+    wp_register_ability('madagaskar/kommo-stage-preview',array(
+        'label'=>'Program → Kommo Aşama Hareketini Önizle',
+        'description'=>'Program durumu için hedef Kommo aşamasını ve mevcut lead’in ileri/stay/ileride-koru/pipeline-uyuşmazlığı davranışını önizler. Geriye otomatik taşıma yoktur.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array(
+            'program_id'=>array('type'=>'integer','minimum'=>1),
+            'force'=>array('type'=>'boolean')
+        ),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_stage_preview',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$inspect
+    ));
+
+    wp_register_ability('madagaskar/kommo-sync-program-lead',array(
+        'label'=>'Program Kartını Kommo’ya Senkronla',
+        'description'=>'Kommo lead oluşturur/günceller; yalnız güvenli ileri aşama hareketine izin verir, pipeline uyuşmazlığı veya iptalde otomatik yazmaz. Harici CRM yazma işlemidir.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_sync_lead',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$external
+    ));
+
+    wp_register_ability('madagaskar/kommo-create-text-source',array(
+        'label'=>'Kommo AI Doğrudan Metin Kaynağı Oluştur',
+        'description'=>'Kaynak tutarlılık kapısı geçerse Kommo AI text source oluşturur; mevcut güncel kaynak varsa yeniden oluşturmaz. Eski 2+2 aile kuralı varsa bloke edilir.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_create_text_source',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$external
+    ));
+
+    wp_register_ability('madagaskar/kommo-sync-ai-source',array(
+        'label'=>'Kommo AI Kaynak Durumunu Senkronla',
+        'description'=>'Kaynak tutarlılık kapısı geçerse URL/text taşıma moduna göre Kommo AI kaynağını oluşturur veya yenileme durumunu işler. Eski 2+2 aile kuralı varsa bloke edilir.',
+        'category'=>'madagaskar-kommo',
+        'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_kommo_sync_ai_source',
+        'permission_callback'=>'mdg_ai_kommo_can_run',
+        'meta'=>$external
+    ));
+});
