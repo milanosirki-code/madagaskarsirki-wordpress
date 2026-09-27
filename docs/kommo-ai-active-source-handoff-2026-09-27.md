@@ -145,3 +145,20 @@ Yeni sohbette once su kontrol edilmeli:
 
 GitHub icin durum: Bu calisma klasoru yerel olarak Git repo degil. Bagli GitHub hesabinda ilgili repo bulunamadi. GitHub'a commit atmak icin repo adi veya URL gerekir.
 
+
+
+## 2026-09-27 — Kommo kaynak v4 düzenlemesi
+
+Kommo retrieval testlerinde Uşak ve Denizli gibi etkinliklerde kısa kaynağın 1950 karakter sınırında kesildiği, aynı verinin `DOĞRU CEVAP`, şehir-tarih indeksi ve `TÜM AKTİF` bloklarında tekrarlandığı görüldü. Bunun sonucunda AI bazı şehirlerde tarihi bulup salon/konum bilgisini kaçırabiliyordu.
+
+Yapılan değişiklikler:
+- `MMC | Aktif Programlar | Global Kısa Cevap` sadeleştirildi; her aktif etkinlik yalnız bir kez `şehir | tarih | salon | seans | fiyat` biçiminde yazılıyor.
+- Ayrı `MMC | Aktif Etkinlik Konumları` kısa metin kaynağı eklendi; `şehir | salon | açık adres | Google Maps` biçiminde çalışıyor.
+- Program kısa kaynağındaki tekrar eden `ŞEHİR-TARİH İNDEKSİ`, `TÜM AKTİF` ve şehir özel tekrar blokları kaldırıldı.
+- Tüm online satış yönlendirmesi yalnız `https://madagaskarsirki.com/bilet-al/` merkezî sayfasına alındı.
+- Okuldan ücretsiz çocuk bileti kuralı netleştirildi: toplu girişte geçersiz; çocuk tek başına giremez; bir ücretli yetişkin yanında en fazla iki ücretsiz çocuk bileti kullanılabilir.
+- Senkronizasyon artık URL kaynağı + Program kısa kaynağı + Konum kısa kaynağını birlikte oluşturur/günceller.
+
+İlgili commit: `0fc870f200dcde205cdaae626b8e9aecb9fd12b5`.
+
+Canlı WordPress tarafında bu snippet sürümü uygulandıktan sonra Madagaskar > Kommo Aktif Kaynak ekranından yeniden senkronizasyon çalıştırılmalıdır. Sonrasında Kommo kaynak listesinde `MMC | Aktif Etkinlik Konumları` kaynağı görünmelidir.
