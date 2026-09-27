@@ -88,6 +88,7 @@ function mdg_kommo_active_events_instruction_section() {
     echo '<p>Bu kaynakta aktif etkinlik bulunan şehir veya ilçe için "program yayımlanmadı" deme. Aktif kayıt varsa salon, tarih, seans, fiyat ve bilet bağlantısını ver.</p>';
     echo '<p>Müşteri "konum", "yer nerede", "salon nerede", "adres", "nasıl giderim" veya "yol tarifi" dediğinde ilgili etkinliğin salon adını, açık adresini ve doğrulanmış Google Maps bağlantısını birlikte gönder.</p>';
     echo '<p>Şehir belli değilse yalnızca "Hangi şehirdeki gösterimizin konumunu öğrenmek istersiniz?" diye sor. Google Maps bağlantısı eksikse bağlantı uydurma; açık adresi paylaş ve canlı temsilciye aktar.</p>';
+    echo '<p>Müşteri yalnız "Ankara" derse aktif satıştaki Ankara adresli veya Ankara ilçeli tüm etkinlikleri birlikte listele; aktif kayıt varsa "program yayımlanmadı" deme.</p>';
     echo '</section>';
 }
 
@@ -96,14 +97,15 @@ function mdg_kommo_active_events_customer_rules_section() {
     echo '<ul>';
     echo '<li>Gösteri: Madagaskar Sirki tamamen hayvansız, ailelere ve çocuklara uygun canlı sahne gösterisidir.</li>';
     echo '<li>Süre: Gösteri yaklaşık 60 dakika sürer. Salon kapıları genellikle gösteriden yaklaşık 30 dakika önce açılır; farklı salon notu varsa etkinlik kaydı esas alınır.</li>';
-    echo '<li>Oturma düzeni: Genel model serbest oturmadır. Özel koltuk veya numara belirtilmedikçe koltuk numarası sözü verme.</li>';
+    echo '<li>Oturma düzeni: Genel model serbest/numarasız oturmadır. Özel koltuk veya numara belirtilmedikçe koltuk numarası sözü verme; özel etkinlikte farklı bilgi varsa etkinlik kaydı geçerlidir.</li>';
     echo '<li>Yaş kuralı: 0-2 yaş ücretsizdir. 3-12 yaş çocuk bileti, 13 yaş ve üzeri yetişkin bileti alır.</li>';
     echo '<li>Standart fiyat: Çocuk 250 TL, yetişkin 500 TL, aile paketi 1.100 TL. İzmir gibi özel fiyatlı etkinlikte etkinlik kaydındaki fiyatı kullan.</li>';
     echo '<li>Aile paketi: 1 aile paketi toplam 4 kişilik kapasite düşer. Etkinlik kaydında farklı paket yazmıyorsa standart paket bilgisini kullan.</li>';
+    echo '<li>Kapıda bilet: Etkinlik günü salon girişinden nakit veya kredi kartıyla bilet alınabilir.</li>';
     echo '<li>Okuldan ücretsiz bilet / ücretsiz çocuk davetiyesi: Yalnız bireysel girişte ve ilgili kampanyada geçerlidir; toplu girişte geçersizdir. Her ücretsiz çocuk bileti için yanında ücretli yetişkin bulunmalıdır. 1 ücretli yetişkin yanında en fazla 2 ücretsiz çocuk bileti kullanılabilir. Ücretsiz çocuk biletiyle çocuk tek başına giremez.</li>';
     echo '<li>Bilet merkezi: <a href="https://madagaskarsirki.com/bilet-al/">https://madagaskarsirki.com/bilet-al/</a>. Tüm online satışlarda yalnız bu merkezi sayfayı paylaş; şehir/seans için başka satış bağlantısı üretme veya tahmin etme.</li>';
     echo '<li>İletişim ve WhatsApp: +90 312 911 37 10. Merkez telefon: +90 506 034 38 74.</li>';
-    echo '<li>Canlı temsilciye aktar: başarısız ödeme, ödeme uyuşmazlığı, bilet oluşmadı, iade/değişim, yanlış bilet, kurumsal/toplu organizasyon, özel kampanya uyuşmazlığı ve hukuki/istisnai durumlar.</li>';
+    echo '<li>Canlı temsilciye aktar: ödeme, bilet teslimi, iade/değişim, şikâyet, yanlış bilet, kurumsal/toplu organizasyon, özel kampanya uyuşmazlığı, hukuki/istisnai durumlar ve doğrulanmış politikası olmayan yiyecek-içecek gibi konular.</li>';
     echo '</ul>';
     echo '</section>';
 }
@@ -136,9 +138,7 @@ function mdg_kommo_active_events_quick_index( array $events ) {
         );
 
         if (
-            false !== mb_stripos( $event['city_label'], 'Ankara', 0, 'UTF-8' ) ||
-            false !== mb_stripos( $event['address'], 'Ankara', 0, 'UTF-8' ) ||
-            in_array( $event['city_label'], array( 'Sincan', 'Yenimahalle', 'Mamak' ), true )
+            mdg_kommo_active_events_is_ankara_event( $event ) 
         ) {
             $ankara_events[] = $line;
         }
@@ -171,8 +171,18 @@ function mdg_kommo_active_events_quick_index( array $events ) {
     }
     echo '</ul>';
 
-    echo '<p>Özel netleştirme: Kırıkkale aktif programı varsa 2 Ekim 2026 Kırıkkale gösterisini ver. Mamak aktif programı varsa 10 Ekim 2026 Mamak gösterisini ver. Müşteri "Mamak 2 Ekim" gibi şehir ve tarihi karıştırırsa "2 Ekim Kırıkkale, Mamak ise 10 Ekim" diye düzelt ve müşteriye hangi gösteriyi istediğini sor.</p>';
     echo '</section>';
+}
+
+function mdg_kommo_active_events_is_ankara_event( array $event ) {
+    foreach ( array( 'city_label', 'address', 'name', 'venue' ) as $field ) {
+        $value = isset( $event[ $field ] ) ? (string) $event[ $field ] : '';
+        if ( '' !== $value && false !== mb_stripos( $value, 'Ankara', 0, 'UTF-8' ) ) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function mdg_kommo_active_events_short_date( $date_label ) {
@@ -391,7 +401,7 @@ function mdg_kommo_active_events_create_text_source() {
     }
 
     $text     = mdg_kommo_active_events_compact_text( $events );
-    $hash     = md5( $text . '|agent_v4_program' );
+    $hash     = md5( $text . '|agent_v5_program' );
     $existing = get_option( 'mdg_kommo_active_events_text_source', array() );
 
     if ( ! empty( $existing['source_id'] ) && ! empty( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
@@ -456,7 +466,7 @@ function mdg_kommo_active_events_create_locations_text_source() {
     }
 
     $text     = mdg_kommo_active_events_compact_locations_text( $events );
-    $hash     = md5( $text . '|agent_v4_locations' );
+    $hash     = md5( $text . '|agent_v5_locations' );
     $existing = get_option( 'mdg_kommo_active_events_locations_text_source', array() );
 
     if ( ! empty( $existing['source_id'] ) && ! empty( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
@@ -523,9 +533,7 @@ function mdg_kommo_active_events_compact_text( array $events ) {
         $lines[] = $line;
 
         if (
-            false !== mb_stripos( $event['city_label'], 'Ankara', 0, 'UTF-8' ) ||
-            false !== mb_stripos( $event['address'], 'Ankara', 0, 'UTF-8' ) ||
-            in_array( $event['city_label'], array( 'Pursaklar', 'Sincan', 'Yenimahalle', 'Mamak', 'Altındağ', 'Çubuk' ), true )
+            mdg_kommo_active_events_is_ankara_event( $event ) 
         ) {
             $ankara[] = $event['city_label'] . ' ' . mdg_kommo_active_events_short_date( $event['date_label'] );
         }
@@ -571,7 +579,7 @@ function mdg_kommo_active_events_compact_locations_text( array $events ) {
         );
     }
 
-    return mdg_kommo_active_events_limit_text( $text, 1950 );
+    return mdg_kommo_active_events_limit_text( $text, 5000 );
 }
 
 function mdg_kommo_active_events_limit_text( $text, $limit ) {
