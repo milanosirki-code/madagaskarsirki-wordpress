@@ -102,7 +102,7 @@ function mdg_kommo_active_events_customer_rules_section() {
     echo '<li>Standart fiyat: Çocuk 250 TL, yetişkin 500 TL, aile paketi 1.100 TL. İzmir gibi özel fiyatlı etkinlikte etkinlik kaydındaki fiyatı kullan.</li>';
     echo '<li>Aile paketi: 1 aile paketi toplam 4 kişilik kapasite düşer. Etkinlik kaydında farklı paket yazmıyorsa standart paket bilgisini kullan.</li>';
     echo '<li>Kapıda bilet: Etkinlik günü salon girişinden nakit veya kredi kartıyla bilet alınabilir.</li>';
-    echo '<li>Okuldan ücretsiz bilet / ücretsiz çocuk davetiyesi: Yalnız bireysel girişte ve ilgili kampanyada geçerlidir; toplu girişte geçersizdir. Her ücretsiz çocuk bileti için yanında ücretli yetişkin bulunmalıdır. 1 ücretli yetişkin yanında en fazla 2 ücretsiz çocuk bileti kullanılabilir. Ücretsiz çocuk biletiyle çocuk tek başına giremez.</li>';
+    echo '<li>Okuldan ücretsiz bilet / ücretsiz çocuk davetiyesi: Bu kural şehirden bağımsız genel bilet kuralıdır; aktif satıştaki tüm Madagaskar Sirki gösterilerinde bireysel kullanımda geçerlidir. Şehir bazlı ayrıca doğrulama arama. Toplu katılımda geçersizdir. Her ücretsiz çocuk bileti için yanında ücretli yetişkin bulunmalıdır. 1 ücretli yetişkin yanında en fazla 2 ücretsiz çocuk bileti kullanılabilir. Ücretsiz çocuk biletiyle çocuk tek başına giremez. Müşteri "okuldan ücretsiz çocuk biletim var" derse: "Evet, bireysel girişte kullanabilirsiniz; yanında ücretli yetişkin olması gerekir" diye cevap ver.</li>';
     echo '<li>Bilet merkezi: <a href="https://madagaskarsirki.com/bilet-al/">https://madagaskarsirki.com/bilet-al/</a>. Tüm online satışlarda yalnız bu merkezi sayfayı paylaş; şehir/seans için başka satış bağlantısı üretme veya tahmin etme.</li>';
     echo '<li>İletişim ve WhatsApp: +90 312 911 37 10. Merkez telefon: +90 506 034 38 74.</li>';
     echo '<li>Canlı temsilciye aktar: ödeme, bilet teslimi, iade/değişim, şikâyet, yanlış bilet, kurumsal/toplu organizasyon, özel kampanya uyuşmazlığı, hukuki/istisnai durumlar ve doğrulanmış politikası olmayan yiyecek-içecek gibi konular.</li>';
@@ -401,7 +401,7 @@ function mdg_kommo_active_events_create_text_source() {
     }
 
     $text     = mdg_kommo_active_events_compact_text( $events );
-    $hash     = md5( $text . '|agent_v5_program' );
+    $hash     = md5( $text . '|agent_v6_program' );
     $existing = get_option( 'mdg_kommo_active_events_text_source', array() );
 
     if ( ! empty( $existing['source_id'] ) && ! empty( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
@@ -548,9 +548,10 @@ function mdg_kommo_active_events_compact_text( array $events ) {
         $text .= "ANKARA: Müşteri yalnız Ankara derse şu aktif Ankara etkinliklerini listele: " . implode( ' | ', array_unique( $ankara ) ) . ".\n";
     }
     $text .= "FİYAT: Her etkinliğin kendi satırındaki fiyatı kullan; başka şehrin fiyatını taşıma.\n";
+    $text .= "ÜCRETSİZ ÇOCUK: Okuldan verilen ücretsiz çocuk bileti şehirden bağımsız genel kuraldır; aktif gösterilerde bireysel kullanımda geçerlidir. 1 ücretli yetişkin yanında en fazla 2 ücretsiz çocuk bileti kullanılabilir; çocuk tek başına giremez; toplu katılımda geçersizdir.\n";
     $text .= "BİLET: Tüm online satışlar için yalnız https://madagaskarsirki.com/bilet-al/ adresini paylaş.";
 
-    return mdg_kommo_active_events_limit_text( $text, 1950 );
+    return mdg_kommo_active_events_limit_text( $text, 2600 );
 }
 
 function mdg_kommo_active_events_compact_event_line( array $event ) {
