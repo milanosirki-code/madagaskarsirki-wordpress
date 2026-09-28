@@ -228,7 +228,7 @@ class MMC_Sales_Service {
         $gross = (float) $item->get_total() + (float) $item->get_total_tax();
         $ref_amount = 0.0;
         if ( method_exists( $order, 'get_total_refunded_for_item' ) ) $ref_amount += abs( (float) $order->get_total_refunded_for_item( $item_id ) );
-        if ( method_exists( $order, 'get_tax_refunded_for_item' ) ) $ref_amount += abs( (float) $order->get_tax_refunded_for_item( $item_id ) );
+        if ( method_exists( $order, 'get_tax_refunded_for_item' ) ) $ref_amount += abs( (float) $order->get_tax_refunded_for_item( $item_id, 'line_item' ) );
         $paid_at_obj = method_exists( $order, 'get_date_paid' ) ? $order->get_date_paid() : null;
         $was_paid = (bool) $paid_at_obj;
         $net_amount = $was_paid ? max( 0, $gross - $ref_amount ) : 0;
