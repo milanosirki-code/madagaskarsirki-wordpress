@@ -24,8 +24,13 @@ if ( ! function_exists( 'mdg_ai_refund_can_run' ) ) {
 if ( ! function_exists( 'mdg_ai_refund_v4_private' ) ) {
     function mdg_ai_refund_v4_private( $method, $args = array() ) {
         try {
-            $obj = new MDG_Bilet_Yonetimi_V4();
-            $ref = new ReflectionMethod( 'MDG_Bilet_Yonetimi_V4', $method );
+            $ref_class = new ReflectionClass( 'MDG_Bilet_Yonetimi_V4' );
+            if ( ! $ref_class->hasMethod( $method ) ) {
+                return new WP_Error( 'mdg_ai_refund_method_missing', sprintf( 'MDG_Bilet_Yonetimi_V4::%s yöntemi bulunamadı.', $method ) );
+            }
+
+            $obj = $ref_class->newInstanceWithoutConstructor();
+            $ref = $ref_class->getMethod( $method );
             if ( method_exists( $ref, 'setAccessible' ) ) { $ref->setAccessible( true ); }
             return $ref->invokeArgs( $obj, $args );
         } catch ( Throwable $e ) {
