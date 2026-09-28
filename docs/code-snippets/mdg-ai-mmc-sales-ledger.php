@@ -33,6 +33,158 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_event' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_mmc_sales_should_fallback' ) ) {
+    function mdg_ai_mmc_sales_should_fallback( $error ) {
+        return $error instanceof Throwable
+            && false !== strpos( (string) $error->getMessage(), 'get_tax_refunded_for_item' );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_tax_refunded_for_item' ) ) {
+    function mdg_ai_mmc_sales_tax_refunded_for_item( $order, $item_id ) {
+        if ( ! method_exists( $order, 'get_tax_refunded_for_item' ) ) {
+            return 0.0;
+        }
+        return abs( (float) $order->get_tax_refunded_for_item( $item_id, 'line_item' ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_mapping_for_product' ) ) {
+    function mdg_ai_mmc_sales_mapping_for_product( $product_id, $variation_id = 0 ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'mmc_sales_mappings';
+        if ( $variation_id ) {
+            $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE is_active=1 AND wc_variation_id=%d ORDER BY id ASC LIMIT 1", absint( $variation_id ) ) );
+            if ( $row ) { return $row; }
+        }
+        if ( $product_id ) {
+            return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE is_active=1 AND wc_product_id=%d AND (wc_variation_id IS NULL OR wc_variation_id=0) ORDER BY id ASC LIMIT 1", absint( $product_id ) ) );
+        }
+        return null;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_ledger_count' ) ) {
+    function mdg_ai_mmc_sales_ledger_count( $event_id ) {
+        global $wpdb;
+        return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_ledger WHERE event_id=%d", absint( $event_id ) ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_upsert_ledger_item' ) ) {
+    function mdg_ai_mmc_sales_upsert_ledger_item( $order, $item_id, $item, $mapping ) {
+        global $wpdb;
+        $ticket = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mmc_ticket_types WHERE id=%d LIMIT 1", (int) $mapping->ticket_type_id ) );
+        if ( ! $ticket ) { return false; }
+
+        $qty = max( 0, (int) $item->get_quantity() );
+        $ref_qty = 0;
+        if ( method_exists( $order, 'get_qty_refunded_for_item' ) ) {
+            $ref_qty = abs( (int) $order->get_qty_refunded_for_item( $item_id ) );
+        }
+        $net_qty = max( 0, $qty - $ref_qty );
+
+        $gross = (float) $item->get_total() + (float) $item->get_total_tax();
+        $ref_amount = 0.0;
+        if ( method_exists( $order, 'get_total_refunded_for_item' ) ) {
+            $ref_amount += abs( (float) $order->get_total_refunded_for_item( $item_id ) );
+        }
+        $ref_amount += mdg_ai_mmc_sales_tax_refunded_for_item( $order, $item_id );
+
+        $paid_at_obj = method_exists( $order, 'get_date_paid' ) ? $order->get_date_paid() : null;
+        $was_paid = (bool) $paid_at_obj;
+        $counted_qty = $was_paid ? $net_qty : 0;
+        $capacity = $counted_qty * max( 1, (int) $ticket->capacity_units );
+
+        $table = $wpdb->prefix . 'mmc_sales_ledger';
+        $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE channel='woocommerce' AND external_order_item_id=%d LIMIT 1", absint( $item_id ) ) );
+        $now = current_time( 'mysql' );
+        $row = array(
+            'program_id'             => (int) $mapping->program_id,
+            'event_id'               => (int) $mapping->event_id,
+            'session_id'             => (int) $mapping->session_id,
+            'ticket_type_id'         => (int) $mapping->ticket_type_id,
+            'channel'                => 'woocommerce',
+            'external_order_id'      => (int) $order->get_id(),
+            'external_order_item_id' => absint( $item_id ),
+            'order_status'           => sanitize_key( $order->get_status() ),
+            'payment_method'         => sanitize_key( (string) $order->get_payment_method() ),
+            'payment_method_title'   => sanitize_text_field( (string) $order->get_payment_method_title() ),
+            'quantity'               => $qty,
+            'refunded_quantity'      => $ref_qty,
+            'net_quantity'           => $counted_qty,
+            'capacity_units'         => $capacity,
+            'gross_amount'           => round( $gross, 2 ),
+            'refunded_amount'        => round( $ref_amount, 2 ),
+            'net_amount'             => round( $was_paid ? max( 0, $gross - $ref_amount ) : 0, 2 ),
+            'paid_at'                => $paid_at_obj ? $paid_at_obj->date( 'Y-m-d H:i:s' ) : null,
+            'last_synced_at'         => $now,
+            'updated_at'             => $now,
+        );
+
+        if ( $existing ) {
+            return false !== $wpdb->update( $table, $row, array( 'id' => (int) $existing ) );
+        }
+
+        $row['created_at'] = $now;
+        return false !== $wpdb->insert( $table, $row );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_fallback_sync_order' ) ) {
+    function mdg_ai_mmc_sales_fallback_sync_order( $order_id, $target_event_id = 0 ) {
+        if ( ! MMC_Sales_Service::woocommerce_available() ) { return 0; }
+        $order = wc_get_order( absint( $order_id ) );
+        if ( ! $order ) { return 0; }
+
+        $matched = 0;
+        foreach ( $order->get_items( 'line_item' ) as $item_id => $item ) {
+            $mapping = mdg_ai_mmc_sales_mapping_for_product( absint( $item->get_product_id() ), absint( $item->get_variation_id() ) );
+            if ( ! $mapping ) { continue; }
+            if ( $target_event_id && (int) $mapping->event_id !== (int) $target_event_id ) { continue; }
+            if ( mdg_ai_mmc_sales_upsert_ledger_item( $order, $item_id, $item, $mapping ) ) { $matched++; }
+        }
+        return $matched;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mmc_sales_fallback_sync_event' ) ) {
+    function mdg_ai_mmc_sales_fallback_sync_event( $event_id, $lookback_days = 365 ) {
+        if ( ! MMC_Sales_Service::woocommerce_available() ) {
+            return new WP_Error( 'mmc_wc_missing', 'WooCommerce etkin değil.' );
+        }
+
+        $page = 1;
+        $processed = 0;
+        $matched_before = mdg_ai_mmc_sales_ledger_count( $event_id );
+        do {
+            $result = wc_get_orders( array(
+                'limit'        => 100,
+                'paged'        => $page,
+                'paginate'     => true,
+                'orderby'      => 'date',
+                'order'        => 'DESC',
+                'date_created' => '>' . ( time() - DAY_IN_SECONDS * $lookback_days ),
+                'return'       => 'objects',
+            ) );
+            foreach ( (array) $result->orders as $order ) {
+                mdg_ai_mmc_sales_fallback_sync_order( $order->get_id(), $event_id );
+                $processed++;
+            }
+            $page++;
+        } while ( $page <= (int) $result->max_num_pages );
+
+        MMC_Sales_Service::refresh_integration_health( $event_id );
+        $matched_after = mdg_ai_mmc_sales_ledger_count( $event_id );
+        return array(
+            'scanned' => $processed,
+            'matched' => $matched_after,
+            'ledger_before' => $matched_before,
+            'fallback' => 'woocommerce_tax_refund_signature',
+        );
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_mmc_sales_bridge_verified' ) ) {
     function mdg_ai_mmc_sales_bridge_verified( $event ) {
         if ( ! class_exists( 'MMC_MDG_Bridge_Service' ) ) {
@@ -141,8 +293,20 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_sync_order' ) ) {
             return new WP_Error( 'mdg_ai_mmc_sales_order_missing', 'WooCommerce siparişi bulunamadı.' );
         }
 
-        $ok = MMC_Sales_Service::sync_order( $order_id );
-        return array( 'synced' => (bool) $ok, 'order_id' => $order_id );
+        try {
+            $ok = MMC_Sales_Service::sync_order( $order_id );
+            return array( 'synced' => (bool) $ok, 'order_id' => $order_id );
+        } catch ( Throwable $e ) {
+            if ( ! mdg_ai_mmc_sales_should_fallback( $e ) ) { throw $e; }
+            $matched = mdg_ai_mmc_sales_fallback_sync_order( $order_id );
+            return array(
+                'synced' => (bool) $matched,
+                'order_id' => $order_id,
+                'matched_items' => $matched,
+                'fallback' => 'woocommerce_tax_refund_signature',
+                'original_error' => $e->getMessage(),
+            );
+        }
     }
 }
 
@@ -154,7 +318,14 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_sync_event' ) ) {
         if ( is_wp_error( $event ) ) { return $event; }
 
         $before = MMC_Sales_Service::summary( $event_id );
-        $result = MMC_Sales_Service::sync_event_orders( $event_id, $days );
+        try {
+            $result = MMC_Sales_Service::sync_event_orders( $event_id, $days );
+        } catch ( Throwable $e ) {
+            if ( ! mdg_ai_mmc_sales_should_fallback( $e ) ) { throw $e; }
+            $result = mdg_ai_mmc_sales_fallback_sync_event( $event_id, $days );
+            if ( is_wp_error( $result ) ) { return $result; }
+            $result['original_error'] = $e->getMessage();
+        }
         if ( is_wp_error( $result ) ) { return $result; }
         $after = MMC_Sales_Service::summary( $event_id );
 
