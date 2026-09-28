@@ -8,7 +8,8 @@ Bu belge `ai-abilities-staging-2026-09-28` dalındaki staged abilities için pro
 - Ability kaydı oluşturmak veri değiştirmez. Destructive işaretli ability'ler yalnız açık kullanıcı talebiyle çalıştırılmalı.
 - Gerçek para iadesi için ability yoktur ve eklenmemelidir; V4'ün iki-yönetici güvenlik akışı korunur.
 - Kommo secret/token değerleri hiçbir çıktıda gösterilmemelidir.
-- Kommo AI source, legacy `family_2_2` / “2 yetişkin + 2 çocuk” kuralı düzeltilmeden senkronlanmamalıdır.
+- Madagaskar aile paketi standardı `family_2_2` = “2 yetişkin + 2 çocuk” ve `capacity_units = 4` olarak korunmalıdır.
+- Kommo AI source consistency check bu doğru `family_2_2` standardını hata saymamalı; yalnız tanım/kod/kapasite tutarsızlığında unsafe dönmelidir.
 - MMC satış defteri senkronu, MMC↔MDG köprüsü ve satış mapping kapsamı doğrulanmadan çalıştırılmamalıdır.
 
 ## 1. Temizlik
@@ -71,7 +72,8 @@ Aktivasyonda domain write ability çalıştırılmaz.
 - `madagaskar/kommo-configuration`
 - `madagaskar/kommo-connection-diagnostics`
 - Pursaklar için `madagaskar/kommo-source-consistency-check`.
-- Legacy 2+2 kuralı varsa `safe=false` beklenir ve AI source write ability çalıştırılmaz.
+- Beklenti: `family_2_2`, “2 yetişkin + 2 çocuk” ve `capacity_units = 4` birlikte görülüyorsa aile paketi açısından `safe=true` olabilir.
+- Eski “1 yetişkin + 2 çocuk” metni veya `family_2_2` için 4 dışı kapasite görülürse `safe=false` beklenir ve AI source write ability çalıştırılmaz.
 
 ## 4. MMC ↔ MDG köprüsü — satış senkronundan önce zorunlu
 
@@ -142,7 +144,7 @@ Aşağıdakiler harici CRM yazımıdır:
 - pipeline diagnostics geçerli,
 - stage preview pipeline mismatch göstermiyor,
 - source consistency `safe=true`,
-- aile paketi kuralı güncel.
+- aile paketi kuralı `family_2_2` / “2 yetişkin + 2 çocuk” / `capacity_units = 4` olarak güncel.
 
 Kommo kartı MMC'den ilerideyse geriye çekilmez.
 İptal programlarda otomatik stage hareketi yapılmaz.

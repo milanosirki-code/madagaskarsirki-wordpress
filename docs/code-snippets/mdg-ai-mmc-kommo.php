@@ -3,8 +3,8 @@
  * Madagaskar AI — MMC Kommo Güvenli Köprü
  *
  * Secret/token değerlerini hiçbir ability döndürmez.
- * AI kaynak yazma işlemleri, eski family_2_2 / "2 yetişkin + 2 çocuk"
- * kuralı tespit edilirse bloke edilir.
+ * AI kaynak yazma işlemleri, aile paketi standardı tutarsızsa bloke edilir.
+ * Doğru standart: family_2_2 = 2 yetişkin + 2 çocuk, kapasite 4.
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -56,10 +56,14 @@ if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
         if(is_wp_error($program))return $program;
 
         $text=MMC_Kommo_Service::build_source_text($program_id);
+        $normalized_text=remove_accents($text);
         $issues=array();
+        $family_detected=false;
+        $family_capacity_units=null;
+        $family_text_ok=false!==stripos($normalized_text,'2 yetiskin + 2 cocuk');
 
-        if(false!==stripos(remove_accents($text),'2 yetiskin + 2 cocuk')){
-            $issues[]='Kommo kaynak metninde eski "2 yetişkin + 2 çocuk" aile paketi kuralı bulunuyor.';
+        if(false!==stripos($normalized_text,'1 yetiskin + 2 cocuk')){
+            $issues[]='Kommo kaynak metninde eski "1 yetişkin + 2 çocuk" aile paketi kuralı bulunuyor.';
         }
 
         if(class_exists('MMC_Event_Service')){
@@ -67,16 +71,32 @@ if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
             if($event){
                 foreach((array)MMC_Event_Service::ticket_types($event->id) as $ticket){
                     if((string)$ticket->ticket_code==='family_2_2' && !empty($ticket->is_active)){
-                        $issues[]='Aktif MMC bilet türünde legacy family_2_2 kodu bulunuyor.';
+                        $family_detected=true;
+                        $family_capacity_units=(int)$ticket->capacity_units;
+                        if(4!==$family_capacity_units){
+                            $issues[]='Aktif family_2_2 aile paketi kapasite tüketimi 4 olmalıdır.';
+                        }
                         break;
                     }
                 }
             }
         }
 
+        if($family_detected && !$family_text_ok){
+            $issues[]='Kommo kaynak metninde "Aile Paketi: 2 yetişkin + 2 çocuk" tanımı bulunmalıdır.';
+        }
+
         return array(
             'safe'=>empty($issues),
             'issues'=>$issues,
+            'family_package'=>array(
+                'ticket_code'=>'family_2_2',
+                'expected_definition'=>'2 yetişkin + 2 çocuk',
+                'expected_capacity_units'=>4,
+                'detected'=>$family_detected,
+                'detected_capacity_units'=>$family_capacity_units,
+                'source_text_has_definition'=>$family_text_ok
+            ),
             'source_hash'=>hash('sha256',$text),
             'source_text'=>$text,
             'transport'=>MMC_Kommo_Service::ai_transport_mode($program_id),
@@ -281,7 +301,7 @@ add_action('wp_abilities_api_init',function(){
 
     wp_register_ability('madagaskar/kommo-source-consistency-check',array(
         'label'=>'Kommo AI Kaynak Metnini Denetle',
-        'description'=>'Programdan üretilecek Kommo AI metnini önizler ve legacy family_2_2 / 2+2 aile paketi kuralı varsa senkronun güvenli olmadığını işaretler.',
+        'description'=>'Programdan üretilecek Kommo AI metnini önizler; family_2_2 = 2 yetişkin + 2 çocuk ve kapasite 4 standardının tutarlı olduğunu denetler.',
         'category'=>'madagaskar-kommo',
         'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
         'output_schema'=>array('type'=>'object'),
@@ -317,7 +337,7 @@ add_action('wp_abilities_api_init',function(){
 
     wp_register_ability('madagaskar/kommo-create-text-source',array(
         'label'=>'Kommo AI Doğrudan Metin Kaynağı Oluştur',
-        'description'=>'Kaynak tutarlılık kapısı geçerse Kommo AI text source oluşturur; mevcut güncel kaynak varsa yeniden oluşturmaz. Eski 2+2 aile kuralı varsa bloke edilir.',
+        'description'=>'Kaynak tutarlılık kapısı geçerse Kommo AI text source oluşturur; mevcut güncel kaynak varsa yeniden oluşturmaz. Aile paketi standardı tutarsızsa bloke edilir.',
         'category'=>'madagaskar-kommo',
         'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
         'output_schema'=>array('type'=>'object'),
@@ -328,7 +348,7 @@ add_action('wp_abilities_api_init',function(){
 
     wp_register_ability('madagaskar/kommo-sync-ai-source',array(
         'label'=>'Kommo AI Kaynak Durumunu Senkronla',
-        'description'=>'Kaynak tutarlılık kapısı geçerse URL/text taşıma moduna göre Kommo AI kaynağını oluşturur veya yenileme durumunu işler. Eski 2+2 aile kuralı varsa bloke edilir.',
+        'description'=>'Kaynak tutarlılık kapısı geçerse URL/text taşıma moduna göre Kommo AI kaynağını oluşturur veya yenileme durumunu işler. Aile paketi standardı tutarsızsa bloke edilir.',
         'category'=>'madagaskar-kommo',
         'input_schema'=>array('type'=>'object','properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),'required'=>array('program_id')),
         'output_schema'=>array('type'=>'object'),

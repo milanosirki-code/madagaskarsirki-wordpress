@@ -341,7 +341,7 @@ add_action( 'wp_abilities_api_init', function() {
         'public' => true,
     );
     $ensure = array(
-        'annotations' => array( 'readonly'=>false, 'destructive'=>false, 'idempotent'=>true ),
+        'annotations' => array( 'readonly'=>false, 'destructive'=>true, 'idempotent'=>true ),
         'public' => true,
     );
     $write = array(

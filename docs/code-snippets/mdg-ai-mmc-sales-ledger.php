@@ -33,6 +33,22 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_event' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_mmc_sales_bridge_verified' ) ) {
+    function mdg_ai_mmc_sales_bridge_verified( $event ) {
+        if ( ! class_exists( 'MMC_MDG_Bridge_Service' ) ) {
+            return new WP_Error( 'mdg_ai_mmc_sales_bridge_missing', 'MMC ↔ MDG köprü servisi kullanılamıyor.' );
+        }
+        $status = MMC_MDG_Bridge_Service::status( (int) $event->program_id );
+        if ( empty( $status['linked'] ) || ! empty( $status['stale'] ) ) {
+            return new WP_Error(
+                'mdg_ai_mmc_sales_bridge_required',
+                'Otomatik satış eşleştirmesi için önce MMC ↔ MDG köprü bağlantısı doğrulanmalıdır.'
+            );
+        }
+        return true;
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_mmc_sales_health' ) ) {
     function mdg_ai_mmc_sales_health( $input = array() ) {
         return array(
@@ -66,6 +82,19 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_mapping_save' ) ) {
         $event = mdg_ai_mmc_sales_event( $event_id );
         if ( is_wp_error( $event ) ) { return $event; }
 
+        $external_ids = array(
+            absint( $input['wc_product_id'] ?? 0 ),
+            absint( $input['wc_variation_id'] ?? 0 ),
+            absint( $input['tickera_event_id'] ?? 0 ),
+            absint( $input['tickera_ticket_type_id'] ?? 0 ),
+        );
+        if ( ! array_filter( $external_ids ) ) {
+            return new WP_Error(
+                'mdg_ai_mmc_sales_mapping_external_required',
+                'Satış eşleştirmesi için en az bir WooCommerce veya Tickera kimliği açıkça verilmelidir.'
+            );
+        }
+
         $result = MMC_Sales_Service::save_mapping( $event_id, $session_id, $ticket_type_id, array(
             'wc_product_id'          => absint( $input['wc_product_id'] ?? 0 ),
             'wc_variation_id'        => absint( $input['wc_variation_id'] ?? 0 ),
@@ -90,6 +119,9 @@ if ( ! function_exists( 'mdg_ai_mmc_sales_import_legacy' ) ) {
         $legacy_event_id = absint( $input['legacy_event_id'] ?? 0 );
         $event = mdg_ai_mmc_sales_event( $event_id );
         if ( is_wp_error( $event ) ) { return $event; }
+
+        $bridge_ok = mdg_ai_mmc_sales_bridge_verified( $event );
+        if ( is_wp_error( $bridge_ok ) ) { return $bridge_ok; }
 
         $result = MMC_Sales_Service::import_legacy_mdg_event( $event_id, $legacy_event_id );
         if ( is_wp_error( $result ) ) { return $result; }

@@ -259,11 +259,15 @@ class MMC_Kommo_Service {
         $lines[] = '- Çocuklar yetişkin eşliğinde katılır.';
         foreach ( $tickets as $t ) {
             if ( ! (int)$t->is_active ) continue;
-            $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
+            if ( 'family_2_2' === $t->ticket_code ) {
+                $row = '- Aile Paketi: 2 yetişkin + 2 çocuk | Fiyat: ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
+            } else {
+                $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
+            }
             if ( isset($bmap[(int)$t->id]) && null !== $bmap[(int)$t->id]->channel_price ) {
                 $row .= ' | Biletinial: ' . number_format_i18n((float)$bmap[(int)$t->id]->channel_price, 2) . ' TL + varsa hizmet bedeli';
             }
-            if ( 'family_2_2' === $t->ticket_code ) $row .= ' | 2 yetişkin + 2 çocuk, 4 kişi kapasite tüketir';
+            if ( 'family_2_2' === $t->ticket_code ) $row .= ' | Kapasite tüketimi: 4 kişi';
             $lines[] = $row;
         }
         $lines[] = 'Resmî merkezi bilet sayfası: https://madagaskarsirki.com/bilet-al/';

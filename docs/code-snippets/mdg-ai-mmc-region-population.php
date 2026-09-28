@@ -137,7 +137,7 @@ add_action('wp_abilities_api_init',function(){
 
     $read=array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'public'=>true);
     $write=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>false),'public'=>true);
-    $create=array('annotations'=>array('readonly'=>false,'destructive'=>false,'idempotent'=>false),'public'=>true);
+    $create=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>false),'public'=>true);
 
     wp_register_ability('madagaskar/region-sources',array(
         'label'=>'Bölge Veri Kaynaklarını Getir',

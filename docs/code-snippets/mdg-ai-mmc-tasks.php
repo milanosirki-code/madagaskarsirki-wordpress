@@ -258,7 +258,7 @@ add_action('wp_abilities_api_init',function(){
     if(!function_exists('wp_register_ability'))return;
 
     $read=array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'public'=>true);
-    $create=array('annotations'=>array('readonly'=>false,'destructive'=>false,'idempotent'=>false),'public'=>true);
+    $create=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>false),'public'=>true);
     $write=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>false),'public'=>true);
     $status=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>true),'public'=>true);
 
