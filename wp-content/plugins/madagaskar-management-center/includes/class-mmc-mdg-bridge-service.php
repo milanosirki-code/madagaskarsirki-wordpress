@@ -352,8 +352,13 @@ class MMC_MDG_Bridge_Service {
         $event = $program && class_exists( 'MMC_Event_Service' ) ? MMC_Event_Service::event_for_program( $program_id ) : null;
         $sessions = $event && class_exists( 'MMC_Event_Service' ) ? (array) MMC_Event_Service::sessions( (int) $event->id ) : array();
         $tickets = $event && class_exists( 'MMC_Event_Service' ) ? (array) MMC_Event_Service::ticket_types( (int) $event->id ) : array();
+        // family_2_2 is a virtual package in the MDG/WooCommerce layer.
+        // It consumes 4 capacity units in MMC, but must not become a third
+        // physical MDG ticket variation. Only real child/adult ticket types
+        // are copied into the MDG draft structure.
         $active_tickets = array_values( array_filter( $tickets, function( $ticket ) {
-            return (int) ( $ticket->is_active ?? 0 ) === 1;
+            return (int) ( $ticket->is_active ?? 0 ) === 1
+                && 'family_2_2' !== sanitize_key( (string) ( $ticket->ticket_code ?? '' ) );
         } ) );
 
         $venue = null;
