@@ -212,8 +212,20 @@ class MMC_Region_Service {
                 'created_at'                 => $now,
             ) );
         }
-        MMC_Program_Service::set_status( $program_id, 'region_analysis', 'Tanıtım havzası güncellendi; bölge analizi başladı.' );
-        MMC_Program_Service::add_log( $program_id, 'target_districts_updated', 'program', $program_id, null, $clean, 'Tanıtım havzası ilçeleri güncellendi.' );
+        // Target edits must never move an already-advanced program backwards.
+        // Only a brand-new preparation record advances into region analysis.
+        if ( 'preparation' === (string) $program->status ) {
+            MMC_Program_Service::set_status( $program_id, 'region_analysis', 'Tanıtım havzası güncellendi; bölge analizi başladı.' );
+        }
+        MMC_Program_Service::add_log(
+            $program_id,
+            'target_districts_updated',
+            'program',
+            $program_id,
+            null,
+            $clean,
+            'Tanıtım havzası ilçeleri güncellendi; mevcut ileri yaşam döngüsü durumu korundu.'
+        );
         return $clean;
     }
 
