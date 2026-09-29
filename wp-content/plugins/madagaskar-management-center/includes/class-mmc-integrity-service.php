@@ -76,6 +76,17 @@ class MMC_Integrity_Service {
     }
 
     public static function selected_venue( $program_id ) {
+        $program_id = absint( $program_id );
+
+        if ( class_exists( 'MMC_Venue_Service' ) && method_exists( 'MMC_Venue_Service', 'venues_for_program' ) ) {
+            foreach ( (array) MMC_Venue_Service::venues_for_program( $program_id ) as $venue ) {
+                if ( (int) ( $venue->is_selected ?? 0 ) === 1 ) {
+                    return $venue;
+                }
+            }
+        }
+
+        // Geriye uyumluluk: MMC_Venue_Service kullanılamazsa yalnız legacy kaynağı oku.
         global $wpdb;
         $pv = $wpdb->prefix . 'mmc_program_venues';
         $v  = $wpdb->prefix . 'mmc_venues';
@@ -85,7 +96,7 @@ class MMC_Integrity_Service {
              FROM $pv pv INNER JOIN $v v ON v.id=pv.venue_id
              WHERE pv.program_id=%d AND pv.is_selected=1
              ORDER BY (pv.allocation_status='approved') DESC,pv.id DESC LIMIT 1",
-            absint( $program_id )
+            $program_id
         ) );
     }
 
