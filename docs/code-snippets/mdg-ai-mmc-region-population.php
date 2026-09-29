@@ -195,6 +195,31 @@ if ( ! function_exists( 'mdg_ai_region_recent_imports' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_region_preserve_advanced_status' ) ) {
+    function mdg_ai_region_preserve_advanced_status( $program_id, $action, $entity_type, $entity_id, $old_value, $new_value, $note ) {
+        if ( 'program_status_changed' !== (string) $action || 'program' !== (string) $entity_type ) return;
+        if ( 'region_analysis' !== (string) $new_value ) return;
+        if ( false === strpos( (string) $note, 'Tanıtım havzası güncellendi' ) ) return;
+
+        $advanced = array(
+            'venue_research','allocation_request','allocation_pending','venue_confirmed','venue_payment',
+            'event_setup','sales_prep','sales_open','promotion','operations','show_day',
+            'financial_close','deposit_refund','completed'
+        );
+        if ( ! in_array( (string) $old_value, $advanced, true ) ) return;
+
+        $program = MMC_Program_Service::get_program( absint( $program_id ) );
+        if ( ! $program || 'region_analysis' !== (string) $program->status ) return;
+
+        MMC_Program_Service::set_status(
+            absint( $program_id ),
+            (string) $old_value,
+            'Tanıtım havzası güncellendi; ileri yaşam döngüsü durumu korundu.'
+        );
+    }
+    add_action( 'mmc_program_logged', 'mdg_ai_region_preserve_advanced_status', 99, 7 );
+}
+
 add_action('wp_abilities_api_categories_init',function(){
     if(function_exists('wp_register_ability_category')){
         wp_register_ability_category('madagaskar-bolge-nufus',array(
@@ -246,7 +271,7 @@ add_action('wp_abilities_api_init',function(){
 
     wp_register_ability('madagaskar/region-set-target-districts',array(
         'label'=>'Program Tanıtım Havzasını Güncelle',
-        'description'=>'Programın hedef ilçe listesini tamamen yeniler, nüfus snapshotlarını alır ve programı Bölge Analizi durumuna geçirir. Kritik yazma işlemidir.',
+        'description'=>'Programın hedef ilçe listesini tamamen yeniler ve nüfus snapshotlarını alır. Yalnız hazırlık aşamasındaki programı Bölge Analizine ilerletir; ileri aşamaları geriye çekmez. Kritik yazma işlemidir.',
         'category'=>'madagaskar-bolge-nufus',
         'input_schema'=>array(
             'type'=>'object',
