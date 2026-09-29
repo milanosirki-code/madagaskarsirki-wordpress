@@ -506,3 +506,105 @@ add_action('wp_abilities_api_init',function(){
         'meta'=>$external
     ));
 });
+
+
+/**
+ * One-time wp-config token constant migration.
+ * Changes only the constant NAME; the secret value is never returned or logged.
+ */
+if ( ! function_exists( 'mdg_ai_kommo_migrate_token_constant' ) ) {
+    function mdg_ai_kommo_migrate_token_constant( $input = array() ) {
+        $path = ABSPATH . 'wp-config.php';
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return new WP_Error( 'mdg_ai_kommo_config_forbidden', 'Yönetici yetkisi gerekir.' );
+        }
+        if ( ! is_readable( $path ) || ! is_writable( $path ) ) {
+            return new WP_Error( 'mdg_ai_kommo_config_not_writable', 'wp-config.php güvenli biçimde yazılabilir değil.' );
+        }
+
+        $original = file_get_contents( $path );
+        if ( false === $original ) {
+            return new WP_Error( 'mdg_ai_kommo_config_read_failed', 'wp-config.php okunamadı.' );
+        }
+
+        $old_pattern = '/define\s*\(\s*([\'\"])MS_KOMMO_TOKEN\\1\s*,/';
+        $new_pattern = '/define\s*\(\s*([\'\"])MMC_KOMMO_TOKEN\\1\s*,/';
+
+        $old_count = preg_match_all( $old_pattern, $original, $m1 );
+        $new_count = preg_match_all( $new_pattern, $original, $m2 );
+
+        if ( 0 === $old_count && 1 === $new_count ) {
+            return array(
+                'migrated' => false,
+                'already_migrated' => true,
+                'old_constant_present' => false,
+                'new_constant_present' => true,
+            );
+        }
+
+        if ( 1 !== $old_count || 0 !== $new_count ) {
+            return new WP_Error(
+                'mdg_ai_kommo_config_ambiguous',
+                'Token sabiti beklenen tekil yapıda değil; otomatik değişiklik yapılmadı.'
+            );
+        }
+
+        $updated = preg_replace(
+            '/define\s*\(\s*([\'\"])MS_KOMMO_TOKEN\\1\s*,/',
+            'define(\'MMC_KOMMO_TOKEN\',',
+            $original,
+            1,
+            $replace_count
+        );
+
+        if ( 1 !== $replace_count || ! is_string( $updated ) || $updated === $original ) {
+            return new WP_Error( 'mdg_ai_kommo_config_replace_failed', 'Token sabit adı güvenli biçimde değiştirilemedi.' );
+        }
+
+        $bytes = file_put_contents( $path, $updated, LOCK_EX );
+        if ( false === $bytes || $bytes !== strlen( $updated ) ) {
+            // Best-effort restore of the in-memory original if the write was incomplete.
+            file_put_contents( $path, $original, LOCK_EX );
+            return new WP_Error( 'mdg_ai_kommo_config_write_failed', 'wp-config.php yazımı tamamlanamadı; değişiklik geri alınmaya çalışıldı.' );
+        }
+
+        $verify = file_get_contents( $path );
+        if ( false === $verify
+            || 0 !== preg_match_all( $old_pattern, $verify )
+            || 1 !== preg_match_all( $new_pattern, $verify ) ) {
+            file_put_contents( $path, $original, LOCK_EX );
+            return new WP_Error( 'mdg_ai_kommo_config_verify_failed', 'Yazım sonrası doğrulama geçmedi; özgün içerik geri yüklendi.' );
+        }
+
+        return array(
+            'migrated' => true,
+            'already_migrated' => false,
+            'old_constant_present' => false,
+            'new_constant_present' => true,
+            'secret_exposed' => false,
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) { return; }
+
+    wp_register_ability( 'madagaskar/kommo-migrate-token-constant', array(
+        'label' => 'Kommo Token Sabit Adını Kalıcı Taşı',
+        'description' => 'wp-config.php içinde yalnız MS_KOMMO_TOKEN sabit adını MMC_KOMMO_TOKEN olarak değiştirir; secret değerini okumaz, döndürmez veya loglamaz.',
+        'category' => 'madagaskar-kommo',
+        'input_schema' => array( 'type'=>'object', 'properties'=>array() ),
+        'output_schema' => array( 'type'=>'object' ),
+        'execute_callback' => 'mdg_ai_kommo_migrate_token_constant',
+        'permission_callback' => 'mdg_ai_kommo_can_run',
+        'meta' => array(
+            'annotations' => array(
+                'readonly' => false,
+                'destructive' => true,
+                'idempotent' => true,
+            ),
+            'public' => true,
+        ),
+    ) );
+} );
