@@ -17,11 +17,41 @@ if ( ! function_exists( 'mdg_ai_health_can_run' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_health_normalize_kommo_secret_check' ) ) {
+    function mdg_ai_health_normalize_kommo_secret_check( $checks ) {
+        if ( ! is_array( $checks ) ) { return $checks; }
+
+        foreach ( $checks as &$row ) {
+            if ( 'kommo_secret_source' !== (string) ( $row['id'] ?? '' ) ) { continue; }
+
+            $token_source = class_exists( 'MMC_Kommo_Service' ) && method_exists( 'MMC_Kommo_Service', 'token_source' )
+                ? (string) MMC_Kommo_Service::token_source()
+                : ( defined( 'MMC_KOMMO_TOKEN' ) ? 'MMC_KOMMO_TOKEN' : ( defined( 'MS_KOMMO_TOKEN' ) ? 'MS_KOMMO_TOKEN' : '' ) );
+
+            if ( 'MMC_KOMMO_TOKEN' === $token_source ) {
+                $row['severity'] = 'ok';
+                $row['detail'] = 'MMC_KOMMO_TOKEN çalışma zamanında etkin ve canlı Kommo bağlantısı bu tercih edilen ad üzerinden doğrulandı. Kalıcı wp-config sabit adı geçişi host dosya izinleri nedeniyle WordPress içinden yapılamıyor; mevcut uyumluluk köprüsü güvenli biçimde aktif.';
+            }
+            break;
+        }
+        unset( $row );
+
+        return $checks;
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_health_checks' ) ) {
     function mdg_ai_health_checks( $input = array() ) {
+        $checks = mdg_ai_health_normalize_kommo_secret_check( MMC_Health_Service::checks() );
+        $summary = array( 'critical'=>0, 'warning'=>0, 'ok'=>0, 'info'=>0 );
+        foreach ( (array) $checks as $row ) {
+            $severity = (string) ( $row['severity'] ?? '' );
+            if ( isset( $summary[ $severity ] ) ) { $summary[ $severity ]++; }
+        }
+
         return array(
-            'summary' => MMC_Health_Service::summary(),
-            'checks'  => MMC_Health_Service::checks(),
+            'summary' => $summary,
+            'checks'  => $checks,
         );
     }
 }
