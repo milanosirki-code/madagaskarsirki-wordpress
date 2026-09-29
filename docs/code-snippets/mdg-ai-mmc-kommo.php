@@ -86,6 +86,23 @@ if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
             $issues[]='Kommo kaynak metninde "Aile Paketi: 2 yetişkin + 2 çocuk" tanımı bulunmalıdır.';
         }
 
+        $session_times=array();
+        $session_times_ok=true;
+        if(class_exists('MMC_Event_Service')){
+            $event=MMC_Event_Service::event_for_program($program_id);
+            if($event){
+                foreach((array)MMC_Event_Service::sessions($event->id) as $session){
+                    $expected=substr((string)$session->session_time,11,5);
+                    if(!$expected)continue;
+                    $session_times[]=$expected;
+                    if(false===strpos($text,'- '.$expected.' |')){
+                        $session_times_ok=false;
+                        $issues[]='Kommo kaynak metnindeki seans saatleri MMC etkinlik saatleriyle uyuşmuyor: '.$expected.' bekleniyor.';
+                    }
+                }
+            }
+        }
+
         return array(
             'safe'=>empty($issues),
             'issues'=>$issues,
@@ -96,6 +113,10 @@ if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
                 'detected'=>$family_detected,
                 'detected_capacity_units'=>$family_capacity_units,
                 'source_text_has_definition'=>$family_text_ok
+            ),
+            'session_times'=>array(
+                'expected'=>$session_times,
+                'source_ok'=>$session_times_ok
             ),
             'source_hash'=>hash('sha256',$text),
             'source_text'=>$text,
