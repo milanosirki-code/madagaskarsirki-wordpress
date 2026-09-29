@@ -407,8 +407,14 @@ class MMC_Operations_Service {
             $sessions=MMC_Event_Service::sessions($event->id);
             foreach($sessions as $s){
                 $key='session_'.(int)$s->id; $valid_keys[]=$key;
-                $start=$s->session_time; $end=wp_date('Y-m-d H:i:s',strtotime($start.' +60 minutes'));
-                self::upsert_schedule($program_id,$key,(int)$s->id,'show','Gösteri '.wp_date('H:i',strtotime($start)),$start,$end,100+(int)$s->id,1);
+                $start=(string)$s->session_time;
+                $start_dt=DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$start,wp_timezone());
+                $end=$start_dt?$start_dt->modify('+60 minutes')->format('Y-m-d H:i:s'):'';
+                self::upsert_schedule(
+                    $program_id,$key,(int)$s->id,'show',
+                    'Gösteri '.substr($start,11,5),
+                    $start,$end,100+(int)$s->id,1
+                );
             }
         }
         $rows=$wpdb->get_results($wpdb->prepare("SELECT id,source_key FROM $table WHERE program_id=%d AND is_system=1 AND source_key LIKE 'session_%%'",$program_id));
