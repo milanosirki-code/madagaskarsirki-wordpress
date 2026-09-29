@@ -26,6 +26,22 @@ if ( ! function_exists( 'mdg_ai_health_checks' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_integrity_selected_venue_resolved' ) ) {
+    function mdg_ai_integrity_selected_venue_resolved( $program_id ) {
+        $venue = mdg_ai_integrity_selected_venue_resolved( $program_id );
+        if ( $venue || ! class_exists( 'MMC_Venue_Service' ) || ! method_exists( 'MMC_Venue_Service', 'venues_for_program' ) ) {
+            return $venue;
+        }
+
+        foreach ( (array) MMC_Venue_Service::venues_for_program( $program_id ) as $candidate ) {
+            if ( (int) ( $candidate->is_selected ?? 0 ) === 1 ) {
+                return $candidate;
+            }
+        }
+        return null;
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_integrity_checks' ) ) {
     function mdg_ai_integrity_checks( $input ) {
         $program_id = absint( $input['program_id'] ?? 0 );
@@ -33,10 +49,31 @@ if ( ! function_exists( 'mdg_ai_integrity_checks' ) ) {
             return new WP_Error( 'mdg_ai_integrity_program_missing', 'Program bulunamadı.' );
         }
 
+        $checks = MMC_Integrity_Service::checks( $program_id );
+        $venue  = mdg_ai_integrity_selected_venue_resolved( $program_id );
+
+        if ( $venue ) {
+            foreach ( $checks as &$row ) {
+                if ( 'venue' !== (string) ( $row['key'] ?? '' ) ) { continue; }
+                $row['severity'] = 'approved' === (string) ( $venue->allocation_status ?? '' ) ? 'ok' : 'warning';
+                $row['detail']   = (string) ( $venue->venue_name ?? 'Salon' ) .
+                    ' · Tahsis: ' . (string) ( $venue->allocation_status ?? '' ) .
+                    ' · program_id=' . $program_id;
+                break;
+            }
+            unset( $row );
+        }
+
+        $summary = array( 'ok'=>0, 'warning'=>0, 'critical'=>0, 'info'=>0 );
+        foreach ( $checks as $row ) {
+            $severity = (string) ( $row['severity'] ?? '' );
+            if ( isset( $summary[ $severity ] ) ) { $summary[ $severity ]++; }
+        }
+
         return array(
             'program_id' => $program_id,
-            'summary'    => MMC_Integrity_Service::summary( $program_id ),
-            'checks'     => MMC_Integrity_Service::checks( $program_id ),
+            'summary'    => $summary,
+            'checks'     => $checks,
         );
     }
 }
