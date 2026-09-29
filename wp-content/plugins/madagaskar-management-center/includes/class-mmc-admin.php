@@ -357,6 +357,7 @@ class MMC_Admin {
         $roles = array(
             'Madagaskar Yönetici' => 'Tüm MMC modülleri ve Bölge Veri Ambarı',
             'Madagaskar Operasyon' => 'Program görüntüleme, salon, etkinlik/seans, Kommo kontrolü, görev ve operasyon',
+            'Madagaskar Pazarlama' => 'Program görüntüleme, pazarlama/Meta hazırlığı ve görev yönetimi',
             'Madagaskar Saha' => 'Program görüntüleme ve saha',
             'Madagaskar Finans' => 'Program görüntüleme, finans ve rapor',
             'Madagaskar Görüntüleyici' => 'Salt okunur dashboard/program/rapor',
