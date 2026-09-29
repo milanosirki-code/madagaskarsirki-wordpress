@@ -9,8 +9,8 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-if ( ! function_exists( 'mdg_ai_ops_can_run' ) ) {
-    function mdg_ai_ops_can_run( $input = null ) {
+if ( ! function_exists( 'mdg_ai_operations_can_run' ) ) {
+    function mdg_ai_operations_can_run( $input = null ) {
         if ( ! current_user_can( 'mmc_manage_operations' ) ) {
             return new WP_Error( 'mdg_ai_ops_forbidden', 'Operasyon & Lojistik yetkisi gerekir.' );
         }
@@ -366,7 +366,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_plan_get',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -377,7 +377,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_plan_ensure',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$ensure,
     ) );
 
@@ -415,7 +415,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_plan_update',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 
@@ -426,7 +426,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_summary',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -442,7 +442,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_resources_list',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -464,7 +464,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_resource_add',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$ensure,
     ) );
 
@@ -475,7 +475,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_program_resources',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -497,7 +497,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_resource_assign',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 
@@ -521,7 +521,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_assignment_update',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 
@@ -539,7 +539,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_checklist_list',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -569,7 +569,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_checklist_update',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 
@@ -580,7 +580,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_schedule_list',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$read,
     ) );
 
@@ -591,7 +591,7 @@ add_action( 'wp_abilities_api_init', function() {
         'input_schema'=>$program_schema,
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_schedule_sync',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write_idempotent,
     ) );
 
@@ -614,7 +614,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_schedule_add',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 
@@ -633,7 +633,7 @@ add_action( 'wp_abilities_api_init', function() {
         ),
         'output_schema'=>array('type'=>'object'),
         'execute_callback'=>'mdg_ai_ops_schedule_status',
-        'permission_callback'=>'mdg_ai_ops_can_run',
+        'permission_callback'=>'mdg_ai_operations_can_run',
         'meta'=>$write,
     ) );
 } );
