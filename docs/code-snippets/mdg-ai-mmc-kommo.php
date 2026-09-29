@@ -50,6 +50,24 @@ if ( ! function_exists( 'mdg_ai_kommo_safe_profile' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_kommo_source_session_time_hotfix' ) ) {
+    function mdg_ai_kommo_source_session_time_hotfix( $date, $format, $timestamp, $timezone ) {
+        if ( 'H:i' !== (string) $format ) {
+            return $date;
+        }
+
+        foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 12 ) as $frame ) {
+            if ( 'MMC_Kommo_Service' === (string) ( $frame['class'] ?? '' )
+                && 'build_source_text' === (string) ( $frame['function'] ?? '' ) ) {
+                return gmdate( 'H:i', (int) $timestamp );
+            }
+        }
+
+        return $date;
+    }
+    add_filter( 'wp_date', 'mdg_ai_kommo_source_session_time_hotfix', 99, 4 );
+}
+
 if ( ! function_exists( 'mdg_ai_kommo_source_guard' ) ) {
     function mdg_ai_kommo_source_guard( $program_id ) {
         $program=mdg_ai_kommo_program($program_id);
