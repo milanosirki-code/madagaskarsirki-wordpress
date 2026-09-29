@@ -269,13 +269,33 @@ class MMC_Finance_Service {
 
     public static function deposit_refunds( $program_id ) {
         global $wpdb;
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT r.*,pv.target_institution,pv.venue_id,v.venue_name,v.institution_name,v.province_name,v.district_name
+        $rows=$wpdb->get_results($wpdb->prepare(
+            "SELECT r.*,pv.target_institution,pv.venue_id,pv.venue_source
              FROM {$wpdb->prefix}mmc_deposit_refunds r
              LEFT JOIN {$wpdb->prefix}mmc_program_venues pv ON pv.id=r.program_venue_id
-             LEFT JOIN {$wpdb->prefix}mmc_venues v ON v.id=pv.venue_id
              WHERE r.program_id=%d ORDER BY r.id ASC",absint($program_id)
         ));
+
+        foreach((array)$rows as $row){
+            $row->venue_name='';
+            $row->institution_name='';
+            $row->province_name='';
+            $row->district_name='';
+
+            if(!$row->program_venue_id || !class_exists('MMC_Venue_Service') || !method_exists('MMC_Venue_Service','venues_for_program')){
+                continue;
+            }
+
+            foreach((array)MMC_Venue_Service::venues_for_program(absint($program_id)) as $venue){
+                if((int)($venue->id??0)!==(int)$row->program_venue_id)continue;
+                $row->venue_name=(string)($venue->venue_name??'');
+                $row->institution_name=(string)($venue->institution_name??'');
+                $row->province_name=(string)($venue->province_name??'');
+                $row->district_name=(string)($venue->district_name??'');
+                break;
+            }
+        }
+        return $rows;
     }
 
     public static function generate_refund_letter( $refund_id ) {
@@ -283,9 +303,17 @@ class MMC_Finance_Service {
         $r=$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_deposit_refunds WHERE id=%d",absint($refund_id)));
         if(!$r)return new WP_Error('mmc_refund_missing','Teminat iade kaydı bulunamadı.');
         $program=MMC_Program_Service::get_program($r->program_id); if(!$program)return new WP_Error('mmc_refund_program','Program bulunamadı.');
-        $pv=$r->program_venue_id?$wpdb->get_row($wpdb->prepare("SELECT pv.*,v.venue_name,v.institution_name FROM {$wpdb->prefix}mmc_program_venues pv LEFT JOIN {$wpdb->prefix}mmc_venues v ON v.id=pv.venue_id WHERE pv.id=%d",(int)$r->program_venue_id)):null;
-        $institution=$pv?trim((string)($pv->target_institution?:$pv->institution_name)):''; if(!$institution)$institution=$program->province_name.' Gençlik ve Spor İl Müdürlüğü';
-        $venue=$pv?(string)$pv->venue_name:'';
+        $pv=$r->program_venue_id?$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_program_venues WHERE id=%d",(int)$r->program_venue_id)):null;
+        $resolved_venue=null;
+        if($pv && class_exists('MMC_Venue_Service') && method_exists('MMC_Venue_Service','venues_for_program')){
+            foreach((array)MMC_Venue_Service::venues_for_program((int)$r->program_id) as $candidate){
+                if((int)($candidate->id??0)===(int)$pv->id){$resolved_venue=$candidate;break;}
+            }
+        }
+        $institution=$pv?trim((string)($pv->target_institution??'')):'';
+        if(!$institution && $resolved_venue)$institution=trim((string)($resolved_venue->institution_name??''));
+        if(!$institution)$institution=$program->province_name.' Gençlik ve Spor İl Müdürlüğü';
+        $venue=$resolved_venue?(string)($resolved_venue->venue_name??''):'';
         $body="T.C.\n".mb_strtoupper($institution,'UTF-8')."\n\n";
         $body.="Konu: Salon Teminat Bedelinin İadesi Talebi\n\n";
         $body.=$program->province_name.' / '.($program->district_name?:'Merkez')." bölgesinde düzenlenen Madagaskar Sirki programı kapsamında";
