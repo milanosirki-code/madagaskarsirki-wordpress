@@ -349,15 +349,37 @@ class MMC_Integrity_Service {
         $bridge = $s['bridge'];
         $mdg_event = $s['event'];
         $bridge_mismatch = $mmc_event && (int)$bridge->mmc_event_id !== (int)$mmc_event->id;
-        $rows[] = self::row(
-            'mdg_bridge',
-            'MMC ↔ MDG Etkinlik Köprüsü',
-            $bridge_mismatch ? 'critical' : 'ok',
+
+        $onsale_structural = array();
+        if ( $mdg_event && 'draft' === (string)$mdg_event->status ) {
+            foreach ( (array) MMC_MDG_Bridge_Service::candidates( $program_id ) as $candidate ) {
+                if ( (int)$candidate['event_id'] === (int)$bridge->mdg_event_id ) { continue; }
+                if ( 'onsale' !== (string)($candidate['status'] ?? '') ) { continue; }
+                if ( empty($candidate['province_match']) || empty($candidate['district_match'])
+                    || empty($candidate['date_match']) || empty($candidate['venue_match']) ) { continue; }
+                if ( (int)($candidate['session_count'] ?? 0) !== (int)($s['sessions_mmc'] ?? 0) ) { continue; }
+                $onsale_structural[] = $candidate;
+            }
+        }
+
+        $bridge_sev = $bridge_mismatch ? 'critical' : ( $onsale_structural ? 'warning' : 'ok' );
+        $bridge_detail =
             'MMC Program #' . (int)$program_id . ' / Event #' . (int)$bridge->mmc_event_id .
             ' ↔ MDG Event #' . (int)$bridge->mdg_event_id .
             ( $mdg_event ? ' · ' . $mdg_event->title : ' · MDG etkinliği bulunamadı' ) .
             ' · yöntem: ' . $bridge->match_method .
-            ( $bridge_mismatch ? ' · MMC EVENT UYUŞMUYOR' : '' ),
+            ( $bridge_mismatch ? ' · MMC EVENT UYUŞMUYOR' : '' );
+
+        if ( $onsale_structural ) {
+            $ids = array_map( static function( $row ){ return '#' . (int)$row['event_id']; }, $onsale_structural );
+            $bridge_detail .= ' · DİKKAT: köprü draft kayıtta; aynı yapıdaki satıştaki MDG event ' . implode(', ', $ids) . ' bulundu. Satış mapping/köprü kaynağını doğrulayın.';
+        }
+
+        $rows[] = self::row(
+            'mdg_bridge',
+            'MMC ↔ MDG Etkinlik Köprüsü',
+            $bridge_sev,
+            $bridge_detail,
             $url
         );
 
