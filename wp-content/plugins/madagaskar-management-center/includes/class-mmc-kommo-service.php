@@ -245,7 +245,7 @@ class MMC_Kommo_Service {
         $lines[] = 'SEANSLAR';
         if ( $sessions ) {
             foreach ( $sessions as $s ) {
-                $lines[] = '- ' . wp_date( 'H:i', strtotime($s->session_time) ) . ' | Kapasite: ' . (int)$s->capacity;
+                $lines[] = '- ' . substr( (string) $s->session_time, 11, 5 ) . ' | Kapasite: ' . (int)$s->capacity;
             }
         } else {
             $lines[] = '- Seanslar henüz kesinleşmedi.';
