@@ -76,6 +76,78 @@ if ( ! function_exists( 'mdg_ai_region_set_targets' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_region_ensure_primary_district' ) ) {
+    function mdg_ai_region_ensure_primary_district( $input ) {
+        global $wpdb;
+
+        $program_id=absint($input['program_id']??0);
+        $program=MMC_Program_Service::get_program($program_id);
+        if(!$program)return new WP_Error('mdg_ai_region_program_missing','Program bulunamadı.');
+
+        $district=MMC_Region_Service::normalize_place_name((string)$program->district_name);
+        if(!$district)return new WP_Error('mdg_ai_region_primary_missing','Programın ana ilçesi bulunamadı.');
+
+        $known=array_map(array('MMC_Region_Service','normalize_place_name'),(array)MMC_Region_Service::known_districts($program->province_name));
+        if($known && !in_array($district,$known,true)){
+            return new WP_Error('mdg_ai_region_primary_unknown','Programın ana ilçesi bölge kaynaklarında doğrulanamadı.');
+        }
+
+        $table=$wpdb->prefix.'mmc_program_target_districts';
+        $existing=$wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE program_id=%d AND district_name=%s ORDER BY id ASC LIMIT 1",
+            $program_id,$district
+        ));
+        if($existing){
+            return array(
+                'created'=>false,
+                'program_status'=>(string)$program->status,
+                'target'=>mdg_ai_region_arr($existing),
+                'summary'=>mdg_ai_region_arr(MMC_Region_Service::program_summary($program_id))
+            );
+        }
+
+        $population=class_exists('MMC_Population_Source_Service') && MMC_Population_Source_Service::ready()
+            ? MMC_Population_Source_Service::district($program->province_name,$district)
+            : null;
+        $source_info=class_exists('MMC_Population_Source_Service') ? MMC_Population_Source_Service::info() : array();
+        $now=current_time('mysql');
+
+        $ok=$wpdb->insert($table,array(
+            'program_id'=>$program_id,
+            'province_name'=>(string)$program->province_name,
+            'district_name'=>$district,
+            'is_primary'=>1,
+            'is_selected'=>1,
+            'population_snapshot'=>$population ? (int)$population['population'] : null,
+            'population_year_snapshot'=>$population ? (int)$population['data_year'] : null,
+            'population_source_snapshot'=>$population ? (string)($population['source_name']??($source_info['source']??'')) : '',
+            'population_snapshot_at'=>$population ? $now : null,
+            'created_by'=>get_current_user_id() ?: (int)$program->created_by,
+            'created_at'=>$now
+        ),array('%d','%s','%s','%d','%d','%d','%d','%s','%s','%d','%s'));
+
+        if(false===$ok)return new WP_Error('mdg_ai_region_primary_insert','Ana hedef ilçe kaydı oluşturulamadı.');
+
+        $id=(int)$wpdb->insert_id;
+        MMC_Program_Service::add_log(
+            $program_id,
+            'target_primary_district_ensured',
+            'program',
+            $program_id,
+            null,
+            array('district'=>$district,'target_row_id'=>$id),
+            'Eksik ana hedef ilçe kaydı program yaşam döngüsü değiştirilmeden tamamlandı.'
+        );
+
+        return array(
+            'created'=>true,
+            'program_status'=>(string)MMC_Program_Service::get_program($program_id)->status,
+            'target'=>mdg_ai_region_arr($wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d",$id))),
+            'summary'=>mdg_ai_region_arr(MMC_Region_Service::program_summary($program_id))
+        );
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_region_metric_add' ) ) {
     function mdg_ai_region_metric_add( $input ) {
         $result=MMC_Region_Service::add_metric($input);
@@ -188,6 +260,24 @@ add_action('wp_abilities_api_init',function(){
         'execute_callback'=>'mdg_ai_region_set_targets',
         'permission_callback'=>'mdg_ai_region_can_run',
         'meta'=>$write
+    ));
+
+    wp_register_ability('madagaskar/region-ensure-primary-district',array(
+        'label'=>'Program Ana Hedef İlçesini Tamamla',
+        'description'=>'Programın kendi ilçesi için eksik hedef-ilçe kaydını nüfus snapshotıyla idempotent oluşturur; mevcut hedefleri silmez ve program yaşam döngüsü durumunu değiştirmez.',
+        'category'=>'madagaskar-bolge-nufus',
+        'input_schema'=>array(
+            'type'=>'object',
+            'properties'=>array('program_id'=>array('type'=>'integer','minimum'=>1)),
+            'required'=>array('program_id')
+        ),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_region_ensure_primary_district',
+        'permission_callback'=>'mdg_ai_region_can_run',
+        'meta'=>array(
+            'annotations'=>array('readonly'=>false,'destructive'=>false,'idempotent'=>true),
+            'public'=>true
+        )
     ));
 
     wp_register_ability('madagaskar/region-add-metric',array(
