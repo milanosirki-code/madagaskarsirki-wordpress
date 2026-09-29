@@ -9,6 +9,18 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+/**
+ * Secret-source compatibility bridge.
+ * Keep the legacy constants untouched, but expose the preferred MMC names
+ * without reading, logging or persisting the secret value anywhere else.
+ */
+if ( ! defined( 'MMC_KOMMO_TOKEN' ) && defined( 'MS_KOMMO_TOKEN' ) ) {
+    define( 'MMC_KOMMO_TOKEN', MS_KOMMO_TOKEN );
+}
+if ( ! defined( 'MMC_KOMMO_BASE_URL' ) && defined( 'MS_KOMMO_BASE_URL' ) ) {
+    define( 'MMC_KOMMO_BASE_URL', MS_KOMMO_BASE_URL );
+}
+
 if ( ! function_exists( 'mdg_ai_kommo_can_run' ) ) {
     function mdg_ai_kommo_can_run( $input = null ) {
         if ( ! current_user_can( 'manage_options' ) ) {
