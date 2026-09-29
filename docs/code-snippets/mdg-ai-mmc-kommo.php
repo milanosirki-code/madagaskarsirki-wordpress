@@ -258,6 +258,103 @@ if ( ! function_exists( 'mdg_ai_kommo_create_text_source' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_kommo_safe_text_source_state_sync' ) ) {
+    function mdg_ai_kommo_safe_text_source_state_sync( $program_id ) {
+        global $wpdb;
+
+        $program_id=absint($program_id);
+        $profile=MMC_Kommo_Service::ensure_profile($program_id);
+        if(is_wp_error($profile))return $profile;
+
+        if('text'!==MMC_Kommo_Service::ai_transport_mode($program_id)){
+            return MMC_Kommo_Service::sync_ai_source($program_id);
+        }
+
+        $state=MMC_Kommo_Service::direct_text_source_state($program_id);
+        $table=$wpdb->prefix.'mmc_kommo_profiles';
+        $now=current_time('mysql');
+
+        if(empty($state['source_id'])){
+            $wpdb->update($table,array(
+                'ai_source_status'=>'direct_pending',
+                'last_error'=>'',
+                'updated_at'=>$now
+            ),array('id'=>(int)$profile->id));
+            return array('status'=>'direct_pending','external_write'=>false);
+        }
+
+        if(hash_equals((string)$state['source_hash'],(string)$profile->source_hash)){
+            $wpdb->update($table,array(
+                'ai_source_id'=>(string)$state['source_id'],
+                'ai_source_status'=>'synced',
+                'ai_synced_hash'=>(string)$state['source_hash'],
+                'last_error'=>'',
+                'updated_at'=>$now
+            ),array('id'=>(int)$profile->id));
+            return array('status'=>'synced','external_write'=>false);
+        }
+
+        $wpdb->update($table,array(
+            'ai_source_id'=>(string)$state['source_id'],
+            'ai_source_status'=>'refresh_needed',
+            'last_error'=>'Kommo AI text source güncellemesi manuel yenileme gerektiriyor; duplicate kaynak oluşturulmadı.',
+            'updated_at'=>$now
+        ),array('id'=>(int)$profile->id));
+
+        return array(
+            'status'=>'refresh_needed',
+            'external_write'=>false,
+            'source_id'=>(string)$state['source_id']
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_kommo_preprocess_text_queue' ) ) {
+    function mdg_ai_kommo_preprocess_text_queue() {
+        global $wpdb;
+
+        if(!class_exists('MMC_Kommo_Service'))return;
+
+        $table=$wpdb->prefix.'mmc_kommo_queue';
+        $rows=$wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table WHERE job_type='ai_source_sync' AND status='queued' AND available_at<=%s ORDER BY id ASC LIMIT 25",
+            current_time('mysql')
+        ));
+
+        foreach((array)$rows as $job){
+            $program_id=absint($job->program_id);
+            if('text'!==MMC_Kommo_Service::ai_transport_mode($program_id))continue;
+
+            $wpdb->update($table,array(
+                'status'=>'running',
+                'attempts'=>(int)$job->attempts+1,
+                'updated_at'=>current_time('mysql')
+            ),array('id'=>(int)$job->id));
+
+            $result=mdg_ai_kommo_safe_text_source_state_sync($program_id);
+            if(is_wp_error($result)){
+                $wpdb->update($table,array(
+                    'status'=>'error',
+                    'last_error'=>$result->get_error_message(),
+                    'processed_at'=>current_time('mysql'),
+                    'updated_at'=>current_time('mysql')
+                ),array('id'=>(int)$job->id));
+                continue;
+            }
+
+            $wpdb->update($table,array(
+                'status'=>'done',
+                'last_error'=>'',
+                'processed_at'=>current_time('mysql'),
+                'updated_at'=>current_time('mysql')
+            ),array('id'=>(int)$job->id));
+        }
+    }
+
+    add_action('mmc_kommo_process_queue','mdg_ai_kommo_preprocess_text_queue',1);
+    add_action('mmc_kommo_process_queue_fast','mdg_ai_kommo_preprocess_text_queue',1);
+}
+
 if ( ! function_exists( 'mdg_ai_kommo_sync_ai_source' ) ) {
     function mdg_ai_kommo_sync_ai_source( $input ) {
         $program_id=absint($input['program_id']??0);
@@ -267,11 +364,12 @@ if ( ! function_exists( 'mdg_ai_kommo_sync_ai_source' ) ) {
             return new WP_Error('mdg_ai_kommo_source_blocked',implode(' ',$guard['issues']));
         }
 
-        $result=MMC_Kommo_Service::sync_ai_source($program_id);
+        $result=mdg_ai_kommo_safe_text_source_state_sync($program_id);
         if(is_wp_error($result))return $result;
 
         return array(
             'synced_or_marked'=>true,
+            'result'=>$result,
             'profile'=>mdg_ai_kommo_safe_profile(MMC_Kommo_Service::get_profile($program_id)),
             'transport'=>MMC_Kommo_Service::ai_transport_mode($program_id)
         );
