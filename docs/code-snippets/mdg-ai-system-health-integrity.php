@@ -28,7 +28,7 @@ if ( ! function_exists( 'mdg_ai_health_checks' ) ) {
 
 if ( ! function_exists( 'mdg_ai_integrity_selected_venue_resolved' ) ) {
     function mdg_ai_integrity_selected_venue_resolved( $program_id ) {
-        $venue = mdg_ai_integrity_selected_venue_resolved( $program_id );
+        $venue = MMC_Integrity_Service::selected_venue( $program_id );
         if ( $venue || ! class_exists( 'MMC_Venue_Service' ) || ! method_exists( 'MMC_Venue_Service', 'venues_for_program' ) ) {
             return $venue;
         }
@@ -84,7 +84,7 @@ if ( ! function_exists( 'mdg_ai_integrity_selected_venue' ) ) {
         if ( ! $program_id ) {
             return new WP_Error( 'mdg_ai_integrity_program_required', 'program_id zorunludur.' );
         }
-        $venue = MMC_Integrity_Service::selected_venue( $program_id );
+        $venue = mdg_ai_integrity_selected_venue_resolved( $program_id );
         return array(
             'program_id' => $program_id,
             'venue'      => json_decode( wp_json_encode( $venue ), true ),
