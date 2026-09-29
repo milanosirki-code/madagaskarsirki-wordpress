@@ -132,6 +132,28 @@ class MMC_Sales_Service {
         return $mapping_id;
     }
 
+    private static function canonical_ticket_code( $code ) {
+        $raw = strtoupper( trim( (string) $code ) );
+        $raw = strtr( $raw, array(
+            'Ç'=>'C','Ğ'=>'G','İ'=>'I','Ö'=>'O','Ş'=>'S','Ü'=>'U',
+            'ç'=>'C','ğ'=>'G','ı'=>'I','i'=>'I','ö'=>'O','ş'=>'S','ü'=>'U',
+        ) );
+        $key = strtolower( preg_replace( '/[^A-Z0-9]+/', '_', $raw ) );
+        $key = trim( $key, '_' );
+
+        $aliases = array(
+            'child'      => 'child',
+            'cocuk'      => 'child',
+            'adult'      => 'adult',
+            'yetiskin'   => 'adult',
+            'family_2_2' => 'family_2_2',
+            'aile_2_2'   => 'family_2_2',
+            'family22'   => 'family_2_2',
+            'aile22'     => 'family_2_2',
+        );
+        return $aliases[ $key ] ?? sanitize_key( $code );
+    }
+
     public static function import_legacy_mdg_event( $event_id, $legacy_event_id ) {
         global $wpdb;
         if ( ! class_exists( 'MDG_DB' ) ) return new WP_Error( 'mmc_legacy_missing', 'Eski Madagaskar Bilet Yönetimi (MDG_DB) algılanmadı.' );
@@ -148,7 +170,11 @@ class MMC_Sales_Service {
         $mmc_sessions = MMC_Event_Service::sessions( $event_id );
         $mmc_types    = MMC_Event_Service::ticket_types( $event_id );
         $type_by_code = array();
-        foreach ( $mmc_types as $t ) $type_by_code[ sanitize_key( $t->ticket_code ) ] = $t;
+        foreach ( $mmc_types as $t ) {
+            $canonical = self::canonical_ticket_code( $t->ticket_code );
+            if ( 'family_2_2' === $canonical ) { continue; }
+            $type_by_code[ $canonical ] = $t;
+        }
 
         $session_by_local = array();
         foreach ( $mmc_sessions as $s ) $session_by_local[ substr( (string)$s->session_time, 0, 16 ) ] = $s;
@@ -162,7 +188,8 @@ class MMC_Sales_Service {
 
             $legacy_types = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $legacy_types_table WHERE session_id=%d AND is_active=1 ORDER BY sort_order ASC,id ASC", (int)$ls->id ) );
             foreach ( $legacy_types as $lt ) {
-                $code = sanitize_key( $lt->code );
+                $code = self::canonical_ticket_code( $lt->code );
+                if ( 'family_2_2' === $code ) { continue; }
                 $mt = $type_by_code[ $code ] ?? null;
                 if ( ! $mt ) { $warnings[] = 'Bilet türü eşleşmedi: ' . $lt->code; continue; }
                 $r = self::save_mapping( $event_id, $ms->id, $mt->id, array(
