@@ -189,8 +189,8 @@ class MMC_Marketing_Service {
 
     private static function generate_item($type,$s){
         $p=$s['program'];$e=$s['event'];$v=$s['venue'];$sessions=$s['sessions'];$tickets=$s['tickets'];
-        $place=$p->district_name ?: $p->province_name; $date=$e->event_date?wp_date('d F Y',strtotime($e->event_date)):'';
-        $times=implode(' • ',array_map(function($x){return wp_date('H:i',strtotime($x->session_time));},$sessions));
+        $place=$p->district_name ?: $p->province_name; $date=self::local_date_label($e->event_date);
+        $times=implode(' • ',array_map(function($x){return substr((string)$x->session_time,11,5);},$sessions));
         $prices=array(); foreach($tickets as $t){ if((int)$t->is_active) $prices[]=$t->ticket_name.' '.number_format_i18n((float)$t->price,0).' TL'; }
         $price_text=implode(' • ',$prices); $venue=$v?$v->venue_name:'';
         $base="{$place}’de Madagaskar Sirki! 🎪\n{$date} • {$venue}\nSeanslar: {$times}\n{$price_text}\n🎟️ Bilet: madagaskarsirki.com/bilet-al/\nUluslararası sanatçılar • Hayvansız modern sirk • Aile eğlencesi";
@@ -217,7 +217,19 @@ class MMC_Marketing_Service {
     private static function source_hash($s){$data=array('p'=>$s['program']->program_code,'ps'=>$s['program']->status,'e'=>$s['event']->event_date,'es'=>$s['event']->status,'v'=>$s['venue']?$s['venue']->venue_name:'','a'=>$s['venue']?$s['venue']->address:'','s'=>array_map(function($x){return array($x->session_time,(int)$x->capacity);},$s['sessions']),'t'=>array_map(function($x){return array($x->ticket_code,(float)$x->price,(int)$x->is_active);},$s['tickets']));return hash('sha256',wp_json_encode($data));}
     private static function channel_for_type($type){return in_array($type,array('instagram_post','instagram_story','reel','countdown','giveaway'),true)?'instagram':('meta_ad'===$type?'meta':'creative');}
     private static function target_geo($program_id,$program){global $wpdb;$rows=$wpdb->get_col($wpdb->prepare("SELECT district_name FROM {$wpdb->prefix}mmc_program_target_districts WHERE program_id=%d AND is_selected=1 ORDER BY district_name",absint($program_id)));if(!$rows)$rows=array($program->district_name?:$program->province_name);return implode(', ',$rows);}
-    private static function dt_or_null($v){$v=trim((string)$v);if(!$v)return null;$ts=strtotime($v);return $ts?wp_date('Y-m-d H:i:s',$ts):null;}
+    private static function local_date_label($value){
+        $value=trim((string)$value); if(!$value)return '';
+        $dt=DateTimeImmutable::createFromFormat('!Y-m-d',$value,wp_timezone());
+        return $dt?wp_date('d F Y',$dt->getTimestamp(),wp_timezone()):$value;
+    }
+    private static function dt_or_null($v){
+        $v=trim((string)$v); if(!$v)return null;
+        foreach(array('Y-m-d\TH:i','Y-m-d H:i:s','Y-m-d H:i') as $format){
+            $dt=DateTimeImmutable::createFromFormat($format,$v,wp_timezone());
+            if($dt instanceof DateTimeImmutable)return $dt->format('Y-m-d H:i:s');
+        }
+        return null;
+    }
     private static function money($v){
         $v=preg_replace('/[^0-9,.-]/','',trim((string)$v));
         if(strpos($v,',')!==false && strpos($v,'.')!==false){
