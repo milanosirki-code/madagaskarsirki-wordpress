@@ -1,12 +1,21 @@
 <?php
 /**
  * Plugin Name: Madagaskar Kommo Active Events Unified Source
- * Version: 1.1.0
+ * Version: 1.2.0
  * Description: Kommo AI icin satisdaki tum etkinlikleri tek, dinamik ve tokenli kaynak URL'sinde toplar.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
+}
+
+// Program kisa kaynagi: Kommo AI'nin guvenilir okudugu pratik sinir.
+if ( ! defined( 'MDG_KOMMO_PROGRAM_TEXT_LIMIT' ) ) {
+    define( 'MDG_KOMMO_PROGRAM_TEXT_LIMIT', 1950 );
+}
+// Konum kisa kaynagi siniri. Kommo belgelenmis bir ust sinir vermiyor; asilirsa kaynak kesilmez, hata gosterilir.
+if ( ! defined( 'MDG_KOMMO_LOCATIONS_TEXT_LIMIT' ) ) {
+    define( 'MDG_KOMMO_LOCATIONS_TEXT_LIMIT', 5000 );
 }
 
 add_action( 'template_redirect', 'mdg_kommo_active_events_endpoint', 0 );
@@ -249,16 +258,43 @@ function mdg_kommo_active_events_admin_page() {
     echo '<p><button class="button button-primary" type="submit">Kommo’ya Gizli Bilgi Merkezi Olarak Ekle / Doğrula</button></p>';
     echo '</form>';
 
-    if ( ! empty( $state['source_id'] ) ) {
-        echo '<p class="ok">Kommo URL source ID: #' . esc_html( (string) $state['source_id'] ) . ' · ' . esc_html( $state['created_at'] ?? '' ) . '</p>';
+    $details = ! empty( $last['details'] ) && is_array( $last['details'] ) ? $last['details'] : array();
+    $rows    = array(
+        array( 'key' => 'url',       'label' => 'MMC | Aktif Satıştaki Etkinlikler (gizli URL kaynağı)',  'state' => $state,          'when' => $state['updated_at'] ?? ( $state['created_at'] ?? '' ) ),
+        array( 'key' => 'program',   'label' => 'MMC | Aktif Programlar | Global Kısa Cevap',            'state' => $text_state,     'when' => $text_state['updated_at'] ?? '' ),
+        array( 'key' => 'locations', 'label' => 'MMC | Aktif Etkinlik Konumları',                        'state' => $location_state, 'when' => $location_state['updated_at'] ?? '' ),
+    );
+
+    echo '<h3>Kommo kaynakları (son senkronizasyon: ' . esc_html( $last['at'] ?? 'henüz yok' ) . ')</h3>';
+    echo '<table><thead><tr><th>Kaynak</th><th>Source ID</th><th>Kayıt zamanı</th><th>Son işlem sonucu</th></tr></thead><tbody>';
+    foreach ( $rows as $row ) {
+        $detail   = isset( $details[ $row['key'] ] ) ? $details[ $row['key'] ] : array();
+        $id       = ! empty( $row['state']['source_id'] ) ? '#' . (string) $row['state']['source_id'] : '<span class="bad">Yok</span>';
+        $id_html  = 0 === strpos( $id, '<' ) ? $id : esc_html( $id );
+        if ( empty( $detail ) ) {
+            $result = '<span>Henüz senkronize edilmedi</span>';
+        } elseif ( empty( $detail['ok'] ) ) {
+            $result = '<span class="bad">HATA - Kommo\'daki kaynak GÜNCEL DEĞİL: ' . esc_html( (string) $detail['error'] ) . '</span>';
+        } elseif ( ! empty( $detail['warning'] ) ) {
+            $result = '<span style="color:#996800;font-weight:700">UYARI: ' . esc_html( (string) $detail['warning'] ) . '</span>';
+        } else {
+            $result = '<span class="ok">Başarılı (' . esc_html( (string) $detail['status'] ) . ')</span>';
+        }
+        echo '<tr><td>' . esc_html( $row['label'] ) . '</td><td>' . $id_html . '</td><td>' . esc_html( (string) $row['when'] ) . '</td><td>' . $result . '</td></tr>';
     }
-    if ( ! empty( $text_state['source_id'] ) ) {
-        echo '<p class="ok">Kommo program kısa metin source ID: #' . esc_html( (string) $text_state['source_id'] ) . ' · ' . esc_html( $text_state['updated_at'] ?? '' ) . '</p>';
+    echo '</tbody></table>';
+
+    $collect = get_option( 'mdg_kommo_active_events_last_collect', array() );
+    if ( ! empty( $collect ) ) {
+        echo '<p>Son okuma: ' . esc_html( (string) ( $collect['events'] ?? 0 ) ) . ' aktif etkinlik / ' . esc_html( (string) ( $collect['links'] ?? 0 ) ) . ' link · ' . esc_html( $collect['at'] ?? '' ) . '</p>';
+        if ( ! empty( $collect['failed'] ) ) {
+            echo '<p class="bad">Geçici okunamayan sayfalar (kaynaklar bu yüzden güncellenmedi): ' . esc_html( implode( ', ', (array) $collect['failed'] ) ) . '</p>';
+        }
+        if ( ! empty( $collect['not_event'] ) ) {
+            echo '<p>Etkinlik verisi bulunamayan linkler (taslak/eski/tahmin edilen link olabilir): ' . esc_html( implode( ', ', (array) $collect['not_event'] ) ) . '</p>';
+        }
     }
-    if ( ! empty( $location_state['source_id'] ) ) {
-        echo '<p class="ok">Kommo konum kısa metin source ID: #' . esc_html( (string) $location_state['source_id'] ) . ' · ' . esc_html( $location_state['updated_at'] ?? '' ) . '</p>';
-    }
-    if ( ! empty( $last['message'] ) ) {
+    if ( ! empty( $last['message'] ) && empty( $details ) ) {
         $class = ! empty( $last['ok'] ) ? 'ok' : 'bad';
         echo '<p class="' . esc_attr( $class ) . '">Son işlem: ' . esc_html( $last['message'] ) . '</p>';
     }
@@ -304,35 +340,67 @@ function mdg_kommo_active_events_sync_all() {
     set_transient( 'mdg_kommo_unified_sync_lock', 1, 5 * MINUTE_IN_SECONDS );
     try {
         mdg_kommo_active_events_collect( true );
-    $url_result      = mdg_kommo_active_events_create_url_source();
-    $text_result     = mdg_kommo_active_events_create_text_source();
-    $location_result = mdg_kommo_active_events_create_locations_text_source();
-    $ok              = ! is_wp_error( $url_result ) && false !== $url_result
-        && ! is_wp_error( $text_result ) && false !== $text_result
-        && ! is_wp_error( $location_result ) && false !== $location_result;
+        $collect    = get_option( 'mdg_kommo_active_events_last_collect', array() );
+        $incomplete = ! empty( $collect['failed'] );
 
-    update_option(
-        'mdg_kommo_active_events_last_sync',
-        array(
-            'at'      => current_time( 'mysql' ),
-            'ok'      => $ok,
-            'message' => wp_json_encode(
-                array(
-                    'url'       => is_wp_error( $url_result ) ? $url_result->get_error_message() : $url_result,
-                    'program'   => is_wp_error( $text_result ) ? $text_result->get_error_message() : $text_result,
-                    'locations' => is_wp_error( $location_result ) ? $location_result->get_error_message() : $location_result,
-                ),
-                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        // URL kaynagi canli sayfayi gosterir; etkinlik listesi eksik okunsa bile bundan etkilenmez.
+        $url_result = mdg_kommo_active_events_create_url_source();
+
+        if ( $incomplete ) {
+            // Eksik liste Kommo'ya yazilmaz: bir etkinligi sessizce dusurmek, eski listeyi korumaktan daha kotudur.
+            $msg = 'Bazı etkinlik sayfaları geçici olarak okunamadı; kaynak güncellenmedi, Kommo\'daki önceki sürüm GÜNCEL DEĞİL. Okunamayan: ' . implode( ', ', array_map( 'esc_url_raw', (array) $collect['failed'] ) );
+            $text_result     = new WP_Error( 'mdg_kommo_collect_incomplete', $msg );
+            $location_result = new WP_Error( 'mdg_kommo_collect_incomplete', $msg );
+        } else {
+            $text_result     = mdg_kommo_active_events_create_text_source();
+            $location_result = mdg_kommo_active_events_create_locations_text_source();
+        }
+
+        $details = array(
+            'url'       => mdg_kommo_active_events_describe_result( $url_result ),
+            'program'   => mdg_kommo_active_events_describe_result( $text_result ),
+            'locations' => mdg_kommo_active_events_describe_result( $location_result ),
+        );
+        $ok = $details['url']['ok'] && $details['program']['ok'] && $details['locations']['ok'];
+
+        update_option(
+            'mdg_kommo_active_events_last_sync',
+            array(
+                'at'      => current_time( 'mysql' ),
+                'ok'      => $ok,
+                'details' => $details,
+                'message' => wp_json_encode( $details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
             ),
-        ),
-        false
-    );
+            false
+        );
 
-
-        if ( ! $ok ) { error_log( 'MMC Kommo unified sources: sync failed; see mdg_kommo_active_events_last_sync.' ); }
+        foreach ( $details as $name => $detail ) {
+            if ( ! $detail['ok'] ) {
+                error_log( 'MMC Kommo unified sources: ' . $name . ' kaynağı güncellenemedi: ' . $detail['error'] );
+            }
+        }
     } finally {
         delete_transient( 'mdg_kommo_unified_sync_lock' );
     }
+}
+
+/**
+ * Bir kaynak isleminin sonucunu {ok,status,id,error,warning} biciminde ozetler.
+ */
+function mdg_kommo_active_events_describe_result( $result ) {
+    if ( is_wp_error( $result ) ) {
+        return array( 'ok' => false, 'status' => 'error', 'id' => '', 'error' => $result->get_error_message(), 'warning' => '' );
+    }
+    if ( ! is_array( $result ) ) {
+        return array( 'ok' => false, 'status' => 'error', 'id' => '', 'error' => 'Kommo geçerli yanıt döndürmedi.', 'warning' => '' );
+    }
+    return array(
+        'ok'      => true,
+        'status'  => isset( $result['status'] ) ? (string) $result['status'] : 'updated',
+        'id'      => isset( $result['id'] ) ? (string) $result['id'] : '',
+        'error'   => '',
+        'warning' => isset( $result['warning'] ) ? (string) $result['warning'] : '',
+    );
 }
 
 add_action( 'mdg_kommo_unified_hourly_sync', 'mdg_kommo_active_events_sync_all' );
@@ -364,12 +432,33 @@ function mdg_kommo_active_events_create_url_source() {
     if ( ! empty( $existing['source_id'] ) ) {
         // Registration is not proof of re-indexing. Surface the API result honestly.
         $hash = md5( wp_json_encode( mdg_kommo_active_events_collect() ) );
-        if ( isset( $existing['source_hash'] ) && hash_equals( $existing['source_hash'], $hash ) ) {
+        if ( isset( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
             return array( 'id' => $existing['source_id'], 'status' => 'already_current' );
         }
+        // Bu icerik icin guncelleme zaten denendi ve dogrulanamadi: her saat ayni istekleri tekrarlama.
+        if ( isset( $existing['attempted_hash'] ) && hash_equals( (string) $existing['attempted_hash'], $hash ) ) {
+            return array(
+                'id'      => $existing['source_id'],
+                'status'  => 'refresh_not_confirmed',
+                'warning' => isset( $existing['last_refresh_error'] ) ? (string) $existing['last_refresh_error'] : 'URL kaynağı yenilemesi doğrulanamadı.',
+            );
+        }
         $result = mdg_kommo_active_events_source_update_request( $existing['source_id'], $payload, 'url' );
-        if ( is_wp_error( $result ) ) { return $result; }
+        if ( is_wp_error( $result ) ) {
+            // Kaynak Kommo'da kayitli ve canli sayfayi gosterir; ancak API ile yeniden indeksleme DOGRULANAMADI.
+            // Bu durum guncel sayilmaz: source_hash yazilmaz, uyari olarak raporlanir.
+            $existing['attempted_hash']     = $hash;
+            $existing['last_refresh_error'] = 'URL kaynağı Kommo\'da kayıtlı (canlı sayfa), ancak API ile yeniden indeksleme doğrulanamadı: ' . $result->get_error_message();
+            update_option( 'mdg_kommo_active_events_url_source', $existing, false );
+            error_log( 'MMC Kommo unified sources: ' . $existing['last_refresh_error'] );
+            return array(
+                'id'      => $existing['source_id'],
+                'status'  => 'refresh_not_confirmed',
+                'warning' => $existing['last_refresh_error'],
+            );
+        }
         $existing['source_hash'] = $hash;
+        unset( $existing['attempted_hash'], $existing['last_refresh_error'] );
         $existing['updated_at'] = current_time( 'mysql' );
         update_option( 'mdg_kommo_active_events_url_source', $existing, false );
         return $result;
@@ -413,6 +502,7 @@ function mdg_kommo_active_events_create_url_source() {
             'source_url'          => mdg_kommo_active_events_source_url(),
             'available_functions' => mdg_kommo_active_events_available_functions(),
             'functions_version'   => 'agent_v3',
+            'source_hash'         => md5( wp_json_encode( mdg_kommo_active_events_collect() ) ),
             'created_at'          => current_time( 'mysql' ),
         ),
         false
@@ -428,8 +518,11 @@ function mdg_kommo_active_events_create_text_source() {
     }
 
     $text     = mdg_kommo_active_events_compact_text( $events );
-    if ( mb_strlen( $text, 'UTF-8' ) > 1950 ) { return new WP_Error( 'program_overflow', 'Tüm program 1950 karaktere sığmadı; kaynak kesilmedi ve eski hash korunuyor.' ); }
-    $hash     = md5( $text . '|agent_v6_program' );
+    $length   = mb_strlen( $text, 'UTF-8' );
+    if ( $length > (int) MDG_KOMMO_PROGRAM_TEXT_LIMIT ) {
+        return new WP_Error( 'program_overflow', 'Tüm program ' . $length . ' karakter; ' . (int) MDG_KOMMO_PROGRAM_TEXT_LIMIT . ' sınırına sığmadı. Kaynak kesilmedi ve Kommo\'daki önceki program kaynağı GÜNCEL DEĞİL (eski hash korunuyor).' );
+    }
+    $hash     = md5( $text . '|agent_v7_program' );
     $existing = get_option( 'mdg_kommo_active_events_text_source', array() );
 
     if ( ! empty( $existing['source_id'] ) && ! empty( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
@@ -490,8 +583,11 @@ function mdg_kommo_active_events_create_locations_text_source() {
     }
 
     $text     = mdg_kommo_active_events_compact_locations_text( $events );
-    if ( mb_strlen( $text, 'UTF-8' ) > 5000 ) { return new WP_Error( 'locations_overflow', 'Konum metni 5000 karakteri aşıyor; kaynak kesilmedi.' ); }
-    $hash     = md5( $text . '|agent_v5_locations' );
+    $length   = mb_strlen( $text, 'UTF-8' );
+    if ( $length > (int) MDG_KOMMO_LOCATIONS_TEXT_LIMIT ) {
+        return new WP_Error( 'locations_overflow', 'Konum metni ' . $length . ' karakter; ' . (int) MDG_KOMMO_LOCATIONS_TEXT_LIMIT . ' sınırını aşıyor. Kaynak kesilmedi ve Kommo\'daki önceki konum kaynağı GÜNCEL DEĞİL.' );
+    }
+    $hash     = md5( $text . '|agent_v6_locations' );
     $existing = get_option( 'mdg_kommo_active_events_locations_text_source', array() );
 
     if ( ! empty( $existing['source_id'] ) && ! empty( $existing['source_hash'] ) && hash_equals( (string) $existing['source_hash'], $hash ) ) {
@@ -545,53 +641,109 @@ function mdg_kommo_active_events_create_locations_text_source() {
     return $response;
 }
 
+/**
+ * Program kisa kaynagi. Her aktif etkinlik YALNIZ BIR satirdir: Sehir | Tarih | Salon | Seans | Fiyat.
+ * Metin siniri asilirsa etkinlik dusurulmez; once fiyat biçimi, sonra yil/ust bilgi kisaltilir.
+ * Fiyat her zaman etkinligin kendi kaydindan gelir; sehirler arasi varsayilan fiyat tasinmaz.
+ */
 function mdg_kommo_active_events_compact_text( array $events ) {
-    $header = "AKTİF PROGRAM: Şehir | Tarih | Salon | Seans | Fiyat\n";
-    $footer = "\nAnkara sorulursa Ankara yazan tüm ilçeleri listele. Bağlamdaki şehri koru. Online bilet: https://madagaskarsirki.com/bilet-al/";
-    $lines = array();
-    foreach ( $events as $event ) {
-        if ( mdg_kommo_active_events_is_ankara_event( $event ) && false === mb_stripos( $event['city_label'], 'Ankara', 0, 'UTF-8' ) ) {
-            $event['city_label'] .= '/Ankara';
+    $limit = (int) MDG_KOMMO_PROGRAM_TEXT_LIMIT;
+    $bilet = 'https://madagaskarsirki.com/bilet-al/';
+
+    $levels = array(
+        // 1) Tam fiyat metni.
+        array(
+            'header'   => "AKTİF PROGRAM (Şehir | Tarih | Salon | Seans | Fiyat)\n",
+            'footer'   => "\nAnkara denirse Ankara ilçelerinin hepsini listele. Konuşmadaki şehri koru. Online bilet: " . $bilet,
+            'prices'   => 'full',
+            'year'     => true,
+        ),
+        // 2) Kisa fiyat kodu (her etkinligin kendi fiyati): Ç=çocuk 3-12, Y=yetişkin 13+, A=aile paketi.
+        array(
+            'header'   => "AKTİF PROGRAM (Şehir | Tarih | Salon | Seans | Fiyat TL; Ç=çocuk 3-12, Y=yetişkin 13+, A=aile paketi, 0-2 yaş ücretsiz)\n",
+            'footer'   => "\nAnkara denirse Ankara ilçelerinin hepsini listele. Konuşmadaki şehri koru. Online bilet: " . $bilet,
+            'prices'   => 'code',
+            'year'     => true,
+        ),
+        // 3) Kisa fiyat kodu + yilsiz tarih + kisa ust/alt bilgi.
+        array(
+            'header'   => "AKTİF PROGRAM (Şehir | Tarih | Salon | Seans | Fiyat TL; Ç=çocuk, Y=yetişkin, A=aile)\n",
+            'footer'   => "\nAnkara: tüm ilçeleri say. Bilet: " . $bilet,
+            'prices'   => 'code',
+            'year'     => false,
+        ),
+    );
+
+    $text = '';
+    foreach ( $levels as $level ) {
+        $lines = array();
+        foreach ( $events as $event ) {
+            $lines[] = mdg_kommo_active_events_compact_event_line( $event, $level['prices'], $level['year'] );
         }
-        $lines[] = mdg_kommo_active_events_compact_event_line( $event );
+        $text = $level['header'] . implode( "\n", $lines ) . $level['footer'];
+        if ( mb_strlen( $text, 'UTF-8' ) <= $limit ) {
+            return $text;
+        }
     }
-    $text = $header . implode( "\n", $lines ) . $footer;
-    if ( mb_strlen( $text, 'UTF-8' ) <= 1950 ) { return $text; }
-    // Dictionary compression preserves every event and its own price, without city defaults.
-    $prices = array();
-    $lines = array();
-    foreach ( $events as $event ) {
-        $key = array_search( $event['prices'], $prices, true );
-        if ( false === $key ) { $prices[] = $event['prices']; $key = count( $prices ) - 1; }
-        $event['prices'] = 'F' . ( $key + 1 );
-        if ( mdg_kommo_active_events_is_ankara_event( $event ) && false === mb_stripos( $event['city_label'], 'Ankara', 0, 'UTF-8' ) ) { $event['city_label'] .= '/Ankara'; }
-        $lines[] = mdg_kommo_active_events_compact_event_line( $event );
-    }
-    $legend = array();
-    foreach ( $prices as $key => $price ) { $legend[] = 'F' . ( $key + 1 ) . '=' . $price; }
-    return $header . implode( "\n", $legend ) . "\n" . implode( "\n", $lines ) . $footer;
+
+    // Son seviye de sigmadi: hicbir etkinlik kesilmez; cagiran taraf hatayi gorunur sekilde raporlar.
+    return $text;
 }
 
-function mdg_kommo_active_events_compact_event_line( array $event ) {
+function mdg_kommo_active_events_compact_event_line( array $event, $price_mode = 'full', $with_year = true ) {
+    $city = (string) $event['city_label'];
+    if ( mdg_kommo_active_events_is_ankara_event( $event ) && false === mb_stripos( $city, 'Ankara', 0, 'UTF-8' ) ) {
+        $city .= '/Ankara';
+    }
+
+    $date = mdg_kommo_active_events_short_date( $event['date_label'] );
+    if ( ! $with_year ) {
+        $date = trim( (string) preg_replace( '/\s+20\d{2}\s*$/u', '', $date ) );
+    }
+
+    $prices = (string) $event['prices'];
+    if ( 'code' === $price_mode ) {
+        $prices = mdg_kommo_active_events_price_code( $prices );
+    }
+
     return sprintf(
         '%s | %s | %s | %s | %s',
-        $event['city_label'],
-        mdg_kommo_active_events_short_date( $event['date_label'] ),
+        $city,
+        $date,
         $event['venue'],
         implode( '/', $event['sessions'] ),
-        $event['prices']
+        $prices
     );
 }
 
+/**
+ * "Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL" -> "Ç250/Y500/A1.100".
+ * Fiyat metni tanınmazsa olduğu gibi bırakılır (değer uydurulmaz).
+ */
+function mdg_kommo_active_events_price_code( $prices ) {
+    if ( preg_match( '/Çocuk\s*([0-9\.\,]+)\s*TL;\s*Yetişkin\s*([0-9\.\,]+)\s*TL;\s*Aile Paketi\s*([0-9\.\,]+)\s*TL/iu', (string) $prices, $m ) ) {
+        return 'Ç' . $m[1] . '/Y' . $m[2] . '/A' . $m[3];
+    }
+    return (string) $prices;
+}
+
+/**
+ * Konum kisa kaynagi. Her aktif etkinlik icin: Sehir/Ilce | Salon | Acik adres | Google Maps.
+ * Maps baglantisi yoksa baglanti uydurulmaz.
+ */
 function mdg_kommo_active_events_compact_locations_text( array $events ) {
-    $text  = "KOMMO AKTİF ETKİNLİK KONUMLARI\n";
-    $text .= "Salon nerede, salon, adres, konum, konumu var mı, yol tarifi, nasıl giderim sorularında bu kaynağı kullan. Konuşmadaki şehri koru; tekrar sorma. Salon + adres + kayıtlı Maps bağlantısını ver; eksik bağlantı uydurma.\n";
+    $text  = "AKTİF ETKİNLİK KONUMLARI (Şehir/İlçe | Salon | Açık adres | Google Maps)\n";
+    $text .= "Salon nerede, salon, adres, konum, konumu var mı, yol tarifi, nasıl giderim sorularında bu kaynağı kullan. Konuşmadaki şehri koru, şehri tekrar sorma. Salon + açık adres + kayıtlı Maps bağlantısını ver; bağlantı yoksa uydurma, adresi paylaş.\n";
 
     foreach ( $events as $event ) {
-        $maps = ! empty( $event['maps_url'] ) ? $event['maps_url'] : 'Google Maps bağlantısı yok';
+        $city = (string) $event['city_label'];
+        if ( mdg_kommo_active_events_is_ankara_event( $event ) && false === mb_stripos( $city, 'Ankara', 0, 'UTF-8' ) ) {
+            $city .= '/Ankara';
+        }
+        $maps  = ! empty( $event['maps_url'] ) ? $event['maps_url'] : 'Maps bağlantısı yok';
         $text .= sprintf(
-            "%s | Salon: %s | Adres: %s | Konum: %s\n",
-            $event['city_label'],
+            "%s | %s | %s | %s\n",
+            $city,
             $event['venue'],
             $event['address'],
             $maps
@@ -741,10 +893,25 @@ function mdg_kommo_active_events_collect( $force_refresh = false ) {
         }
     }
 
-    $links  = mdg_kommo_active_events_detail_links();
-    $events = array();
+    $links     = mdg_kommo_active_events_detail_links();
+    $events    = array();
+    $failed    = array(); // Gecici okuma hatalari (zaman asimi / 5xx): etkinlik sessizce dusmemeli.
+    $not_event = array(); // 404 veya etkinlik verisi yok: tahmin edilen link gecersiz olabilir.
+
     foreach ( $links as $link ) {
-        $event = mdg_kommo_active_events_parse_event_page( $link );
+        $reason = '';
+        $event  = mdg_kommo_active_events_parse_event_page( $link, 6, $reason );
+        if ( empty( $event ) && 'transient' === $reason ) {
+            $event = mdg_kommo_active_events_parse_event_page( $link, 15, $reason ); // Tek seferlik yeniden deneme.
+        }
+        if ( empty( $event ) ) {
+            if ( 'transient' === $reason ) {
+                $failed[] = $link;
+            } else {
+                $not_event[] = $link;
+            }
+            continue;
+        }
         if ( ! empty( $event['name'] ) && mdg_kommo_active_events_is_future_event( $event ) ) {
             $event_key = sanitize_title( $event['name'] . '-' . $event['date_label'] );
             $events[ $event_key ] = $event;
@@ -760,7 +927,25 @@ function mdg_kommo_active_events_collect( $force_refresh = false ) {
         }
     );
 
-    set_transient( 'mdg_kommo_active_events_rows', $events, 10 * MINUTE_IN_SECONDS );
+    update_option(
+        'mdg_kommo_active_events_last_collect',
+        array(
+            'at'        => current_time( 'mysql' ),
+            'links'     => count( $links ),
+            'events'    => count( $events ),
+            'failed'    => $failed,
+            'not_event' => $not_event,
+        ),
+        false
+    );
+    if ( ! empty( $failed ) ) {
+        error_log( 'MMC Kommo unified sources: ' . count( $failed ) . ' etkinlik sayfası geçici olarak okunamadı: ' . implode( ', ', $failed ) );
+    }
+
+    // Eksik okunmus (gecici hata) liste onbellege alinmaz.
+    if ( empty( $failed ) ) {
+        set_transient( 'mdg_kommo_active_events_rows', $events, 10 * MINUTE_IN_SECONDS );
+    }
     return $events;
 }
 
@@ -778,10 +963,12 @@ function mdg_kommo_active_events_detail_links() {
     );
 
     if ( is_wp_error( $response ) ) {
-        return array();
+        // Liste sayfasi okunamasa bile WooCommerce urunlerinden uretilen linkler kullanilir.
+        error_log( 'MMC Kommo unified sources: /bilet-al/ okunamadı: ' . $response->get_error_message() );
+        $html = '';
+    } else {
+        $html = (string) wp_remote_retrieve_body( $response );
     }
-
-    $html = (string) wp_remote_retrieve_body( $response );
     preg_match_all( '#href=["\']([^"\']*/etkinlik/[^"\']+)["\']#i', $html, $matches );
 
     $links = array();
@@ -903,22 +1090,35 @@ function mdg_kommo_active_events_candidate_event_slugs( $location, $date_label )
     return $slugs;
 }
 
-function mdg_kommo_active_events_parse_event_page( $url ) {
+function mdg_kommo_active_events_parse_event_page( $url, $timeout = 6, &$reason = '' ) {
+    $reason   = '';
     $response = wp_remote_get(
         $url,
         array(
-            'timeout' => 6,
+            'timeout' => (int) $timeout,
             'headers' => array( 'Accept' => 'text/html' ),
         )
     );
 
     if ( is_wp_error( $response ) ) {
+        $reason = 'transient';
+        return array();
+    }
+
+    $status = (int) wp_remote_retrieve_response_code( $response );
+    if ( $status >= 500 || 429 === $status ) {
+        $reason = 'transient';
+        return array();
+    }
+    if ( $status >= 400 ) {
+        $reason = 'not_event';
         return array();
     }
 
     $html       = (string) wp_remote_retrieve_body( $response );
     $event_json = mdg_kommo_active_events_json_ld_event( $html );
     if ( empty( $event_json['startDate'] ) || empty( $event_json['location'] ) ) {
+        $reason = 'not_event';
         return array();
     }
 

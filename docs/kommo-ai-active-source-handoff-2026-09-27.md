@@ -162,3 +162,22 @@ Yapılan değişiklikler:
 İlgili commit: `0fc870f200dcde205cdaae626b8e9aecb9fd12b5`.
 
 Canlı WordPress tarafında bu snippet sürümü uygulandıktan sonra Madagaskar > Kommo Aktif Kaynak ekranından yeniden senkronizasyon çalıştırılmalıdır. Sonrasında Kommo kaynak listesinde `MMC | Aktif Etkinlik Konumları` kaynağı görünmelidir.
+
+
+## 2026-09-30 — Snippet v1.2.0 (dayanıklı senkronizasyon)
+
+**Önemli:** Kommo kaynak kodu `madagaskar-management-center` plugin'inde DEĞİL, WordPress **Code Snippets ID 70** olarak çalışır (`docs/code-snippets/mdg-kommo-active-events-unified-source.php`). GitHub'a commit atmak canlı siteyi güncellemez; dosyanın içeriği Code Snippets ID 70'e yapıştırılıp kaydedilmelidir. MMC plugin'i (1.3.30) bu işte değişmedi.
+
+Değişenler:
+- Program kısa kaynağı: her etkinlik tek satır. 1950 sınırı aşılırsa sırasıyla (1) kısa fiyat kodu `Ç250/Y500/A1.100` (fiyat her etkinliğin kendi kaydından), (2) yılsız tarih + kısa alt bilgi uygulanır; etkinlik hiçbir zaman düşürülmez. Benzer 11 etkinlik ~1.1K, 19 etkinlik ~1.9K karakter.
+- Konum kaynağı biçimi: `Şehir/İlçe | Salon | Açık adres | Google Maps`; Maps yoksa `Maps bağlantısı yok` (bağlantı uydurulmaz).
+- Ankara: adres/şehir verisinden dinamik (`/Ankara` etiketi), ilçe adı kodda sabit değil.
+- Etkinlik sayfası geçici olarak okunamazsa (zaman aşımı/5xx/429) bir kez yeniden denenir; hâlâ okunamazsa program/konum kaynakları GÜNCELLENMEZ ve ekranda "GÜNCEL DEĞİL" yazar (eksik liste Kommo'ya yazılmaz, eksik liste önbelleğe alınmaz).
+- `/bilet-al/` okunamasa bile WooCommerce ürünlerinden üretilen linkler kullanılır.
+- URL kaynağı için API yenilemesi doğrulanamazsa (PATCH/PUT 404) bu **UYARI** olarak gösterilir, kaynak "güncel" sayılmaz; aynı içerik için her saat tekrar denenmez.
+- Yönetim ekranı: üç kaynak (URL / Program / Konum) ayrı ayrı source ID, kayıt zamanı ve son işlem sonucuyla gösterilir; son okuma tanısı (aktif etkinlik sayısı, okunamayan linkler) görünür.
+- Yeni metin biçimi hash'i değiştirdiği için ilk senkronizasyonda program ve konum kaynakları mevcut source ID'leri üzerinden güncellenir (yeni kaynak açılmaz).
+
+Canlıya alma adımları: (1) Code Snippets ID 70'i yedekle, (2) yeni dosya içeriğini yapıştır, kaydet, etkin bırak, (3) `Madagaskar > Kommo Aktif Kaynak` ekranında "Kommo'ya Gizli Bilgi Merkezi Olarak Ekle / Doğrula" düğmesine bas, (4) tablodaki üç kaynağın durumunu kontrol et, (5) Kommo'da `MMC | Aktif Etkinlik Konumları` kaynağının göründüğünü doğrula, (6) `mdg-kommo-auto-source-refresh.php` snippet'i etkinse kapalı olduğundan emin ol (etkinlik başına ayrı kaynak üretip Kommo'yu karıştırır).
+
+"Temel bilgiler" kaynağı için yapıştırılacak metin: `docs/kommo-temel-bilgiler-metni.md`.
