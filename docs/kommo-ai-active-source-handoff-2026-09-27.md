@@ -164,22 +164,32 @@ Yapılan değişiklikler:
 Canlı WordPress tarafında bu snippet sürümü uygulandıktan sonra Madagaskar > Kommo Aktif Kaynak ekranından yeniden senkronizasyon çalıştırılmalıdır. Sonrasında Kommo kaynak listesinde `MMC | Aktif Etkinlik Konumları` kaynağı görünmelidir.
 
 
-## 2026-09-30 — Snippet v1.2.0 (dayanıklı senkronizasyon)
+## 2026-09-30 — Snippet v1.2.0 (dayanıklı senkronizasyon + elle güncelleme akışı)
 
-**Önemli:** Kommo kaynak kodu `madagaskar-management-center` plugin'inde DEĞİL, WordPress **Code Snippets ID 70** olarak çalışır (`docs/code-snippets/mdg-kommo-active-events-unified-source.php`). GitHub'a commit atmak canlı siteyi güncellemez; dosyanın içeriği Code Snippets ID 70'e yapıştırılıp kaydedilmelidir. MMC plugin'i (1.3.30) bu işte değişmedi.
+**Önemli:** Kommo kaynak kodu `madagaskar-management-center` plugin'inde DEĞİL, WordPress **Code Snippets ID 70** olarak çalışır (`docs/code-snippets/mdg-kommo-active-events-unified-source.php`). GitHub'a commit atmak canlı siteyi güncellemez; dosya içeriği (ilk `<?php` satırı hariç) Code Snippets ID 70'e yapıştırılıp kaydedilmelidir. MMC plugin'i (1.3.30) bu işte değişmedi.
 
-Değişenler:
-- Program kısa kaynağı: her etkinlik tek satır. 1950 sınırı aşılırsa sırasıyla (1) kısa fiyat kodu `Ç250/Y500/A1.100` (fiyat her etkinliğin kendi kaydından), (2) yılsız tarih + kısa alt bilgi uygulanır; etkinlik hiçbir zaman düşürülmez. Benzer 11 etkinlik ~1.1K, 19 etkinlik ~1.9K karakter.
-- Konum kaynağı biçimi: `Şehir/İlçe | Salon | Açık adres | Google Maps`; Maps yoksa `Maps bağlantısı yok` (bağlantı uydurulmaz).
-- Ankara: adres/şehir verisinden dinamik (`/Ankara` etiketi), ilçe adı kodda sabit değil.
-- Etkinlik sayfası geçici olarak okunamazsa (zaman aşımı/5xx/429) bir kez yeniden denenir; hâlâ okunamazsa program/konum kaynakları GÜNCELLENMEZ ve ekranda "GÜNCEL DEĞİL" yazar (eksik liste Kommo'ya yazılmaz, eksik liste önbelleğe alınmaz).
-- `/bilet-al/` okunamasa bile WooCommerce ürünlerinden üretilen linkler kullanılır.
-- URL kaynağı için API yenilemesi doğrulanamazsa (PATCH/PUT 404) bu **UYARI** olarak gösterilir, kaynak "güncel" sayılmaz; aynı içerik için her saat tekrar denenmez.
-- Yönetim ekranı: üç kaynak (URL / Program / Konum) ayrı ayrı source ID, kayıt zamanı ve son işlem sonucuyla gösterilir; son okuma tanısı (aktif etkinlik sayısı, okunamayan linkler) görünür.
-- Fiyat okuma sağlamlaştırıldı: canlı sayfalarda fiyat cümlesi farklı yazılıyor (Uşak/Aydın: "Çocuk bileti 250 TL, yetişkin bileti 500 TL, aile paketi 1.100 TL'dir."; Mamak/Denizli: "3–12 yaş çocuk bileti 250 TL ... Aile Paketi 2 yetişkin ve 2 çocuk için toplam 1.100 TL"). Eski tek kalıp bunların bir kısmını tanımayıp "Fiyat kaydı doğrulanamadı" üretebilirdi; artık kalem kalem okunur. Bir kalem bulunamazsa değer uydurulmaz.
-- Canlı /bilet-al/ listesinde 30 Eylül itibarıyla 11 aktif etkinlik görünüyor; program metni bunlarla ~1650 karakter (sınır 1950).
-- Yeni metin biçimi hash'i değiştirdiği için ilk senkronizasyonda program ve konum kaynakları mevcut source ID'leri üzerinden güncellenir (yeni kaynak açılmaz).
+### Canlı denetim bulguları (30 Eylül 2026, ekran görüntüleri + canlı sayfalar)
+- Canlı snippet = repo `24432d6` + 3 küçük fark (sürüm 1.1.1, iki önizleme kutusu, `source_update_request` içinde 404 nedeniyle erken dönüş).
+- Kommo AI kaynaklarında (`#1334640` URL, `#1334998` program, `#1334988` konum) mevcut kaynağı güncelleyen PATCH/PUT adresleri 404 dönüyor. WordPress metni üretiyor ama Kommo'daki metin 27 Eylül'den beri değişmemiş olabilir; Uşak gibi sonradan eklenen etkinliklerin Kommo'da "yayımlanmadı" görünmesinin en güçlü adayı budur (Kommo'daki metin doğrulanmadı).
+- Konum kaynağı `#1334988` WordPress'te kayıtlı; "oluşmadı" değil "güncellenemiyor" sorunu.
+- 12 aktif etkinliğin 8'inde fiyat "doğrulanamadı" yazıyordu: sayfalar fiyatı farklı cümlelerle yazıyor (Uşak/Aydın/Didim: tek cümle; Kırıkkale: `Biletler: Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL`; Mamak/Denizli/Sincan/Yenimahalle/Eskişehir/İzmir: aile paketi ayrı cümlede). Eski tek kalıp yalnız birini tanıyordu.
+- Kırıkkale adresi JSON-LD'de satır sonu içeriyor; konum satırı ikiye bölünüyordu.
+- Kommo AI kaynak API'sinde belgelenmiş güncelleme/silme adresi yok; yalnız oluşturma (POST) çalışıyor.
 
-Canlıya alma adımları: (1) Code Snippets ID 70'i yedekle, (2) yeni dosya içeriğini yapıştır, kaydet, etkin bırak, (3) `Madagaskar > Kommo Aktif Kaynak` ekranında "Kommo'ya Gizli Bilgi Merkezi Olarak Ekle / Doğrula" düğmesine bas, (4) tablodaki üç kaynağın durumunu kontrol et, (5) Kommo'da `MMC | Aktif Etkinlik Konumları` kaynağının göründüğünü doğrula, (6) `mdg-kommo-auto-source-refresh.php` snippet'i etkinse kapalı olduğundan emin ol (etkinlik başına ayrı kaynak üretip Kommo'yu karıştırır).
+### v1.2.0 değişiklikleri
+- Program kısa kaynağı: her etkinlik tek satır. 1950 sınırı aşılırsa kısa fiyat kodu (Ç250/Y500/A1.100) ve yılsız tarih uygulanır; etkinlik düşürülmez. 12 etkinlik ~1.7K karakter.
+- Fiyat okuma: eski kalıp korunur, yoksa Çocuk/Yetişkin/Aile Paketi sıradan bağımsız ayrı ayrı okunur. Bulunamayan kalem için değer uydurulmaz. Fiyat her etkinliğin kendi sayfasından gelir (İzmir 300/600/1.300).
+- Konum kaynağı: `Şehir/İlçe | Salon | Açık adres | Google Maps`; Maps yoksa `Maps bağlantısı yok`. Ad, salon, adres alanlarındaki satır sonları tek boşluğa çevrilir.
+- Ankara ilçeleri adres/şehir verisinden dinamik etiketlenir.
+- **Elle güncelleme akışı:** API güncellemesi olmadığı için mevcut kaynağa yazılamaz; kod yeni/duplicate kaynak açmaz. Yönetim ekranı her metin kaynağı için güncel metni, karakter sayısını, "Metni kopyala" düğmesini ve "Kommo'ya yapıştırdım, güncel işaretle" düğmesini gösterir. Kaynak, yalnız doğrulanmış başarıda veya bu onayda "güncel" sayılır; etkinlik verisi değişirse yeniden "GÜNCEL DEĞİL" olur.
+- Etkinlik sayfası geçici okunamazsa (zaman aşımı/5xx/429) bir kez yeniden denenir; hâlâ okunamazsa program/konum kaynakları güncellenmez, eksik liste önbelleğe alınmaz.
+- URL kaynağında yenileme doğrulanamazsa HATA değil UYARI gösterilir.
+- Güncelleme API'si ileride çalışırsa: `add_filter( 'mdg_kommo_source_update_api_available', '__return_true' );`
 
-"Temel bilgiler" kaynağı için yapıştırılacak metin: `docs/kommo-temel-bilgiler-metni.md`.
+### Canlıya alma sırası
+1. Code Snippets ID 70 kodunu yedekle.
+2. `mdg-kommo-active-events-unified-source.php` içeriğini (ilk `<?php` satırı olmadan) yapıştır, kaydet, etkin bırak.
+3. `mdg-kommo-auto-source-refresh.php` ("Madagaskar Kommo AI Source Auto R...") ve `mdg-kommo-force-refresh-trigger.php` snippet'lerini devre dışı bırak (etkinlik/program başına ayrı Kommo kaynağı üretip botu karıştırır).
+4. `Madagaskar > Kommo Aktif Kaynak`: senkronizasyon düğmesine bas, sonra Program ve Konum kartlarındaki metni kopyalayıp Kommo'da ilgili kaynağın (`#1334998`, `#1334988`) içine yapıştır, kaydet, "güncel işaretle" düğmesine bas.
+5. Kommo'da "Temel bilgiler" kaynağına `docs/kommo-temel-bilgiler-metni.md` metnini yapıştır.
+6. Yeni kaynakların yeni konuşmada çalıştığı doğrulandıktan sonra eski `MMC | PRG-...` kaynaklarını sil.
