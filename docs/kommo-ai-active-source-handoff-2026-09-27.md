@@ -176,6 +176,8 @@ Değişenler:
 - `/bilet-al/` okunamasa bile WooCommerce ürünlerinden üretilen linkler kullanılır.
 - URL kaynağı için API yenilemesi doğrulanamazsa (PATCH/PUT 404) bu **UYARI** olarak gösterilir, kaynak "güncel" sayılmaz; aynı içerik için her saat tekrar denenmez.
 - Yönetim ekranı: üç kaynak (URL / Program / Konum) ayrı ayrı source ID, kayıt zamanı ve son işlem sonucuyla gösterilir; son okuma tanısı (aktif etkinlik sayısı, okunamayan linkler) görünür.
+- Fiyat okuma sağlamlaştırıldı: canlı sayfalarda fiyat cümlesi farklı yazılıyor (Uşak/Aydın: "Çocuk bileti 250 TL, yetişkin bileti 500 TL, aile paketi 1.100 TL'dir."; Mamak/Denizli: "3–12 yaş çocuk bileti 250 TL ... Aile Paketi 2 yetişkin ve 2 çocuk için toplam 1.100 TL"). Eski tek kalıp bunların bir kısmını tanımayıp "Fiyat kaydı doğrulanamadı" üretebilirdi; artık kalem kalem okunur. Bir kalem bulunamazsa değer uydurulmaz.
+- Canlı /bilet-al/ listesinde 30 Eylül itibarıyla 11 aktif etkinlik görünüyor; program metni bunlarla ~1650 karakter (sınır 1950).
 - Yeni metin biçimi hash'i değiştirdiği için ilk senkronizasyonda program ve konum kaynakları mevcut source ID'leri üzerinden güncellenir (yeni kaynak açılmaz).
 
 Canlıya alma adımları: (1) Code Snippets ID 70'i yedekle, (2) yeni dosya içeriğini yapıştır, kaydet, etkin bırak, (3) `Madagaskar > Kommo Aktif Kaynak` ekranında "Kommo'ya Gizli Bilgi Merkezi Olarak Ekle / Doğrula" düğmesine bas, (4) tablodaki üç kaynağın durumunu kontrol et, (5) Kommo'da `MMC | Aktif Etkinlik Konumları` kaynağının göründüğünü doğrula, (6) `mdg-kommo-auto-source-refresh.php` snippet'i etkinse kapalı olduğundan emin ol (etkinlik başına ayrı kaynak üretip Kommo'yu karıştırır).

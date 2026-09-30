@@ -1368,8 +1368,44 @@ function mdg_kommo_active_events_parse_turkish_date( $date_label, $time ) {
 }
 
 function mdg_kommo_active_events_prices( $event_json, $text, $name ) {
-    if ( preg_match( '/Çocuk bileti\s*([0-9\.\,]+)\s*TL.*?yetişkin bileti\s*([0-9\.\,]+)\s*TL.*?Aile Paketi\s*([0-9\.\,]+)\s*TL/iu', (string) $text, $match ) ) {
+    $text = (string) $text;
+
+    // 1) Eski, tek cümlelik biçim: "Çocuk bileti 250 TL, yetişkin bileti 500 TL, aile paketi 1.100 TL".
+    if ( preg_match( '/Çocuk bileti\s*([0-9\.\,]+)\s*TL.*?yetişkin bileti\s*([0-9\.\,]+)\s*TL.*?Aile Paketi\s*([0-9\.\,]+)\s*TL/iu', $text, $match ) ) {
         return 'Çocuk ' . $match[1] . ' TL; Yetişkin ' . $match[2] . ' TL; Aile Paketi ' . $match[3] . ' TL';
+    }
+
+    // 2) Sayfalarda farklı yazılmış cümleler için sıradan bağımsız, kalem kalem okuma.
+    //    Bulunamayan kalem için değer uydurulmaz; üçü birden bulunamazsa doğrulanamadı denir.
+    $money = '([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{2,5})\s*(?:TL|₺)';
+    $child = $adult = $family = '';
+
+    if ( preg_match( '/çocuk(?:\s+bileti)?\s*' . $money . '/iu', $text, $m ) ) {
+        $child = $m[1];
+    } elseif ( preg_match( '/çocuk\s*[0-9]+\s*[–—-]\s*[0-9]+\s*yaş\s*' . $money . '/iu', $text, $m ) ) {
+        $child = $m[1];
+    }
+
+    if ( preg_match( '/yetişkin(?:\s+bileti)?\s*' . $money . '/iu', $text, $m ) ) {
+        $adult = $m[1];
+    } elseif ( preg_match( '/yetişkin\s*[0-9]+\s*yaş(?:\s+ve\s+üzeri)?\s*' . $money . '/iu', $text, $m ) ) {
+        $adult = $m[1];
+    }
+
+    // Aile paketi: "aile paketi" ifadesinden sonraki 160 karakter içindeki ilk TL tutarı
+    // ("2 yetişkin ve 2 çocuk için toplam 1.100 TL" gibi aradaki sayılar TL ile bitmediği için atlanır).
+    if ( preg_match_all( '/aile paketi/iu', $text, $hits, PREG_OFFSET_CAPTURE ) ) {
+        foreach ( $hits[0] as $hit ) {
+            $window = mb_strcut( $text, (int) $hit[1], 220, 'UTF-8' );
+            if ( preg_match( '/' . $money . '/u', $window, $m ) ) {
+                $family = $m[1];
+                break;
+            }
+        }
+    }
+
+    if ( '' !== $child && '' !== $adult && '' !== $family ) {
+        return 'Çocuk ' . $child . ' TL; Yetişkin ' . $adult . ' TL; Aile Paketi ' . $family . ' TL';
     }
 
     return 'Fiyat kaydı doğrulanamadı; temsilciye aktar';
