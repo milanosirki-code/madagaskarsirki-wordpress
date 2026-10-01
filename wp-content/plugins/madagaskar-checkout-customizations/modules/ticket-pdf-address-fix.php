@@ -3,8 +3,7 @@
  * Madagaskar Sirki
  * Tickera bilet PDF'sindeki "Adres: Adres:" tekrarını düzeltir.
  *
- * - Mevcut Bartın Tickera etkinliği #2124'ü bir kez düzeltir.
- * - Bundan sonra MDG tarafından oluşturulan yeni Tickera etkinliklerinde
+ * - MDG tarafından oluşturulan yeni Tickera etkinliklerinde
  *   event_terms başındaki fazladan "Adres:" etiketini otomatik temizler.
  * - Sipariş, QR, bilet kodu, ürün, fiyat veya kapasiteye dokunmaz.
  */
