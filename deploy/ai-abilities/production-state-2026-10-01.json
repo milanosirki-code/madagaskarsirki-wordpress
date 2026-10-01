@@ -1,12 +1,12 @@
 {
-  "captured_at": "2026-10-01T14:02:00+03:00",
-  "source": "final_verified_live_state_after_ai_abilities_migration",
+  "captured_at": "2026-10-01T20:22:00+03:00",
+  "source": "verified_live_state_after_sincan_legacy_migration_canary",
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "live_version": "0.5.0",
-    "github_main_version": "0.5.0",
+    "live_version": "0.6.1",
+    "github_main_version": "0.7.0",
     "status": "active",
-    "enabled_modules": [
+    "enabled_modules_last_confirmed": [
       "system-health-integrity",
       "mmc-sales-ledger",
       "mmc-dashboard",
@@ -20,14 +20,14 @@
       "mmc-marketing",
       "mmc-mdg-bridge",
       "mmc-kommo",
-      "invoice-tracking",
-      "school-promotion",
-      "v5-finance",
-      "program-venue-event-sales"
+      "legacy-mdg-mmc-preview"
+    ],
+    "staged_not_in_plugin_live": [
+      "legacy-mdg-mmc-migrate"
     ]
   },
   "code_snippets": {
-    "active_count": 36,
+    "active_count_last_confirmed": 36,
     "migrated_disabled": [
       72,
       74,
@@ -47,40 +47,116 @@
       89,
       94
     ],
-    "temporary_installer": {
+    "temporary_runner": {
       "id": 101,
-      "active": false
+      "name": "GEÇİCİ — Legacy MDG → MMC Migration Runner",
+      "last_confirmed_active": true,
+      "state_note": "Sincan canary ran successfully. Immediate post-run deactivation attempt was blocked by WPVibe daily cap before state could be changed/verified. First next live action: verify and deactivate #101."
     }
   },
   "health": {
-    "critical": 0,
-    "warning": 0,
-    "ok": 16,
-    "info": 0
+    "last_full_check_before_sincan": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0
+    },
+    "post_sincan_note": "No separate post-run health call completed because WPVibe daily fair-use limit was reached. The migration transaction itself completed and passed bridge plus paid-sales reconciliation checks."
   },
-  "verified_sales": {
-    "pursaklar_program_id": 3,
-    "pursaklar_paid_orders": 17,
-    "pursaklar_tickets": 59,
-    "pursaklar_revenue": 22500,
-    "pursaklar_revenue_diff": 0,
-    "kirikkale_program_id": 2,
-    "kirikkale_paid_orders": 7,
-    "kirikkale_tickets": 26,
-    "kirikkale_revenue": 10250,
-    "kirikkale_revenue_diff": 0
+  "sincancanary": {
+    "mdg_event_id": 11,
+    "program_id": 8,
+    "program_code": "PRG-2026-ANK-SINCAN-001",
+    "program_status": "sales_open",
+    "event_id": 8,
+    "program_venue_id": 8,
+    "sessions": 3,
+    "active_ticket_codes": [
+      "adult",
+      "child"
+    ],
+    "mappings": {
+      "required": 6,
+      "mapped": 6,
+      "complete": true
+    },
+    "orders_found": 36,
+    "orders_synced": 36,
+    "ledger": {
+      "orders_count": 36,
+      "ticket_count": 89,
+      "sold_capacity": 89,
+      "gross_revenue": 43500,
+      "refunded_amount": 0,
+      "net_revenue": 36000,
+      "failed_orders": 8
+    },
+    "bridge": {
+      "linked": true,
+      "stale": false,
+      "identity_expected": 6,
+      "identity_matched": 6,
+      "session_time_match": true
+    },
+    "reconciliation": {
+      "ok": true,
+      "mdg_paid_orders": 28,
+      "mmc_paid_orders": 28,
+      "mdg_items": 45,
+      "mmc_items": 45,
+      "mdg_tickets": 89,
+      "mmc_tickets": 89,
+      "mdg_units": 89,
+      "mmc_units": 89,
+      "missing_in_mmc": [],
+      "extra_in_mmc": [],
+      "mdg_revenue_ex_tax": 36000,
+      "mmc_revenue": 36000,
+      "revenue_diff": 0
+    }
   },
-  "kommo": {
-    "configured": true,
-    "connected": true,
-    "http_ok": true,
-    "token_source": "MMC_KOMMO_TOKEN",
-    "uses_legacy_token": false,
-    "source_consistency_safe": true
+  "remaining_legacy_migrations": [
+    {
+      "mdg_event_id": 7,
+      "place": "Ankara / Yenimahalle",
+      "date": "2026-10-04"
+    },
+    {
+      "mdg_event_id": 12,
+      "place": "Denizli / Pamukkale",
+      "date": "2026-10-08"
+    },
+    {
+      "mdg_event_id": 9,
+      "place": "Ankara / Mamak",
+      "date": "2026-10-10"
+    },
+    {
+      "mdg_event_id": 13,
+      "place": "Eskişehir / Odunpazarı",
+      "date": "2026-10-11"
+    },
+    {
+      "mdg_event_id": 10,
+      "place": "İzmir / Konak",
+      "date": "2026-11-08"
+    }
+  ],
+  "blockers": {
+    "wpvibe_daily_cap": {
+      "active": true,
+      "next_expected_window": "2026-10-02 around 10:10 UTC",
+      "first_actions": [
+        "verify Code Snippet #101 state and deactivate if active",
+        "run system health",
+        "verify Program #8 bridge/dashboard read-only",
+        "only then continue remaining migrations one event at a time"
+      ]
+    }
   },
-  "migration_status": "complete",
   "tracking": {
-    "migration_issue": 54,
-    "source_capture_issue": 52
+    "legacy_migration_issue": 81,
+    "kommo_source_limit_issue": 82,
+    "transition_plugin_audit_issue": 77
   }
 }

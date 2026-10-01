@@ -50,3 +50,41 @@ Run Sincan MDG #11 first as canary. After health/bridge/sales verification, migr
 - #9 Mamak
 - #13 Eskişehir
 - #10 İzmir
+
+
+## 1 Ekim 2026 — Sincan canary sonucu
+
+Sincan MDG #11 kontrollü migration başarıyla tamamlandı.
+
+- Program: `PRG-2026-ANK-SINCAN-001`
+- MMC Program ID: 8
+- MMC Event ID: 8
+- Program status: `sales_open`
+- 3 seans
+- aktif legacy bilet kodları: adult, child
+- mapping coverage: 6/6
+- 36 legacy WooCommerce siparişi bulundu ve sync edildi
+- MMC ledger: 36 sipariş / 89 bilet / 36.000 TL net gelir
+- bridge linked=true, stale=false
+- identity: 6/6
+- paid-sales reconciliation: 28/28 sipariş, 45/45 item, 89/89 bilet
+- revenue difference: 0 TL
+
+Transaction COMMIT oldu; rollback tetiklenmedi.
+
+### Geçici operasyon notu
+
+Canary tamamlandıktan hemen sonra WPVibe günlük fair-use limiti doldu. Bu nedenle bağımsız post-run health/dashboard çağrısı ve geçici #101 runner'ın pasif duruma döndüğünün doğrulanması tamamlanamadı.
+
+WPVibe tekrar açıldığında **ilk işlem**:
+1. #101 durumunu oku; aktifse kapat.
+2. system health çalıştır.
+3. Program #8 bridge/dashboard read-only kontrol et.
+4. Ancak üçü temizse kalan eventlere devam et.
+
+Kalan sıra:
+1. #7 Yenimahalle
+2. #12 Denizli
+3. #9 Mamak
+4. #13 Eskişehir
+5. #10 İzmir
