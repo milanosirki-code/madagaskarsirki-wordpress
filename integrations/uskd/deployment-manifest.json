@@ -52,7 +52,14 @@
       "checkout_link_visible": false,
       "client_side_fetch_present": false,
       "shortcode_present": true
-    }
+    },
+    "live_plugin_version": "0.1.0",
+    "target_plugin_version": "0.2.0",
+    "upgrade_status": "pending_manual_upload",
+    "homepage_shortcode": "[uskd_madagaskar_events limit=\"2\"]",
+    "homepage_behavior_current": "v0.1.0 renders all events server-side; homepage CSS displays first two.",
+    "homepage_behavior_after_upgrade": "v0.2.0 renders only first two events server-side on homepage.",
+    "last_live_check": "2026-10-01T14:58:40+03:00"
   },
   "shortcode_examples": {
     "full": "[uskd_madagaskar_events]",
