@@ -178,6 +178,7 @@ function uskd_mdg_events_text( $value ) {
 /**
  * Render shortcode output.
  *
+ * @param array $atts Shortcode attributes. Optional limit restricts rendered event count.
  * @return string
  */
 function uskd_mdg_events_shortcode( $atts = array() ) {
