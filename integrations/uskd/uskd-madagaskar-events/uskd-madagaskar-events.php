@@ -2,7 +2,7 @@
 /**
  * Plugin Name: USKD Madagaskar Etkinlik Akışı
  * Description: Madagaskar Sirki'nin yayındaki şehirler sayfasından şehir, tarih, salon ve seans bilgilerini güvenli biçimde gösterir. Fiyat bilgisi göstermez.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: USKD
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'USKD_MDG_EVENTS_VERSION', '0.1.0' );
+define( 'USKD_MDG_EVENTS_VERSION', '0.2.0' );
 define( 'USKD_MDG_EVENTS_SOURCE', 'https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content' );
 define( 'USKD_MDG_EVENTS_CACHE_KEY', 'uskd_mdg_events_source_v1' );
 define( 'USKD_MDG_EVENTS_CACHE_TTL', 5 * MINUTE_IN_SECONDS );
@@ -180,7 +180,16 @@ function uskd_mdg_events_text( $value ) {
  *
  * @return string
  */
-function uskd_mdg_events_shortcode() {
+function uskd_mdg_events_shortcode( $atts = array() ) {
+	$atts = shortcode_atts(
+		array(
+			'limit' => 0,
+		),
+		(array) $atts,
+		'uskd_madagaskar_events'
+	);
+
+	$limit = absint( $atts['limit'] );
 	$html = uskd_mdg_events_source_html();
 
 	if ( is_wp_error( $html ) ) {
@@ -190,6 +199,10 @@ function uskd_mdg_events_shortcode() {
 	$events = uskd_mdg_events_parse( $html );
 	if ( is_wp_error( $events ) ) {
 		return uskd_mdg_events_fallback();
+	}
+
+	if ( $limit > 0 ) {
+		$events = array_slice( $events, 0, $limit );
 	}
 
 	ob_start();
