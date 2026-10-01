@@ -20,6 +20,8 @@ Comma-separated değer örneği:
 |---|---:|
 | system-health-integrity | #80 |
 | mmc-sales-ledger | #89 |
+| mmc-dashboard | #81 |
+| mmc-tasks | #82 |
 
 ## Canlı geçiş sırası
 
@@ -48,3 +50,9 @@ Her modül ayrı ayrı taşınır:
 - `madagaskar/mdg-bridge-status`
 
 Migration smoke testinde satış sync veya mapping write çalıştırılmaz.
+
+
+## Phase 2 — #81 ve #82
+
+- `mmc-dashboard`: yalnız read-only dashboard abilities.
+- `mmc-tasks`: task read + create/update/status abilities içerir. Migration smoke testinde yalnız read abilities kullanılacaktır.
