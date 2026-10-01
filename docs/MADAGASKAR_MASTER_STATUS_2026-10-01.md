@@ -238,3 +238,28 @@ WPVibe tekrar erişilebilir olduğunda sıra:
 5. WPVibe / WordPress read-only kontroller — canlı gerçeklik doğrulaması
 
 Canlıda yapılan her kalıcı değişiklik GitHub’a geri işlenmeli; GitHub’da tamamlanan anlamlı üretim değişikliği Drive rehberine özetlenmelidir.
+
+
+## 14. Google Drive senkron durumu
+
+1 Ekim 2026 21:41 TSİ itibarıyla Google Drive teknik rehberi güncellenmiştir.
+
+Drive belgesi:
+- Ad: `Madagaskar + USKD Codex Çalışma ve Yedek Rehberi`
+- Doc ID: `1Q6-mOKbbkYZgWVcxFYK3yy9zLFjqEZEwKTJ14Z1PiZI`
+- Güncellenen konular:
+  - canlı AI Abilities v0.6.1 / GitHub main v0.7.0 ayrımı,
+  - Snippet #101 son doğrulanmış active=true uyarısı,
+  - Kırıkkale 1 Ekim production audit rakamları,
+  - Sincan Program #8 canary sonucu,
+  - kalan legacy migration sırası,
+  - Kommo source-limit Issue #82,
+  - transition/hotfix Issue #77,
+  - legacy migration Issue #81,
+  - USKD v0.1 live / v0.2 source-ready durumu,
+  - WPVibe kota engeli ve ilk devam adımları,
+  - PR #78, #79, #80, #83, #84, #85 ve kanonik dosya yolları.
+- Drive read-back revision: `ANLCKQlDOOe3iC9OlEPPSMdTtLvogc4JvL5-PPGKMlXQ-5ked6VuaVnUikinOtf9jWyhOrvmz_f_SnHxGhJTSSdhwjeAcLFNnQemc6mNjjY`
+- Read-back doğrulaması: v0.6.1, Sincan program kodu, #101 uyarısı, Yenimahalle başlangıçlı kalan sıra, Issue #82 ve bu master dosya adı dokümanda bulundu.
+
+Bu nedenle bu PR merge edildikten sonra GitHub ve Drive 1 Ekim 2026 kapanış durumu bakımından senkron kabul edilir.
