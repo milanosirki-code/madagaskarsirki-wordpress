@@ -1,0 +1,487 @@
+
+if ( ! function_exists( 'mdg_ai_invoice_can_run' ) ) {
+    function mdg_ai_invoice_can_run( $input = null ) {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            return new WP_Error( 'mdg_ai_invoice_forbidden', 'Bu işlem için WooCommerce yönetim yetkisi gerekir.' );
+        }
+        if ( ! function_exists( 'wc_get_orders' ) || ! function_exists( 'wc_get_order' ) ) {
+            return new WP_Error( 'mdg_ai_wc_missing', 'WooCommerce sipariş servisi kullanılamıyor.' );
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_state' ) ) {
+    function mdg_ai_invoice_state( $order ) {
+        $invoice = $order->get_meta( '_mdg_invoice_status', true ) === 'issued';
+        $wa      = $order->get_meta( '_mdg_invoice_whatsapp_sent', true ) === 'yes';
+        if ( ! $invoice ) return 'pending';
+        if ( ! $wa ) return 'invoiced';
+        return 'sent';
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_paid_orders' ) ) {
+    function mdg_ai_invoice_paid_orders() {
+        $orders = wc_get_orders( array(
+            'limit'   => 200,
+            'orderby' => 'date',
+            'order'   => 'DESC',
+            'status'  => array_keys( wc_get_order_statuses() ),
+            'return'  => 'objects',
+        ) );
+        $paid = array();
+        foreach ( (array) $orders as $order ) {
+            if ( ! $order instanceof WC_Order ) continue;
+            if ( ! $order->is_paid() && ! in_array( $order->get_status(), array( 'processing','completed' ), true ) ) continue;
+            $paid[] = $order;
+        }
+        return $paid;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_tax_id' ) ) {
+    function mdg_ai_invoice_tax_id( $order ) {
+        $keys = array(
+            '_billing_tc_kimlik_no','billing_tc_kimlik_no','tc_kimlik_no','_tc_kimlik_no',
+            '_billing_tckn','billing_tckn','tckn','_tckn','_billing_vkn','billing_vkn','vkn','_vkn',
+            '_billing_tax_no','billing_tax_no','tax_number','_tax_number'
+        );
+        foreach ( $keys as $key ) {
+            $value = trim( (string) $order->get_meta( $key, true ) );
+            if ( '' !== $value ) return $value;
+        }
+        return '';
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_address' ) ) {
+    function mdg_ai_invoice_address( $order ) {
+        return implode( ', ', array_filter( array(
+            $order->get_billing_address_1(),
+            $order->get_billing_address_2(),
+            $order->get_billing_postcode(),
+            $order->get_billing_city(),
+            $order->get_billing_state(),
+            $order->get_billing_country(),
+        ) ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_products' ) ) {
+    function mdg_ai_invoice_products( $order ) {
+        $items = array();
+        foreach ( $order->get_items() as $item ) {
+            $items[] = array(
+                'name'     => (string) $item->get_name(),
+                'quantity' => (int) $item->get_quantity(),
+                'line'     => (int) $item->get_quantity() . ' x ' . (string) $item->get_name(),
+            );
+        }
+        return $items;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_amounts' ) ) {
+    function mdg_ai_invoice_amounts( $order ) {
+        $rate = 10;
+        $gross_cents = (int) round( (float) $order->get_total() * 100 );
+        $net_cents   = (int) round( $gross_cents * 100 / ( 100 + $rate ) );
+        $vat_cents   = $gross_cents - $net_cents;
+        return array(
+            'rate'  => $rate,
+            'net'   => $net_cents / 100,
+            'vat'   => $vat_cents / 100,
+            'gross' => $gross_cents / 100,
+            'currency' => (string) $order->get_currency(),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_copy_text' ) ) {
+    function mdg_ai_invoice_copy_text( $order ) {
+        $lines = array(
+            'Sipariş: #' . $order->get_id(),
+            'Ad Soyad: ' . trim( $order->get_formatted_billing_full_name() ),
+            'Adres: ' . mdg_ai_invoice_address( $order ),
+            'Telefon: ' . $order->get_billing_phone(),
+            'E-posta: ' . $order->get_billing_email(),
+        );
+        $tax = mdg_ai_invoice_tax_id( $order );
+        if ( $tax ) $lines[] = 'T.C./VKN: ' . $tax;
+        $lines[] = 'Ürünler:';
+        foreach ( mdg_ai_invoice_products( $order ) as $item ) {
+            $lines[] = $item['line'];
+        }
+        $amounts = mdg_ai_invoice_amounts( $order );
+        $money = function( $value ) {
+            return number_format( (float) $value, 2, ',', '.' ) . ' TL';
+        };
+        $lines[] = '';
+        $lines[] = 'KDV Hariç Tutar: ' . $money( $amounts['net'] );
+        $lines[] = 'KDV Oranı: %' . $amounts['rate'];
+        $lines[] = 'KDV Tutarı: ' . $money( $amounts['vat'] );
+        $lines[] = 'KDV Dahil Toplam: ' . $money( $amounts['gross'] );
+        return implode( "\n", $lines );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_order_to_array' ) ) {
+    function mdg_ai_invoice_order_to_array( $order, $include_copy = false ) {
+        $created = $order->get_date_created();
+        $state = mdg_ai_invoice_state( $order );
+        $phone = preg_replace( '/\D+/', '', (string) $order->get_billing_phone() );
+        if ( substr( $phone, 0, 1 ) === '0' ) $phone = '90' . substr( $phone, 1 );
+        elseif ( substr( $phone, 0, 2 ) !== '90' && strlen( $phone ) === 10 ) $phone = '90' . $phone;
+
+        $data = array(
+            'order_id'          => (int) $order->get_id(),
+            'order_number'      => (string) $order->get_order_number(),
+            'created_at'        => $created ? $created->date( 'Y-m-d H:i:s' ) : '',
+            'order_status'      => (string) $order->get_status(),
+            'is_paid'           => (bool) $order->is_paid(),
+            'customer_name'     => trim( (string) $order->get_formatted_billing_full_name() ),
+            'company'           => (string) $order->get_billing_company(),
+            'address'           => mdg_ai_invoice_address( $order ),
+            'phone'             => (string) $order->get_billing_phone(),
+            'email'             => (string) $order->get_billing_email(),
+            'tax_id'            => mdg_ai_invoice_tax_id( $order ),
+            'payment_method'    => (string) $order->get_payment_method(),
+            'payment_title'     => (string) $order->get_payment_method_title(),
+            'products'          => mdg_ai_invoice_products( $order ),
+            'amounts'           => mdg_ai_invoice_amounts( $order ),
+            'invoice_state'     => $state,
+            'invoice_status'    => (string) $order->get_meta( '_mdg_invoice_status', true ),
+            'invoice_date'      => (string) $order->get_meta( '_mdg_invoice_date', true ),
+            'whatsapp_sent'     => $order->get_meta( '_mdg_invoice_whatsapp_sent', true ) === 'yes',
+            'whatsapp_date'     => (string) $order->get_meta( '_mdg_invoice_whatsapp_date', true ),
+            'whatsapp_url'      => $phone ? 'https://wa.me/' . $phone : '',
+            'inconsistent_meta' => ( $order->get_meta( '_mdg_invoice_whatsapp_sent', true ) === 'yes' && $order->get_meta( '_mdg_invoice_status', true ) !== 'issued' ),
+        );
+        if ( $include_copy ) {
+            $data['mikro_copy_text'] = mdg_ai_invoice_copy_text( $order );
+        }
+        return $data;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_match' ) ) {
+    function mdg_ai_invoice_match( $order, $input ) {
+        $state = sanitize_key( $input['state'] ?? 'all' );
+        if ( 'all' !== $state && mdg_ai_invoice_state( $order ) !== $state ) return false;
+
+        $min_id = absint( $input['min_order_id'] ?? 0 );
+        $max_id = absint( $input['max_order_id'] ?? 0 );
+        if ( $min_id && $order->get_id() < $min_id ) return false;
+        if ( $max_id && $order->get_id() > $max_id ) return false;
+
+        $from = sanitize_text_field( $input['date_from'] ?? '' );
+        $to   = sanitize_text_field( $input['date_to'] ?? '' );
+        $created = $order->get_date_created();
+        $date = $created ? $created->date( 'Y-m-d' ) : '';
+        if ( $from && $date && $date < $from ) return false;
+        if ( $to && $date && $date > $to ) return false;
+
+        $payment = sanitize_text_field( $input['payment_method'] ?? '' );
+        if ( $payment && $order->get_payment_method() !== $payment ) return false;
+
+        $search = trim( sanitize_text_field( $input['search'] ?? '' ) );
+        if ( $search ) {
+            $haystack = implode( ' ', array(
+                '#' . $order->get_id(),
+                $order->get_order_number(),
+                $order->get_formatted_billing_full_name(),
+                $order->get_billing_company(),
+                $order->get_billing_phone(),
+                $order->get_billing_email(),
+                mdg_ai_invoice_tax_id( $order ),
+                mdg_ai_invoice_address( $order ),
+                implode( ' ', array_column( mdg_ai_invoice_products( $order ), 'line' ) ),
+            ) );
+            if ( false === mb_stripos( $haystack, $search, 0, 'UTF-8' ) ) return false;
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoices_list' ) ) {
+    function mdg_ai_invoices_list( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        $limit = isset( $input['limit'] ) ? max( 1, min( 200, absint( $input['limit'] ) ) ) : 50;
+        $items = array();
+        foreach ( mdg_ai_invoice_paid_orders() as $order ) {
+            if ( ! mdg_ai_invoice_match( $order, $input ) ) continue;
+            $items[] = mdg_ai_invoice_order_to_array( $order, false );
+            if ( count( $items ) >= $limit ) break;
+        }
+        return array( 'count' => count( $items ), 'items' => $items );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_get' ) ) {
+    function mdg_ai_invoice_get( $input ) {
+        $order_id = absint( $input['order_id'] ?? 0 );
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) return new WP_Error( 'mdg_ai_invoice_order_missing', 'Sipariş bulunamadı.' );
+        return array( 'order' => mdg_ai_invoice_order_to_array( $order, true ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_summary' ) ) {
+    function mdg_ai_invoice_summary( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        unset( $input['state'] );
+        $counts = array( 'pending'=>0, 'invoiced'=>0, 'sent'=>0, 'all'=>0 );
+        $totals = array( 'net'=>0.0, 'vat'=>0.0, 'gross'=>0.0 );
+        foreach ( mdg_ai_invoice_paid_orders() as $order ) {
+            if ( ! mdg_ai_invoice_match( $order, $input ) ) continue;
+            $state = mdg_ai_invoice_state( $order );
+            $counts[$state]++;
+            $counts['all']++;
+            $a = mdg_ai_invoice_amounts( $order );
+            $totals['net'] += $a['net'];
+            $totals['vat'] += $a['vat'];
+            $totals['gross'] += $a['gross'];
+        }
+        foreach ( $totals as $k => $v ) $totals[$k] = round( $v, 2 );
+        return array(
+            'counts' => $counts,
+            'totals' => $totals,
+            'vat_rate' => 10,
+            'scope' => 'Son 200 sipariş içinden ödeme alınmış/processing/completed kayıtlar',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_set_state_internal' ) ) {
+    function mdg_ai_invoice_set_state_internal( $order, $state ) {
+        $old = mdg_ai_invoice_state( $order );
+        $now = current_time( 'mysql' );
+
+        if ( 'pending' === $state ) {
+            $order->delete_meta_data( '_mdg_invoice_status' );
+            $order->delete_meta_data( '_mdg_invoice_date' );
+            $order->delete_meta_data( '_mdg_invoice_whatsapp_sent' );
+            $order->delete_meta_data( '_mdg_invoice_whatsapp_date' );
+        } elseif ( 'invoiced' === $state ) {
+            $order->update_meta_data( '_mdg_invoice_status', 'issued' );
+            if ( ! $order->get_meta( '_mdg_invoice_date', true ) ) {
+                $order->update_meta_data( '_mdg_invoice_date', $now );
+            }
+            $order->delete_meta_data( '_mdg_invoice_whatsapp_sent' );
+            $order->delete_meta_data( '_mdg_invoice_whatsapp_date' );
+            if ( 'invoiced' !== $old ) {
+                $order->add_order_note( 'Fatura Takip: Fatura kesildi olarak işaretlendi.' );
+            }
+        } elseif ( 'sent' === $state ) {
+            $order->update_meta_data( '_mdg_invoice_status', 'issued' );
+            if ( ! $order->get_meta( '_mdg_invoice_date', true ) ) {
+                $order->update_meta_data( '_mdg_invoice_date', $now );
+                $order->add_order_note( 'Fatura Takip: Fatura kesildi olarak işaretlendi.' );
+            }
+            $order->update_meta_data( '_mdg_invoice_whatsapp_sent', 'yes' );
+            if ( ! $order->get_meta( '_mdg_invoice_whatsapp_date', true ) ) {
+                $order->update_meta_data( '_mdg_invoice_whatsapp_date', $now );
+            }
+            if ( 'sent' !== $old ) {
+                $order->add_order_note( 'Fatura Takip: Fatura WhatsApp ile gönderildi olarak işaretlendi.' );
+            }
+        } else {
+            return new WP_Error( 'mdg_ai_invoice_state_invalid', 'Geçersiz fatura durumu.' );
+        }
+
+        $order->save();
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_set_state' ) ) {
+    function mdg_ai_invoice_set_state( $input ) {
+        $order_id = absint( $input['order_id'] ?? 0 );
+        $state = sanitize_key( $input['state'] ?? '' );
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) return new WP_Error( 'mdg_ai_invoice_order_missing', 'Sipariş bulunamadı.' );
+        $ok = mdg_ai_invoice_set_state_internal( $order, $state );
+        if ( is_wp_error( $ok ) ) return $ok;
+        return array( 'updated'=>true, 'order'=>mdg_ai_invoice_order_to_array( $order, false ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_bulk_set_state' ) ) {
+    function mdg_ai_invoice_bulk_set_state( $input ) {
+        $ids = array_values( array_unique( array_filter( array_map( 'absint', (array) ( $input['order_ids'] ?? array() ) ) ) ) );
+        $state = sanitize_key( $input['state'] ?? '' );
+        if ( empty( $ids ) ) return new WP_Error( 'mdg_ai_invoice_ids_required', 'En az bir sipariş numarası gerekir.' );
+        if ( count( $ids ) > 100 ) return new WP_Error( 'mdg_ai_invoice_bulk_limit', 'Tek işlemde en fazla 100 sipariş güncellenebilir.' );
+
+        $updated = array();
+        $failed = array();
+        foreach ( $ids as $id ) {
+            $order = wc_get_order( $id );
+            if ( ! $order ) {
+                $failed[] = array( 'order_id'=>$id, 'error'=>'Sipariş bulunamadı.' );
+                continue;
+            }
+            $ok = mdg_ai_invoice_set_state_internal( $order, $state );
+            if ( is_wp_error( $ok ) ) {
+                $failed[] = array( 'order_id'=>$id, 'error'=>$ok->get_error_message() );
+            } else {
+                $updated[] = $id;
+            }
+        }
+        return array( 'state'=>$state, 'updated_count'=>count($updated), 'updated_order_ids'=>$updated, 'failed'=>$failed );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_invoice_system_audit' ) ) {
+    function mdg_ai_invoice_system_audit( $input = array() ) {
+        $mdg = array( 'issued'=>0, 'whatsapp'=>0 );
+        $dof = array( 'pending'=>0, 'invoiced'=>0, 'sent'=>0, 'other'=>0 );
+        $conflicts = array();
+
+        foreach ( mdg_ai_invoice_paid_orders() as $order ) {
+            if ( $order->get_meta( '_mdg_invoice_status', true ) === 'issued' ) $mdg['issued']++;
+            if ( $order->get_meta( '_mdg_invoice_whatsapp_sent', true ) === 'yes' ) $mdg['whatsapp']++;
+
+            $ds = (string) $order->get_meta( '_dof_invoice_status', true );
+            if ( $ds ) {
+                if ( isset( $dof[$ds] ) ) $dof[$ds]++;
+                else $dof['other']++;
+            }
+
+            if ( $ds && ( ( 'invoiced' === $ds && mdg_ai_invoice_state($order) !== 'invoiced' ) || ( 'sent' === $ds && mdg_ai_invoice_state($order) !== 'sent' ) || ( 'pending' === $ds && mdg_ai_invoice_state($order) !== 'pending' ) ) ) {
+                $conflicts[] = (int) $order->get_id();
+            }
+        }
+
+        return array(
+            'canonical' => 'Madagaskar Fatura Takip (_mdg_invoice_*)',
+            'mdg_counts' => $mdg,
+            'dunya_organizasyon_counts' => $dof,
+            'conflict_order_ids' => $conflicts,
+            'note' => 'AI yazma işlemleri yalnız Madagaskar Fatura Takip meta alanlarına yapılır.',
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_categories_init', function() {
+    if ( function_exists( 'wp_register_ability_category' ) ) {
+        wp_register_ability_category(
+            'madagaskar-fatura',
+            array(
+                'label' => 'Madagaskar Fatura Takip',
+                'description' => 'Ödeme alınmış WooCommerce siparişlerinde fatura ve WhatsApp takip işlemleri.',
+            )
+        );
+    }
+} );
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) return;
+
+    $read = array(
+        'annotations' => array( 'readonly'=>true, 'destructive'=>false, 'idempotent'=>true ),
+        'public' => true,
+    );
+    $critical = array(
+        'annotations' => array( 'readonly'=>false, 'destructive'=>true, 'idempotent'=>false ),
+        'public' => true,
+    );
+
+    $filter_props = array(
+        'state' => array( 'type'=>'string', 'enum'=>array('pending','invoiced','sent','all') ),
+        'search' => array( 'type'=>'string' ),
+        'date_from' => array( 'type'=>'string', 'pattern'=>'^\d{4}-\d{2}-\d{2}$' ),
+        'date_to' => array( 'type'=>'string', 'pattern'=>'^\d{4}-\d{2}-\d{2}$' ),
+        'payment_method' => array( 'type'=>'string' ),
+        'min_order_id' => array( 'type'=>'integer', 'minimum'=>1 ),
+        'max_order_id' => array( 'type'=>'integer', 'minimum'=>1 ),
+    );
+
+    $list_props = $filter_props;
+    $list_props['limit'] = array( 'type'=>'integer', 'minimum'=>1, 'maximum'=>200 );
+
+    wp_register_ability( 'madagaskar/invoices-list', array(
+        'label'=>'Fatura Siparişlerini Listele',
+        'description'=>'Son 200 siparişten ödeme alınmış kayıtları fatura durumu, tarih, ödeme yöntemi, sipariş numarası aralığı veya arama metnine göre listeler.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array('type'=>'object','properties'=>$list_props),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoices_list',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$read,
+    ) );
+
+    wp_register_ability( 'madagaskar/invoice-get', array(
+        'label'=>'Fatura Sipariş Detayını Getir',
+        'description'=>'Siparişin müşteri, ürün, KDV, fatura/WhatsApp durumu ve Mikro için kopyalama metnini getirir.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array(
+            'type'=>'object',
+            'properties'=>array('order_id'=>array('type'=>'integer','minimum'=>1)),
+            'required'=>array('order_id')
+        ),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoice_get',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$read,
+    ) );
+
+    wp_register_ability( 'madagaskar/invoice-summary', array(
+        'label'=>'Fatura Özetini Getir',
+        'description'=>'Seçilen filtrelerde fatura bekleyen, kesilen ve WhatsApp gönderilen sipariş sayılarını ve KDV tutarlarını özetler.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array('type'=>'object','properties'=>$filter_props),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoice_summary',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$read,
+    ) );
+
+    wp_register_ability( 'madagaskar/invoice-set-state', array(
+        'label'=>'Fatura Durumunu Güncelle',
+        'description'=>'Tek siparişi bekliyor, fatura kesildi veya WhatsApp gönderildi durumuna getirir. Sipariş/ödeme/bilet içeriğini değiştirmez. Kritik yazma işlemidir.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array(
+            'type'=>'object',
+            'properties'=>array(
+                'order_id'=>array('type'=>'integer','minimum'=>1),
+                'state'=>array('type'=>'string','enum'=>array('pending','invoiced','sent'))
+            ),
+            'required'=>array('order_id','state')
+        ),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoice_set_state',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$critical,
+    ) );
+
+    wp_register_ability( 'madagaskar/invoice-bulk-set-state', array(
+        'label'=>'Toplu Fatura Durumu Güncelle',
+        'description'=>'Açıkça verilen sipariş numaralarını topluca bekliyor, fatura kesildi veya WhatsApp gönderildi durumuna getirir. Kritik yazma işlemidir.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array(
+            'type'=>'object',
+            'properties'=>array(
+                'order_ids'=>array('type'=>'array','items'=>array('type'=>'integer','minimum'=>1),'minItems'=>1,'maxItems'=>100),
+                'state'=>array('type'=>'string','enum'=>array('pending','invoiced','sent'))
+            ),
+            'required'=>array('order_ids','state')
+        ),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoice_bulk_set_state',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$critical,
+    ) );
+
+    wp_register_ability( 'madagaskar/invoice-system-audit', array(
+        'label'=>'Fatura Sistem Çakışmasını Denetle',
+        'description'=>'İki aktif fatura takip eklentisinin meta kayıtlarını salt okunur karşılaştırır ve çakışan siparişleri gösterir.',
+        'category'=>'madagaskar-fatura',
+        'input_schema'=>array('type'=>'object','properties'=>array()),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ai_invoice_system_audit',
+        'permission_callback'=>'mdg_ai_invoice_can_run',
+        'meta'=>$read,
+    ) );
+} );
