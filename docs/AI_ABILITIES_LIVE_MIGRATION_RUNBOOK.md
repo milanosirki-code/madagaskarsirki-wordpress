@@ -6,7 +6,7 @@ WPVibe çağrılarını minimumda tutarak Code Snippets içindeki AI ability mod
 
 ## GitHub kaynak durumu
 
-- Source sürümü: **0.4.0**
+- Source sürümü: **0.5.0**
 - Plugin yolu: `wp-content/plugins/madagaskar-ai-abilities/`
 - Manifest: `migration-manifest.json`
 - GitHub Actions paketi: **Build Madagaskar AI Abilities**
@@ -169,3 +169,31 @@ Read-only smoke:
 - Program/Salon/Etkinlik: listeler ve satış readiness katmanı okunabilir
 
 Migration sırasında write abilities çalıştırılmadı.
+
+
+## 1 Ekim 2026 — nihai doğrulanmış durum
+
+Migration tamamlandı.
+
+Canlı:
+- plugin: `madagaskar-ai-abilities` **v0.5.0**
+- GitHub `main`: **v0.5.0**
+- aktif module slug: **17**
+- ilgili legacy AI snippetlerin tamamı pasif
+- geçici installer #101 pasif
+- aktif Code Snippets toplamı: **36**
+- system health: **0 critical / 0 warning / 16 OK**
+
+Satış mutabakatı:
+- Pursaklar #3: 17 ücretli sipariş / 59 bilet / 22.500 TL / fark 0
+- Kırıkkale #2: 7 ücretli sipariş / 26 bilet / 10.250 TL / fark 0
+
+Kommo:
+- configured=true
+- connected=true
+- http_ok=true
+- token_source=MMC_KOMMO_TOKEN
+- uses_legacy_token=false
+- source consistency safe=true
+
+Bu runbook artık normal migration rehberi + rollback referansı olarak saklanır; yeni migration beklememektedir.
