@@ -1,0 +1,78 @@
+name: Build Madagaskar AI Abilities
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-ai-abilities/**'
+      - '.github/workflows/build-madagaskar-ai-abilities.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'wp-content/plugins/madagaskar-ai-abilities/**'
+      - '.github/workflows/build-madagaskar-ai-abilities.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint plugin PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find wp-content/plugins/madagaskar-ai-abilities -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Validate migration manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('wp-content/plugins/madagaskar-ai-abilities/migration-manifest.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          assert data['plugin']['slug'] == 'madagaskar-ai-abilities'
+          assert data['plugin']['source_version']
+          modules = [x['module'] for x in data['migration_order']]
+          assert len(modules) == len(set(modules)), 'duplicate migration module'
+          ids = [x['snippet_id'] for x in data['migration_order']]
+          assert len(ids) == len(set(ids)), 'duplicate snippet id'
+          print('manifest ok:', data['plugin']['source_version'], len(modules), 'pending modules')
+          PY
+
+      - name: Build ZIP and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/madagaskar-ai-abilities
+          cp -R wp-content/plugins/madagaskar-ai-abilities/. build/madagaskar-ai-abilities/
+          (
+            cd build
+            zip -r -q madagaskar-ai-abilities.zip madagaskar-ai-abilities
+            sha256sum madagaskar-ai-abilities.zip > madagaskar-ai-abilities.zip.sha256
+          )
+
+      - name: Upload plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: madagaskar-ai-abilities
+          path: |
+            build/madagaskar-ai-abilities.zip
+            build/madagaskar-ai-abilities.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
