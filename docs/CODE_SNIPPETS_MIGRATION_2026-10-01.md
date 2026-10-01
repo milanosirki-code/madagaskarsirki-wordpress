@@ -159,3 +159,27 @@ Bu nedenle UI/API etiketleri ileride şu şekilde ayrılmalıdır:
 - net ciro
 
 Mevcut hesaplama değiştirilmeden önce geriye dönük uyumluluk test edilmelidir.
+
+## 1 Ekim 2026 — ilk plugin migration sonucu
+
+Canlı `Madagaskar AI Abilities` plugin kuruldu ve inert-by-default gate yaklaşımı doğrulandı.
+
+Başarıyla Code Snippets'tan plugin'e devredilen modüller:
+- #80 Sistem Sağlığı → `system-health-integrity`
+- #89 MMC Satış Defteri → `mmc-sales-ledger`
+- #81 MMC Genel Bakış → `mmc-dashboard`
+- #82 MMC Görevler → `mmc-tasks`
+
+Canlı option:
+`mdg_ai_abilities_modules=system-health-integrity,mmc-sales-ledger,mmc-dashboard,mmc-tasks`
+
+Geçiş doğrulamaları:
+- #80/#81/#82/#89 pasif
+- geçici installer #101 pasif
+- system health: 0 critical / 1 warning / 15 OK
+- Pursaklar sales mapping 4/4 ve MDG↔MMC fark 0
+- Kırıkkale sales mapping 4/4 ve MDG↔MMC fark 0
+- dashboard-overview plugin modülünden çalıştı
+- tasks-summary plugin modülünden çalıştı: 86 açık görev; write yapılmadı
+
+WPVibe rolling 24-hour çağrı sınırına ulaşıldığı için kalan canlı migration aynı pencerede devam ettirilmedi. Phase 3 kaynakları GitHub'da gated olarak hazırlanmıştır.

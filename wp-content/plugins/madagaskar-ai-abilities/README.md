@@ -56,3 +56,19 @@ Migration smoke testinde satış sync veya mapping write çalıştırılmaz.
 
 - `mmc-dashboard`: yalnız read-only dashboard abilities.
 - `mmc-tasks`: task read + create/update/status abilities içerir. Migration smoke testinde yalnız read abilities kullanılacaktır.
+
+
+## Phase 3 — sıradaki gated modüller
+
+| Modül | Canlı snippet | Migration smoke testi |
+|---|---:|---|
+| v4-refund-safety | #79 | refund-preflight / refund history; gerçek refund yok |
+| mmc-region-population | #83 | sources / districts / program-summary / population lookup |
+| mmc-field | #84 | field-summary / targets / routes / recent-visits |
+| mmc-operations | #85 | plan-get / summary / checklist-list / schedule-list |
+| mmc-marketing | #86 | marketing-pack-get / item-get / meta-plan-get |
+| mmc-kommo | #87 | configuration / diagnostics / source consistency / stage preview |
+| mmc-mdg-bridge | #88 | bridge-status / candidates / publish-preview |
+
+Bu modüller v0.3.0 içinde yalnız gate'e eklenir; production option'a otomatik eklenmez.
+Write abilities migration sırasında çağrılmaz.
