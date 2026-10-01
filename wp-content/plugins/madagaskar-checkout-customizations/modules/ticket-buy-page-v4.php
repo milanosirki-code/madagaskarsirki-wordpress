@@ -1,0 +1,3751 @@
+<?php
+
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — BİLET AL SAYFASI V4
+ * ============================================================
+ *
+ * Sayfa:
+ * /bilet-al/
+ *
+ * AMAÇ
+ * ------------------------------------------------------------
+ * - Mevcut çalışan bilet motorunu kullanır:
+ *      mdg_v1_get_live_tickets()
+ *
+ * - WooCommerce'e dokunmaz.
+ * - Tickera'ya dokunmaz.
+ * - PayTR'a dokunmaz.
+ * - Siparişlere dokunmaz.
+ * - Stoklara dokunmaz.
+ * - Fiyatlara dokunmaz.
+ * - QR/PDF sistemine dokunmaz.
+ * - Etkinlik oluşturmaz.
+ *
+ * Yalnızca:
+ * [madagaskar_bilet_al]
+ *
+ * shortcode görünümünü /bilet-al/ sayfasında değiştirir.
+ *
+ *
+ * V4 FARKI
+ * ------------------------------------------------------------
+ * Aynı şehir + salon + tarih altındaki bütün seanslar
+ * TEK etkinlik kartında toplanır.
+ *
+ * Örnek:
+ *
+ * Ankara
+ * 26 Eylül 2026
+ * Altınpark ANFA B Salonu
+ *
+ * 12:00   14:00   16:00
+ *
+ * [ Tarih ve seans seç – bilet al ]
+ *
+ *
+ * ÖNEMLİ
+ * ------------------------------------------------------------
+ * ETKİNLİK YAYINLA V1 aktif kalmalıdır.
+ * Çünkü mdg_v1_get_live_tickets() fonksiyonu oradan gelir.
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+/* ============================================================
+   1. SAYFA KONTROLÜ
+   ============================================================ */
+
+function msba_v4_is_page() {
+
+	return is_page( 'bilet-al' );
+}
+
+
+/* ============================================================
+   2. BODY CLASS
+   ============================================================ */
+
+add_filter(
+	'body_class',
+	function ( $classes ) {
+
+		if ( msba_v4_is_page() ) {
+			$classes[] = 'msba-v4-page';
+		}
+
+		return $classes;
+	}
+);
+
+
+/* ============================================================
+   3. TARİH / SAAT NORMALLEŞTİRME
+   ============================================================ */
+
+function msba_v4_parse_datetime( $value ) {
+
+	if ( empty( $value ) ) {
+		return false;
+	}
+
+
+	if ( $value instanceof DateTimeInterface ) {
+
+		try {
+
+			return new DateTime(
+				$value->format( 'Y-m-d H:i:s' ),
+				wp_timezone()
+			);
+
+		} catch ( Exception $e ) {
+
+			return false;
+		}
+	}
+
+
+	if ( is_numeric( $value ) ) {
+
+		try {
+
+			$date = new DateTime(
+				'@' . intval( $value )
+			);
+
+			$date->setTimezone(
+				wp_timezone()
+			);
+
+			return $date;
+
+		} catch ( Exception $e ) {
+
+			return false;
+		}
+	}
+
+
+	if ( is_string( $value ) ) {
+
+		try {
+
+			return new DateTime(
+				$value,
+				wp_timezone()
+			);
+
+		} catch ( Exception $e ) {
+
+			return false;
+		}
+	}
+
+
+	return false;
+}
+
+
+/* ============================================================
+   4. ŞEHİR SLUG
+   ============================================================ */
+
+function msba_v4_city_slug( $city ) {
+
+	$city = trim(
+		(string) $city
+	);
+
+
+	if ( $city === '' ) {
+		return '';
+	}
+
+
+	/*
+	 * Türkçe karakterleri URL için normalleştir.
+	 *
+	 * Örnek:
+	 * Eskişehir → eskisehir
+	 * İzmir     → izmir
+	 */
+
+	return sanitize_title(
+		remove_accents(
+			$city
+		)
+	);
+}
+
+
+/* ============================================================
+   5. ŞEHİR SAYFASI URL
+   ============================================================ */
+
+function msba_v4_city_url(
+	$city,
+	$fallback = ''
+) {
+
+	$slug =
+		msba_v4_city_slug(
+			$city
+		);
+
+
+	if ( ! $slug ) {
+		return $fallback;
+	}
+
+
+	/*
+	 * Önce gerçek WordPress şehir sayfasını ara.
+	 *
+	 * Örnek:
+	 * /sehirler/ankara/
+	 */
+
+	$page =
+		get_page_by_path(
+			'sehirler/' . $slug,
+			OBJECT,
+			'page'
+		);
+
+
+	if (
+		$page instanceof WP_Post &&
+		$page->post_status === 'publish'
+	) {
+
+		return get_permalink(
+			$page
+		);
+	}
+
+
+	/*
+	 * Sayfa bulunamazsa ürün bağlantısını kullan.
+	 */
+
+	if ( $fallback ) {
+		return $fallback;
+	}
+
+
+	return home_url(
+		'/sehirler/' . $slug . '/'
+	);
+}
+
+
+/* ============================================================
+   6. BİLET VERİSİNİ ETKİNLİK OLARAK GRUPLA
+   ============================================================ */
+
+function msba_v4_get_events() {
+
+	/*
+	 * ETKİNLİK YAYINLA V1 motoru yoksa
+	 * güvenli şekilde boş liste döndür.
+	 */
+
+	if (
+		! function_exists(
+			'mdg_v1_get_live_tickets'
+		)
+	) {
+
+		return array();
+	}
+
+
+	$tickets =
+		mdg_v1_get_live_tickets();
+
+
+	if ( ! is_array( $tickets ) ) {
+		return array();
+	}
+
+
+	$events = array();
+
+
+	foreach ( $tickets as $ticket ) {
+
+
+		if ( ! is_array( $ticket ) ) {
+			continue;
+		}
+
+
+		/* ----------------------------------------------------
+		   ŞEHİR
+		   ---------------------------------------------------- */
+
+		$city =
+			isset( $ticket['city'] )
+				? trim(
+					(string) $ticket['city']
+				)
+				: '';
+
+
+		if ( $city === '' ) {
+			continue;
+		}
+
+
+		/* ----------------------------------------------------
+		   SALON
+		   ---------------------------------------------------- */
+
+		$venue =
+			isset( $ticket['venue'] )
+				? trim(
+					(string) $ticket['venue']
+				)
+				: '';
+
+
+		/* ----------------------------------------------------
+		   ÜRÜN URL
+		   ---------------------------------------------------- */
+
+		$product_url =
+			isset( $ticket['url'] )
+				? trim(
+					(string) $ticket['url']
+				)
+				: '';
+
+
+		/* ----------------------------------------------------
+		   FİYAT
+		   ---------------------------------------------------- */
+
+		$price_html =
+			isset( $ticket['price_html'] )
+				? $ticket['price_html']
+				: '';
+
+
+		/* ----------------------------------------------------
+		   İLÇE
+		   ---------------------------------------------------- */
+
+		$district = '';
+
+
+		foreach (
+			array(
+				'district',
+				'ilce',
+				'town'
+			)
+			as $district_key
+		) {
+
+			if (
+				! empty(
+					$ticket[ $district_key ]
+				)
+			) {
+
+				$district =
+					trim(
+						(string)
+						$ticket[ $district_key ]
+					);
+
+				break;
+			}
+		}
+
+
+		/* ----------------------------------------------------
+		   TARİH
+		   ---------------------------------------------------- */
+
+		$date_object =
+			msba_v4_parse_datetime(
+				$ticket['start'] ?? ''
+			);
+
+
+		$date_key  = '';
+		$date_text = '';
+		$time      = '';
+
+
+		if ( $date_object ) {
+
+
+			$date_key =
+				$date_object->format(
+					'Y-m-d'
+				);
+
+
+			$date_text =
+				wp_date(
+					'j F Y, l',
+					$date_object->getTimestamp(),
+					wp_timezone()
+				);
+
+
+			$time =
+				$date_object->format(
+					'H:i'
+				);
+		}
+
+
+		/* ----------------------------------------------------
+		   GRUPLAMA ANAHTARI
+		   ----------------------------------------------------
+
+		   ÖNEMLİ:
+
+		   URL ARTIK BURADA YOK.
+
+		   Çünkü her seans ayrı WooCommerce ürünü olabilir.
+
+		   Eski kod:
+		   şehir + salon + URL + tarih
+
+		   Yeni kod:
+		   şehir + salon + tarih
+
+		   Böylece:
+
+		   Ankara 12:00
+		   Ankara 14:00
+		   Ankara 16:00
+
+		   TEK KARTTA görünür.
+		   ---------------------------------------------------- */
+
+		$group_key =
+			md5(
+				strtolower(
+					remove_accents(
+						$city
+					)
+					.
+					'|'
+					.
+					remove_accents(
+						$venue
+					)
+					.
+					'|'
+					.
+					$date_key
+				)
+			);
+
+
+		/* ----------------------------------------------------
+		   İLK SEANS
+		   ---------------------------------------------------- */
+
+		if (
+			! isset(
+				$events[ $group_key ]
+			)
+		) {
+
+			$events[ $group_key ] =
+				array(
+
+					'city' =>
+						$city,
+
+					'district' =>
+						$district,
+
+					'venue' =>
+						$venue,
+
+					'date_key' =>
+						$date_key,
+
+					'date_text' =>
+						$date_text,
+
+					'price_html' =>
+						$price_html,
+
+					'first_product_url' =>
+						$product_url,
+
+					'times' =>
+						array(),
+				);
+		}
+
+
+		/* ----------------------------------------------------
+		   İLK DOLU SALON
+		   ---------------------------------------------------- */
+
+		if (
+			empty(
+				$events[ $group_key ]['venue']
+			)
+			&&
+			$venue
+		) {
+
+			$events[ $group_key ]['venue'] =
+				$venue;
+		}
+
+
+		/* ----------------------------------------------------
+		   İLK DOLU İLÇE
+		   ---------------------------------------------------- */
+
+		if (
+			empty(
+				$events[ $group_key ]['district']
+			)
+			&&
+			$district
+		) {
+
+			$events[ $group_key ]['district'] =
+				$district;
+		}
+
+
+		/* ----------------------------------------------------
+		   İLK DOLU FİYAT
+		   ---------------------------------------------------- */
+
+		if (
+			empty(
+				$events[ $group_key ]['price_html']
+			)
+			&&
+			$price_html
+		) {
+
+			$events[ $group_key ]['price_html'] =
+				$price_html;
+		}
+
+
+		/* ----------------------------------------------------
+		   İLK DOLU ÜRÜN URL
+		   ---------------------------------------------------- */
+
+		if (
+			empty(
+				$events[ $group_key ]['first_product_url']
+			)
+			&&
+			$product_url
+		) {
+
+			$events[ $group_key ]['first_product_url'] =
+				$product_url;
+		}
+
+
+		/* ----------------------------------------------------
+		   ANA SEANS SAATİ
+		   ---------------------------------------------------- */
+
+		if ( $time ) {
+
+			$events[ $group_key ]['times'][] =
+				$time;
+		}
+
+
+		/* ----------------------------------------------------
+		   ALTERNATİF SEANS DİZİLERİ
+		   ----------------------------------------------------
+
+		   Gelecekte veri motoru doğrudan
+		   sessions / times / seanslar
+		   gönderirse bunları da okuyabilir.
+		   ---------------------------------------------------- */
+
+		foreach (
+			array(
+				'sessions',
+				'times',
+				'seanslar'
+			)
+			as $possible_key
+		) {
+
+			if (
+				empty(
+					$ticket[ $possible_key ]
+				)
+				||
+				! is_array(
+					$ticket[ $possible_key ]
+				)
+			) {
+
+				continue;
+			}
+
+
+			foreach (
+				$ticket[ $possible_key ]
+				as $possible_time
+			) {
+
+				if (
+					! is_string(
+						$possible_time
+					)
+				) {
+					continue;
+				}
+
+
+				if (
+					preg_match(
+						'/\b([01]?\d|2[0-3]):[0-5]\d\b/',
+						$possible_time,
+						$matches
+					)
+				) {
+
+					$events[ $group_key ]['times'][] =
+						$matches[0];
+				}
+			}
+		}
+	}
+
+
+	/* ========================================================
+	   7. ETKİNLİKLERİ SON HALİNE GETİR
+	   ======================================================== */
+
+	foreach (
+		$events as &$event
+	) {
+
+
+		/* ----------------------------------------------------
+		   TEKRAR EDEN SEANSLARI TEMİZLE
+		   ---------------------------------------------------- */
+
+		$event['times'] =
+			array_values(
+				array_unique(
+					array_filter(
+						$event['times']
+					)
+				)
+			);
+
+
+		sort(
+			$event['times'],
+			SORT_STRING
+		);
+
+
+		/* ----------------------------------------------------
+		   CTA ŞEHİR SAYFASINA GİTSİN
+		   ---------------------------------------------------- */
+
+		$event['url'] =
+			msba_v4_city_url(
+				$event['city'],
+				$event['first_product_url']
+			);
+
+
+		/* ----------------------------------------------------
+		   SEANS SAYISI
+		   ---------------------------------------------------- */
+
+		$event['session_count'] =
+			count(
+				$event['times']
+			);
+	}
+
+
+	unset( $event );
+
+
+	/* ========================================================
+	   8. TARİHE GÖRE SIRALA
+	   ======================================================== */
+
+	uasort(
+		$events,
+		function ( $a, $b ) {
+
+
+			if (
+				empty( $a['date_key'] )
+				&&
+				empty( $b['date_key'] )
+			) {
+
+				return strcmp(
+					$a['city'],
+					$b['city']
+				);
+			}
+
+
+			if (
+				empty(
+					$a['date_key']
+				)
+			) {
+
+				return 1;
+			}
+
+
+			if (
+				empty(
+					$b['date_key']
+				)
+			) {
+
+				return -1;
+			}
+
+
+			$date_compare =
+				strcmp(
+					$a['date_key'],
+					$b['date_key']
+				);
+
+
+			if ( $date_compare !== 0 ) {
+				return $date_compare;
+			}
+
+
+			return strcmp(
+				$a['city'],
+				$b['city']
+			);
+		}
+	);
+
+
+	return array_values(
+		$events
+	);
+}
+
+
+/* ============================================================
+   9. SHORTCODE
+   ============================================================ */
+
+function msba_v4_shortcode(
+	$atts = array(),
+	$content = null,
+	$tag = ''
+) {
+
+	/*
+	 * /bilet-al/ dışındaysa
+	 * eski shortcode callback'ini kullan.
+	 */
+
+	if (
+		! msba_v4_is_page()
+	) {
+
+		$old_callback =
+			$GLOBALS[
+				'msba_v4_original_shortcode'
+			] ?? null;
+
+
+		if (
+			is_callable(
+				$old_callback
+			)
+			&&
+			$old_callback !==
+			'msba_v4_shortcode'
+		) {
+
+			return call_user_func(
+				$old_callback,
+				$atts,
+				$content,
+				$tag
+			);
+		}
+
+
+		return '';
+	}
+
+
+	/* ========================================================
+	   VERİ
+	   ======================================================== */
+
+	$events =
+		msba_v4_get_events();
+
+
+	$event_count =
+		count(
+			$events
+		);
+
+
+	$session_count = 0;
+
+
+	foreach (
+		$events as $event
+	) {
+
+		$session_count +=
+			intval(
+				$event['session_count'] ?? 0
+			);
+	}
+
+
+	/* ========================================================
+	   BAĞLANTILAR
+	   ======================================================== */
+
+	$whatsapp_general =
+		'https://wa.me/903129113710?text='
+		.
+		rawurlencode(
+			'Merhaba, Madagaskar Sirki biletleri hakkında bilgi almak istiyorum.'
+		);
+
+
+	$whatsapp_support =
+		'https://wa.me/903129113710?text='
+		.
+		rawurlencode(
+			'Merhaba, Madagaskar Sirki bilet işlemim hakkında destek almak istiyorum.'
+		);
+
+
+	$faq_url =
+		home_url(
+			'/sik-sorulan-sorular-2/'
+		);
+
+
+	$cities_url =
+		home_url(
+			'/sehirler/'
+		);
+
+
+	$hero_image =
+		apply_filters(
+			'msba_v4_hero_image',
+			'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_0000000096dc820a81af4ef56f90b184-1.png'
+		);
+
+
+	ob_start();
+
+	?>
+
+
+<div id="msba-v4">
+
+
+	<!-- =====================================================
+	     HERO
+	     ===================================================== -->
+
+	<section class="msba4-hero">
+
+		<div class="msba4-wrap">
+
+			<div class="msba4-hero-grid">
+
+
+				<div class="msba4-hero-copy">
+
+
+					<span class="msba4-eyebrow">
+						2026–2027 TÜRKİYE TURNESİ
+					</span>
+
+
+					<h1>
+						Şehrini seç.<br>
+						Seansını seç.<br>
+						Heyecana katıl.
+					</h1>
+
+
+					<p class="msba4-lead">
+						Uluslararası sanatçılarla hazırlanan,
+						hayvansız ve ailelere uygun Madagaskar Sirki
+						gösterilerinden size uygun şehir, tarih ve
+						seansı seçerek biletinizi güvenle alın.
+					</p>
+
+
+					<div class="msba4-actions">
+
+
+						<a
+							href="#msba4-events"
+							class="msba4-btn msba4-btn-red"
+						>
+							Satıştaki Gösterileri Gör
+						</a>
+
+
+						<a
+							href="<?php
+							echo esc_url(
+								$whatsapp_general
+							);
+							?>"
+							target="_blank"
+							rel="noopener"
+							class="msba4-btn msba4-btn-white"
+						>
+							WhatsApp ile Bilgi Al
+						</a>
+
+
+					</div>
+
+
+				</div>
+
+
+
+				<div class="msba4-visual">
+
+
+					<div class="msba4-image">
+
+
+						<img
+							src="<?php
+							echo esc_url(
+								$hero_image
+							);
+							?>"
+							alt="Madagaskar Sirki canlı sahne gösterisi"
+							loading="eager"
+							decoding="async"
+						>
+
+
+						<div class="msba4-image-overlay">
+
+
+							<span>
+								MADAGASKAR SİRKİ
+							</span>
+
+
+							<strong>
+								Canlı.<br>
+								Renkli.<br>
+								Unutulmaz.
+							</strong>
+
+
+						</div>
+
+
+					</div>
+
+
+					<div class="msba4-stats">
+
+
+						<div>
+
+							<b>60 dk</b>
+							<span>Canlı gösteri</span>
+
+						</div>
+
+
+						<div>
+
+							<b>Hayvansız</b>
+							<span>Sahne deneyimi</span>
+
+						</div>
+
+
+						<div>
+
+							<b>Ailece</b>
+							<span>Ortak eğlence</span>
+
+						</div>
+
+
+					</div>
+
+
+				</div>
+
+
+			</div>
+
+
+
+			<!-- =================================================
+			     GÜVEN BANDI
+			     ================================================= -->
+
+			<div class="msba4-trust">
+
+
+				<div>
+					<strong>Güvenli Ödeme</strong>
+					<span>Online ödeme altyapısı</span>
+				</div>
+
+
+				<div>
+					<strong>Dijital Bilet</strong>
+					<span>Biletinize online erişin</span>
+				</div>
+
+
+				<div>
+					<strong>QR Bilet</strong>
+					<span>Telefondan kullanabilirsiniz</span>
+				</div>
+
+
+				<div>
+					<strong>WhatsApp Destek</strong>
+					<span>Bilet işlemlerinde yardım</span>
+				</div>
+
+
+			</div>
+
+
+		</div>
+
+	</section>
+
+
+
+	<!-- =====================================================
+	     ETKİNLİKLER
+	     ===================================================== -->
+
+	<section
+		id="msba4-events"
+		class="msba4-events"
+	>
+
+		<div class="msba4-wrap">
+
+
+			<div class="msba4-section-head">
+
+
+				<div>
+
+
+					<span>
+						TURNE TAKVİMİ
+					</span>
+
+
+					<h2>
+						Satıştaki gösteriler
+					</h2>
+
+
+					<p>
+						Şehrinizi seçin, gösteri tarihini ve
+						salon bilgisini inceleyin, ardından size
+						uygun seansı seçerek bilet işleminize
+						devam edin.
+					</p>
+
+
+				</div>
+
+
+
+				<?php if ( $event_count > 0 ) : ?>
+
+					<div class="msba4-count">
+
+						<strong>
+							<?php
+							echo esc_html(
+								$event_count
+							);
+							?>
+						</strong>
+
+						<span>
+							etkinlik
+						</span>
+
+						<i></i>
+
+						<strong>
+							<?php
+							echo esc_html(
+								$session_count
+							);
+							?>
+						</strong>
+
+						<span>
+							seans
+						</span>
+
+					</div>
+
+				<?php endif; ?>
+
+
+			</div>
+
+
+
+			<?php if ( ! empty( $events ) ) : ?>
+
+
+				<div class="msba4-grid">
+
+
+					<?php foreach ( $events as $event ) : ?>
+
+
+						<article class="msba4-card">
+
+
+							<div class="msba4-card-top">
+
+
+								<span>
+									YAKLAŞAN GÖSTERİ
+								</span>
+
+
+								<b>
+									SATIŞTA
+								</b>
+
+
+							</div>
+
+
+
+							<h3>
+
+								<?php
+								echo esc_html(
+									$event['city']
+								);
+								?>
+
+							</h3>
+
+
+
+							<?php
+							if (
+								! empty(
+									$event['date_text']
+								)
+							) :
+							?>
+
+								<div class="msba4-date">
+
+									<?php
+									echo esc_html(
+										$event['date_text']
+									);
+									?>
+
+								</div>
+
+							<?php endif; ?>
+
+
+
+							<div class="msba4-divider"></div>
+
+
+
+							<?php
+							if (
+								! empty(
+									$event['venue']
+								)
+							) :
+							?>
+
+								<div class="msba4-venue">
+
+
+									<?php
+									if (
+										! empty(
+											$event['district']
+										)
+									) :
+									?>
+
+										<strong>
+
+											<?php
+											echo esc_html(
+												$event['district']
+											);
+											?>
+
+											·
+
+										</strong>
+
+									<?php endif; ?>
+
+
+									<?php
+									echo esc_html(
+										$event['venue']
+									);
+									?>
+
+
+								</div>
+
+							<?php endif; ?>
+
+
+
+							<div class="msba4-features">
+
+
+								<span>
+									60 dk
+								</span>
+
+
+								<span>
+									Çocuk + Yetişkin
+								</span>
+
+
+								<span>
+									QR Bilet
+								</span>
+
+
+							</div>
+
+
+
+							<?php
+							if (
+								! empty(
+									$event['times']
+								)
+							) :
+							?>
+
+								<div class="msba4-session-title">
+									Seanslar
+								</div>
+
+
+								<div class="msba4-times">
+
+
+									<?php
+									foreach (
+										$event['times']
+										as $time
+									) :
+									?>
+
+										<span>
+
+											<?php
+											echo esc_html(
+												$time
+											);
+											?>
+
+										</span>
+
+									<?php endforeach; ?>
+
+
+								</div>
+
+							<?php endif; ?>
+
+
+
+							<?php
+							if (
+								! empty(
+									$event['price_html']
+								)
+							) :
+							?>
+
+								<div class="msba4-price">
+
+									<span>
+										Bilet fiyatı
+									</span>
+
+									<strong>
+										<?php
+										echo wp_kses_post(
+											$event['price_html']
+										);
+										?>
+									</strong>
+
+								</div>
+
+							<?php endif; ?>
+
+
+
+							<?php
+							if (
+								! empty(
+									$event['url']
+								)
+							) :
+							?>
+
+								<a
+									href="<?php
+									echo esc_url(
+										$event['url']
+									);
+									?>"
+									class="msba4-ticket"
+								>
+									Tarih ve seans seç – bilet al
+								</a>
+
+							<?php endif; ?>
+
+
+						</article>
+
+
+					<?php endforeach; ?>
+
+
+				</div>
+
+
+			<?php else : ?>
+
+
+				<div class="msba4-empty">
+
+
+					<span>
+						TURNE TAKVİMİ
+					</span>
+
+
+					<h3>
+						Şu anda satışa açık gösteri bulunmuyor.
+					</h3>
+
+
+					<p>
+						Yeni şehir veya etkinlik satışa açıldığında
+						bu alan otomatik olarak güncellenecektir.
+					</p>
+
+
+					<div class="msba4-empty-actions">
+
+
+						<a
+							href="<?php
+							echo esc_url(
+								$cities_url
+							);
+							?>"
+							class="msba4-btn msba4-btn-red"
+						>
+							Şehirleri Gör
+						</a>
+
+
+						<a
+							href="<?php
+							echo esc_url(
+								$whatsapp_general
+							);
+							?>"
+							target="_blank"
+							rel="noopener"
+							class="msba4-btn msba4-btn-white"
+						>
+							WhatsApp ile Bilgi Al
+						</a>
+
+
+					</div>
+
+
+				</div>
+
+
+			<?php endif; ?>
+
+
+		</div>
+
+	</section>
+
+
+
+	<!-- =====================================================
+	     NASIL BİLET ALINIR
+	     ===================================================== -->
+
+	<section class="msba4-how">
+
+		<div class="msba4-wrap">
+
+
+			<div class="msba4-section-head">
+
+
+				<div>
+
+					<span>
+						BİLET İŞLEMİ
+					</span>
+
+					<h2>
+						Üç adımda biletinizi alın
+					</h2>
+
+				</div>
+
+
+			</div>
+
+
+
+			<div class="msba4-how-grid">
+
+
+				<article>
+
+					<b>
+						01
+					</b>
+
+					<h3>
+						Şehrinizi seçin
+					</h3>
+
+					<p>
+						Satışa açık Madagaskar Sirki
+						gösterileri arasından katılmak
+						istediğiniz şehri seçin.
+					</p>
+
+				</article>
+
+
+
+				<article>
+
+					<b>
+						02
+					</b>
+
+					<h3>
+						Seansınızı seçin
+					</h3>
+
+					<p>
+						Şehir sayfasında tarih, salon ve
+						gösteri saatlerini inceleyerek size
+						uygun seansı belirleyin.
+					</p>
+
+				</article>
+
+
+
+				<article>
+
+					<b>
+						03
+					</b>
+
+					<h3>
+						Biletinizi alın
+					</h3>
+
+					<p>
+						Çocuk ve yetişkin bilet adetlerini
+						seçin, güvenli online ödeme işlemini
+						tamamlayın.
+					</p>
+
+				</article>
+
+
+			</div>
+
+
+		</div>
+
+	</section>
+
+
+
+	<!-- =====================================================
+	     DESTEK
+	     ===================================================== -->
+
+	<section class="msba4-support">
+
+		<div class="msba4-wrap">
+
+
+			<div class="msba4-support-box">
+
+
+				<div>
+
+
+					<span>
+						BİLET DESTEĞİ
+					</span>
+
+
+					<h2>
+						Yardıma mı ihtiyacınız var?
+					</h2>
+
+
+					<p>
+						Sipariş, dijital bilet, QR kod,
+						şehir veya seans işlemleri hakkında
+						destek almak için bize ulaşabilirsiniz.
+					</p>
+
+
+				</div>
+
+
+
+				<div class="msba4-support-actions">
+
+
+					<a
+						href="<?php
+						echo esc_url(
+							$whatsapp_support
+						);
+						?>"
+						target="_blank"
+						rel="noopener"
+						class="msba4-btn msba4-btn-green"
+					>
+						WhatsApp Bilet Desteği
+					</a>
+
+
+					<a
+						href="<?php
+						echo esc_url(
+							$faq_url
+						);
+						?>"
+						class="msba4-btn msba4-btn-darkwhite"
+					>
+						Sık Sorulan Sorular
+					</a>
+
+
+				</div>
+
+
+			</div>
+
+
+		</div>
+
+	</section>
+
+
+</div>
+
+
+	<?php
+
+	return ob_get_clean();
+}
+
+
+/* ============================================================
+   10. ESKİ SHORTCODE'U SAKLA VE V4 İLE DEĞİŞTİR
+   ============================================================ */
+
+add_action(
+	'init',
+	function () {
+
+		global $shortcode_tags;
+
+
+		$current_callback =
+			$shortcode_tags[
+				'madagaskar_bilet_al'
+			] ?? null;
+
+
+		/*
+		 * Mevcut callback bizim callback değilse sakla.
+		 */
+
+		if (
+			is_callable(
+				$current_callback
+			)
+			&&
+			$current_callback !==
+			'msba_v4_shortcode'
+		) {
+
+			$GLOBALS[
+				'msba_v4_original_shortcode'
+			] =
+				$current_callback;
+		}
+
+
+		remove_shortcode(
+			'madagaskar_bilet_al'
+		);
+
+
+		add_shortcode(
+			'madagaskar_bilet_al',
+			'msba_v4_shortcode'
+		);
+
+	},
+	99999
+);
+
+
+/* ============================================================
+   11. CSS
+   ============================================================ */
+
+add_action(
+	'wp_head',
+	function () {
+
+		if (
+			! msba_v4_is_page()
+		) {
+			return;
+		}
+
+		?>
+
+<style id="msba-v4-css">
+
+
+/* ============================================================
+   SAYFA
+   ============================================================ */
+
+body.msba-v4-page {
+
+	background:
+		#f6f2e8 !important;
+
+	overflow-x:
+		hidden !important;
+}
+
+
+body.msba-v4-page .entry-title,
+body.msba-v4-page .wp-block-post-title {
+
+	display:
+		none !important;
+}
+
+
+#msba-v4,
+#msba-v4 * {
+
+	box-sizing:
+		border-box !important;
+}
+
+
+#msba-v4 {
+
+	--bg:
+		#f6f2e8;
+
+	--soft:
+		#ebe5d8;
+
+	--white:
+		#ffffff;
+
+	--dark:
+		#111118;
+
+	--text:
+		#111118;
+
+	--muted:
+		#706d72;
+
+	--red:
+		#d15845;
+
+	--yellow:
+		#f1bd45;
+
+	--green:
+		#70d39a;
+
+	--border:
+		#ded8cc;
+
+
+	position:
+		relative;
+
+
+	left:
+		50%;
+
+
+	width:
+		100vw !important;
+
+
+	max-width:
+		100vw !important;
+
+
+	margin-left:
+		-50vw !important;
+
+
+	background:
+		var(--bg);
+
+
+	color:
+		var(--text);
+
+
+	overflow:
+		hidden;
+}
+
+
+#msba-v4 .msba4-wrap {
+
+	width:
+		min(
+			1180px,
+			calc(100% - 48px)
+		) !important;
+
+
+	margin:
+		0 auto !important;
+}
+
+
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+
+#msba-v4 .msba4-btn {
+
+	display:
+		inline-flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		center;
+
+
+	min-height:
+		50px;
+
+
+	padding:
+		0 22px;
+
+
+	border-radius:
+		999px;
+
+
+	text-decoration:
+		none !important;
+
+
+	font-size:
+		12px;
+
+
+	font-weight:
+		800;
+
+
+	transition:
+		transform .18s ease,
+		box-shadow .18s ease;
+}
+
+
+#msba-v4 .msba4-btn:hover {
+
+	transform:
+		translateY(-1px);
+}
+
+
+#msba-v4 .msba4-btn-red {
+
+	background:
+		var(--red);
+
+
+	color:
+		#fff !important;
+
+
+	box-shadow:
+		0 12px 26px
+		rgba(209,88,69,.20);
+}
+
+
+#msba-v4 .msba4-btn-white {
+
+	background:
+		#fff;
+
+
+	color:
+		var(--dark) !important;
+
+
+	border:
+		1px solid
+		var(--border);
+}
+
+
+#msba-v4 .msba4-btn-green {
+
+	background:
+		var(--green);
+
+
+	color:
+		#111 !important;
+}
+
+
+#msba-v4 .msba4-btn-darkwhite {
+
+	background:
+		#fff;
+
+
+	color:
+		#111 !important;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#msba-v4 .msba4-hero {
+
+	padding:
+		54px 0 25px;
+}
+
+
+#msba-v4 .msba4-hero-grid {
+
+	display:
+		grid;
+
+
+	grid-template-columns:
+		1.08fr .92fr;
+
+
+	gap:
+		18px;
+}
+
+
+#msba-v4 .msba4-hero-copy,
+#msba-v4 .msba4-visual {
+
+	min-height:
+		480px;
+
+
+	background:
+		#fff;
+
+
+	border-radius:
+		28px;
+}
+
+
+#msba-v4 .msba4-hero-copy {
+
+	display:
+		flex;
+
+
+	flex-direction:
+		column;
+
+
+	justify-content:
+		center;
+
+
+	padding:
+		48px;
+}
+
+
+#msba-v4 .msba4-eyebrow {
+
+	display:
+		inline-flex;
+
+
+	align-self:
+		flex-start;
+
+
+	padding:
+		10px 15px;
+
+
+	background:
+		var(--dark);
+
+
+	color:
+		#fff;
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		9px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1.2px;
+}
+
+
+#msba-v4 h1 {
+
+	margin:
+		36px 0 22px !important;
+
+
+	color:
+		var(--text) !important;
+
+
+	font-size:
+		clamp(
+			50px,
+			5.5vw,
+			76px
+		) !important;
+
+
+	font-weight:
+		500 !important;
+
+
+	line-height:
+		.93 !important;
+
+
+	letter-spacing:
+		-4px !important;
+}
+
+
+#msba-v4 .msba4-lead {
+
+	max-width:
+		600px;
+
+
+	margin:
+		0 !important;
+
+
+	color:
+		#555258;
+
+
+	font-size:
+		16px;
+
+
+	line-height:
+		1.65;
+}
+
+
+#msba-v4 .msba4-actions {
+
+	display:
+		flex;
+
+
+	flex-wrap:
+		wrap;
+
+
+	gap:
+		9px;
+
+
+	margin-top:
+		32px;
+}
+
+
+
+/* ============================================================
+   HERO IMAGE
+   ============================================================ */
+
+#msba-v4 .msba4-visual {
+
+	padding:
+		9px;
+
+
+	overflow:
+		hidden;
+}
+
+
+#msba-v4 .msba4-image {
+
+	position:
+		relative;
+}
+
+
+#msba-v4 .msba4-image img {
+
+	display:
+		block;
+
+
+	width:
+		100% !important;
+
+
+	height:
+		355px !important;
+
+
+	object-fit:
+		cover;
+
+
+	border-radius:
+		20px;
+}
+
+
+#msba-v4 .msba4-image::after {
+
+	content:
+		"";
+
+
+	position:
+		absolute;
+
+
+	inset:
+		0;
+
+
+	border-radius:
+		20px;
+
+
+	background:
+		linear-gradient(
+			180deg,
+			rgba(0,0,0,0) 35%,
+			rgba(0,0,0,.62) 100%
+		);
+
+
+	pointer-events:
+		none;
+}
+
+
+#msba-v4 .msba4-image-overlay {
+
+	position:
+		absolute;
+
+
+	z-index:
+		2;
+
+
+	left:
+		26px;
+
+
+	bottom:
+		24px;
+
+
+	color:
+		#fff;
+}
+
+
+#msba-v4 .msba4-image-overlay span {
+
+	display:
+		inline-flex;
+
+
+	margin-bottom:
+		11px;
+
+
+	padding:
+		6px 10px;
+
+
+	background:
+		rgba(17,17,24,.90);
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		7px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1px;
+}
+
+
+#msba-v4 .msba4-image-overlay strong {
+
+	display:
+		block;
+
+
+	font-size:
+		32px;
+
+
+	font-weight:
+		500;
+
+
+	line-height:
+		.94;
+
+
+	letter-spacing:
+		-1.7px;
+}
+
+
+#msba-v4 .msba4-stats {
+
+	display:
+		grid;
+
+
+	grid-template-columns:
+		repeat(
+			3,
+			1fr
+		);
+
+
+	gap:
+		7px;
+
+
+	margin-top:
+		7px;
+}
+
+
+#msba-v4 .msba4-stats > div {
+
+	padding:
+		16px 6px;
+
+
+	background:
+		var(--bg);
+
+
+	border-radius:
+		13px;
+
+
+	text-align:
+		center;
+}
+
+
+#msba-v4 .msba4-stats b,
+#msba-v4 .msba4-stats span {
+
+	display:
+		block;
+}
+
+
+#msba-v4 .msba4-stats b {
+
+	font-size:
+		11px;
+}
+
+
+#msba-v4 .msba4-stats span {
+
+	margin-top:
+		4px;
+
+
+	color:
+		var(--muted);
+
+
+	font-size:
+		8px;
+}
+
+
+
+/* ============================================================
+   TRUST
+   ============================================================ */
+
+#msba-v4 .msba4-trust {
+
+	display:
+		grid;
+
+
+	grid-template-columns:
+		repeat(
+			4,
+			1fr
+		);
+
+
+	margin-top:
+		17px;
+
+
+	background:
+		var(--dark);
+
+
+	border-radius:
+		18px;
+
+
+	overflow:
+		hidden;
+}
+
+
+#msba-v4 .msba4-trust > div {
+
+	padding:
+		20px 15px;
+
+
+	text-align:
+		center;
+
+
+	border-right:
+		1px solid
+		rgba(255,255,255,.10);
+}
+
+
+#msba-v4 .msba4-trust > div:last-child {
+
+	border-right:
+		0;
+}
+
+
+#msba-v4 .msba4-trust strong,
+#msba-v4 .msba4-trust span {
+
+	display:
+		block;
+}
+
+
+#msba-v4 .msba4-trust strong {
+
+	color:
+		#fff;
+
+
+	font-size:
+		11px;
+}
+
+
+#msba-v4 .msba4-trust span {
+
+	margin-top:
+		5px;
+
+
+	color:
+		#a9a7ae;
+
+
+	font-size:
+		8px;
+}
+
+
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+
+#msba-v4 .msba4-events {
+
+	padding:
+		86px 0 96px;
+
+
+	background:
+		var(--soft);
+
+
+	scroll-margin-top:
+		80px;
+}
+
+
+#msba-v4 .msba4-section-head {
+
+	display:
+		flex;
+
+
+	align-items:
+		flex-end;
+
+
+	justify-content:
+		space-between;
+
+
+	gap:
+		30px;
+
+
+	margin-bottom:
+		35px;
+}
+
+
+#msba-v4 .msba4-section-head > div:first-child {
+
+	max-width:
+		700px;
+}
+
+
+#msba-v4 .msba4-section-head > div:first-child > span {
+
+	display:
+		block;
+
+
+	margin-bottom:
+		9px;
+
+
+	color:
+		var(--red);
+
+
+	font-size:
+		9px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1.4px;
+}
+
+
+#msba-v4 .msba4-section-head h2 {
+
+	margin:
+		0 !important;
+
+
+	color:
+		var(--text) !important;
+
+
+	font-size:
+		clamp(
+			40px,
+			5vw,
+			58px
+		) !important;
+
+
+	font-weight:
+		500 !important;
+
+
+	line-height:
+		.98 !important;
+
+
+	letter-spacing:
+		-2.8px !important;
+}
+
+
+#msba-v4 .msba4-section-head p {
+
+	margin:
+		14px 0 0;
+
+
+	color:
+		var(--muted);
+
+
+	font-size:
+		13px;
+
+
+	line-height:
+		1.65;
+}
+
+
+#msba-v4 .msba4-count {
+
+	display:
+		flex;
+
+
+	align-items:
+		center;
+
+
+	gap:
+		7px;
+
+
+	flex:
+		0 0 auto;
+
+
+	padding:
+		10px 15px;
+
+
+	background:
+		var(--dark);
+
+
+	color:
+		#fff;
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		9px;
+}
+
+
+#msba-v4 .msba4-count strong {
+
+	font-size:
+		11px;
+}
+
+
+#msba-v4 .msba4-count i {
+
+	width:
+		1px;
+
+
+	height:
+		12px;
+
+
+	margin:
+		0 3px;
+
+
+	background:
+		rgba(255,255,255,.25);
+}
+
+
+
+/* ============================================================
+   EVENT CARDS
+   ============================================================ */
+
+#msba-v4 .msba4-grid {
+
+	display:
+		grid;
+
+
+	grid-template-columns:
+		repeat(
+			2,
+			minmax(0,1fr)
+		);
+
+
+	gap:
+		17px;
+}
+
+
+#msba-v4 .msba4-card {
+
+	display:
+		flex;
+
+
+	flex-direction:
+		column;
+
+
+	min-height:
+		410px;
+
+
+	padding:
+		28px;
+
+
+	background:
+		#fff;
+
+
+	border:
+		1px solid
+		var(--border);
+
+
+	border-radius:
+		22px;
+
+
+	box-shadow:
+		0 16px 34px
+		rgba(0,0,0,.035);
+}
+
+
+#msba-v4 .msba4-card-top {
+
+	display:
+		flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		space-between;
+
+
+	gap:
+		20px;
+
+
+	margin-bottom:
+		15px;
+}
+
+
+#msba-v4 .msba4-card-top > span {
+
+	color:
+		var(--red);
+
+
+	font-size:
+		8px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1.2px;
+}
+
+
+#msba-v4 .msba4-card-top > b {
+
+	padding:
+		7px 11px;
+
+
+	background:
+		var(--red);
+
+
+	color:
+		#fff;
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		7px;
+
+
+	letter-spacing:
+		.5px;
+}
+
+
+#msba-v4 .msba4-card h3 {
+
+	margin:
+		0 0 7px !important;
+
+
+	color:
+		var(--text) !important;
+
+
+	font-size:
+		32px !important;
+
+
+	font-weight:
+		500 !important;
+
+
+	line-height:
+		1 !important;
+
+
+	letter-spacing:
+		-1.4px !important;
+}
+
+
+#msba-v4 .msba4-date {
+
+	color:
+		#77747b;
+
+
+	font-size:
+		12px;
+}
+
+
+#msba-v4 .msba4-divider {
+
+	height:
+		1px;
+
+
+	margin:
+		20px 0;
+
+
+	background:
+		var(--border);
+}
+
+
+#msba-v4 .msba4-venue {
+
+	min-height:
+		22px;
+
+
+	color:
+		var(--muted);
+
+
+	font-size:
+		12px;
+
+
+	line-height:
+		1.55;
+}
+
+
+#msba-v4 .msba4-venue strong {
+
+	color:
+		var(--text);
+}
+
+
+#msba-v4 .msba4-features {
+
+	display:
+		flex;
+
+
+	flex-wrap:
+		wrap;
+
+
+	gap:
+		6px;
+
+
+	margin-top:
+		15px;
+}
+
+
+#msba-v4 .msba4-features span {
+
+	padding:
+		6px 10px;
+
+
+	background:
+		#f7f4ee;
+
+
+	color:
+		#5d5a60;
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		8px;
+
+
+	font-weight:
+		750;
+}
+
+
+#msba-v4 .msba4-session-title {
+
+	margin-top:
+		20px;
+
+
+	color:
+		var(--text);
+
+
+	font-size:
+		9px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		.7px;
+
+
+	text-transform:
+		uppercase;
+}
+
+
+#msba-v4 .msba4-times {
+
+	display:
+		flex;
+
+
+	flex-wrap:
+		wrap;
+
+
+	gap:
+		7px;
+
+
+	margin-top:
+		8px;
+}
+
+
+#msba-v4 .msba4-times span {
+
+	display:
+		inline-flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		center;
+
+
+	min-width:
+		64px;
+
+
+	min-height:
+		40px;
+
+
+	padding:
+		0 14px;
+
+
+	background:
+		var(--bg);
+
+
+	border:
+		1px solid
+		var(--border);
+
+
+	border-radius:
+		999px;
+
+
+	font-size:
+		11px;
+
+
+	font-weight:
+		850;
+}
+
+
+#msba-v4 .msba4-price {
+
+	display:
+		flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		space-between;
+
+
+	gap:
+		15px;
+
+
+	margin-top:
+		20px;
+
+
+	padding-top:
+		17px;
+
+
+	border-top:
+		1px solid
+		var(--border);
+}
+
+
+#msba-v4 .msba4-price > span {
+
+	color:
+		var(--muted);
+
+
+	font-size:
+		10px;
+}
+
+
+#msba-v4 .msba4-price strong {
+
+	color:
+		var(--text);
+
+
+	font-size:
+		13px;
+}
+
+
+#msba-v4 .msba4-ticket {
+
+	display:
+		flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		center;
+
+
+	width:
+		100%;
+
+
+	min-height:
+		49px;
+
+
+	margin-top:
+		auto;
+
+
+	padding:
+		0 18px;
+
+
+	background:
+		var(--red);
+
+
+	color:
+		#fff !important;
+
+
+	border-radius:
+		999px;
+
+
+	text-decoration:
+		none !important;
+
+
+	font-size:
+		11px;
+
+
+	font-weight:
+		850;
+
+
+	box-shadow:
+		0 11px 24px
+		rgba(209,88,69,.18);
+
+
+	transition:
+		transform .18s ease,
+		box-shadow .18s ease;
+}
+
+
+#msba-v4 .msba4-ticket:hover {
+
+	transform:
+		translateY(-1px);
+
+
+	box-shadow:
+		0 14px 29px
+		rgba(209,88,69,.24);
+}
+
+
+
+/* ============================================================
+   EMPTY
+   ============================================================ */
+
+#msba-v4 .msba4-empty {
+
+	padding:
+		45px;
+
+
+	background:
+		#fff;
+
+
+	border:
+		1px solid
+		var(--border);
+
+
+	border-radius:
+		22px;
+}
+
+
+#msba-v4 .msba4-empty > span {
+
+	color:
+		var(--red);
+
+
+	font-size:
+		8px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1px;
+}
+
+
+#msba-v4 .msba4-empty h3 {
+
+	margin:
+		13px 0 !important;
+
+
+	font-size:
+		30px !important;
+
+
+	font-weight:
+		600 !important;
+}
+
+
+#msba-v4 .msba4-empty p {
+
+	max-width:
+		600px;
+
+
+	margin:
+		0 0 24px;
+
+
+	color:
+		var(--muted);
+
+
+	line-height:
+		1.6;
+}
+
+
+#msba-v4 .msba4-empty-actions {
+
+	display:
+		flex;
+
+
+	flex-wrap:
+		wrap;
+
+
+	gap:
+		8px;
+}
+
+
+
+/* ============================================================
+   HOW
+   ============================================================ */
+
+#msba-v4 .msba4-how {
+
+	padding:
+		90px 0;
+}
+
+
+#msba-v4 .msba4-how-grid {
+
+	display:
+		grid;
+
+
+	grid-template-columns:
+		repeat(
+			3,
+			minmax(0,1fr)
+		);
+
+
+	gap:
+		13px;
+}
+
+
+#msba-v4 .msba4-how-grid article {
+
+	min-height:
+		225px;
+
+
+	padding:
+		27px;
+
+
+	background:
+		#fff;
+
+
+	border:
+		1px solid
+		var(--border);
+
+
+	border-radius:
+		20px;
+}
+
+
+#msba-v4 .msba4-how-grid article > b {
+
+	display:
+		block;
+
+
+	margin-bottom:
+		40px;
+
+
+	color:
+		var(--red);
+
+
+	font-size:
+		9px;
+}
+
+
+#msba-v4 .msba4-how-grid h3 {
+
+	margin:
+		0 0 11px !important;
+
+
+	color:
+		var(--text) !important;
+
+
+	font-size:
+		21px !important;
+
+
+	font-weight:
+		650 !important;
+}
+
+
+#msba-v4 .msba4-how-grid p {
+
+	margin:
+		0;
+
+
+	color:
+		var(--muted);
+
+
+	font-size:
+		12px;
+
+
+	line-height:
+		1.65;
+}
+
+
+
+/* ============================================================
+   SUPPORT
+   ============================================================ */
+
+#msba-v4 .msba4-support {
+
+	padding:
+		0 0 92px;
+}
+
+
+#msba-v4 .msba4-support-box {
+
+	display:
+		flex;
+
+
+	align-items:
+		center;
+
+
+	justify-content:
+		space-between;
+
+
+	gap:
+		45px;
+
+
+	padding:
+		48px;
+
+
+	background:
+		var(--dark);
+
+
+	color:
+		#fff;
+
+
+	border-radius:
+		26px;
+}
+
+
+#msba-v4 .msba4-support-box > div:first-child {
+
+	max-width:
+		650px;
+}
+
+
+#msba-v4 .msba4-support-box > div:first-child > span {
+
+	display:
+		block;
+
+
+	margin-bottom:
+		11px;
+
+
+	color:
+		var(--yellow);
+
+
+	font-size:
+		8px;
+
+
+	font-weight:
+		900;
+
+
+	letter-spacing:
+		1.4px;
+}
+
+
+#msba-v4 .msba4-support h2 {
+
+	margin:
+		0 !important;
+
+
+	color:
+		#fff !important;
+
+
+	font-size:
+		clamp(
+			39px,
+			5vw,
+			56px
+		) !important;
+
+
+	font-weight:
+		500 !important;
+
+
+	line-height:
+		.98 !important;
+
+
+	letter-spacing:
+		-2.6px !important;
+}
+
+
+#msba-v4 .msba4-support p {
+
+	margin:
+		16px 0 0;
+
+
+	color:
+		#c2c0c7;
+
+
+	font-size:
+		13px;
+
+
+	line-height:
+		1.65;
+}
+
+
+#msba-v4 .msba4-support-actions {
+
+	display:
+		flex;
+
+
+	flex-direction:
+		column;
+
+
+	gap:
+		8px;
+
+
+	min-width:
+		260px;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+
+	#msba-v4 .msba4-hero-grid {
+
+		grid-template-columns:
+			1fr;
+	}
+
+
+	#msba-v4 .msba4-grid {
+
+		grid-template-columns:
+			1fr;
+	}
+
+
+	#msba-v4 .msba4-how-grid {
+
+		grid-template-columns:
+			1fr;
+	}
+
+
+	#msba-v4 .msba4-support-box {
+
+		flex-direction:
+			column;
+
+
+		align-items:
+			flex-start;
+	}
+
+
+	#msba-v4 .msba4-support-actions {
+
+		width:
+			100%;
+	}
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+
+	#msba-v4 .msba4-wrap {
+
+		width:
+			calc(100% - 30px) !important;
+	}
+
+
+	/* HERO */
+
+	#msba-v4 .msba4-hero {
+
+		padding:
+			30px 0 18px;
+	}
+
+
+	#msba-v4 .msba4-hero-copy {
+
+		min-height:
+			0;
+
+
+		padding:
+			29px 22px;
+	}
+
+
+	#msba-v4 .msba4-eyebrow {
+
+		font-size:
+			7px;
+	}
+
+
+	#msba-v4 h1 {
+
+		margin-top:
+			29px !important;
+
+
+		font-size:
+			45px !important;
+
+
+		line-height:
+			.94 !important;
+
+
+		letter-spacing:
+			-2.8px !important;
+	}
+
+
+	#msba-v4 .msba4-lead {
+
+		font-size:
+			15px;
+	}
+
+
+	#msba-v4 .msba4-actions {
+
+		display:
+			grid;
+	}
+
+
+	#msba-v4 .msba4-btn {
+
+		width:
+			100%;
+	}
+
+
+	#msba-v4 .msba4-visual {
+
+		min-height:
+			0;
+	}
+
+
+	#msba-v4 .msba4-image img {
+
+		height:
+			310px !important;
+	}
+
+
+	#msba-v4 .msba4-image-overlay strong {
+
+		font-size:
+			27px;
+	}
+
+
+	/* TRUST */
+
+	#msba-v4 .msba4-trust {
+
+		grid-template-columns:
+			1fr 1fr;
+	}
+
+
+	#msba-v4 .msba4-trust > div {
+
+		border-bottom:
+			1px solid
+			rgba(255,255,255,.10);
+	}
+
+
+	/* EVENT */
+
+	#msba-v4 .msba4-events {
+
+		padding:
+			64px 0;
+	}
+
+
+	#msba-v4 .msba4-section-head {
+
+		align-items:
+			flex-start;
+
+
+		flex-direction:
+			column;
+	}
+
+
+	#msba-v4 .msba4-section-head h2 {
+
+		font-size:
+			38px !important;
+
+
+		line-height:
+			1 !important;
+	}
+
+
+	#msba-v4 .msba4-card {
+
+		min-height:
+			0;
+
+
+		padding:
+			23px;
+	}
+
+
+	#msba-v4 .msba4-ticket {
+
+		margin-top:
+			24px;
+	}
+
+
+	#msba-v4 .msba4-price {
+
+		align-items:
+			flex-start;
+
+
+		flex-direction:
+			column;
+
+
+		gap:
+			5px;
+	}
+
+
+	/* HOW */
+
+	#msba-v4 .msba4-how {
+
+		padding:
+			64px 0;
+	}
+
+
+	#msba-v4 .msba4-how-grid article {
+
+		min-height:
+			0;
+	}
+
+
+	#msba-v4 .msba4-how-grid article > b {
+
+		margin-bottom:
+			27px;
+	}
+
+
+	/* SUPPORT */
+
+	#msba-v4 .msba4-support {
+
+		padding-bottom:
+			64px;
+	}
+
+
+	#msba-v4 .msba4-support-box {
+
+		padding:
+			29px 22px;
+	}
+
+
+	#msba-v4 .msba4-support h2 {
+
+		font-size:
+			36px !important;
+
+
+		line-height:
+			1 !important;
+	}
+
+
+	#msba-v4 .msba4-support-actions {
+
+		min-width:
+			0;
+	}
+
+
+	#msba-v4 .msba4-empty {
+
+		padding:
+			28px 22px;
+	}
+
+
+	#msba-v4 .msba4-empty-actions {
+
+		display:
+			grid;
+	}
+
+}
+
+</style>
+
+		<?php
+	},
+	9999
+);
