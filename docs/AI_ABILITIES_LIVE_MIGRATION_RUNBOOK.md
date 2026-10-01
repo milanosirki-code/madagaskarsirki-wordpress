@@ -16,7 +16,7 @@ WPVibe çağrılarını minimumda tutarak Code Snippets içindeki AI ability mod
 
 ## Bilinen canlı durum — 1 Ekim 2026
 
-Canlı plugin bilinen sürümü: **0.2.0**
+Canlı plugin doğrulanan sürümü: **0.4.0**
 
 Plugin'e devredilmiş modüller:
 - `system-health-integrity` ← snippet #80
@@ -111,3 +111,35 @@ Bir snippet ancak:
 - read-only smoke test başarılı,
 - rollback yolu kayıtlı
 ise migrate edilmiş kabul edilir.
+
+
+## 1 Ekim 2026 — migration tamamlandı
+
+Aşağıdaki tüm modüller canlıda Code Snippets'tan `madagaskar-ai-abilities` v0.4.0 plugin'ine devredildi:
+
+- #80 → system-health-integrity
+- #89 → mmc-sales-ledger
+- #81 → mmc-dashboard
+- #82 → mmc-tasks
+- #79 → v4-refund-safety
+- #94 → v4-operations-safety
+- #78 → reporting-customer
+- #83 → mmc-region-population
+- #84 → mmc-field
+- #85 → mmc-operations
+- #86 → mmc-marketing
+- #88 → mmc-mdg-bridge
+- #87 → mmc-kommo
+
+Son doğrulama:
+- plugin v0.4.0 aktif
+- 13 module slug option'da açık
+- ilgili 13 eski snippet pasif
+- installer #101 pasif
+- system health: 0 critical / 0 warning / 16 OK
+- aktif Code Snippets: 51
+- Pursaklar bridge: 16/16 sipariş, 58/58 bilet, 22.000 TL, fark 0
+- Kırıkkale bridge: 7/7 sipariş, 26/26 bilet, 10.250 TL, fark 0
+- Kommo: connected/http_ok, token_source=MMC_KOMMO_TOKEN, legacy=false, source consistency safe
+
+Gerçek refund, sales mapping write, MDG link write, Kommo write, saha/operasyon/pazarlama write veya report-send-now migration testi sırasında çalıştırılmadı.
