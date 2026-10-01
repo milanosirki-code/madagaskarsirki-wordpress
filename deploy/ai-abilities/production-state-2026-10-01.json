@@ -1,10 +1,10 @@
 {
   "captured_at": "2026-10-01",
-  "source": "verified_after_full_ai_abilities_live_migration",
+  "source": "verified_after_full_ai_abilities_v0.5_live_migration",
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "live_version": "0.4.0",
-    "github_main_version": "0.4.0",
+    "live_version": "0.5.0",
+    "github_main_version": "0.5.0",
     "status": "active",
     "enabled_modules": [
       "system-health-integrity",
@@ -19,12 +19,20 @@
       "mmc-operations",
       "mmc-marketing",
       "mmc-mdg-bridge",
-      "mmc-kommo"
+      "mmc-kommo",
+      "invoice-tracking",
+      "school-promotion",
+      "v5-finance",
+      "program-venue-event-sales"
     ]
   },
   "code_snippets": {
-    "active_count": 51,
+    "active_count": 47,
     "migrated_disabled": [
+      72,
+      74,
+      75,
+      77,
       78,
       79,
       80,
@@ -50,27 +58,47 @@
     "ok": 16,
     "info": 0
   },
-  "verified_sales": {
+  "verification": {
+    "invoice": {
+      "all_paid_scope_orders": 112,
+      "pending": 67,
+      "invoiced": 45,
+      "sent": 0,
+      "gross": 110900
+    },
+    "school": {
+      "pursaklar_total": 76,
+      "bridge": "MMC #3 ↔ legacy school program #15"
+    },
+    "finance": {
+      "month": "2026-10",
+      "expense_count": 2,
+      "expenses_total": 98488,
+      "income_count": 0
+    },
+    "program_sales": {
+      "program_list_read": true,
+      "venue_list_read": true,
+      "event_list_read": true
+    }
+  },
+  "bridge_sales": {
     "pursaklar": {
       "program_id": 3,
-      "mdg_orders": 16,
-      "mmc_orders": 16,
-      "mdg_tickets": 58,
-      "mmc_tickets": 58,
+      "orders": 16,
+      "tickets": 58,
       "revenue": 22000,
       "revenue_diff": 0
     },
     "kirikkale": {
       "program_id": 2,
-      "mdg_orders": 7,
-      "mmc_orders": 7,
-      "mdg_tickets": 26,
-      "mmc_tickets": 26,
+      "orders": 7,
+      "tickets": 26,
       "revenue": 10250,
       "revenue_diff": 0
     }
   },
-  "verified_kommo": {
+  "kommo": {
     "configured": true,
     "connected": true,
     "http_ok": true,
@@ -78,6 +106,6 @@
     "uses_legacy_token": false,
     "source_consistency_safe": true
   },
-  "remaining_ai_source_capture_issue": 52,
-  "completed_live_migration_issue": 54
+  "capture_issue": 52,
+  "v04_migration_issue": 54
 }
