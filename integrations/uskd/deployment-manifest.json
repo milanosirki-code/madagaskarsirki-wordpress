@@ -2,7 +2,7 @@
   "schema_version": 1,
   "integration": "uskd-madagaskar-events",
   "source_path": "integrations/uskd/uskd-madagaskar-events",
-  "plugin_version": "0.1.0",
+  "plugin_version": "0.2.0",
   "live_page": {
     "site": "https://uskdernegi.org",
     "page_id": 392,
@@ -53,5 +53,12 @@
       "client_side_fetch_present": false,
       "shortcode_present": true
     }
-  }
+  },
+  "shortcode_examples": {
+    "full": "[uskd_madagaskar_events]",
+    "homepage": "[uskd_madagaskar_events limit=\"2\"]"
+  },
+  "notes": [
+    "v0.2.0 adds server-side limit support for homepage use."
+  ]
 }
