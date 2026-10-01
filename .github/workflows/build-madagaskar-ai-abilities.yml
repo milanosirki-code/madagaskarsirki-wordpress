@@ -7,6 +7,7 @@ on:
       - 'wp-content/plugins/madagaskar-ai-abilities/**'
       - '.github/workflows/build-madagaskar-ai-abilities.yml'
       - 'tests/validate-legacy-mdg-mmc-preview.py'
+      - 'tests/validate-legacy-mdg-mmc-migrate.py'
   push:
     branches:
       - main
@@ -43,6 +44,9 @@ jobs:
 
       - name: Validate legacy MDG to MMC preview safety
         run: python tests/validate-legacy-mdg-mmc-preview.py
+
+      - name: Validate controlled legacy migration safety
+        run: python tests/validate-legacy-mdg-mmc-migrate.py
 
       - name: Build ZIP and checksum
         shell: bash
