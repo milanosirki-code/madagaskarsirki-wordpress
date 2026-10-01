@@ -39,10 +39,29 @@ class MMC_MDG_Bridge_Service {
         global $wpdb;
         $table = self::table();
         if ( ! self::table_exists( $table ) ) { return 0; }
-        return (int) $wpdb->get_var( $wpdb->prepare(
+        $program_id = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT program_id FROM {$table} WHERE mdg_event_id=%d AND is_active=1 LIMIT 1",
             absint( $mdg_event_id )
         ) );
+        if ( $program_id ) { return $program_id; }
+        if ( ! self::legacy_available() ) { return 0; }
+        $sessions = MDG_DB::table('sessions');
+        $types = MDG_DB::table('ticket_types');
+        $maps = $wpdb->prefix . 'mmc_sales_mappings';
+        if ( ! self::table_exists($maps) ) { return 0; }
+        $rows = (array)$wpdb->get_results($wpdb->prepare(
+            "SELECT m.program_id,m.wc_variation_id,t.wc_variation_id AS mdg_variation
+             FROM {$sessions} s JOIN {$types} t ON t.session_id=s.id AND t.is_active=1
+             LEFT JOIN {$maps} m ON m.wc_product_id=s.wc_product_id AND m.wc_variation_id=t.wc_variation_id AND m.is_active=1
+             WHERE s.event_id=%d AND t.wc_variation_id>0", absint($mdg_event_id)
+        ));
+        if ( ! $rows ) { return 0; }
+        $owners = array();
+        foreach ( $rows as $row ) {
+            if ( ! (int)$row->program_id ) { return 0; }
+            $owners[(int)$row->program_id] = true;
+        }
+        return count($owners) === 1 ? (int)array_key_first($owners) : 0;
     }
 
     public static function get_mdg_event( $mdg_event_id ) {
@@ -237,6 +256,7 @@ class MMC_MDG_Bridge_Service {
             'stale' => false,
             'bridge' => null,
             'event' => null,
+            'sales_source_event_id' => 0,
             'candidates' => array(),
             'identity_expected' => 0,
             'identity_matched' => 0,
@@ -279,7 +299,7 @@ class MMC_MDG_Bridge_Service {
         $mmc_event = class_exists('MMC_Event_Service') ? MMC_Event_Service::event_for_program( $program_id ) : null;
         $program = MMC_Program_Service::get_program( $program_id );
         $identity = self::mmc_identity( $program_id );
-        $result['identity_expected'] = count($identity['rows']);
+        $result['identity_expected'] = count(array_filter($identity['rows'],function($map){ return !self::virtual_family_mapping($map); }));
 
         $mmc_sessions = $mmc_event && class_exists('MMC_Event_Service') ? (array)MMC_Event_Service::sessions((int)$mmc_event->id) : array();
         $result['sessions_mmc'] = count($mmc_sessions);
@@ -327,8 +347,16 @@ class MMC_MDG_Bridge_Service {
         $result['session_time_match'] = !$result['missing_session_times_in_mdg'] && !$result['extra_session_times_in_mdg']
             && count($result['session_times_mmc']) === count($result['session_times_mdg']);
 
+        $source_id = self::sales_source_event_id($program_id, (int)$event->id);
+        $result['sales_source_event_id'] = $source_id;
+        $sales_rows = $source_id === (int)$event->id ? $legacy_rows : (array)$wpdb->get_results($wpdb->prepare(
+            "SELECT s.id mdg_session_id,s.start_at,s.wc_product_id,s.tickera_event_id,t.wc_variation_id
+             FROM {$sessions_table} s LEFT JOIN {$types_table} t ON t.session_id=s.id AND t.is_active=1
+             WHERE s.event_id=%d", $source_id
+        ));
         foreach ( $identity['rows'] as $map ) {
-            foreach ( $legacy_rows as $legacy ) {
+            if ( self::virtual_family_mapping($map) ) { continue; }
+            foreach ( $sales_rows as $legacy ) {
                 if ( (int)$map->wc_product_id === (int)$legacy->wc_product_id
                     && (int)$map->wc_variation_id === (int)$legacy->wc_variation_id
                     && (int)$map->tickera_event_id === (int)$legacy->tickera_event_id ) {
@@ -338,8 +366,40 @@ class MMC_MDG_Bridge_Service {
             }
         }
 
-        $result['sales'] = self::sales_reconciliation( $program_id, (int)$event->id );
+        $result['sales'] = self::sales_reconciliation( $program_id, $source_id ?: (int)$event->id );
         return $result;
+    }
+
+    private static function sales_source_event_id($program_id, $content_event_id) {
+        if ( ! self::legacy_available() ) { return 0; }
+        global $wpdb;
+        $maps = $wpdb->prefix . 'mmc_sales_mappings';
+        if ( ! self::table_exists($maps) ) { return $content_event_id; }
+        $sessions = MDG_DB::table('sessions');
+        $types = MDG_DB::table('ticket_types');
+        $rows = (array)$wpdb->get_results($wpdb->prepare(
+            "SELECT m.ticket_type_id,m.wc_product_id,m.wc_variation_id,s.event_id AS source_id
+             FROM {$maps} m LEFT JOIN {$sessions} s ON s.wc_product_id=m.wc_product_id
+             LEFT JOIN {$types} t ON t.session_id=s.id AND t.wc_variation_id=m.wc_variation_id AND t.is_active=1
+             WHERE m.program_id=%d AND m.is_active=1 AND t.id IS NOT NULL", absint($program_id)
+        ));
+        $owners = array();
+        foreach ($rows as $row) {
+            if (self::virtual_family_mapping($row)) { continue; }
+            $owners[(int)$row->source_id] = true;
+        }
+        return count($owners) === 1 ? (int)array_key_first($owners) : ( $owners ? 0 : $content_event_id );
+    }
+
+    private static function virtual_family_mapping($map) {
+        if ( empty($map->ticket_type_id) || !class_exists('MMC_Event_Service') ) { return false; }
+        static $codes = array();
+        $id = (int)$map->ticket_type_id;
+        if (!array_key_exists($id,$codes)) {
+            global $wpdb;
+            $codes[$id] = (string)$wpdb->get_var($wpdb->prepare("SELECT ticket_code FROM {$wpdb->prefix}mmc_ticket_types WHERE id=%d",$id));
+        }
+        return $codes[$id] === 'family_2_2';
     }
 
     /**

@@ -407,8 +407,10 @@ class MMC_Operations_Service {
             $sessions=MMC_Event_Service::sessions($event->id);
             foreach($sessions as $s){
                 $key='session_'.(int)$s->id; $valid_keys[]=$key;
-                $start=$s->session_time; $end=wp_date('Y-m-d H:i:s',strtotime($start.' +60 minutes'));
-                self::upsert_schedule($program_id,$key,(int)$s->id,'show','Gösteri '.wp_date('H:i',strtotime($start)),$start,$end,100+(int)$s->id,1);
+                $start=$s->session_time;
+                $local_start=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$start,wp_timezone());
+                $end=$local_start?$local_start->modify('+60 minutes')->format('Y-m-d H:i:s'):null;
+                self::upsert_schedule($program_id,$key,(int)$s->id,'show','Gösteri '.substr($start,11,5),$start,$end,100+(int)$s->id,1);
             }
         }
         $rows=$wpdb->get_results($wpdb->prepare("SELECT id,source_key FROM $table WHERE program_id=%d AND is_system=1 AND source_key LIKE 'session_%%'",$program_id));
@@ -505,7 +507,11 @@ class MMC_Operations_Service {
     }
 
     private static function datetime_or_null( $value ) {
-        $value=sanitize_text_field($value); if(!$value)return null; $value=str_replace('T',' ',$value); $ts=strtotime($value); return $ts?wp_date('Y-m-d H:i:s',$ts):null;
+        $value=sanitize_text_field($value); if(!$value)return null;
+        $value=str_replace('T',' ',$value);
+        if(!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?$/',$value))return null;
+        $date=DateTimeImmutable::createFromFormat(strlen($value)===16?'!Y-m-d H:i':'!Y-m-d H:i:s',$value,wp_timezone());
+        return $date&&$date->format(strlen($value)===16?'Y-m-d H:i':'Y-m-d H:i:s')===$value?$date->format('Y-m-d H:i:s'):null;
     }
 
     private static function money( $value ) {

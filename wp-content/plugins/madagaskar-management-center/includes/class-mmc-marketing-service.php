@@ -44,7 +44,9 @@ class MMC_Marketing_Service {
                 "SELECT * FROM $table WHERE program_id=%d AND item_type=%s ORDER BY version_no DESC,id DESC LIMIT 1",
                 $program_id, $type
             ) );
-            if ( $latest && ! $force && hash_equals( (string) $latest->source_hash, $hash ) ) continue;
+            // Reopening the page or pressing Update must not erase editorial work.
+            // A changed program source creates a new version; the previous version stays intact.
+            if ( $latest && hash_equals( (string) $latest->source_hash, $hash ) ) continue;
 
             $content = self::generate_item( $type, $snapshot );
             if ( $latest && in_array( $latest->status, array( 'approved','published' ), true ) ) {
@@ -97,6 +99,9 @@ class MMC_Marketing_Service {
         $row = self::get_item($item_id); if(!$row) return new WP_Error('mmc_marketing_item_missing','İçerik bulunamadı.');
         $status = sanitize_key($data['status'] ?? $row->status);
         if ( ! isset(self::item_statuses()[$status]) ) $status=$row->status;
+        if ( 'published' === $status && ! esc_url_raw($data['external_url'] ?? $row->external_url) ) {
+            return new WP_Error('mmc_marketing_publication_url_missing','Yayınlandı durumu için yayın URL adresi gereklidir.');
+        }
         $update=array(
             'title'=>sanitize_text_field($data['title'] ?? $row->title),
             'body'=>sanitize_textarea_field($data['body'] ?? $row->body),
@@ -190,19 +195,31 @@ class MMC_Marketing_Service {
     private static function generate_item($type,$s){
         $p=$s['program'];$e=$s['event'];$v=$s['venue'];$sessions=$s['sessions'];$tickets=$s['tickets'];
         $place=$p->district_name ?: $p->province_name; $date=$e->event_date?wp_date('d F Y',strtotime($e->event_date)):'';
-        $times=implode(' • ',array_map(function($x){return wp_date('H:i',strtotime($x->session_time));},$sessions));
+        $place_suffix = self::locative_suffix($place);
+        // session_time is stored as a local DATETIME, not as a UTC timestamp.
+        $times=implode(' • ',array_map(function($x){return substr((string)$x->session_time,11,5);},$sessions));
         $prices=array(); foreach($tickets as $t){ if((int)$t->is_active) $prices[]=$t->ticket_name.' '.number_format_i18n((float)$t->price,0).' TL'; }
         $price_text=implode(' • ',$prices); $venue=$v?$v->venue_name:'';
-        $base="{$place}’de Madagaskar Sirki! 🎪\n{$date} • {$venue}\nSeanslar: {$times}\n{$price_text}\n🎟️ Bilet: madagaskarsirki.com/bilet-al/\nUluslararası sanatçılar • Hayvansız modern sirk • Aile eğlencesi";
+        $base="{$place}’{$place_suffix} Madagaskar Sirki! 🎪\n{$date} • {$venue}\nSeanslar: {$times}\n{$price_text}\n🎟️ Bilet: madagaskarsirki.com/bilet-al/\nUluslararası sanatçılar • Hayvansız modern sirk • Aile eğlencesi";
         switch($type){
             case 'poster': return array('title'=>"{$place} Afiş Briefi",'body'=>'','brief'=>"1080×1350 ana post ve 1080×1920 story. Üstte MADAGASKAR SİRKİ; belirgin şehir: {$place}; tarih: {$date}; salon: {$venue}; seanslar: {$times}; fiyatlar: {$price_text}. Hayvan görseli kullanma. Uluslararası akrobasi ve aile deneyimini öne çıkar. CTA: BİLET AL — madagaskarsirki.com/bilet-al/.");
-            case 'instagram_story': return array('title'=>"{$place} Story",'body'=>"🎪 MADAGASKAR SİRKİ {$place}’DE!\n📅 {$date}\n📍 {$venue}\n🕒 {$times}\n🎟️ Bilet için: madagaskarsirki.com/bilet-al/",'brief'=>'1080×1920; büyük şehir/tarih; alt bölümde bilet CTA.');
+            case 'instagram_story': return array('title'=>"{$place} Story",'body'=>"🎪 MADAGASKAR SİRKİ {$place}’".mb_strtoupper($place_suffix,'UTF-8')."!\n📅 {$date}\n📍 {$venue}\n🕒 {$times}\n🎟️ Bilet için: madagaskarsirki.com/bilet-al/",'brief'=>'1080×1920; büyük şehir/tarih; alt bölümde bilet CTA.');
             case 'reel': return array('title'=>"{$place} Reels",'body'=>"{$place}, hazır mısın? 🎪 {$date} tarihinde Madagaskar Sirki geliyor. Uluslararası akrobasi, palyaço ve ailece eğlence için seansını seç. Biletler madagaskarsirki.com’da.",'brief'=>'20–30 sn. İlk 3 sn şehir+tarih. Hızlı akrobasi/palyaço/hula hoop kesitleri. Son 5 sn salon+seans+bilet CTA.');
             case 'countdown': return array('title'=>"{$place} Geri Sayım",'body'=>"⏳ {$place} için geri sayım başladı!\n{$date} • {$venue}\nSeanslar: {$times}\nBilet: madagaskarsirki.com/bilet-al/",'brief'=>'Etkinliğe 7, 3 ve 1 gün kala aynı şablonun tarih sayacı varyasyonları.');
             case 'giveaway': return array('title'=>"{$place} Çekiliş Taslağı",'body'=>"🎉 {$place} ÇEKİLİŞİ!\nMadagaskar Sirki için çift kişilik bilet kazanma şansı. Gönderiyi beğen, bir arkadaşını etiketle ve @madagaskarsirkiturkiye hesabını takip et. Sonuç/katılım koşulları yayın öncesi yönetici tarafından kesinleştirilecektir.",'brief'=>'Varsayılan olarak yayınlama. Ödül adedi, son katılım ve sonuç tarihi yönetici onayı olmadan eklenmez.');
-            case 'meta_ad': return array('title'=>"{$place} Meta Reklam",'body'=>"🎪 Madagaskar Sirki {$place}’de! {$date} • {$venue}. Uluslararası sanatçılarla hayvansız modern sirk deneyimi. Seansını seç, biletini şimdi al.",'brief'=>'Amaç: bilet satışı. Tek kreatif farklı şehirlerde kullanılıyorsa şehir/tarih/salon/fiyat metni mutlaka bu Program Dosyasından gelsin.');
+            case 'meta_ad': return array('title'=>"{$place} Meta Reklam",'body'=>"🎪 Madagaskar Sirki {$place}’{$place_suffix}! {$date} • {$venue}. Uluslararası sanatçılarla hayvansız modern sirk deneyimi. Seansını seç, biletini şimdi al.",'brief'=>'Amaç: bilet satışı. Tek kreatif farklı şehirlerde kullanılıyorsa şehir/tarih/salon/fiyat metni mutlaka bu Program Dosyasından gelsin.');
             default: return array('title'=>"{$place} Instagram Gönderisi",'body'=>$base,'brief'=>'1080×1350; şehir/tarih/salon/seans net; sıcak, kısa, aile dostu dil.');
         }
+    }
+
+    private static function locative_suffix($name){
+        $letters=preg_replace('/[^a-zA-ZçğıöşüÇĞİÖŞÜ]/u','',mb_strtolower($name,'UTF-8'));
+        $vowels=preg_replace('/[^aeıioöuü]/u','',$letters);
+        $last=mb_substr($vowels,-1,1,'UTF-8');
+        $ending=mb_substr($letters,-1,1,'UTF-8');
+        $hard=in_array($ending,array('f','s','t','k','ç','ş','h','p'),true);
+        $vowel=in_array($last,array('a','ı','o','u'),true)?'a':'e';
+        return ($hard?'t':'d').$vowel;
     }
 
     private static function snapshot($program_id){
@@ -214,7 +231,7 @@ class MMC_Marketing_Service {
         $tickets=$event?MMC_Event_Service::ticket_types($event->id):array(); $active=array_filter($tickets,function($t){return (int)$t->is_active && (float)$t->price>=0;}); if(!$active)$errors[]='Aktif bilet/fiyat yok.';
         return array('ready'=>empty($errors),'errors'=>$errors,'program'=>$program,'event'=>$event,'venue'=>$venue,'sessions'=>$sessions,'tickets'=>$tickets);
     }
-    private static function source_hash($s){$data=array('p'=>$s['program']->program_code,'ps'=>$s['program']->status,'e'=>$s['event']->event_date,'es'=>$s['event']->status,'v'=>$s['venue']?$s['venue']->venue_name:'','a'=>$s['venue']?$s['venue']->address:'','s'=>array_map(function($x){return array($x->session_time,(int)$x->capacity);},$s['sessions']),'t'=>array_map(function($x){return array($x->ticket_code,(float)$x->price,(int)$x->is_active);},$s['tickets']));return hash('sha256',wp_json_encode($data));}
+    private static function source_hash($s){$data=array('template_version'=>2,'p'=>$s['program']->program_code,'ps'=>$s['program']->status,'e'=>$s['event']->event_date,'es'=>$s['event']->status,'v'=>$s['venue']?$s['venue']->venue_name:'','a'=>$s['venue']?$s['venue']->address:'','s'=>array_map(function($x){return array($x->session_time,(int)$x->capacity);},$s['sessions']),'t'=>array_map(function($x){return array($x->ticket_code,(float)$x->price,(int)$x->is_active);},$s['tickets']));return hash('sha256',wp_json_encode($data));}
     private static function channel_for_type($type){return in_array($type,array('instagram_post','instagram_story','reel','countdown','giveaway'),true)?'instagram':('meta_ad'===$type?'meta':'creative');}
     private static function target_geo($program_id,$program){global $wpdb;$rows=$wpdb->get_col($wpdb->prepare("SELECT district_name FROM {$wpdb->prefix}mmc_program_target_districts WHERE program_id=%d AND is_selected=1 ORDER BY district_name",absint($program_id)));if(!$rows)$rows=array($program->district_name?:$program->province_name);return implode(', ',$rows);}
     private static function dt_or_null($v){$v=trim((string)$v);if(!$v)return null;$ts=strtotime($v);return $ts?wp_date('Y-m-d H:i:s',$ts):null;}
