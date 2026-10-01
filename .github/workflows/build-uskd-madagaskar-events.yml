@@ -46,7 +46,45 @@ jobs:
           import json
           from pathlib import Path
           manifest = json.loads(Path('integrations/uskd/deployment-manifest.json').read_text(encoding='utf-8'))
-          assert manifest['plugin_version'] == '0.1.0'
+          plugin_file = Path('integrations/uskd/uskd-madagaskar-events/uskd-madagaskar-events.php')
+          plugin_text = plugin_file.read_text(encoding='utf-8')
+          import re
+          header = re.search(r'^\s*\* Version:\s*([0-9.]+)\s*
+          excluded = set(manifest['display_contract']['exclude'])
+          assert 'price' in excluded
+          assert 'checkout_link' in excluded
+          backup = Path(manifest['live_page']['backup_path'])
+          assert backup.is_file(), f'missing rollback backup: {backup}'
+          print('USKD deployment contract OK')
+          PY
+
+      - name: Build ZIP and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/uskd-madagaskar-events
+          cp -R integrations/uskd/uskd-madagaskar-events/. build/uskd-madagaskar-events/
+          (
+            cd build
+            zip -r -q uskd-madagaskar-events.zip uskd-madagaskar-events
+            sha256sum uskd-madagaskar-events.zip > uskd-madagaskar-events.zip.sha256
+          )
+
+      - name: Upload plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: uskd-madagaskar-events
+          path: |
+            build/uskd-madagaskar-events.zip
+            build/uskd-madagaskar-events.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
+, plugin_text, re.MULTILINE)
+          constant = re.search(r"USKD_MDG_EVENTS_VERSION',\s*'([^']+)'", plugin_text)
+          assert header, 'plugin Version header not found'
+          assert constant, 'USKD_MDG_EVENTS_VERSION constant not found'
+          assert manifest['plugin_version'] == header.group(1) == constant.group(1)
           assert manifest['shortcode'] == 'uskd_madagaskar_events'
           excluded = set(manifest['display_contract']['exclude'])
           assert 'price' in excluded
