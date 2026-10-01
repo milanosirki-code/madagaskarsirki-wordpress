@@ -608,8 +608,15 @@ class MMC_Field_Service {
     private static function normalize_datetime( $v ) {
         $v = trim( sanitize_text_field( (string) $v ) );
         if ( ! $v ) { return null; }
-        $ts = strtotime( $v );
-        return $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : null;
+
+        $formats = array( 'Y-m-d\TH:i', 'Y-m-d H:i:s', 'Y-m-d H:i' );
+        foreach ( $formats as $format ) {
+            $dt = DateTimeImmutable::createFromFormat( $format, $v, wp_timezone() );
+            if ( $dt instanceof DateTimeImmutable ) {
+                return $dt->format( 'Y-m-d H:i:s' );
+            }
+        }
+        return null;
     }
 
     private static function xml( $v ) { return htmlspecialchars( (string)$v, ENT_XML1 | ENT_COMPAT, 'UTF-8' ); }
