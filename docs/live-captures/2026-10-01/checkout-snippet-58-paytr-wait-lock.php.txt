@@ -1,0 +1,966 @@
+/**
+ * ==========================================================
+ * MADAGASKAR SİRKİ
+ * PAYTR CANLI ONAY BEKLEME KİLİDİ V1
+ * ==========================================================
+ *
+ * Yalnız:
+ *   #3 Bartın / Merkez
+ *   #4 Ankara / Çubuk
+ *
+ * için geri alınabilir satış kapatma/açma aracı.
+ *
+ * KAPAT:
+ * - MDG etkinliğini CLOSED yapar.
+ * - Seansları CLOSED yapar.
+ * - WooCommerce ana ürünlerine
+ *   _mdg_v371_sales_closed = yes yazar.
+ *
+ * AÇ:
+ * - Kapatma öncesindeki etkinlik durumunu geri getirir.
+ * - Her seansın önceki durumunu geri getirir.
+ * - WooCommerce satış kilidi metasını önceki haline getirir.
+ *
+ * DOKUNMAZ:
+ * - Siparişler
+ * - PayTR işlemleri
+ * - Tickera biletleri
+ * - QR kodlar
+ * - Biletlerim
+ * - Ürün fiyatları
+ * - Kapasite / sold_units
+ * - Tickera etkinlikleri
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+/* =========================================================
+ * AYARLAR
+ * ======================================================= */
+
+function ms_paytr_wait_targets_v1() {
+
+	return array(
+
+		3 => array(
+			'province' => 'Bartın',
+			'district' => 'Merkez',
+			'label'    => 'Bartın – 25 Eylül 2026',
+		),
+
+		4 => array(
+			'province' => 'Ankara',
+			'district' => 'Çubuk',
+			'label'    => 'Çubuk – 26 Eylül 2026',
+		),
+
+	);
+}
+
+
+function ms_paytr_wait_snapshot_key_v1() {
+
+	return 'ms_paytr_wait_lock_snapshot_v1';
+}
+
+
+function ms_paytr_wait_closed_status_v1() {
+
+	if (
+		class_exists( 'MDG_Status' ) &&
+		defined( 'MDG_Status::CLOSED' )
+	) {
+		return constant( 'MDG_Status::CLOSED' );
+	}
+
+	return 'closed';
+}
+
+
+/* =========================================================
+ * HEDEF DOĞRULAMA
+ * ======================================================= */
+
+function ms_paytr_wait_validate_event_v1( $event_id, $expected ) {
+
+	if (
+		! class_exists( 'MDG_Events' ) ||
+		! class_exists( 'MDG_Sessions' ) ||
+		! class_exists( 'MDG_DB' )
+	) {
+		return new WP_Error(
+			'mdg_missing',
+			'Madagaskar çekirdek sınıfları yüklenmemiş.'
+		);
+	}
+
+	$event = MDG_Events::get( $event_id );
+
+	if ( ! $event ) {
+		return new WP_Error(
+			'event_missing',
+			'Etkinlik #' . $event_id . ' bulunamadı.'
+		);
+	}
+
+	if (
+		(string) $event->province_name !==
+		(string) $expected['province']
+	) {
+		return new WP_Error(
+			'province_mismatch',
+			'Etkinlik #' . $event_id .
+			' beklenen ile ait değil.'
+		);
+	}
+
+	if (
+		(string) $event->district !==
+		(string) $expected['district']
+	) {
+		return new WP_Error(
+			'district_mismatch',
+			'Etkinlik #' . $event_id .
+			' beklenen ilçeye ait değil.'
+		);
+	}
+
+	return $event;
+}
+
+
+/* =========================================================
+ * SNAPSHOT OLUŞTUR
+ * ======================================================= */
+
+function ms_paytr_wait_create_snapshot_v1() {
+
+	$snapshot = array(
+		'created_at' => current_time( 'mysql' ),
+		'events'     => array(),
+		'products'   => array(),
+	);
+
+	foreach (
+		ms_paytr_wait_targets_v1()
+		as $event_id => $expected
+	) {
+
+		$event =
+			ms_paytr_wait_validate_event_v1(
+				$event_id,
+				$expected
+			);
+
+		if ( is_wp_error( $event ) ) {
+			return $event;
+		}
+
+		$sessions =
+			MDG_Sessions::by_event(
+				$event_id
+			);
+
+		if ( empty( $sessions ) ) {
+
+			return new WP_Error(
+				'no_sessions',
+				$expected['label'] .
+				' için seans bulunamadı.'
+			);
+		}
+
+		$snapshot['events'][ $event_id ] = array(
+			'status'   => (string) $event->status,
+			'sessions' => array(),
+		);
+
+		foreach ( $sessions as $session ) {
+
+			$session_id =
+				absint( $session->id );
+
+			$product_id =
+				absint(
+					$session->wc_product_id
+				);
+
+			$snapshot['events'][ $event_id ]
+				['sessions'][ $session_id ] =
+				(string) $session->status;
+
+
+			/*
+			 * WooCommerce ana ürünü.
+			 * Aynı ürün bir kez kaydedilir.
+			 */
+			if (
+				$product_id &&
+				! isset(
+					$snapshot['products']
+						[ $product_id ]
+				)
+			) {
+
+				$exists =
+					metadata_exists(
+						'post',
+						$product_id,
+						'_mdg_v371_sales_closed'
+					);
+
+				$snapshot['products']
+					[ $product_id ] =
+					array(
+						'existed' => $exists,
+						'value'   =>
+							(string)
+							get_post_meta(
+								$product_id,
+								'_mdg_v371_sales_closed',
+								true
+							),
+					);
+			}
+		}
+	}
+
+	return $snapshot;
+}
+
+
+/* =========================================================
+ * SATIŞI KAPAT
+ * ======================================================= */
+
+function ms_paytr_wait_close_v1() {
+
+	global $wpdb;
+
+	$key =
+		ms_paytr_wait_snapshot_key_v1();
+
+	/*
+	 * İlk kapatmada mevcut durumu sakla.
+	 * Daha sonra tekrar KAPAT'a basılırsa
+	 * orijinal snapshot ezilmez.
+	 */
+	$snapshot =
+		get_option( $key, array() );
+
+	if ( empty( $snapshot ) ) {
+
+		$snapshot =
+			ms_paytr_wait_create_snapshot_v1();
+
+		if ( is_wp_error( $snapshot ) ) {
+			return $snapshot;
+		}
+
+		update_option(
+			$key,
+			$snapshot,
+			false
+		);
+	}
+
+
+	$closed =
+		ms_paytr_wait_closed_status_v1();
+
+	$now =
+		MDG_DB::now();
+
+	$events_table =
+		MDG_DB::table( 'events' );
+
+	$sessions_table =
+		MDG_DB::table( 'sessions' );
+
+
+	foreach (
+		ms_paytr_wait_targets_v1()
+		as $event_id => $expected
+	) {
+
+		$event =
+			ms_paytr_wait_validate_event_v1(
+				$event_id,
+				$expected
+			);
+
+		if ( is_wp_error( $event ) ) {
+			return $event;
+		}
+
+
+		/*
+		 * Etkinliği satıştan çıkar.
+		 */
+		$result =
+			$wpdb->update(
+				$events_table,
+				array(
+					'status'     => $closed,
+					'updated_at' => $now,
+				),
+				array(
+					'id' => $event_id,
+				),
+				array(
+					'%s',
+					'%s',
+				),
+				array(
+					'%d',
+				)
+			);
+
+		if ( false === $result ) {
+
+			return new WP_Error(
+				'event_close_failed',
+				$expected['label'] .
+				' kapatılamadı.'
+			);
+		}
+
+
+		/*
+		 * Etkinliğin bütün seanslarını kapat.
+		 */
+		$result =
+			$wpdb->update(
+				$sessions_table,
+				array(
+					'status'     => $closed,
+					'updated_at' => $now,
+				),
+				array(
+					'event_id' => $event_id,
+				),
+				array(
+					'%s',
+					'%s',
+				),
+				array(
+					'%d',
+				)
+			);
+
+		if ( false === $result ) {
+
+			return new WP_Error(
+				'session_close_failed',
+				$expected['label'] .
+				' seansları kapatılamadı.'
+			);
+		}
+	}
+
+
+	/*
+	 * WooCommerce ana ürünlerine
+	 * ikinci satış kapısını koy.
+	 */
+	foreach (
+		(array) (
+			$snapshot['products'] ?? array()
+		)
+		as $product_id => $previous
+	) {
+
+		update_post_meta(
+			absint( $product_id ),
+			'_mdg_v371_sales_closed',
+			'yes'
+		);
+
+		if (
+			function_exists(
+				'wc_delete_product_transients'
+			)
+		) {
+			wc_delete_product_transients(
+				absint( $product_id )
+			);
+		}
+	}
+
+
+	/*
+	 * Dinamik listelerin eski sonucu
+	 * taşımaması için cache temizliği.
+	 */
+	if ( function_exists( 'wp_cache_flush' ) ) {
+		wp_cache_flush();
+	}
+
+	return true;
+}
+
+
+/* =========================================================
+ * SATIŞI TEKRAR AÇ
+ * ======================================================= */
+
+function ms_paytr_wait_open_v1() {
+
+	global $wpdb;
+
+	$key =
+		ms_paytr_wait_snapshot_key_v1();
+
+	$snapshot =
+		get_option( $key, array() );
+
+	if (
+		empty( $snapshot ) ||
+		empty( $snapshot['events'] )
+	) {
+
+		return new WP_Error(
+			'no_snapshot',
+			'Geri yüklenecek kapatma snapshotı bulunamadı.'
+		);
+	}
+
+
+	$events_table =
+		MDG_DB::table( 'events' );
+
+	$sessions_table =
+		MDG_DB::table( 'sessions' );
+
+	$now =
+		MDG_DB::now();
+
+
+	foreach (
+		ms_paytr_wait_targets_v1()
+		as $event_id => $expected
+	) {
+
+		$event =
+			ms_paytr_wait_validate_event_v1(
+				$event_id,
+				$expected
+			);
+
+		if ( is_wp_error( $event ) ) {
+			return $event;
+		}
+
+		if (
+			empty(
+				$snapshot['events']
+					[ $event_id ]
+			)
+		) {
+			continue;
+		}
+
+
+		$old_event_status =
+			(string)
+			$snapshot['events']
+				[ $event_id ]
+				['status'];
+
+
+		/*
+		 * Etkinlik statüsünü eski haline getir.
+		 */
+		$result =
+			$wpdb->update(
+				$events_table,
+				array(
+					'status'     =>
+						$old_event_status,
+					'updated_at' =>
+						$now,
+				),
+				array(
+					'id' =>
+						$event_id,
+				),
+				array(
+					'%s',
+					'%s',
+				),
+				array(
+					'%d',
+				)
+			);
+
+		if ( false === $result ) {
+
+			return new WP_Error(
+				'event_open_failed',
+				$expected['label'] .
+				' yeniden açılamadı.'
+			);
+		}
+
+
+		/*
+		 * Seansların her birini kapatma
+		 * öncesindeki durumuna getir.
+		 */
+		foreach (
+			(array)
+			$snapshot['events']
+				[ $event_id ]
+				['sessions']
+			as $session_id => $old_status
+		) {
+
+			$result =
+				$wpdb->update(
+					$sessions_table,
+					array(
+						'status' =>
+							(string)
+							$old_status,
+
+						'updated_at' =>
+							$now,
+					),
+					array(
+						'id' =>
+							absint(
+								$session_id
+							),
+
+						'event_id' =>
+							$event_id,
+					),
+					array(
+						'%s',
+						'%s',
+					),
+					array(
+						'%d',
+						'%d',
+					)
+				);
+
+			if ( false === $result ) {
+
+				return new WP_Error(
+					'session_open_failed',
+					'Seans #' .
+					absint( $session_id ) .
+					' geri yüklenemedi.'
+				);
+			}
+		}
+	}
+
+
+	/*
+	 * WooCommerce satış kilidini
+	 * kapatma öncesindeki haline getir.
+	 */
+	foreach (
+		(array) (
+			$snapshot['products'] ?? array()
+		)
+		as $product_id => $previous
+	) {
+
+		$product_id =
+			absint( $product_id );
+
+		if (
+			! empty(
+				$previous['existed']
+			)
+		) {
+
+			update_post_meta(
+				$product_id,
+				'_mdg_v371_sales_closed',
+				(string)
+				$previous['value']
+			);
+
+		} else {
+
+			delete_post_meta(
+				$product_id,
+				'_mdg_v371_sales_closed'
+			);
+		}
+
+
+		if (
+			function_exists(
+				'wc_delete_product_transients'
+			)
+		) {
+
+			wc_delete_product_transients(
+				$product_id
+			);
+		}
+	}
+
+
+	delete_option( $key );
+
+
+	if ( function_exists( 'wp_cache_flush' ) ) {
+		wp_cache_flush();
+	}
+
+	return true;
+}
+
+
+/* =========================================================
+ * ADMIN İŞLEMİ
+ * ======================================================= */
+
+add_action(
+	'admin_post_ms_paytr_wait_lock_v1',
+	function () {
+
+		if (
+			! current_user_can(
+				'manage_woocommerce'
+			)
+		) {
+			wp_die( 'Yetkiniz yok.' );
+		}
+
+		check_admin_referer(
+			'ms_paytr_wait_lock_v1_action'
+		);
+
+		$mode =
+			sanitize_key(
+				$_POST['mode'] ?? ''
+			);
+
+
+		if ( 'close' === $mode ) {
+
+			$result =
+				ms_paytr_wait_close_v1();
+
+		} elseif ( 'open' === $mode ) {
+
+			$result =
+				ms_paytr_wait_open_v1();
+
+		} else {
+
+			$result =
+				new WP_Error(
+					'invalid_mode',
+					'Geçersiz işlem.'
+				);
+		}
+
+
+		$args = array(
+			'page' =>
+				'ms-paytr-wait-lock-v1',
+		);
+
+
+		if ( is_wp_error( $result ) ) {
+
+			$args['ms_error'] =
+				rawurlencode(
+					$result->get_error_message()
+				);
+
+		} else {
+
+			$args['ms_done'] =
+				$mode;
+		}
+
+
+		wp_safe_redirect(
+			add_query_arg(
+				$args,
+				admin_url(
+					'tools.php'
+				)
+			)
+		);
+
+		exit;
+	}
+);
+
+
+/* =========================================================
+ * ARAÇLAR MENÜSÜ
+ * ======================================================= */
+
+add_action(
+	'admin_menu',
+	function () {
+
+		add_management_page(
+			'Madagaskar PayTR Bekleme Kilidi',
+			'Madagaskar PayTR Kilidi',
+			'manage_woocommerce',
+			'ms-paytr-wait-lock-v1',
+			'ms_paytr_wait_render_v1'
+		);
+	}
+);
+
+
+/* =========================================================
+ * YÖNETİM EKRANI
+ * ======================================================= */
+
+function ms_paytr_wait_render_v1() {
+
+	if (
+		! current_user_can(
+			'manage_woocommerce'
+		)
+	) {
+		return;
+	}
+
+
+	$snapshot =
+		get_option(
+			ms_paytr_wait_snapshot_key_v1(),
+			array()
+		);
+
+	$is_locked =
+		! empty( $snapshot );
+
+
+	echo '<div class="wrap">';
+
+	echo '<h1>🎪 Madagaskar – PayTR Bekleme Kilidi</h1>';
+
+
+	if (
+		isset( $_GET['ms_done'] ) &&
+		'close' ===
+		sanitize_key(
+			$_GET['ms_done']
+		)
+	) {
+
+		echo '<div class="notice notice-success"><p><strong>Bartın ve Çubuk geçici olarak satışa kapatıldı.</strong></p></div>';
+	}
+
+
+	if (
+		isset( $_GET['ms_done'] ) &&
+		'open' ===
+		sanitize_key(
+			$_GET['ms_done']
+		)
+	) {
+
+		echo '<div class="notice notice-success"><p><strong>Bartın ve Çubuk kapatma öncesindeki satış durumlarına geri getirildi.</strong></p></div>';
+	}
+
+
+	if ( ! empty( $_GET['ms_error'] ) ) {
+
+		echo '<div class="notice notice-error"><p>' .
+			esc_html(
+				rawurldecode(
+					wp_unslash(
+						$_GET['ms_error']
+					)
+				)
+			) .
+			'</p></div>';
+	}
+
+
+	echo '<div style="
+		background:#fff;
+		border:1px solid #dcdcde;
+		padding:22px;
+		max-width:900px;
+		margin-top:18px;
+	">';
+
+
+	echo '<h2>Mevcut Durum</h2>';
+
+
+	echo '<p><strong>PayTR bekleme kilidi:</strong> ';
+
+	if ( $is_locked ) {
+
+		echo '<span style="color:#b32d2e;font-weight:700;">AKTİF – SATIŞ KAPALI</span>';
+
+	} else {
+
+		echo '<span style="color:#008a20;font-weight:700;">PASİF – NORMAL DURUM</span>';
+	}
+
+	echo '</p>';
+
+
+	echo '<table class="widefat striped" style="margin-top:18px;">';
+
+	echo '<thead>
+		<tr>
+			<th>Etkinlik</th>
+			<th>MDG Durumu</th>
+			<th>Seans</th>
+		</tr>
+	</thead><tbody>';
+
+
+	foreach (
+		ms_paytr_wait_targets_v1()
+		as $event_id => $expected
+	) {
+
+		$event =
+			class_exists( 'MDG_Events' )
+				? MDG_Events::get(
+					$event_id
+				)
+				: null;
+
+		$sessions =
+			(
+				$event &&
+				class_exists(
+					'MDG_Sessions'
+				)
+			)
+				? MDG_Sessions::by_event(
+					$event_id
+				)
+				: array();
+
+
+		$status =
+			$event
+				? (string)
+					$event->status
+				: 'BULUNAMADI';
+
+
+		$session_statuses =
+			array();
+
+		foreach (
+			(array) $sessions
+			as $session
+		) {
+
+			$session_statuses[] =
+				'#' .
+				absint(
+					$session->id
+				) .
+				' ' .
+				(string)
+				$session->status;
+		}
+
+
+		echo '<tr>';
+
+		echo '<td><strong>' .
+			esc_html(
+				$expected['label']
+			) .
+			'</strong><br>#' .
+			absint( $event_id ) .
+			'</td>';
+
+		echo '<td><code>' .
+			esc_html( $status ) .
+			'</code></td>';
+
+		echo '<td>' .
+			esc_html(
+				implode(
+					' · ',
+					$session_statuses
+				)
+			) .
+			'</td>';
+
+		echo '</tr>';
+	}
+
+
+	echo '</tbody></table>';
+
+
+	echo '<div style="margin-top:24px;">';
+
+
+	echo '<form method="post" action="' .
+		esc_url(
+			admin_url(
+				'admin-post.php'
+			)
+		) .
+		'">';
+
+	echo '<input type="hidden" name="action" value="ms_paytr_wait_lock_v1">';
+
+	wp_nonce_field(
+		'ms_paytr_wait_lock_v1_action'
+	);
+
+
+	if ( $is_locked ) {
+
+		echo '<input type="hidden" name="mode" value="open">';
+
+		submit_button(
+			'Bartın + Çubuk Satışını Yeniden Aç',
+			'primary',
+			'submit',
+			false
+		);
+
+	} else {
+
+		echo '<input type="hidden" name="mode" value="close">';
+
+		submit_button(
+			'Bartın + Çubuk Satışını Geçici Kapat',
+			'delete',
+			'submit',
+			false
+		);
+	}
+
+
+	echo '</form>';
+
+	echo '</div>';
+
+
+	echo '<p style="margin-top:20px;color:#646970;">';
+
+	echo 'Bu araç WooCommerce ürünlerini, Tickera etkinliklerini, mevcut siparişleri, biletleri veya QR kodlarını silmez. PayTR canlı onayı geldiğinde aynı ekrandan satışları eski durumuna geri açabilirsiniz.';
+
+	echo '</p>';
+
+
+	echo '</div>';
+
+	echo '</div>';
+}
