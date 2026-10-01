@@ -52,7 +52,9 @@ jobs:
           bootstrap=(root/'madagaskar-checkout-customizations.php').read_text(encoding='utf-8')
           for row in pending:
               assert row['module'] in bootstrap
-          assert '2124' not in (root/'modules/ticket-pdf-address-fix.php').read_text(encoding='utf-8')
+          pdf=(root/'modules/ticket-pdf-address-fix.php').read_text(encoding='utf-8')
+          assert 'mdg_bartin_ticket_address_fix_v1' not in pdf
+          assert '$bartin_tickera_event_id' not in pdf
           print('Checkout customizations manifest OK')
           PY
 
