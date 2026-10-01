@@ -1,0 +1,48 @@
+<!-- wp:html -->
+<style>
+#uskd-upcoming{font-family:Arial,Helvetica,sans-serif;color:#1f1f1f;background:#fff;line-height:1.5}
+#uskd-upcoming *{box-sizing:border-box}
+#uskd-upcoming .u-wrap{width:min(1180px,calc(100% - 32px));margin:auto}
+#uskd-upcoming .u-hero{padding:42px 0 34px;background:linear-gradient(135deg,#fff 58%,#f7edef 100%);border-bottom:4px solid #c89d3c}
+#uskd-upcoming .u-kicker{font-size:12px;font-weight:800;letter-spacing:1.25px;text-transform:uppercase;color:#8b0e1a;margin-bottom:10px}
+#uskd-upcoming h1{font-size:clamp(36px,5vw,58px);line-height:1.04;margin:0 0 14px;font-weight:900}
+#uskd-upcoming h1 span{color:#8b0e1a}
+#uskd-upcoming .u-lead{max-width:780px;margin:0;font-size:18px;color:#626262}
+#uskd-upcoming .u-sec{padding:42px 0}
+#uskd-upcoming h2{font-size:34px;line-height:1.15;margin:0 0 10px}
+#uskd-upcoming .u-footer{padding:28px 0 38px;background:#1f1f1f;color:#fff}
+#uskd-upcoming .u-footer p{margin:0;color:#d7d7d7}
+#uskd-upcoming .u-footer a{color:#fff;font-weight:800;text-decoration:underline}
+@media(max-width:640px){
+  #uskd-upcoming .u-wrap{width:calc(100% - 24px)}
+  #uskd-upcoming .u-hero{padding:30px 0}
+  #uskd-upcoming .u-sec{padding:32px 0}
+  #uskd-upcoming h1{font-size:34px!important}
+  #uskd-upcoming h2{font-size:27px!important}
+  #uskd-upcoming .u-lead{font-size:16px}
+}
+</style>
+
+<div id="uskd-upcoming">
+  <section class="u-hero">
+    <div class="u-wrap">
+      <div class="u-kicker">USKD · Yaklaşan Etkinlikler</div>
+      <h1>Güncel <span>Etkinlik Programı</span></h1>
+      <p class="u-lead">Madagaskar Sirki şehirler programındaki güncel etkinliklerin şehir, tarih, salon ve seans bilgileri burada otomatik olarak gösterilir.</p>
+    </div>
+  </section>
+
+  <section class="u-sec">
+    <div class="u-wrap">
+      <h2>Yaklaşan Gösteriler</h2>
+      [uskd_madagaskar_events]
+    </div>
+  </section>
+
+  <section class="u-footer">
+    <div class="u-wrap">
+      <p>Etkinlik programının kaynak sayfası: <a href="https://madagaskarsirki.com/sehirler/" target="_blank" rel="noopener">madagaskarsirki.com/sehirler</a></p>
+    </div>
+  </section>
+</div>
+<!-- /wp:html -->
