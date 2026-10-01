@@ -74,7 +74,7 @@ function mdg_ai_legacy_preview_event_row( $event ) {
 
     $sessions = (array) $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT id,start_at,wc_product_id,tickera_event_id,capacity,status
+            "SELECT id,start_at,wc_product_id,tickera_event_id
              FROM {$sessions_table}
              WHERE event_id=%d
              ORDER BY start_at ASC,id ASC",
@@ -88,13 +88,24 @@ function mdg_ai_legacy_preview_event_row( $event ) {
     if ( $session_ids ) {
         $placeholders = implode( ',', array_fill( 0, count( $session_ids ), '%d' ) );
         $sql = $wpdb->prepare(
-            "SELECT id,session_id,name,price,wc_variation_id,is_active
+            "SELECT id,session_id,wc_variation_id,is_active
              FROM {$types_table}
              WHERE session_id IN ({$placeholders})
              ORDER BY session_id,id",
             $session_ids
         );
         $ticket_rows = (array) $wpdb->get_results( $sql );
+    }
+
+    $venue_exists = false;
+    $venue = null;
+    $default_capacity = 0;
+    if ( ! empty( $event->venue_id ) && class_exists( 'MDG_Venues' ) && method_exists( 'MDG_Venues', 'get' ) ) {
+        $venue = MDG_Venues::get( (int) $event->venue_id );
+        $venue_exists = (bool) $venue;
+        if ( $venue && isset( $venue->default_capacity ) ) {
+            $default_capacity = max( 0, (int) $venue->default_capacity );
+        }
     }
 
     $dates = array();
@@ -107,8 +118,8 @@ function mdg_ai_legacy_preview_event_row( $event ) {
         $session_plan[] = array(
             'mdg_session_id'  => (int) $session->id,
             'local_datetime'  => $local,
-            'capacity'        => (int) $session->capacity,
-            'status'          => (string) $session->status,
+            'capacity'        => $default_capacity,
+            'status'          => 'active',
             'wc_product_id'   => (int) $session->wc_product_id,
             'tickera_event_id'=> (int) $session->tickera_event_id,
         );
@@ -124,18 +135,12 @@ function mdg_ai_legacy_preview_event_row( $event ) {
 
     $bridge_program_id = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( (int) $event->id );
 
-    $venue_exists = false;
-    $venue = null;
-    if ( ! empty( $event->venue_id ) && class_exists( 'MDG_Venues' ) && method_exists( 'MDG_Venues', 'get' ) ) {
-        $venue = MDG_Venues::get( (int) $event->venue_id );
-        $venue_exists = (bool) $venue;
-    }
-
     $warnings = array();
     if ( ! $sessions ) { $warnings[] = 'MDG etkinliğinde seans bulunamadı.'; }
     if ( count( $dates ) > 1 ) { $warnings[] = 'MDG seansları birden fazla yerel tarihe yayılıyor.'; }
     if ( ! $planned_date ) { $warnings[] = 'Tekil plan tarihi güvenle belirlenemedi.'; }
     if ( empty( $event->venue_id ) || ! $venue_exists ) { $warnings[] = 'MDG salon ana kaydı doğrulanamadı.'; }
+    if ( $venue_exists && $default_capacity < 1 ) { $warnings[] = 'MDG salon varsayılan kapasitesi eksik.'; }
     if ( count( $program_matches ) > 1 ) { $warnings[] = 'Aynı il/ilçe/tarihte birden fazla MMC programı bulundu.'; }
 
     if ( $bridge_program_id ) {
@@ -152,8 +157,6 @@ function mdg_ai_legacy_preview_event_row( $event ) {
         return array(
             'mdg_ticket_type_id' => (int) $row->id,
             'mdg_session_id'     => (int) $row->session_id,
-            'name'               => (string) $row->name,
-            'price'              => (float) $row->price,
             'wc_variation_id'    => (int) $row->wc_variation_id,
             'is_active'          => (bool) $row->is_active,
         );
