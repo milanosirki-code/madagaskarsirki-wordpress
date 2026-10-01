@@ -39,24 +39,7 @@ jobs:
             | xargs -0 -n1 php -l
 
       - name: Validate deployment contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          manifest = json.loads(Path('integrations/uskd/deployment-manifest.json').read_text(encoding='utf-8'))
-          plugin_file = Path('integrations/uskd/uskd-madagaskar-events/uskd-madagaskar-events.php')
-          plugin_text = plugin_file.read_text(encoding='utf-8')
-          import re
-          header = re.search(r'^\s*\* Version:\s*([0-9.]+)\s*
-          excluded = set(manifest['display_contract']['exclude'])
-          assert 'price' in excluded
-          assert 'checkout_link' in excluded
-          backup = Path(manifest['live_page']['backup_path'])
-          assert backup.is_file(), f'missing rollback backup: {backup}'
-          print('USKD deployment contract OK')
-          PY
+        run: python tests/validate-uskd-madagaskar-events.py
 
       - name: Build ZIP and checksum
         shell: bash
