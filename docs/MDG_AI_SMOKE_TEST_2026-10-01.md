@@ -224,3 +224,42 @@ Bu aşamada özellikle çalıştırılmadı:
 - pazarlama publish/performance write
 
 Bunlar gerçek operasyon ihtiyacı ve açık onay ile ele alınacaktır.
+
+## Kontrollü canlı staging hizalaması
+
+Read-only smoke test ve CI öncesi yapılan drift analizinde canlı #80 ve #89 snippetlerinin PR #46 staged kaynaklarından eski olduğu görüldü.
+
+Geri dönüş için eski canlı sürümler şu dosyalara kaydedildi:
+- `docs/live-backups/2026-10-01-snippet-80-system-health.php.txt`
+- `docs/live-backups/2026-10-01-snippet-89-sales-ledger.php.txt`
+
+Ardından yalnız bu iki aktif Code Snippets kaydı PR #46 staged kaynaklarıyla güncellendi.
+
+### Snippet #80 — Sistem Sağlığı
+
+Güncelleme sonrası:
+- active: true
+- system health: 0 critical / 1 warning / 15 OK
+- Kommo Secret Kaynağı: OK
+- çalışma zamanı token kaynağı: MMC_KOMMO_TOKEN
+- remaining warning: genel aktif program ticket-chain satış nesnesi 0/0 görünümü
+
+### Snippet #89 — MMC Satış Defteri
+
+Güncelleme sonrası:
+- active: true
+- WooCommerce: available
+- Tickera bridge: detected
+- PayTR: detected + enabled
+
+Pursaklar #3:
+- bridge linked=true, stale=false, MDG #16
+- mapping coverage 4/4 complete
+- ücretli satış mutabakatı 15/15 sipariş, 55/55 bilet, 20.750/20.750 TL, fark 0
+
+Kırıkkale #2:
+- bridge linked=true, stale=false, MDG #15
+- mapping coverage 4/4 complete
+- ücretli satış mutabakatı 4/4 sipariş, 17/17 bilet, 6.750/6.750 TL, fark 0
+
+Her iki güncellemede de satış sync, mapping write, Kommo write veya refund çalıştırılmadı.
