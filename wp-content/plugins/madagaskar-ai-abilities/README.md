@@ -82,3 +82,19 @@ Write abilities migration sırasında çağrılmaz.
 | v4-operations-safety | #94 | satış durumu / erteleme mapping / preflight / transfer scan read-only güvenlik akışları |
 
 Bu modüller de gate ile kapalı gelir ve canlı option'a otomatik eklenmez.
+
+
+## Phase 5 — canlıdan yakalanan çekirdek AI modülleri
+
+| Modül | Live snippet | Risk |
+|---|---:|---|
+| invoice-tracking | #74 | orta |
+| school-promotion | #75 | orta |
+| v5-finance | #77 | yüksek |
+| program-venue-event-sales | #72 | yüksek |
+
+Kaynaklar 1 Ekim 2026'da canlı Code Snippets kayıtlarından birebir yakalanmış ve secret taramasından geçirilmiştir.
+
+Canlı migration sırası: #74 → #75 → #77 → #72.
+
+Migration sırasında yalnız read-only smoke testler çalıştırılır.
