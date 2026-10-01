@@ -1,0 +1,82 @@
+name: Build Madagaskar Checkout Customizations
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-checkout-customizations/**'
+      - '.github/workflows/build-madagaskar-checkout-customizations.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'wp-content/plugins/madagaskar-checkout-customizations/**'
+      - '.github/workflows/build-madagaskar-checkout-customizations.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find wp-content/plugins/madagaskar-checkout-customizations -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Validate manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('wp-content/plugins/madagaskar-checkout-customizations')
+          data=json.loads((root/'migration-manifest.json').read_text(encoding='utf-8'))
+          assert data['plugin']['slug']=='madagaskar-checkout-customizations'
+          assert data['plugin']['source_version']=='0.1.0'
+          pending=data['migration_order']
+          assert [x['snippet_id'] for x in pending]==[5,8,56,57,59,51]
+          assert any(x['snippet_id']==58 for x in data['excluded_high_risk'])
+          bootstrap=(root/'madagaskar-checkout-customizations.php').read_text(encoding='utf-8')
+          for row in pending:
+              assert row['module'] in bootstrap
+          pdf=(root/'modules/ticket-pdf-address-fix.php').read_text(encoding='utf-8')
+          assert 'mdg_bartin_ticket_address_fix_v1' not in pdf
+          assert '$bartin_tickera_event_id' not in pdf
+          print('Checkout customizations manifest OK')
+          PY
+
+      - name: Build ZIP and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/madagaskar-checkout-customizations
+          cp -R wp-content/plugins/madagaskar-checkout-customizations/. build/madagaskar-checkout-customizations/
+          (
+            cd build
+            zip -r -q madagaskar-checkout-customizations.zip madagaskar-checkout-customizations
+            sha256sum madagaskar-checkout-customizations.zip > madagaskar-checkout-customizations.zip.sha256
+          )
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: madagaskar-checkout-customizations
+          path: |
+            build/madagaskar-checkout-customizations.zip
+            build/madagaskar-checkout-customizations.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
