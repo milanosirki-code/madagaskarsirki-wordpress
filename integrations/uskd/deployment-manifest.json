@@ -29,7 +29,7 @@
   },
   "shortcode": "uskd_madagaskar_events",
   "deployment": {
-    "status": "source_staged_not_live",
+    "status": "live",
     "smoke": [
       "activate plugin without fatal",
       "render shortcode on draft/staging page",
@@ -38,6 +38,20 @@
       "verify no price is rendered",
       "verify fallback when source is unavailable"
     ],
-    "rollback": "restore Page 392 from integrations/uskd/live-page-392.html and deactivate plugin"
+    "rollback": "restore Page 392 from integrations/uskd/live-page-392.html and deactivate plugin",
+    "deployed_at": "2026-10-01T14:24:54+03:00",
+    "plugin_active": true,
+    "live_page_id": 392,
+    "live_page_url": "https://uskdernegi.org/etkinlik-takvimi/",
+    "smoke_result": {
+      "passed": true,
+      "event_card_count": 12,
+      "first_event": "Ankara – Pursaklar / Ankara",
+      "last_event": "İzmir",
+      "price_visible": false,
+      "checkout_link_visible": false,
+      "client_side_fetch_present": false,
+      "shortcode_present": true
+    }
   }
 }
