@@ -4,9 +4,40 @@
     "slug": "madagaskar-kommo-automation",
     "source_version": "0.1.1",
     "option_key": "mdg_kommo_automation_modules",
-    "default_behavior": "inert_when_option_empty"
+    "default_behavior": "inert_when_option_empty",
+    "production_known_version": "0.1.1"
   },
-  "migration_order": [
+  "migration_order": [],
+  "security": {
+    "hardcoded_ms_kommo_token_removed": true,
+    "runtime_token_source": "non_autoloaded_option:mmc_kommo_runtime_token",
+    "legacy_alias_only_when_needed": false,
+    "legacy_ms_token_required": false,
+    "wp_config_preferred_when_host_allows": true,
+    "runtime_token_autoload": "off",
+    "runtime_constant": "MMC_KOMMO_TOKEN",
+    "sanitized_legacy_snippet_12": true
+  },
+  "source_hashes": {
+    "12": "5091f66c560eb032653e67510f9fb70fc0711c22",
+    "66": "22116143fcd3a66cf20c41cc88a8c311dfef8a60",
+    "67": "2f8195d1659ac49ce5ca6b70b3ffbbb3652303e0",
+    "70": "ee21ea7d8752b9e182c5035281f6ad365ccde63c"
+  },
+  "production_known_enabled_modules": [
+    "location-menu-fix",
+    "location-answers",
+    "active-events-source",
+    "automatic-ticket-link"
+  ],
+  "production_known_disabled_snippets": [
+    12,
+    66,
+    67,
+    70,
+    101
+  ],
+  "completed_migrations": [
     {
       "module": "location-menu-fix",
       "snippet_id": 67,
@@ -28,17 +59,28 @@
       "risk": "high"
     }
   ],
-  "security": {
-    "hardcoded_ms_kommo_token_removed": true,
-    "runtime_token_source": "non_autoloaded_option:mmc_kommo_runtime_token",
-    "legacy_alias_only_when_needed": false,
-    "legacy_ms_token_required": false,
-    "wp_config_preferred_when_host_allows": true
-  },
-  "source_hashes": {
-    "12": "5091f66c560eb032653e67510f9fb70fc0711c22",
-    "66": "22116143fcd3a66cf20c41cc88a8c311dfef8a60",
-    "67": "2f8195d1659ac49ce5ca6b70b3ffbbb3652303e0",
-    "70": "ee21ea7d8752b9e182c5035281f6ad365ccde63c"
+  "production_verified": {
+    "date": "2026-10-01",
+    "plugin_version": "0.1.1",
+    "enabled_module_count": 4,
+    "system_health": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0
+    },
+    "active_code_snippets": 43,
+    "kommo": {
+      "configured": true,
+      "connected": true,
+      "http_ok": true,
+      "token_source": "MMC_KOMMO_TOKEN",
+      "uses_legacy_token": false
+    },
+    "active_events_source": {
+      "safe": true,
+      "issues": []
+    },
+    "installer_101_active": false
   }
 }
