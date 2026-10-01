@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "plugin": {
+    "slug": "madagaskar-checkout-customizations",
+    "source_version": "0.1.0",
+    "option_key": "mdg_checkout_customizations_modules",
+    "default_behavior": "inert_when_option_empty"
+  },
+  "migration_order": [
+    {
+      "module": "ticket-type-short",
+      "snippet_id": 5,
+      "risk": "low",
+      "smoke": [
+        "Tickera ticket type render"
+      ]
+    },
+    {
+      "module": "checkout-phone-required",
+      "snippet_id": 8,
+      "risk": "low",
+      "smoke": [
+        "WooCommerce checkout phone field required option"
+      ]
+    },
+    {
+      "module": "ticket-buy-cache-clear",
+      "snippet_id": 56,
+      "risk": "medium",
+      "smoke": [
+        "/bilet-al/ nocache headers and page render"
+      ]
+    },
+    {
+      "module": "ticket-pdf-address-fix",
+      "snippet_id": 57,
+      "risk": "medium",
+      "smoke": [
+        "generic MDG event_terms address sanitizer remains registered"
+      ]
+    },
+    {
+      "module": "whatsapp-ticket-access-fix",
+      "snippet_id": 59,
+      "risk": "medium",
+      "smoke": [
+        "/biletlerim/ render and WhatsApp support link"
+      ]
+    },
+    {
+      "module": "ticket-buy-page-v4",
+      "snippet_id": 51,
+      "risk": "high",
+      "smoke": [
+        "/bilet-al/ shortcode page renders active event cards without fatal"
+      ]
+    }
+  ],
+  "excluded_high_risk": [
+    {
+      "snippet_id": 58,
+      "name": "Madagaskar PayTR Bekleme Kilidi V1",
+      "reason": "direct_db_write_and_past_event_specific_sales_lock"
+    }
+  ],
+  "source_hashes": {
+    "5": "f9badcb8c87bd9ea6f3fa3b10e2a7b534993e5ae",
+    "8": "01fa35926b38be513b24d8613ac60c0b8c312b7c",
+    "51": "26cb61ce9cc0cf9c78c3d49388ef2a83c1ff029e",
+    "56": "5650152f7b62bbe4c7eb8ade2ec3cbdc98312688",
+    "57": "b411c13dc98b74cda584f276eae747413578f66d",
+    "59": "ec0de42f8df391bd88448ef843ed189096b80a2a"
+  },
+  "transformations": {
+    "57": "Removed one-time Bartin Tickera event #2124 migration block; retained generic future MDG event_terms sanitizer."
+  }
+}
