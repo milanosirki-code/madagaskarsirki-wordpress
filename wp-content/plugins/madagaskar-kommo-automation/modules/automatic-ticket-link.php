@@ -16,10 +16,6 @@
  * AYARLAR
  * ======================================================= */
 
-if ( ! defined( 'MS_KOMMO_TOKEN' ) && defined( 'MMC_KOMMO_TOKEN' ) ) {
-	define( 'MS_KOMMO_TOKEN', MMC_KOMMO_TOKEN );
-}
-
 if ( ! defined( 'MS_KOMMO_BASE_URL' ) ) {
 	define(
 		'MS_KOMMO_BASE_URL',
@@ -72,6 +68,28 @@ if ( ! function_exists( 'ms_kommo_log' ) ) {
 
 
 /* =========================================================
+ * TOKEN ÇÖZÜMLEME
+ * ======================================================= */
+
+if ( ! function_exists( 'ms_kommo_token_value' ) ) {
+	function ms_kommo_token_value() {
+		if ( defined( 'MMC_KOMMO_TOKEN' ) ) {
+			$token = trim( (string) MMC_KOMMO_TOKEN );
+			if ( '' !== $token ) {
+				return $token;
+			}
+		}
+
+		// Rollback compatibility only. New production should not define this.
+		if ( defined( 'MS_KOMMO_TOKEN' ) ) {
+			return trim( (string) MS_KOMMO_TOKEN );
+		}
+
+		return '';
+	}
+}
+
+/* =========================================================
  * TOKEN KONTROLÜ
  * ======================================================= */
 
@@ -79,20 +97,13 @@ if ( ! function_exists( 'ms_kommo_token_hazir_mi' ) ) {
 
 	function ms_kommo_token_hazir_mi() {
 
-		if ( ! defined( 'MS_KOMMO_TOKEN' ) ) {
-			return false;
-		}
-
-		$token = trim( (string) MS_KOMMO_TOKEN );
+		$token = ms_kommo_token_value();
 
 		if ( empty( $token ) ) {
 			return false;
 		}
 
-		if (
-			'YENI_KOMMO_TOKENINI_BURAYA_YAPISTIR'
-			=== $token
-		) {
+		if ( 'YENI_KOMMO_TOKENINI_BURAYA_YAPISTIR' === $token ) {
 			return false;
 		}
 
@@ -298,7 +309,7 @@ if ( ! function_exists( 'ms_kommo_find_order_lead' ) ) {
 				'timeout' => 20,
 				'headers' => [
 					'Authorization' =>
-						'Bearer ' . MS_KOMMO_TOKEN,
+						'Bearer ' . ms_kommo_token_value(),
 					'Accept' =>
 						'application/json',
 				],
@@ -411,7 +422,7 @@ if ( ! function_exists( 'ms_kommo_write_bilet_url' ) ) {
 				'timeout' => 20,
 				'headers' => [
 					'Authorization' =>
-						'Bearer ' . MS_KOMMO_TOKEN,
+						'Bearer ' . ms_kommo_token_value(),
 					'Content-Type' =>
 						'application/json',
 					'Accept' =>
