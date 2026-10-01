@@ -1,0 +1,60 @@
+{
+  "captured_at": "2026-10-01T12:23:00+03:00",
+  "source": "last_verified_live_state_before_wpvibe_quota_stop",
+  "plugin": {
+    "slug": "madagaskar-ai-abilities",
+    "live_version": "0.2.0",
+    "github_main_version": "0.4.0",
+    "status": "active",
+    "enabled_modules": [
+      "system-health-integrity",
+      "mmc-sales-ledger",
+      "mmc-dashboard",
+      "mmc-tasks"
+    ]
+  },
+  "code_snippets": {
+    "active_count": 60,
+    "migrated_disabled": [
+      80,
+      81,
+      82,
+      89
+    ],
+    "temporary_installer": {
+      "id": 101,
+      "active": false
+    }
+  },
+  "health": {
+    "critical": 0,
+    "warning": 1,
+    "ok": 15,
+    "warning_ids": [
+      "ticket_chain"
+    ]
+  },
+  "verified_sales": {
+    "pursaklar_program_id": 3,
+    "pursaklar_mapping": "4/4",
+    "pursaklar_revenue_diff": 0,
+    "kirikkale_program_id": 2,
+    "kirikkale_mapping": "4/4",
+    "kirikkale_revenue_diff": 0
+  },
+  "next_live_migration": [
+    79,
+    94,
+    78,
+    83,
+    84,
+    85,
+    86,
+    88,
+    87
+  ],
+  "tracking": {
+    "migration_issue": 54,
+    "uncaptured_source_issue": 52
+  }
+}
