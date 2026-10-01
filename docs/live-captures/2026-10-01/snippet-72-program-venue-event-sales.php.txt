@@ -1,0 +1,1857 @@
+
+if ( ! function_exists( 'mdg_ai_programs_can_run' ) ) {
+    function mdg_ai_programs_can_run( $input = null ) {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return new WP_Error( 'mdg_ai_forbidden', 'Bu işlem için yönetici yetkisi gerekir.' );
+        }
+        if ( ! class_exists( 'MMC_Program_Service' ) || ! class_exists( 'MMC_Venue_Service' ) ) {
+            return new WP_Error( 'mdg_ai_mmc_missing', 'Madagaskar Management Center servisleri kullanılamıyor.' );
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_program_to_array' ) ) {
+    function mdg_ai_program_to_array( $program ) {
+        if ( ! $program ) {
+            return array();
+        }
+        $statuses = MMC_Program_Service::statuses();
+        return array(
+            'id'            => (int) $program->id,
+            'program_code'  => (string) $program->program_code,
+            'brand'         => (string) $program->brand,
+            'province_name' => (string) $program->province_name,
+            'district_name' => (string) $program->district_name,
+            'plan_year'     => (int) $program->plan_year,
+            'planned_date'  => (string) ( $program->planned_date ?: '' ),
+            'status'        => (string) $program->status,
+            'status_label'  => isset( $statuses[ $program->status ] ) ? (string) $statuses[ $program->status ] : (string) $program->status,
+            'notes'         => (string) ( $program->notes ?: '' ),
+            'created_at'    => (string) $program->created_at,
+            'updated_at'    => (string) $program->updated_at,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_to_array' ) ) {
+    function mdg_ai_venue_to_array( $venue ) {
+        if ( ! $venue ) {
+            return array();
+        }
+        return array(
+            'id'               => isset( $venue->id ) ? (int) $venue->id : 0,
+            'venue_id'         => isset( $venue->venue_id ) ? (int) $venue->venue_id : ( isset( $venue->id ) ? (int) $venue->id : 0 ),
+            'program_venue_id' => isset( $venue->program_id ) && isset( $venue->id ) ? (int) $venue->id : 0,
+            'venue_name'       => isset( $venue->venue_name ) ? (string) $venue->venue_name : '',
+            'province_name'    => isset( $venue->province_name ) ? (string) $venue->province_name : '',
+            'district_name'    => isset( $venue->district_name ) ? (string) $venue->district_name : '',
+            'address'          => isset( $venue->address ) ? (string) $venue->address : '',
+            'maps_url'         => isset( $venue->maps_url ) ? (string) $venue->maps_url : '',
+            'default_capacity' => isset( $venue->default_capacity ) ? (int) $venue->default_capacity : 0,
+            'contact_name'     => isset( $venue->contact_name ) ? (string) $venue->contact_name : '',
+            'contact_phone'    => isset( $venue->contact_phone ) ? (string) $venue->contact_phone : '',
+            'venue_source'     => isset( $venue->venue_source ) ? (string) $venue->venue_source : MMC_Venue_Service::primary_source(),
+            'is_selected'      => ! empty( $venue->is_selected ),
+            'is_preferred'     => ! empty( $venue->is_preferred ),
+            'allocation_status'=> isset( $venue->allocation_status ) ? (string) $venue->allocation_status : '',
+            'requested_date'   => isset( $venue->requested_date ) ? (string) ( $venue->requested_date ?: '' ) : '',
+            'requested_sessions'=> isset( $venue->requested_sessions ) ? (string) $venue->requested_sessions : '',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_programs_list' ) ) {
+    function mdg_ai_programs_list( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        $rows = MMC_Program_Service::all_programs();
+        $items = array();
+
+        $status   = isset( $input['status'] ) ? sanitize_key( $input['status'] ) : '';
+        $province = isset( $input['province_name'] ) ? sanitize_text_field( $input['province_name'] ) : '';
+        $district = isset( $input['district_name'] ) ? sanitize_text_field( $input['district_name'] ) : '';
+        $search   = isset( $input['search'] ) ? sanitize_text_field( $input['search'] ) : '';
+        $limit    = isset( $input['limit'] ) ? max( 1, min( 100, absint( $input['limit'] ) ) ) : 50;
+
+        foreach ( (array) $rows as $row ) {
+            if ( $status && $row->status !== $status ) {
+                continue;
+            }
+            if ( $province && 0 !== strcasecmp( remove_accents( $row->province_name ), remove_accents( $province ) ) ) {
+                continue;
+            }
+            if ( $district && 0 !== strcasecmp( remove_accents( $row->district_name ), remove_accents( $district ) ) ) {
+                continue;
+            }
+            if ( $search ) {
+                $haystack = $row->program_code . ' ' . $row->province_name . ' ' . $row->district_name . ' ' . (string) $row->notes;
+                if ( false === mb_stripos( $haystack, $search, 0, 'UTF-8' ) ) {
+                    continue;
+                }
+            }
+            $items[] = mdg_ai_program_to_array( $row );
+            if ( count( $items ) >= $limit ) {
+                break;
+            }
+        }
+
+        return array(
+            'count'    => count( $items ),
+            'items'    => $items,
+            'statuses' => MMC_Program_Service::statuses(),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_program_get' ) ) {
+    function mdg_ai_program_get( $input ) {
+        $program_id = absint( $input['program_id'] ?? 0 );
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) {
+            return new WP_Error( 'mdg_ai_program_missing', 'Program bulunamadı.' );
+        }
+
+        $venues = array();
+        foreach ( (array) MMC_Venue_Service::venues_for_program( $program_id ) as $venue ) {
+            $venues[] = mdg_ai_venue_to_array( $venue );
+        }
+
+        $event = array();
+        if ( class_exists( 'MMC_Event_Service' ) && method_exists( 'MMC_Event_Service', 'event_for_program' ) ) {
+            $event_row = MMC_Event_Service::event_for_program( $program_id );
+            if ( $event_row ) {
+                $event = array(
+                    'id'               => (int) $event_row->id,
+                    'event_code'       => (string) $event_row->event_code,
+                    'event_title'      => (string) $event_row->event_title,
+                    'event_date'       => (string) ( $event_row->event_date ?: '' ),
+                    'status'           => (string) $event_row->status,
+                    'program_venue_id' => isset( $event_row->program_venue_id ) ? (int) $event_row->program_venue_id : 0,
+                    'mdg_event_id'     => isset( $event_row->mdg_event_id ) ? (int) $event_row->mdg_event_id : 0,
+                );
+            }
+        }
+
+        return array(
+            'program' => mdg_ai_program_to_array( $program ),
+            'venues'  => $venues,
+            'event'   => $event,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_program_create' ) ) {
+    function mdg_ai_program_create( $input ) {
+        $data = array(
+            'province_name' => sanitize_text_field( $input['province_name'] ?? '' ),
+            'district_name' => sanitize_text_field( $input['district_name'] ?? '' ),
+            'plan_year'     => absint( $input['plan_year'] ?? wp_date( 'Y' ) ),
+            'planned_date'  => sanitize_text_field( $input['planned_date'] ?? '' ),
+            'notes'         => sanitize_textarea_field( $input['notes'] ?? '' ),
+        );
+
+        if ( $data['planned_date'] && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $data['planned_date'] ) ) {
+            return new WP_Error( 'mdg_ai_invalid_date', 'planned_date YYYY-AA-GG biçiminde olmalıdır.' );
+        }
+
+        $program_id = MMC_Program_Service::create_program( $data );
+        if ( is_wp_error( $program_id ) ) {
+            return $program_id;
+        }
+
+        $program = MMC_Program_Service::get_program( $program_id );
+        return array(
+            'created' => true,
+            'program' => mdg_ai_program_to_array( $program ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_program_set_status' ) ) {
+    function mdg_ai_program_set_status( $input ) {
+        $program_id = absint( $input['program_id'] ?? 0 );
+        $status     = sanitize_key( $input['status'] ?? '' );
+        $note       = sanitize_text_field( $input['note'] ?? 'AI işlem katmanı üzerinden durum güncellendi.' );
+
+        $result = MMC_Program_Service::set_status( $program_id, $status, $note );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return array(
+            'updated' => true,
+            'program' => mdg_ai_program_to_array( MMC_Program_Service::get_program( $program_id ) ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_candidates' ) ) {
+    function mdg_ai_venue_candidates( $input ) {
+        $program_id = absint( $input['program_id'] ?? 0 );
+        if ( ! MMC_Program_Service::get_program( $program_id ) ) {
+            return new WP_Error( 'mdg_ai_program_missing', 'Program bulunamadı.' );
+        }
+
+        $search = sanitize_text_field( $input['search'] ?? '' );
+        $limit  = isset( $input['limit'] ) ? max( 1, min( 100, absint( $input['limit'] ) ) ) : 30;
+        $items  = array();
+
+        foreach ( (array) MMC_Venue_Service::venue_candidates_for_program( $program_id ) as $venue ) {
+            if ( $search ) {
+                $haystack = (string) $venue->venue_name . ' ' . (string) $venue->district_name . ' ' . (string) $venue->address;
+                if ( false === mb_stripos( $haystack, $search, 0, 'UTF-8' ) ) {
+                    continue;
+                }
+            }
+            $item = mdg_ai_venue_to_array( $venue );
+            $item['exact_district'] = ! empty( $venue->mmc_exact_district );
+            $items[] = $item;
+            if ( count( $items ) >= $limit ) {
+                break;
+            }
+        }
+
+        return array(
+            'program_id' => $program_id,
+            'count'      => count( $items ),
+            'items'      => $items,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_program_link_venue' ) ) {
+    function mdg_ai_program_link_venue( $input ) {
+        $program_id = absint( $input['program_id'] ?? 0 );
+        $venue_id   = absint( $input['venue_id'] ?? 0 );
+        $source     = sanitize_key( $input['venue_source'] ?? '' );
+
+        $result = MMC_Venue_Service::quick_confirm_master_venue( $program_id, $venue_id, $source );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return array(
+            'linked'  => true,
+            'program' => mdg_ai_program_to_array( MMC_Program_Service::get_program( $program_id ) ),
+            'venue'   => mdg_ai_venue_to_array( $result ),
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_categories_init', function() {
+    if ( function_exists( 'wp_register_ability_category' ) ) {
+        wp_register_ability_category(
+            'madagaskar-programlar',
+            array(
+                'label'       => 'Madagaskar Programlar',
+                'description' => 'Madagaskar Yönetim Merkezi program ve salon bağlantısı işlemleri.',
+            )
+        );
+    }
+} );
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) {
+        return;
+    }
+
+    $public_read = array(
+        'annotations' => array(
+            'readonly'    => true,
+            'destructive' => false,
+            'idempotent'  => true,
+        ),
+        'public' => true,
+    );
+
+    $public_add = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => false,
+            'idempotent'  => false,
+        ),
+        'public' => true,
+    );
+
+    $public_critical = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => true,
+            'idempotent'  => false,
+        ),
+        'public' => true,
+    );
+
+    wp_register_ability(
+        'madagaskar/programs-list',
+        array(
+            'label'       => 'Programları Listele',
+            'description' => 'Madagaskar Yönetim Merkezi programlarını durum, il, ilçe veya arama metnine göre listeler.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'status'        => array( 'type' => 'string' ),
+                    'province_name' => array( 'type' => 'string' ),
+                    'district_name' => array( 'type' => 'string' ),
+                    'search'        => array( 'type' => 'string' ),
+                    'limit'         => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 100 ),
+                ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_programs_list',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_read,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/program-get',
+        array(
+            'label'       => 'Program Detayını Getir',
+            'description' => 'Bir programın temel kaydını, bağlı salonlarını ve varsa MMC etkinlik kaydını getirir.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'program_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'program_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_program_get',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_read,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/program-create',
+        array(
+            'label'       => 'Program Oluştur',
+            'description' => 'MMC Program Service üzerinden yeni program dosyası oluşturur; program kodunu ve başlangıç görevlerini sistemin kendi iş kurallarıyla üretir.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'province_name' => array( 'type' => 'string', 'minLength' => 1 ),
+                    'district_name' => array( 'type' => 'string' ),
+                    'plan_year'     => array( 'type' => 'integer', 'minimum' => 2020, 'maximum' => 2100 ),
+                    'planned_date'  => array( 'type' => 'string', 'pattern' => '^\d{4}-\d{2}-\d{2}$' ),
+                    'notes'         => array( 'type' => 'string' ),
+                ),
+                'required' => array( 'province_name' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_program_create',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_add,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/program-set-status',
+        array(
+            'label'       => 'Program Durumunu Değiştir',
+            'description' => 'MMC Program Service üzerinden program yaşam döngüsü durumunu değiştirir ve işlem günlüğüne kaydeder. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'program_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'status'     => array(
+                        'type' => 'string',
+                        'enum' => array(
+                            'preparation','region_analysis','venue_research','allocation_request',
+                            'allocation_pending','venue_confirmed','venue_payment','event_setup',
+                            'sales_prep','sales_open','promotion','operations','show_day',
+                            'financial_close','deposit_refund','completed','cancelled'
+                        ),
+                    ),
+                    'note' => array( 'type' => 'string' ),
+                ),
+                'required' => array( 'program_id', 'status' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_program_set_status',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_critical,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/venue-candidates',
+        array(
+            'label'       => 'Program İçin Salon Adaylarını Getir',
+            'description' => 'Programın iline göre ana Salonlar kaynağından uygun salon adaylarını getirir; aynı ilçe eşleşmelerini öne alır.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'program_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'search'     => array( 'type' => 'string' ),
+                    'limit'      => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 100 ),
+                ),
+                'required' => array( 'program_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_candidates',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_read,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/program-link-venue',
+        array(
+            'label'       => 'Programa Kesin Salon Bağla',
+            'description' => 'Ana Salonlar kaydındaki mevcut salonu programa kesin salon olarak bağlar; seçili salon ilişkisini ve MMC etkinlik bağlantısını sistem servisleriyle oluşturur. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-programlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'program_id'   => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'venue_id'     => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'venue_source' => array( 'type' => 'string', 'enum' => array( 'mdg', 'legacy' ) ),
+                ),
+                'required' => array( 'program_id', 'venue_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_program_link_venue',
+            'permission_callback' => 'mdg_ai_programs_can_run',
+            'meta'                => $public_critical,
+        )
+    );
+} );
+
+
+
+/* ============================================================
+ * MADAGASKAR AI İŞLEM KATMANI — SALONLAR
+ * Ana kaynak: MDG_Venues / mdg_venues
+ * ============================================================ */
+
+if ( ! function_exists( 'mdg_ai_venues_can_run' ) ) {
+    function mdg_ai_venues_can_run( $input = null ) {
+        if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_woocommerce' ) ) {
+            return new WP_Error( 'mdg_ai_forbidden', 'Bu işlem için yönetici yetkisi gerekir.' );
+        }
+        if ( ! class_exists( 'MDG_Venues' ) || ! class_exists( 'MDG_DB' ) ) {
+            return new WP_Error( 'mdg_ai_venues_missing', 'Madagaskar Salonlar servisi kullanılamıyor.' );
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_private_static_call' ) ) {
+    function mdg_ai_private_static_call( $class, $method, $args = array() ) {
+        try {
+            $ref = new ReflectionMethod( $class, $method );
+            if ( ! $ref->isPublic() ) {
+                $ref->setAccessible( true );
+            }
+            return $ref->invokeArgs( null, $args );
+        } catch ( Throwable $e ) {
+            return new WP_Error(
+                'mdg_ai_private_call_failed',
+                'Salon servis yordamcısı çalıştırılamadı: ' . $method
+            );
+        }
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_master_venue_to_array' ) ) {
+    function mdg_ai_master_venue_to_array( $venue ) {
+        if ( ! $venue ) {
+            return array();
+        }
+        return array(
+            'id'                => isset( $venue->id ) ? (int) $venue->id : 0,
+            'name'              => isset( $venue->name ) ? (string) $venue->name : '',
+            'province_code'     => isset( $venue->province_code ) ? (string) $venue->province_code : '',
+            'province_name'     => isset( $venue->province_name ) ? (string) $venue->province_name : '',
+            'district'          => isset( $venue->district ) ? (string) $venue->district : '',
+            'address'           => isset( $venue->address ) ? (string) $venue->address : '',
+            'latitude'          => isset( $venue->latitude ) && null !== $venue->latitude ? (float) $venue->latitude : null,
+            'longitude'         => isset( $venue->longitude ) && null !== $venue->longitude ? (float) $venue->longitude : null,
+            'maps_url'          => isset( $venue->maps_url ) ? (string) $venue->maps_url : '',
+            'default_capacity'  => isset( $venue->default_capacity ) ? (int) $venue->default_capacity : 0,
+            'default_duration'  => isset( $venue->default_duration ) ? (int) $venue->default_duration : 60,
+            'contact_name'      => isset( $venue->contact_name ) ? (string) $venue->contact_name : '',
+            'contact_phone'     => isset( $venue->contact_phone ) ? (string) $venue->contact_phone : '',
+            'notes'             => isset( $venue->notes ) ? (string) $venue->notes : '',
+            'is_active'         => ! empty( $venue->is_active ),
+            'location_qr_attachment_id' => isset( $venue->location_qr_attachment_id ) ? (int) $venue->location_qr_attachment_id : 0,
+            'created_at'        => isset( $venue->created_at ) ? (string) $venue->created_at : '',
+            'updated_at'        => isset( $venue->updated_at ) ? (string) $venue->updated_at : '',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_place_key' ) ) {
+    function mdg_ai_place_key( $value ) {
+        $value = trim( (string) $value );
+        $value = remove_accents( $value );
+        if ( function_exists( 'mb_strtolower' ) ) {
+            $value = mb_strtolower( $value, 'UTF-8' );
+        } else {
+            $value = strtolower( $value );
+        }
+        return preg_replace( '/[^a-z0-9]+/u', '', $value );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_resolve_province_code' ) ) {
+    function mdg_ai_resolve_province_code( $province_code = '', $province_name = '' ) {
+        $provinces = (array) MDG_Venues::provinces();
+
+        $province_code = sanitize_text_field( (string) $province_code );
+        if ( $province_code && isset( $provinces[ $province_code ] ) ) {
+            return $province_code;
+        }
+
+        $needle = mdg_ai_place_key( $province_name );
+        if ( $needle ) {
+            foreach ( $provinces as $code => $name ) {
+                if ( mdg_ai_place_key( $name ) === $needle ) {
+                    return (string) $code;
+                }
+            }
+        }
+
+        return '';
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venues_list' ) ) {
+    function mdg_ai_venues_list( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        $active_only = array_key_exists( 'active_only', $input ) ? (bool) $input['active_only'] : true;
+        $province = sanitize_text_field( $input['province_name'] ?? '' );
+        $district = sanitize_text_field( $input['district'] ?? '' );
+        $search   = sanitize_text_field( $input['search'] ?? '' );
+        $limit    = isset( $input['limit'] ) ? max( 1, min( 200, absint( $input['limit'] ) ) ) : 50;
+
+        $items = array();
+        foreach ( (array) MDG_Venues::all( $active_only ) as $venue ) {
+            if ( $province && mdg_ai_place_key( $venue->province_name ?? '' ) !== mdg_ai_place_key( $province ) ) {
+                continue;
+            }
+            if ( $district && mdg_ai_place_key( $venue->district ?? '' ) !== mdg_ai_place_key( $district ) ) {
+                continue;
+            }
+            if ( $search ) {
+                $haystack = implode( ' ', array(
+                    (string) ( $venue->name ?? '' ),
+                    (string) ( $venue->province_name ?? '' ),
+                    (string) ( $venue->district ?? '' ),
+                    (string) ( $venue->address ?? '' ),
+                    (string) ( $venue->contact_name ?? '' ),
+                    (string) ( $venue->contact_phone ?? '' ),
+                ) );
+                if ( false === mb_stripos( $haystack, $search, 0, 'UTF-8' ) ) {
+                    continue;
+                }
+            }
+            $items[] = mdg_ai_master_venue_to_array( $venue );
+            if ( count( $items ) >= $limit ) {
+                break;
+            }
+        }
+
+        return array(
+            'count' => count( $items ),
+            'items' => $items,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_get' ) ) {
+    function mdg_ai_venue_get( $input ) {
+        $venue_id = absint( $input['venue_id'] ?? 0 );
+        $venue = MDG_Venues::get( $venue_id );
+        if ( ! $venue ) {
+            return new WP_Error( 'mdg_ai_venue_missing', 'Salon bulunamadı.' );
+        }
+        return array( 'venue' => mdg_ai_master_venue_to_array( $venue ) );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_location_options' ) ) {
+    function mdg_ai_venue_location_options( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        $provinces = (array) MDG_Venues::provinces();
+        $code = mdg_ai_resolve_province_code(
+            $input['province_code'] ?? '',
+            $input['province_name'] ?? ''
+        );
+
+        $districts_all = (array) MDG_Venues::districts();
+        $districts = array();
+
+        if ( $code && isset( $districts_all[ $code ] ) ) {
+            $districts = array_values( (array) $districts_all[ $code ] );
+        }
+
+        return array(
+            'province_code' => $code,
+            'province_name' => $code && isset( $provinces[ $code ] ) ? (string) $provinces[ $code ] : '',
+            'districts'     => $districts,
+            'provinces'     => $code ? array() : $provinces,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_save' ) ) {
+    function mdg_ai_venue_save( $input, $venue_id = 0 ) {
+        global $wpdb;
+
+        $venue_id = absint( $venue_id );
+        $old = $venue_id ? MDG_Venues::get( $venue_id ) : null;
+
+        if ( $venue_id && ! $old ) {
+            return new WP_Error( 'mdg_ai_venue_missing', 'Güncellenecek salon bulunamadı.' );
+        }
+
+        $province_code = mdg_ai_resolve_province_code(
+            $input['province_code'] ?? ( $old->province_code ?? '' ),
+            $input['province_name'] ?? ( $old->province_name ?? '' )
+        );
+        $provinces = (array) MDG_Venues::provinces();
+        $province_name = $province_code && isset( $provinces[ $province_code ] ) ? (string) $provinces[ $province_code ] : '';
+
+        $district = sanitize_text_field(
+            $input['district'] ?? ( $old->district ?? '' )
+        );
+        $district = MDG_Venues::canonical_district_name( $province_code, $district );
+
+        $name = sanitize_text_field(
+            $input['name'] ?? ( $old->name ?? '' )
+        );
+
+        $address = sanitize_textarea_field(
+            $input['address'] ?? ( $old->address ?? '' )
+        );
+
+        $maps_raw = array_key_exists( 'maps_url', $input )
+            ? (string) $input['maps_url']
+            : (string) ( $old->maps_url ?? '' );
+
+        $maps_url = mdg_ai_private_static_call(
+            'MDG_Venues',
+            'validate_maps_url',
+            array( $maps_raw )
+        );
+        if ( is_wp_error( $maps_url ) ) {
+            return $maps_url;
+        }
+
+        $latitude = array_key_exists( 'latitude', $input )
+            ? ( null === $input['latitude'] || '' === $input['latitude'] ? null : (float) $input['latitude'] )
+            : ( isset( $old->latitude ) ? ( null === $old->latitude ? null : (float) $old->latitude ) : null );
+
+        $longitude = array_key_exists( 'longitude', $input )
+            ? ( null === $input['longitude'] || '' === $input['longitude'] ? null : (float) $input['longitude'] )
+            : ( isset( $old->longitude ) ? ( null === $old->longitude ? null : (float) $old->longitude ) : null );
+
+        $data = array(
+            'name'             => $name,
+            'province_code'    => $province_code,
+            'province_name'    => $province_name,
+            'district'         => $district,
+            'address'          => $address,
+            'latitude'         => $latitude,
+            'longitude'        => $longitude,
+            'maps_url'         => $maps_url,
+            'contact_name'     => sanitize_text_field( $input['contact_name'] ?? ( $old->contact_name ?? '' ) ),
+            'contact_phone'    => sanitize_text_field( $input['contact_phone'] ?? ( $old->contact_phone ?? '' ) ),
+            'default_capacity' => max( 1, absint( $input['default_capacity'] ?? ( $old->default_capacity ?? 500 ) ) ),
+            'default_duration' => min( 360, max( 15, absint( $input['default_duration'] ?? ( $old->default_duration ?? 60 ) ) ) ),
+            'notes'            => sanitize_textarea_field( $input['notes'] ?? ( $old->notes ?? '' ) ),
+            'is_active'        => array_key_exists( 'is_active', $input ) ? ( $input['is_active'] ? 1 : 0 ) : ( $old ? (int) $old->is_active : 1 ),
+            'updated_at'       => MDG_DB::now(),
+        );
+
+        if ( ! $data['name'] || ! $data['province_code'] || ! $data['province_name'] || ! $data['district'] || ! $data['address'] ) {
+            return new WP_Error( 'mdg_ai_venue_required', 'İl, ilçe, salon adı ve adres zorunludur.' );
+        }
+
+        if ( ! MDG_Venues::district_is_valid( $province_code, $district ) ) {
+            return new WP_Error( 'mdg_ai_venue_district', 'Seçilen ilçe bu ile ait görünmüyor.' );
+        }
+
+        $duplicate = mdg_ai_private_static_call(
+            'MDG_Venues',
+            'duplicate_id',
+            array( $province_code, $district, $name, $venue_id )
+        );
+        if ( is_wp_error( $duplicate ) ) {
+            return $duplicate;
+        }
+        if ( $duplicate ) {
+            return new WP_Error( 'mdg_ai_venue_duplicate', 'Bu il / ilçe içinde aynı isimde bir salon zaten kayıtlı.' );
+        }
+
+        if ( null !== $latitude && ( $latitude < -90 || $latitude > 90 ) ) {
+            return new WP_Error( 'mdg_ai_venue_latitude', 'Enlem -90 ile 90 arasında olmalıdır.' );
+        }
+
+        if ( null !== $longitude && ( $longitude < -180 || $longitude > 180 ) ) {
+            return new WP_Error( 'mdg_ai_venue_longitude', 'Boylam -180 ile 180 arasında olmalıdır.' );
+        }
+
+        $table = MDG_DB::table( 'venues' );
+
+        if ( $venue_id ) {
+            $ok = $wpdb->update( $table, $data, array( 'id' => $venue_id ) );
+            if ( false === $ok ) {
+                return new WP_Error( 'mdg_ai_venue_update_failed', 'Salon güncellenemedi.' );
+            }
+            $action_key = 'venue.updated';
+        } else {
+            $data['created_at'] = MDG_DB::now();
+            $ok = $wpdb->insert( $table, $data );
+            if ( false === $ok ) {
+                return new WP_Error( 'mdg_ai_venue_insert_failed', 'Salon kaydedilemedi.' );
+            }
+            $venue_id = (int) $wpdb->insert_id;
+            $action_key = 'venue.created';
+        }
+
+        $audit = mdg_ai_private_static_call(
+            'MDG_Venues',
+            'audit',
+            array( $action_key, $venue_id, $data )
+        );
+
+        $warning = mdg_ai_private_static_call(
+            'MDG_Venues',
+            'sync_location_qr_after_save',
+            array( $venue_id, $old, $maps_url )
+        );
+
+        $saved = MDG_Venues::get( $venue_id );
+        do_action( 'mdg_venue_saved', $venue_id, $saved );
+
+        return array(
+            'saved'   => true,
+            'created' => ! $old,
+            'warning' => is_wp_error( $warning ) ? $warning->get_error_message() : (string) $warning,
+            'venue'   => mdg_ai_master_venue_to_array( $saved ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_create' ) ) {
+    function mdg_ai_venue_create( $input ) {
+        return mdg_ai_venue_save( $input, 0 );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_update' ) ) {
+    function mdg_ai_venue_update( $input ) {
+        $venue_id = absint( $input['venue_id'] ?? 0 );
+        if ( ! $venue_id ) {
+            return new WP_Error( 'mdg_ai_venue_id_required', 'venue_id zorunludur.' );
+        }
+        unset( $input['venue_id'] );
+        return mdg_ai_venue_save( $input, $venue_id );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_venue_set_active' ) ) {
+    function mdg_ai_venue_set_active( $input ) {
+        $venue_id = absint( $input['venue_id'] ?? 0 );
+        if ( ! $venue_id ) {
+            return new WP_Error( 'mdg_ai_venue_id_required', 'venue_id zorunludur.' );
+        }
+        return mdg_ai_venue_save(
+            array( 'is_active' => ! empty( $input['is_active'] ) ),
+            $venue_id
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_categories_init', function() {
+    if ( function_exists( 'wp_register_ability_category' ) ) {
+        wp_register_ability_category(
+            'madagaskar-salonlar',
+            array(
+                'label'       => 'Madagaskar Salonlar',
+                'description' => 'Madagaskar Bilet Yönetimi ana salon kayıtları için güvenli AI işlemleri.',
+            )
+        );
+    }
+} );
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) {
+        return;
+    }
+
+    $read_meta = array(
+        'annotations' => array(
+            'readonly'    => true,
+            'destructive' => false,
+            'idempotent'  => true,
+        ),
+        'public' => true,
+    );
+
+    $create_meta = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => false,
+            'idempotent'  => false,
+        ),
+        'public' => true,
+    );
+
+    $critical_meta = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => true,
+            'idempotent'  => false,
+        ),
+        'public' => true,
+    );
+
+    wp_register_ability(
+        'madagaskar/venues-list',
+        array(
+            'label'       => 'Salonları Listele',
+            'description' => 'Ana Salonlar kaynağındaki salonları il, ilçe, aktiflik ve arama metnine göre listeler.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'active_only'   => array( 'type' => 'boolean' ),
+                    'province_name' => array( 'type' => 'string' ),
+                    'district'      => array( 'type' => 'string' ),
+                    'search'        => array( 'type' => 'string' ),
+                    'limit'         => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 200 ),
+                ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venues_list',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/venue-get',
+        array(
+            'label'       => 'Salon Detayını Getir',
+            'description' => 'Ana Salonlar kaynağından tek salonun ayrıntılarını getirir.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'venue_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'venue_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_get',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/venue-location-options',
+        array(
+            'label'       => 'Salon İl ve İlçelerini Getir',
+            'description' => 'Salon kaydı için geçerli il ve ilçe seçeneklerini getirir.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'province_code' => array( 'type' => 'string' ),
+                    'province_name' => array( 'type' => 'string' ),
+                ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_location_options',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    $venue_fields = array(
+        'province_code'    => array( 'type' => 'string' ),
+        'province_name'    => array( 'type' => 'string' ),
+        'district'         => array( 'type' => 'string' ),
+        'name'             => array( 'type' => 'string' ),
+        'address'          => array( 'type' => 'string' ),
+        'latitude'         => array( 'type' => array( 'number', 'null' ) ),
+        'longitude'        => array( 'type' => array( 'number', 'null' ) ),
+        'maps_url'         => array( 'type' => 'string' ),
+        'contact_name'     => array( 'type' => 'string' ),
+        'contact_phone'    => array( 'type' => 'string' ),
+        'default_capacity' => array( 'type' => 'integer', 'minimum' => 1 ),
+        'default_duration' => array( 'type' => 'integer', 'minimum' => 15, 'maximum' => 360 ),
+        'notes'            => array( 'type' => 'string' ),
+        'is_active'        => array( 'type' => 'boolean' ),
+    );
+
+    wp_register_ability(
+        'madagaskar/venue-create',
+        array(
+            'label'       => 'Salon Oluştur',
+            'description' => 'Ana Salonlar kaynağına yeni salon ekler. İl/ilçe, tekrar, harita URL ve koordinat doğrulamalarını uygular; audit ve konum QR akışını çalıştırır.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type'       => 'object',
+                'properties' => $venue_fields,
+                'required'   => array( 'district', 'name', 'address' ),
+                'anyOf'      => array(
+                    array( 'required' => array( 'province_code' ) ),
+                    array( 'required' => array( 'province_name' ) ),
+                ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_create',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $create_meta,
+        )
+    );
+
+    $update_fields = $venue_fields;
+    $update_fields['venue_id'] = array( 'type' => 'integer', 'minimum' => 1 );
+
+    wp_register_ability(
+        'madagaskar/venue-update',
+        array(
+            'label'       => 'Salon Güncelle',
+            'description' => 'Mevcut salon kaydını kısmi olarak günceller; ana eklentinin doğrulama, audit ve konum QR kurallarını korur. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type'       => 'object',
+                'properties' => $update_fields,
+                'required'   => array( 'venue_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_update',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/venue-set-active',
+        array(
+            'label'       => 'Salonu Aktif/Pasif Yap',
+            'description' => 'Salon ana kaydının aktiflik durumunu değiştirir. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-salonlar',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'venue_id'  => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'is_active' => array( 'type' => 'boolean' ),
+                ),
+                'required' => array( 'venue_id', 'is_active' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_venue_set_active',
+            'permission_callback' => 'mdg_ai_venues_can_run',
+            'meta'                => $critical_meta,
+        )
+    );
+} );
+
+
+
+/* ============================================================
+ * MADAGASKAR AI İŞLEM KATMANI — ETKİNLİKLER + SEANSLAR
+ * Ana servis: MMC_Event_Service
+ * ============================================================ */
+
+if ( ! function_exists( 'mdg_ai_events_can_run' ) ) {
+    function mdg_ai_events_can_run( $input = null ) {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return new WP_Error( 'mdg_ai_forbidden', 'Bu işlem için yönetici yetkisi gerekir.' );
+        }
+        if ( ! class_exists( 'MMC_Event_Service' ) || ! class_exists( 'MMC_Program_Service' ) ) {
+            return new WP_Error( 'mdg_ai_event_service_missing', 'Madagaskar etkinlik servisleri kullanılamıyor.' );
+        }
+        return true;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_event_to_array' ) ) {
+    function mdg_ai_event_to_array( $event ) {
+        if ( ! $event ) {
+            return array();
+        }
+        $statuses = MMC_Event_Service::event_statuses();
+        return array(
+            'id'                => (int) $event->id,
+            'program_id'        => (int) $event->program_id,
+            'program_venue_id'  => isset( $event->program_venue_id ) ? (int) $event->program_venue_id : 0,
+            'event_code'        => (string) $event->event_code,
+            'event_title'       => (string) $event->event_title,
+            'event_date'        => (string) ( $event->event_date ?: '' ),
+            'seating_mode'      => (string) $event->seating_mode,
+            'door_open_minutes' => (int) $event->door_open_minutes,
+            'status'            => (string) $event->status,
+            'status_label'      => isset( $statuses[ $event->status ] ) ? (string) $statuses[ $event->status ] : (string) $event->status,
+            'notes'             => isset( $event->notes ) ? (string) ( $event->notes ?: '' ) : '',
+            'mdg_event_id'      => isset( $event->mdg_event_id ) ? (int) $event->mdg_event_id : 0,
+            'mdg_synced_at'     => isset( $event->mdg_synced_at ) ? (string) ( $event->mdg_synced_at ?: '' ) : '',
+            'created_at'        => isset( $event->created_at ) ? (string) $event->created_at : '',
+            'updated_at'        => isset( $event->updated_at ) ? (string) $event->updated_at : '',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_session_to_array' ) ) {
+    function mdg_ai_session_to_array( $session ) {
+        if ( ! $session ) {
+            return array();
+        }
+        return array(
+            'id'           => (int) $session->id,
+            'event_id'     => (int) $session->event_id,
+            'session_time' => (string) $session->session_time,
+            'capacity'     => (int) $session->capacity,
+            'status'       => isset( $session->status ) ? (string) $session->status : '',
+            'notes'        => isset( $session->notes ) ? (string) ( $session->notes ?: '' ) : '',
+            'created_at'   => isset( $session->created_at ) ? (string) $session->created_at : '',
+            'updated_at'   => isset( $session->updated_at ) ? (string) $session->updated_at : '',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_events_list' ) ) {
+    function mdg_ai_events_list( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+        $status   = sanitize_key( $input['status'] ?? '' );
+        $province = sanitize_text_field( $input['province_name'] ?? '' );
+        $district = sanitize_text_field( $input['district_name'] ?? '' );
+        $search   = sanitize_text_field( $input['search'] ?? '' );
+        $limit    = isset( $input['limit'] ) ? max( 1, min( 100, absint( $input['limit'] ) ) ) : 50;
+
+        $items = array();
+
+        foreach ( (array) MMC_Program_Service::all_programs() as $program ) {
+            if ( $province && mdg_ai_place_key( $program->province_name ) !== mdg_ai_place_key( $province ) ) {
+                continue;
+            }
+            if ( $district && mdg_ai_place_key( $program->district_name ) !== mdg_ai_place_key( $district ) ) {
+                continue;
+            }
+
+            $event = MMC_Event_Service::event_for_program( $program->id );
+            if ( ! $event ) {
+                continue;
+            }
+            if ( $status && $event->status !== $status ) {
+                continue;
+            }
+            if ( $search ) {
+                $haystack = implode( ' ', array(
+                    (string) $event->event_code,
+                    (string) $event->event_title,
+                    (string) $program->program_code,
+                    (string) $program->province_name,
+                    (string) $program->district_name,
+                ) );
+                if ( false === mb_stripos( $haystack, $search, 0, 'UTF-8' ) ) {
+                    continue;
+                }
+            }
+
+            $item = mdg_ai_event_to_array( $event );
+            $item['program'] = mdg_ai_program_to_array( $program );
+            $item['session_count'] = count( MMC_Event_Service::sessions( $event->id ) );
+            $readiness = MMC_Event_Service::sales_readiness( $event->id );
+            $item['sales_ready'] = ! empty( $readiness['ready'] );
+            $item['sales_issues'] = isset( $readiness['issues'] ) ? array_values( $readiness['issues'] ) : array();
+            $items[] = $item;
+
+            if ( count( $items ) >= $limit ) {
+                break;
+            }
+        }
+
+        return array(
+            'count'    => count( $items ),
+            'items'    => $items,
+            'statuses' => MMC_Event_Service::event_statuses(),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_event_get' ) ) {
+    function mdg_ai_event_get( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $event = MMC_Event_Service::get_event( $event_id );
+        if ( ! $event ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+
+        $program = MMC_Program_Service::get_program( $event->program_id );
+        $sessions = array();
+        foreach ( (array) MMC_Event_Service::sessions( $event_id ) as $session ) {
+            $sessions[] = mdg_ai_session_to_array( $session );
+        }
+
+        $venue = array();
+        if ( ! empty( $event->program_venue_id ) && class_exists( 'MMC_Venue_Service' ) ) {
+            $venue_row = MMC_Venue_Service::get_program_venue( $event->program_venue_id );
+            if ( $venue_row ) {
+                $venue = mdg_ai_venue_to_array( $venue_row );
+            }
+        }
+
+        return array(
+            'event'           => mdg_ai_event_to_array( $event ),
+            'program'         => $program ? mdg_ai_program_to_array( $program ) : array(),
+            'venue'           => $venue,
+            'sessions'        => $sessions,
+            'sales_readiness' => MMC_Event_Service::sales_readiness( $event_id ),
+            'integrations'     => array_map(
+                function( $row ) {
+                    return array(
+                        'id'             => (int) $row->id,
+                        'channel'        => (string) $row->channel,
+                        'status'         => (string) $row->status,
+                        'external_id'    => isset( $row->external_id ) ? (string) $row->external_id : '',
+                        'external_url'   => isset( $row->external_url ) ? (string) $row->external_url : '',
+                        'notes'          => isset( $row->notes ) ? (string) ( $row->notes ?: '' ) : '',
+                        'last_synced_at' => isset( $row->last_synced_at ) ? (string) ( $row->last_synced_at ?: '' ) : '',
+                    );
+                },
+                (array) MMC_Event_Service::integrations( $event_id )
+            ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_event_ensure' ) ) {
+    function mdg_ai_event_ensure( $input ) {
+        $program_id = absint( $input['program_id'] ?? 0 );
+        $program_venue_id = absint( $input['program_venue_id'] ?? 0 );
+
+        if ( ! MMC_Program_Service::get_program( $program_id ) ) {
+            return new WP_Error( 'mdg_ai_program_missing', 'Program bulunamadı.' );
+        }
+
+        $event_id = MMC_Event_Service::ensure_event_for_program( $program_id, $program_venue_id );
+        if ( is_wp_error( $event_id ) ) {
+            return $event_id;
+        }
+
+        return array(
+            'ensured' => true,
+            'event'   => mdg_ai_event_to_array( MMC_Event_Service::get_event( $event_id ) ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_event_update' ) ) {
+    function mdg_ai_event_update( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $event = MMC_Event_Service::get_event( $event_id );
+        if ( ! $event ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+
+        $data = array(
+            'event_title'       => array_key_exists( 'event_title', $input ) ? sanitize_text_field( $input['event_title'] ) : $event->event_title,
+            'event_date'        => array_key_exists( 'event_date', $input ) ? sanitize_text_field( $input['event_date'] ) : $event->event_date,
+            'seating_mode'      => array_key_exists( 'seating_mode', $input ) ? sanitize_key( $input['seating_mode'] ) : $event->seating_mode,
+            'door_open_minutes' => array_key_exists( 'door_open_minutes', $input ) ? absint( $input['door_open_minutes'] ) : $event->door_open_minutes,
+            'notes'             => array_key_exists( 'notes', $input ) ? sanitize_textarea_field( $input['notes'] ) : $event->notes,
+        );
+
+        $ok = MMC_Event_Service::save_event( $event_id, $data );
+        if ( is_wp_error( $ok ) ) {
+            return $ok;
+        }
+
+        return array(
+            'updated' => true,
+            'event'   => mdg_ai_event_to_array( MMC_Event_Service::get_event( $event_id ) ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_sessions_list' ) ) {
+    function mdg_ai_sessions_list( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        if ( ! MMC_Event_Service::get_event( $event_id ) ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+
+        $items = array();
+        foreach ( (array) MMC_Event_Service::sessions( $event_id ) as $session ) {
+            $items[] = mdg_ai_session_to_array( $session );
+        }
+
+        return array(
+            'event_id' => $event_id,
+            'count'    => count( $items ),
+            'items'    => $items,
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_session_add' ) ) {
+    function mdg_ai_session_add( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $session_time = sanitize_text_field( $input['session_time'] ?? '' );
+        $capacity = absint( $input['capacity'] ?? 0 );
+        $notes = sanitize_textarea_field( $input['notes'] ?? '' );
+
+        $session_id = MMC_Event_Service::add_session( $event_id, $session_time, $capacity, $notes );
+        if ( is_wp_error( $session_id ) ) {
+            return $session_id;
+        }
+
+        foreach ( (array) MMC_Event_Service::sessions( $event_id ) as $session ) {
+            if ( (int) $session->id === (int) $session_id ) {
+                return array(
+                    'created' => true,
+                    'session' => mdg_ai_session_to_array( $session ),
+                    'event'   => mdg_ai_event_to_array( MMC_Event_Service::get_event( $event_id ) ),
+                );
+            }
+        }
+
+        return array( 'created' => true, 'session_id' => (int) $session_id );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_session_delete' ) ) {
+    function mdg_ai_session_delete( $input ) {
+        $session_id = absint( $input['session_id'] ?? 0 );
+        $ok = MMC_Event_Service::delete_session( $session_id );
+        if ( is_wp_error( $ok ) ) {
+            return $ok;
+        }
+        return array( 'deleted' => true, 'session_id' => $session_id );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_event_sales_readiness' ) ) {
+    function mdg_ai_event_sales_readiness( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        if ( ! MMC_Event_Service::get_event( $event_id ) ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+
+        return array(
+            'event_id' => $event_id,
+            'result'   => MMC_Event_Service::sales_readiness( $event_id ),
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_categories_init', function() {
+    if ( function_exists( 'wp_register_ability_category' ) ) {
+        wp_register_ability_category(
+            'madagaskar-etkinlikler',
+            array(
+                'label'       => 'Madagaskar Etkinlikler ve Seanslar',
+                'description' => 'Programdan üretilen etkinlik ve seansların güvenli AI işlemleri.',
+            )
+        );
+    }
+} );
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) {
+        return;
+    }
+
+    $read_meta = array(
+        'annotations' => array(
+            'readonly'    => true,
+            'destructive' => false,
+            'idempotent'  => true,
+        ),
+        'public' => true,
+    );
+
+    $ensure_meta = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => false,
+            'idempotent'  => true,
+        ),
+        'public' => true,
+    );
+
+    $critical_meta = array(
+        'annotations' => array(
+            'readonly'    => false,
+            'destructive' => true,
+            'idempotent'  => false,
+        ),
+        'public' => true,
+    );
+
+    wp_register_ability(
+        'madagaskar/events-list',
+        array(
+            'label'       => 'Etkinlikleri Listele',
+            'description' => 'MMC programlarına bağlı etkinlikleri durum, il, ilçe veya arama metnine göre listeler.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'status'        => array( 'type' => 'string', 'enum' => array( 'draft','configured','sales_ready','sales_open','closed','cancelled' ) ),
+                    'province_name' => array( 'type' => 'string' ),
+                    'district_name' => array( 'type' => 'string' ),
+                    'search'        => array( 'type' => 'string' ),
+                    'limit'         => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 100 ),
+                ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_events_list',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/event-get',
+        array(
+            'label'       => 'Etkinlik Detayını Getir',
+            'description' => 'Etkinliğin program, kesin salon, seans, satış hazırlığı ve entegrasyon durumlarını getirir.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_event_get',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/event-ensure-for-program',
+        array(
+            'label'       => 'Program İçin Etkinlik Oluştur/Garanti Et',
+            'description' => 'MMC servis katmanı üzerinden program için etkinlik taslağının varlığını garanti eder; mevcutsa tekrar oluşturmaz.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'program_id'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'program_venue_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'program_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_event_ensure',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $ensure_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/event-update',
+        array(
+            'label'       => 'Etkinlik Bilgilerini Güncelle',
+            'description' => 'Etkinlik başlığı, tarihi, oturma düzeni, kapı açılış süresi ve notlarını MMC servis katmanı üzerinden günceller. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id'          => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'event_title'       => array( 'type' => 'string' ),
+                    'event_date'        => array( 'type' => 'string', 'pattern' => '^\\d{4}-\\d{2}-\\d{2}$' ),
+                    'seating_mode'      => array( 'type' => 'string', 'enum' => array( 'free','numbered' ) ),
+                    'door_open_minutes' => array( 'type' => 'integer', 'minimum' => 0, 'maximum' => 180 ),
+                    'notes'             => array( 'type' => 'string' ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_event_update',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/sessions-list',
+        array(
+            'label'       => 'Seansları Listele',
+            'description' => 'Bir etkinliğe bağlı seansları tarih/saat sırasıyla listeler.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_sessions_list',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/session-add',
+        array(
+            'label'       => 'Seans Ekle',
+            'description' => 'MMC servis katmanı üzerinden etkinliğe seans ekler; mükerrer saat kontrolü ve program işlem günlüğünü uygular. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id'     => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'session_time' => array( 'type' => 'string', 'description' => 'YYYY-AA-GG SS:DD veya YYYY-AA-GGTSS:DD' ),
+                    'capacity'     => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'notes'        => array( 'type' => 'string' ),
+                ),
+                'required' => array( 'event_id', 'session_time', 'capacity' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_session_add',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/session-delete',
+        array(
+            'label'       => 'Seansı Sil',
+            'description' => 'MMC servis katmanı üzerinden seansı siler ve program işlem günlüğüne kaydeder. Kritik yazma işlemidir.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'session_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'session_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_session_delete',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/event-sales-readiness',
+        array(
+            'label'       => 'Etkinlik Satış Hazırlığını Kontrol Et',
+            'description' => 'Etkinliğin tarih, kesin salon, seans kapasitesi ve aktif bilet türü açısından satışa hazırlık durumunu salt okunur kontrol eder.',
+            'category'    => 'madagaskar-etkinlikler',
+            'input_schema'=> array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema'       => array( 'type' => 'object' ),
+            'execute_callback'    => 'mdg_ai_event_sales_readiness',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta'                => $read_meta,
+        )
+    );
+} );
+
+
+
+/* ============================================================
+ * MADAGASKAR AI İŞLEM KATMANI — BİLET / FİYAT / SATIŞ
+ * Ana servis: MMC_Event_Service
+ * ============================================================ */
+
+if ( ! function_exists( 'mdg_ai_ticket_to_array' ) ) {
+    function mdg_ai_ticket_to_array( $ticket ) {
+        if ( ! $ticket ) return array();
+        return array(
+            'id'             => (int) $ticket->id,
+            'event_id'       => (int) $ticket->event_id,
+            'ticket_code'    => (string) $ticket->ticket_code,
+            'ticket_name'    => (string) $ticket->ticket_name,
+            'age_min'        => null === $ticket->age_min ? null : (int) $ticket->age_min,
+            'age_max'        => null === $ticket->age_max ? null : (int) $ticket->age_max,
+            'price'          => (float) $ticket->price,
+            'capacity_units' => (int) $ticket->capacity_units,
+            'sort_order'     => (int) $ticket->sort_order,
+            'is_active'      => ! empty( $ticket->is_active ),
+            'created_at'     => isset( $ticket->created_at ) ? (string) $ticket->created_at : '',
+            'updated_at'     => isset( $ticket->updated_at ) ? (string) $ticket->updated_at : '',
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_ticket_types_list' ) ) {
+    function mdg_ai_ticket_types_list( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        if ( ! MMC_Event_Service::get_event( $event_id ) ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+        $items = array();
+        foreach ( (array) MMC_Event_Service::ticket_types( $event_id ) as $ticket ) {
+            $items[] = mdg_ai_ticket_to_array( $ticket );
+        }
+        return array( 'event_id' => $event_id, 'count' => count( $items ), 'items' => $items );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_ticket_type_update' ) ) {
+    function mdg_ai_ticket_type_update( $input ) {
+        $ticket_id = absint( $input['ticket_id'] ?? 0 );
+        if ( ! $ticket_id ) {
+            return new WP_Error( 'mdg_ai_ticket_id_required', 'ticket_id zorunludur.' );
+        }
+
+        $found = null;
+        $event_id = 0;
+        foreach ( (array) MMC_Program_Service::all_programs() as $program ) {
+            $event = MMC_Event_Service::event_for_program( $program->id );
+            if ( ! $event ) continue;
+            foreach ( (array) MMC_Event_Service::ticket_types( $event->id ) as $ticket ) {
+                if ( (int) $ticket->id === $ticket_id ) {
+                    $found = $ticket;
+                    $event_id = (int) $event->id;
+                    break 2;
+                }
+            }
+        }
+        if ( ! $found ) {
+            return new WP_Error( 'mdg_ai_ticket_missing', 'Bilet türü bulunamadı.' );
+        }
+
+        if ( 'family_2_2' === $found->ticket_code && array_key_exists( 'capacity_units', $input ) && 4 !== (int) $input['capacity_units'] ) {
+            return new WP_Error(
+                'mdg_ai_family_rule_locked',
+                'Mevcut MMC servisi family_2_2 biletini 4 kapasite birimine sabitliyor. Aile paketi iş kuralı düzeltilmeden kapasite birimi değiştirilemez.'
+            );
+        }
+
+        $data = array(
+            'ticket_name'    => array_key_exists( 'ticket_name', $input ) ? sanitize_text_field( $input['ticket_name'] ) : $found->ticket_name,
+            'price'          => array_key_exists( 'price', $input ) ? $input['price'] : $found->price,
+            'capacity_units' => array_key_exists( 'capacity_units', $input ) ? absint( $input['capacity_units'] ) : (int) $found->capacity_units,
+            'is_active'      => array_key_exists( 'is_active', $input ) ? (bool) $input['is_active'] : ! empty( $found->is_active ),
+        );
+
+        $ok = MMC_Event_Service::update_ticket_type( $ticket_id, $data );
+        if ( is_wp_error( $ok ) ) return $ok;
+
+        $updated = null;
+        foreach ( (array) MMC_Event_Service::ticket_types( $event_id ) as $ticket ) {
+            if ( (int) $ticket->id === $ticket_id ) {
+                $updated = $ticket;
+                break;
+            }
+        }
+        return array(
+            'updated' => true,
+            'ticket'  => mdg_ai_ticket_to_array( $updated ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_channel_prices_list' ) ) {
+    function mdg_ai_channel_prices_list( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $channel = sanitize_key( $input['channel'] ?? 'biletinial' );
+        if ( ! MMC_Event_Service::get_event( $event_id ) ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+        if ( ! in_array( $channel, array( 'biletinial','website' ), true ) ) {
+            return new WP_Error( 'mdg_ai_channel_invalid', 'Kanal biletinial veya website olmalıdır.' );
+        }
+
+        $items = array();
+        foreach ( (array) MMC_Event_Service::channel_prices( $event_id, $channel ) as $row ) {
+            $items[] = array(
+                'ticket_type_id' => (int) $row->ticket_type_id,
+                'ticket_code'    => (string) $row->ticket_code,
+                'ticket_name'    => (string) $row->ticket_name,
+                'primary_price'  => (float) $row->primary_price,
+                'price_id'       => isset( $row->price_id ) ? (int) $row->price_id : 0,
+                'channel_price'  => null === $row->channel_price ? null : (float) $row->channel_price,
+                'channel_active' => null === $row->channel_active ? null : ! empty( $row->channel_active ),
+            );
+        }
+        return array( 'event_id' => $event_id, 'channel' => $channel, 'count' => count( $items ), 'items' => $items );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_channel_price_update' ) ) {
+    function mdg_ai_channel_price_update( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $ticket_type_id = absint( $input['ticket_type_id'] ?? 0 );
+        $channel = sanitize_key( $input['channel'] ?? '' );
+        $price = $input['price'] ?? 0;
+        $active = array_key_exists( 'active', $input ) ? (bool) $input['active'] : true;
+
+        $ok = MMC_Event_Service::update_channel_price( $event_id, $ticket_type_id, $channel, $price, $active ? 1 : 0 );
+        if ( is_wp_error( $ok ) ) return $ok;
+
+        return array(
+            'updated' => true,
+            'event_id' => $event_id,
+            'channel' => $channel,
+            'prices' => mdg_ai_channel_prices_list( array( 'event_id' => $event_id, 'channel' => $channel ) ),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_integrations_list' ) ) {
+    function mdg_ai_integrations_list( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        if ( ! MMC_Event_Service::get_event( $event_id ) ) {
+            return new WP_Error( 'mdg_ai_event_missing', 'Etkinlik bulunamadı.' );
+        }
+        $items = array();
+        foreach ( (array) MMC_Event_Service::integrations( $event_id ) as $row ) {
+            $items[] = array(
+                'id'             => (int) $row->id,
+                'program_id'     => (int) $row->program_id,
+                'event_id'       => (int) $row->event_id,
+                'channel'        => (string) $row->channel,
+                'status'         => (string) $row->status,
+                'external_id'    => isset( $row->external_id ) ? (string) $row->external_id : '',
+                'external_url'   => isset( $row->external_url ) ? (string) $row->external_url : '',
+                'notes'          => isset( $row->notes ) ? (string) ( $row->notes ?: '' ) : '',
+                'last_synced_at' => isset( $row->last_synced_at ) ? (string) ( $row->last_synced_at ?: '' ) : '',
+                'updated_at'     => isset( $row->updated_at ) ? (string) $row->updated_at : '',
+            );
+        }
+        return array(
+            'event_id' => $event_id,
+            'count' => count( $items ),
+            'items' => $items,
+            'channels' => MMC_Event_Service::integration_channels(),
+        );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_integration_update' ) ) {
+    function mdg_ai_integration_update( $input ) {
+        $id = absint( $input['integration_id'] ?? 0 );
+        $status = sanitize_key( $input['status'] ?? '' );
+        $external_id = sanitize_text_field( $input['external_id'] ?? '' );
+        $external_url = esc_url_raw( $input['external_url'] ?? '' );
+        $notes = sanitize_textarea_field( $input['notes'] ?? '' );
+
+        $ok = MMC_Event_Service::update_integration( $id, $status, $external_id, $external_url, $notes );
+        if ( is_wp_error( $ok ) ) return $ok;
+        return array( 'updated' => true, 'integration_id' => $id, 'status' => $status );
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_mark_sales_ready' ) ) {
+    function mdg_ai_mark_sales_ready( $input ) {
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $ok = MMC_Event_Service::mark_sales_ready( $event_id );
+        if ( is_wp_error( $ok ) ) return $ok;
+        return array(
+            'updated' => true,
+            'event' => mdg_ai_event_to_array( MMC_Event_Service::get_event( $event_id ) ),
+            'program' => ( function() use ( $event_id ) {
+                $event = MMC_Event_Service::get_event( $event_id );
+                return $event ? mdg_ai_program_to_array( MMC_Program_Service::get_program( $event->program_id ) ) : array();
+            } )(),
+        );
+    }
+}
+
+add_action( 'wp_abilities_api_categories_init', function() {
+    if ( function_exists( 'wp_register_ability_category' ) ) {
+        wp_register_ability_category(
+            'madagaskar-bilet-fiyat',
+            array(
+                'label'       => 'Madagaskar Bilet / Fiyat / Satış',
+                'description' => 'Bilet türleri, kanal fiyatları, satış hazırlığı ve entegrasyon durumları.',
+            )
+        );
+    }
+} );
+
+add_action( 'wp_abilities_api_init', function() {
+    if ( ! function_exists( 'wp_register_ability' ) ) return;
+
+    $read_meta = array(
+        'annotations' => array(
+            'readonly' => true,
+            'destructive' => false,
+            'idempotent' => true,
+        ),
+        'public' => true,
+    );
+    $critical_meta = array(
+        'annotations' => array(
+            'readonly' => false,
+            'destructive' => true,
+            'idempotent' => false,
+        ),
+        'public' => true,
+    );
+
+    wp_register_ability(
+        'madagaskar/ticket-types-list',
+        array(
+            'label' => 'Bilet Türlerini Listele',
+            'description' => 'Etkinliğin bilet türlerini, yaş aralıklarını, ana fiyatlarını, kapasite birimlerini ve aktifliklerini getirir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_ticket_types_list',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/ticket-type-update',
+        array(
+            'label' => 'Bilet Türünü Güncelle',
+            'description' => 'Bilet adı, ana fiyatı, kapasite birimi veya aktifliğini MMC servis katmanı üzerinden günceller. Kritik yazma işlemidir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'ticket_id'      => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'ticket_name'    => array( 'type' => 'string' ),
+                    'price'          => array( 'type' => 'number', 'minimum' => 0 ),
+                    'capacity_units' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'is_active'      => array( 'type' => 'boolean' ),
+                ),
+                'required' => array( 'ticket_id' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_ticket_type_update',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/channel-prices-list',
+        array(
+            'label' => 'Kanal Fiyatlarını Listele',
+            'description' => 'Website veya Biletinial kanal fiyatlarını etkinliğin ana bilet fiyatlarıyla birlikte getirir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'channel'  => array( 'type' => 'string', 'enum' => array( 'website','biletinial' ) ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_channel_prices_list',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/channel-price-update',
+        array(
+            'label' => 'Kanal Fiyatını Güncelle',
+            'description' => 'Website veya Biletinial kanalındaki bilet fiyatını MMC servis katmanı üzerinden günceller. Kritik yazma işlemidir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id'       => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'ticket_type_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'channel'        => array( 'type' => 'string', 'enum' => array( 'website','biletinial' ) ),
+                    'price'          => array( 'type' => 'number', 'minimum' => 0 ),
+                    'active'         => array( 'type' => 'boolean' ),
+                ),
+                'required' => array( 'event_id','ticket_type_id','channel','price' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_channel_price_update',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/integrations-list',
+        array(
+            'label' => 'Satış Entegrasyonlarını Listele',
+            'description' => 'WooCommerce, Tickera, PayTR ve Biletinial entegrasyon durumlarını getirir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_integrations_list',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $read_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/integration-update',
+        array(
+            'label' => 'Satış Entegrasyonunu Güncelle',
+            'description' => 'Bir satış entegrasyonunun durumunu, dış kimliğini, bağlantısını ve notunu günceller. Gerekli üç kanal doğrulanınca sistem programı satışta durumuna geçirebilir. Kritik yazma işlemidir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'integration_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                    'status' => array( 'type' => 'string', 'enum' => array( 'pending','prepared','verified','live','error','not_used' ) ),
+                    'external_id' => array( 'type' => 'string' ),
+                    'external_url' => array( 'type' => 'string' ),
+                    'notes' => array( 'type' => 'string' ),
+                ),
+                'required' => array( 'integration_id','status' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_integration_update',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $critical_meta,
+        )
+    );
+
+    wp_register_ability(
+        'madagaskar/event-mark-sales-ready',
+        array(
+            'label' => 'Etkinliği Satışa Hazır İşaretle',
+            'description' => 'Satış hazırlık kontrolü geçen etkinliği satışa hazır durumuna alır, entegrasyon görevlerini açar ve programı satış hazırlığına geçirir. Kritik yazma işlemidir.',
+            'category' => 'madagaskar-bilet-fiyat',
+            'input_schema' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'event_id' => array( 'type' => 'integer', 'minimum' => 1 ),
+                ),
+                'required' => array( 'event_id' ),
+            ),
+            'output_schema' => array( 'type' => 'object' ),
+            'execute_callback' => 'mdg_ai_mark_sales_ready',
+            'permission_callback' => 'mdg_ai_events_can_run',
+            'meta' => $critical_meta,
+        )
+    );
+} );
