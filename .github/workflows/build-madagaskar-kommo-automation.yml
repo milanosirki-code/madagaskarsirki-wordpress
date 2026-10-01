@@ -48,7 +48,7 @@ jobs:
           root = Path('wp-content/plugins/madagaskar-kommo-automation')
           manifest = json.loads((root / 'migration-manifest.json').read_text(encoding='utf-8'))
           assert manifest['plugin']['slug'] == 'madagaskar-kommo-automation'
-          assert manifest['plugin']['source_version'] == '0.1.0'
+          assert manifest['plugin']['source_version'] == '0.1.1'
 
           php = '\n'.join(p.read_text(encoding='utf-8') for p in root.rglob('*.php'))
 
@@ -61,9 +61,12 @@ jobs:
           )
           assert not hardcoded.search(php), 'Hard-coded MS_KOMMO_TOKEN detected'
 
+          bootstrap = (root / 'madagaskar-kommo-automation.php').read_text(encoding='utf-8')
           ticket = (root / 'modules/automatic-ticket-link.php').read_text(encoding='utf-8')
-          assert "defined( 'MMC_KOMMO_TOKEN' )" in ticket
-          assert "define( 'MS_KOMMO_TOKEN', MMC_KOMMO_TOKEN )" in ticket
+          assert "get_option( 'mmc_kommo_runtime_token'" in bootstrap
+          assert "define( 'MMC_KOMMO_TOKEN', $mdg_kommo_runtime_token )" in bootstrap
+          assert "function ms_kommo_token_value()" in ticket
+          assert "'Bearer ' . ms_kommo_token_value()" in ticket
 
           print('Kommo automation package policy OK')
           PY
