@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar AI Abilities
  * Description: Madagaskar operasyon AI ability modüllerini Code Snippets katmanından kontrollü biçimde kalıcı plugin koduna taşır.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Dünya Organizasyon
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MDG_AI_ABILITIES_VERSION', '0.1.0' );
+define( 'MDG_AI_ABILITIES_VERSION', '0.2.0' );
 define( 'MDG_AI_ABILITIES_DIR', plugin_dir_path( __FILE__ ) );
 
 /**
@@ -36,6 +36,8 @@ function mdg_ai_abilities_module_map() {
     return array(
         'system-health-integrity' => 'modules/system-health-integrity.php',
         'mmc-sales-ledger'        => 'modules/mmc-sales-ledger.php',
+        'mmc-dashboard'           => 'modules/mmc-dashboard.php',
+        'mmc-tasks'               => 'modules/mmc-tasks.php',
     );
 }
 
