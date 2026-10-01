@@ -6,12 +6,14 @@ on:
     paths:
       - 'wp-content/plugins/madagaskar-ai-abilities/**'
       - '.github/workflows/build-madagaskar-ai-abilities.yml'
+      - 'tests/validate-legacy-mdg-mmc-preview.py'
   push:
     branches:
       - main
     paths:
       - 'wp-content/plugins/madagaskar-ai-abilities/**'
       - '.github/workflows/build-madagaskar-ai-abilities.yml'
+      - 'tests/validate-legacy-mdg-mmc-preview.py'
 
 permissions:
   contents: read
@@ -38,6 +40,9 @@ jobs:
 
       - name: Validate package manifest
         run: python tests/validate-ai-abilities-package.py
+
+      - name: Validate legacy MDG to MMC preview safety
+        run: python tests/validate-legacy-mdg-mmc-preview.py
 
       - name: Build ZIP and checksum
         shell: bash
