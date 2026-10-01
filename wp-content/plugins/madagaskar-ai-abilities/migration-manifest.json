@@ -4,7 +4,7 @@
     "slug": "madagaskar-ai-abilities",
     "source_version": "0.4.0",
     "source_path": "wp-content/plugins/madagaskar-ai-abilities",
-    "production_known_version": "0.2.0",
+    "production_known_version": "0.4.0",
     "option_key": "mdg_ai_abilities_modules",
     "default_behavior": "inert_when_option_empty"
   },
@@ -12,16 +12,66 @@
     "system-health-integrity",
     "mmc-sales-ledger",
     "mmc-dashboard",
-    "mmc-tasks"
+    "mmc-tasks",
+    "v4-refund-safety",
+    "v4-operations-safety",
+    "reporting-customer",
+    "mmc-region-population",
+    "mmc-field",
+    "mmc-operations",
+    "mmc-marketing",
+    "mmc-mdg-bridge",
+    "mmc-kommo"
   ],
   "production_known_disabled_snippets": [
+    78,
+    79,
     80,
-    89,
     81,
     82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    94,
     101
   ],
-  "migration_order": [
+  "migration_order": [],
+  "uncaptured_live_snippets": [
+    {
+      "snippet_id": 72,
+      "name": "Program + Salon + Etkinlik + Satış",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 74,
+      "name": "Fatura Takip",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 75,
+      "name": "Okul Tanıtım",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 77,
+      "name": "V5 Finans",
+      "tracking_issue": 52
+    }
+  ],
+  "rollback": {
+    "sequence": [
+      "remove_failed_module_from_mdg_ai_abilities_modules",
+      "reactivate_matching_code_snippet",
+      "flush_object_cache",
+      "run_module_read_only_smoke_test",
+      "run_system_health_checks"
+    ]
+  },
+  "completed_migrations": [
     {
       "module": "v4-refund-safety",
       "snippet_id": 79,
@@ -158,35 +208,40 @@
       ]
     }
   ],
-  "uncaptured_live_snippets": [
-    {
-      "snippet_id": 72,
-      "name": "Program + Salon + Etkinlik + Satış",
-      "tracking_issue": 52
+  "production_verified": {
+    "date": "2026-10-01",
+    "plugin_version": "0.4.0",
+    "system_health": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0
     },
-    {
-      "snippet_id": 74,
-      "name": "Fatura Takip",
-      "tracking_issue": 52
+    "active_code_snippets": 51,
+    "installer_101_active": false,
+    "bridge_sales": {
+      "pursaklar": {
+        "program_id": 3,
+        "orders": 16,
+        "tickets": 58,
+        "revenue": 22000,
+        "revenue_diff": 0
+      },
+      "kirikkale": {
+        "program_id": 2,
+        "orders": 7,
+        "tickets": 26,
+        "revenue": 10250,
+        "revenue_diff": 0
+      }
     },
-    {
-      "snippet_id": 75,
-      "name": "Okul Tanıtım",
-      "tracking_issue": 52
-    },
-    {
-      "snippet_id": 77,
-      "name": "V5 Finans",
-      "tracking_issue": 52
+    "kommo": {
+      "configured": true,
+      "connected": true,
+      "http_ok": true,
+      "token_source": "MMC_KOMMO_TOKEN",
+      "uses_legacy_token": false,
+      "source_consistency_safe": true
     }
-  ],
-  "rollback": {
-    "sequence": [
-      "remove_failed_module_from_mdg_ai_abilities_modules",
-      "reactivate_matching_code_snippet",
-      "flush_object_cache",
-      "run_module_read_only_smoke_test",
-      "run_system_health_checks"
-    ]
   }
 }
