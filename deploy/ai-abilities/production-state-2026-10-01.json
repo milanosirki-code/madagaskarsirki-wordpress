@@ -1,25 +1,43 @@
 {
-  "captured_at": "2026-10-01T12:23:00+03:00",
-  "source": "last_verified_live_state_before_wpvibe_quota_stop",
+  "captured_at": "2026-10-01",
+  "source": "verified_after_full_ai_abilities_live_migration",
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "live_version": "0.2.0",
+    "live_version": "0.4.0",
     "github_main_version": "0.4.0",
     "status": "active",
     "enabled_modules": [
       "system-health-integrity",
       "mmc-sales-ledger",
       "mmc-dashboard",
-      "mmc-tasks"
+      "mmc-tasks",
+      "v4-refund-safety",
+      "v4-operations-safety",
+      "reporting-customer",
+      "mmc-region-population",
+      "mmc-field",
+      "mmc-operations",
+      "mmc-marketing",
+      "mmc-mdg-bridge",
+      "mmc-kommo"
     ]
   },
   "code_snippets": {
-    "active_count": 60,
+    "active_count": 51,
     "migrated_disabled": [
+      78,
+      79,
       80,
       81,
       82,
-      89
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      94
     ],
     "temporary_installer": {
       "id": 101,
@@ -28,33 +46,38 @@
   },
   "health": {
     "critical": 0,
-    "warning": 1,
-    "ok": 15,
-    "warning_ids": [
-      "ticket_chain"
-    ]
+    "warning": 0,
+    "ok": 16,
+    "info": 0
   },
   "verified_sales": {
-    "pursaklar_program_id": 3,
-    "pursaklar_mapping": "4/4",
-    "pursaklar_revenue_diff": 0,
-    "kirikkale_program_id": 2,
-    "kirikkale_mapping": "4/4",
-    "kirikkale_revenue_diff": 0
+    "pursaklar": {
+      "program_id": 3,
+      "mdg_orders": 16,
+      "mmc_orders": 16,
+      "mdg_tickets": 58,
+      "mmc_tickets": 58,
+      "revenue": 22000,
+      "revenue_diff": 0
+    },
+    "kirikkale": {
+      "program_id": 2,
+      "mdg_orders": 7,
+      "mmc_orders": 7,
+      "mdg_tickets": 26,
+      "mmc_tickets": 26,
+      "revenue": 10250,
+      "revenue_diff": 0
+    }
   },
-  "next_live_migration": [
-    79,
-    94,
-    78,
-    83,
-    84,
-    85,
-    86,
-    88,
-    87
-  ],
-  "tracking": {
-    "migration_issue": 54,
-    "uncaptured_source_issue": 52
-  }
+  "verified_kommo": {
+    "configured": true,
+    "connected": true,
+    "http_ok": true,
+    "token_source": "MMC_KOMMO_TOKEN",
+    "uses_legacy_token": false,
+    "source_consistency_safe": true
+  },
+  "remaining_ai_source_capture_issue": 52,
+  "completed_live_migration_issue": 54
 }
