@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "integration": "uskd-madagaskar-events",
+  "source_path": "integrations/uskd/uskd-madagaskar-events",
+  "plugin_version": "0.1.0",
+  "live_page": {
+    "site": "https://uskdernegi.org",
+    "page_id": 392,
+    "slug": "etkinlik-takvimi",
+    "backup_path": "integrations/uskd/live-page-392.html"
+  },
+  "source": {
+    "site": "https://madagaskarsirki.com",
+    "page_id": 1311,
+    "endpoint": "https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content"
+  },
+  "display_contract": {
+    "include": [
+      "city",
+      "date",
+      "venue",
+      "sessions"
+    ],
+    "exclude": [
+      "price",
+      "checkout_link",
+      "woocommerce_order_data"
+    ]
+  },
+  "shortcode": "uskd_madagaskar_events",
+  "deployment": {
+    "status": "source_staged_not_live",
+    "smoke": [
+      "activate plugin without fatal",
+      "render shortcode on draft/staging page",
+      "compare event card count with Madagaskar cities page",
+      "verify city/date/venue/session on first middle last cards",
+      "verify no price is rendered",
+      "verify fallback when source is unavailable"
+    ],
+    "rollback": "restore Page 392 from integrations/uskd/live-page-392.html and deactivate plugin"
+  }
+}
