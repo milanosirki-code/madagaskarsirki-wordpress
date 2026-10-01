@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plugin": {
     "slug": "madagaskar-kommo-automation",
-    "source_version": "0.1.0",
+    "source_version": "0.1.1",
     "option_key": "mdg_kommo_automation_modules",
     "default_behavior": "inert_when_option_empty"
   },
@@ -30,8 +30,10 @@
   ],
   "security": {
     "hardcoded_ms_kommo_token_removed": true,
-    "runtime_token_source": "MMC_KOMMO_TOKEN",
-    "legacy_alias_only_when_needed": true
+    "runtime_token_source": "non_autoloaded_option:mmc_kommo_runtime_token",
+    "legacy_alias_only_when_needed": false,
+    "legacy_ms_token_required": false,
+    "wp_config_preferred_when_host_allows": true
   },
   "source_hashes": {
     "12": "5091f66c560eb032653e67510f9fb70fc0711c22",
