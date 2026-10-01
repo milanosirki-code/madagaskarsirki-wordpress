@@ -1,0 +1,80 @@
+name: Build USKD Madagaskar Events
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'integrations/uskd/uskd-madagaskar-events/**'
+      - 'integrations/uskd/deployment-manifest.json'
+      - '.github/workflows/build-uskd-madagaskar-events.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'integrations/uskd/uskd-madagaskar-events/**'
+      - 'integrations/uskd/deployment-manifest.json'
+      - '.github/workflows/build-uskd-madagaskar-events.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint plugin PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find integrations/uskd/uskd-madagaskar-events -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Validate deployment contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('integrations/uskd/deployment-manifest.json').read_text(encoding='utf-8'))
+          assert manifest['plugin_version'] == '0.1.0'
+          assert manifest['shortcode'] == 'uskd_madagaskar_events'
+          excluded = set(manifest['display_contract']['exclude'])
+          assert 'price' in excluded
+          assert 'checkout_link' in excluded
+          backup = Path(manifest['live_page']['backup_path'])
+          assert backup.is_file(), f'missing rollback backup: {backup}'
+          print('USKD deployment contract OK')
+          PY
+
+      - name: Build ZIP and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/uskd-madagaskar-events
+          cp -R integrations/uskd/uskd-madagaskar-events/. build/uskd-madagaskar-events/
+          (
+            cd build
+            zip -r -q uskd-madagaskar-events.zip uskd-madagaskar-events
+            sha256sum uskd-madagaskar-events.zip > uskd-madagaskar-events.zip.sha256
+          )
+
+      - name: Upload plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: uskd-madagaskar-events
+          path: |
+            build/uskd-madagaskar-events.zip
+            build/uskd-madagaskar-events.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
