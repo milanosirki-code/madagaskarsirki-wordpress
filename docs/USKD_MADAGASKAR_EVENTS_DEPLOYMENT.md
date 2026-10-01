@@ -49,3 +49,23 @@ Artifact:
 - Mevcut client-side fetch davranışına dön.
 
 Bu deployment Madagaskar checkout veya sipariş sistemine write yapmaz.
+
+
+## 1 Ekim 2026 — canlıya alındı
+
+Deployment tamamlandı.
+
+- Plugin: `USKD Madagaskar Etkinlik Akışı` v0.1.0
+- Durum: aktif
+- Page 392: `/etkinlik-takvimi/`
+- Page 392 artık `[uskd_madagaskar_events]` shortcode kullanıyor.
+- Eski browser-side `fetch()` kaldırıldı.
+- Server-side kaynak çekimi + 5 dakikalık transient cache aktif.
+- Canlı kart sayısı: 12
+- İlk kart: Ankara – Pursaklar / Ankara
+- Son kart: İzmir
+- Fiyat görünmüyor.
+- Checkout/bilet satın alma bağlantısı görünmüyor.
+- Rollback yedeği: `integrations/uskd/live-page-392.html`
+
+Smoke test sonucu: **PASS**
