@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Kommo Automation
  * Description: Kommo bilet linki, konum cevapları ve dinamik aktif etkinlik kaynağını Code Snippets'tan kontrollü plugin modüllerine taşır.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Dünya Organizasyon
  */
 
@@ -10,8 +10,22 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MDG_KOMMO_AUTOMATION_VERSION', '0.1.0' );
+define( 'MDG_KOMMO_AUTOMATION_VERSION', '0.1.1' );
 define( 'MDG_KOMMO_AUTOMATION_DIR', plugin_dir_path( __FILE__ ) );
+
+/**
+ * Runtime Kommo secret.
+ *
+ * The secret is intentionally not stored in source control. WordPress.com does
+ * not currently allow this site to persist the preferred constant in wp-config,
+ * so the migration stores it in a non-autoloaded option and exposes only the
+ * preferred MMC constant at plugin bootstrap time.
+ */
+$mdg_kommo_runtime_token = trim( (string) get_option( 'mmc_kommo_runtime_token', '' ) );
+if ( '' !== $mdg_kommo_runtime_token && ! defined( 'MMC_KOMMO_TOKEN' ) ) {
+    define( 'MMC_KOMMO_TOKEN', $mdg_kommo_runtime_token );
+}
+unset( $mdg_kommo_runtime_token );
 
 function mdg_kommo_automation_enabled_modules() {
     $raw = (string) get_option( 'mdg_kommo_automation_modules', '' );
