@@ -2,9 +2,9 @@
   "schema_version": 1,
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "source_version": "0.6.1",
+    "source_version": "0.7.0",
     "source_path": "wp-content/plugins/madagaskar-ai-abilities",
-    "production_known_version": "0.6.0",
+    "production_known_version": "0.6.1",
     "option_key": "mdg_ai_abilities_modules",
     "default_behavior": "inert_when_option_empty"
   },
@@ -317,6 +317,29 @@
         "$wpdb->delete"
       ],
       "notes": "v0.6.1 narrows legacy session/ticket SELECTs to columns already proven by MMC_MDG_Bridge_Service and derives capacity from MDG venue default_capacity."
+    },
+    {
+      "module": "legacy-mdg-mmc-migrate",
+      "status": "staged_not_live",
+      "readonly": false,
+      "abilities": [
+        "madagaskar/legacy-mdg-mmc-migrate-one",
+        "madagaskar/legacy-mdg-mmc-migrate-batch"
+      ],
+      "risk": "high",
+      "confirmation": "MIGRATE_LEGACY_MDG_TO_MMC",
+      "transaction_scope": "one MDG event per transaction",
+      "rollback_on": [
+        "preview_not_safe",
+        "program_or_bridge_conflict",
+        "unknown_ticket_code",
+        "ticket_set_or_price_mismatch",
+        "missing_woocommerce_or_tickera_identity",
+        "mapping_coverage_incomplete",
+        "bridge_structure_mismatch",
+        "sales_reconciliation_failure"
+      ],
+      "live_sales_policy": "reuse existing WooCommerce and Tickera objects; never create replacement sales products"
     }
   ]
 }
