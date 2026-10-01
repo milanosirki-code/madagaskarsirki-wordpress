@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "plugin": {
+    "slug": "madagaskar-kommo-automation",
+    "source_version": "0.1.0",
+    "option_key": "mdg_kommo_automation_modules",
+    "default_behavior": "inert_when_option_empty"
+  },
+  "migration_order": [
+    {
+      "module": "location-menu-fix",
+      "snippet_id": 67,
+      "risk": "low"
+    },
+    {
+      "module": "location-answers",
+      "snippet_id": 66,
+      "risk": "medium"
+    },
+    {
+      "module": "active-events-source",
+      "snippet_id": 70,
+      "risk": "high"
+    },
+    {
+      "module": "automatic-ticket-link",
+      "snippet_id": 12,
+      "risk": "high"
+    }
+  ],
+  "security": {
+    "hardcoded_ms_kommo_token_removed": true,
+    "runtime_token_source": "MMC_KOMMO_TOKEN",
+    "legacy_alias_only_when_needed": true
+  },
+  "source_hashes": {
+    "12": "5091f66c560eb032653e67510f9fb70fc0711c22",
+    "66": "22116143fcd3a66cf20c41cc88a8c311dfef8a60",
+    "67": "2f8195d1659ac49ce5ca6b70b3ffbbb3652303e0",
+    "70": "ee21ea7d8752b9e182c5035281f6ad365ccde63c"
+  }
+}
