@@ -2,9 +2,9 @@
   "schema_version": 1,
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "source_version": "0.6.0",
+    "source_version": "0.6.1",
     "source_path": "wp-content/plugins/madagaskar-ai-abilities",
-    "production_known_version": "0.5.0",
+    "production_known_version": "0.6.0",
     "option_key": "mdg_ai_abilities_modules",
     "default_behavior": "inert_when_option_empty"
   },
@@ -302,7 +302,7 @@
   "staged_modules": [
     {
       "module": "legacy-mdg-mmc-preview",
-      "status": "staged_not_live",
+      "status": "staged_fix_not_live",
       "readonly": true,
       "ability": "madagaskar/legacy-mdg-mmc-migration-preview",
       "purpose": "Preview future unbridged legacy MDG events before controlled MMC migration.",
@@ -315,7 +315,8 @@
         "$wpdb->insert",
         "$wpdb->update",
         "$wpdb->delete"
-      ]
+      ],
+      "notes": "v0.6.1 narrows legacy session/ticket SELECTs to columns already proven by MMC_MDG_Bridge_Service and derives capacity from MDG venue default_capacity."
     }
   ]
 }
