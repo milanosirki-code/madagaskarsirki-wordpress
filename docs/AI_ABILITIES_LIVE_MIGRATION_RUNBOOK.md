@@ -143,3 +143,29 @@ Son doğrulama:
 - Kommo: connected/http_ok, token_source=MMC_KOMMO_TOKEN, legacy=false, source consistency safe
 
 Gerçek refund, sales mapping write, MDG link write, Kommo write, saha/operasyon/pazarlama write veya report-send-now migration testi sırasında çalıştırılmadı.
+
+
+## 1 Ekim 2026 — v0.5.0 ikinci migration dalgası tamamlandı
+
+Canlıdan yakalanan dört çekirdek AI snippet de plugin'e devredildi:
+
+- #74 → invoice-tracking
+- #75 → school-promotion
+- #77 → v5-finance
+- #72 → program-venue-event-sales
+
+Son doğrulama:
+- Madagaskar AI Abilities v0.5.0 aktif
+- 17 module slug aktif
+- ilgili 17 legacy AI snippet pasif
+- installer #101 pasif
+- aktif Code Snippets: 47
+- system health: 0 critical / 0 warning / 16 OK
+
+Read-only smoke:
+- Fatura: 112 sipariş kapsamı, gross 110.900 TL
+- Okul: Pursaklar 76 okul, MMC #3 ↔ legacy #15 bağlı
+- Finans: 2026-10 için 2 gider / 98.488 TL, write yok
+- Program/Salon/Etkinlik: listeler ve satış readiness katmanı okunabilir
+
+Migration sırasında write abilities çalıştırılmadı.

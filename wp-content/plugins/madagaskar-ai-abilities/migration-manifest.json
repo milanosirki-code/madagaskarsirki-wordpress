@@ -4,7 +4,7 @@
     "slug": "madagaskar-ai-abilities",
     "source_version": "0.5.0",
     "source_path": "wp-content/plugins/madagaskar-ai-abilities",
-    "production_known_version": "0.4.0",
+    "production_known_version": "0.5.0",
     "option_key": "mdg_ai_abilities_modules",
     "default_behavior": "inert_when_option_empty"
   },
@@ -21,9 +21,17 @@
     "mmc-operations",
     "mmc-marketing",
     "mmc-mdg-bridge",
-    "mmc-kommo"
+    "mmc-kommo",
+    "invoice-tracking",
+    "school-promotion",
+    "v5-finance",
+    "program-venue-event-sales"
   ],
   "production_known_disabled_snippets": [
+    72,
+    74,
+    75,
+    77,
     78,
     79,
     80,
@@ -39,74 +47,7 @@
     94,
     101
   ],
-  "migration_order": [
-    {
-      "module": "invoice-tracking",
-      "snippet_id": 74,
-      "risk": "medium",
-      "smoke": [
-        "madagaskar/invoice-summary",
-        "madagaskar/invoice-system-audit"
-      ],
-      "forbidden_during_migration": [
-        "madagaskar/invoice-set-state",
-        "madagaskar/invoice-bulk-set-state"
-      ]
-    },
-    {
-      "module": "school-promotion",
-      "snippet_id": 75,
-      "risk": "medium",
-      "smoke": [
-        "madagaskar/schools-summary",
-        "madagaskar/school-bridge-status"
-      ],
-      "forbidden_during_migration": [
-        "madagaskar/school-ensure-bridge",
-        "madagaskar/school-update",
-        "madagaskar/school-assign",
-        "madagaskar/school-task-result"
-      ]
-    },
-    {
-      "module": "v5-finance",
-      "snippet_id": 77,
-      "risk": "high",
-      "smoke": [
-        "madagaskar/finance-summary",
-        "madagaskar/finance-expenses-list",
-        "madagaskar/finance-incomes-list"
-      ],
-      "forbidden_during_migration": [
-        "madagaskar/finance-expense-create",
-        "madagaskar/finance-income-create",
-        "madagaskar/finance-fixed-cost-create",
-        "madagaskar/finance-attendance-set",
-        "madagaskar/finance-delete"
-      ]
-    },
-    {
-      "module": "program-venue-event-sales",
-      "snippet_id": 72,
-      "risk": "high",
-      "smoke": [
-        "madagaskar/programs-list",
-        "madagaskar/venues-list",
-        "madagaskar/events-list",
-        "madagaskar/event-sales-readiness"
-      ],
-      "forbidden_during_migration": [
-        "program_create",
-        "program_status_write",
-        "venue_write",
-        "event_write",
-        "session_write",
-        "ticket_price_write",
-        "integration_write",
-        "event_mark_sales_ready"
-      ]
-    }
-  ],
+  "migration_order": [],
   "uncaptured_live_snippets": [],
   "rollback": {
     "sequence": [
@@ -252,18 +193,84 @@
         "sync_ai_source",
         "token_migration"
       ]
+    },
+    {
+      "module": "invoice-tracking",
+      "snippet_id": 74,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/invoice-summary",
+        "madagaskar/invoice-system-audit"
+      ],
+      "forbidden_during_migration": [
+        "madagaskar/invoice-set-state",
+        "madagaskar/invoice-bulk-set-state"
+      ]
+    },
+    {
+      "module": "school-promotion",
+      "snippet_id": 75,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/schools-summary",
+        "madagaskar/school-bridge-status"
+      ],
+      "forbidden_during_migration": [
+        "madagaskar/school-ensure-bridge",
+        "madagaskar/school-update",
+        "madagaskar/school-assign",
+        "madagaskar/school-task-result"
+      ]
+    },
+    {
+      "module": "v5-finance",
+      "snippet_id": 77,
+      "risk": "high",
+      "smoke": [
+        "madagaskar/finance-summary",
+        "madagaskar/finance-expenses-list",
+        "madagaskar/finance-incomes-list"
+      ],
+      "forbidden_during_migration": [
+        "madagaskar/finance-expense-create",
+        "madagaskar/finance-income-create",
+        "madagaskar/finance-fixed-cost-create",
+        "madagaskar/finance-attendance-set",
+        "madagaskar/finance-delete"
+      ]
+    },
+    {
+      "module": "program-venue-event-sales",
+      "snippet_id": 72,
+      "risk": "high",
+      "smoke": [
+        "madagaskar/programs-list",
+        "madagaskar/venues-list",
+        "madagaskar/events-list",
+        "madagaskar/event-sales-readiness"
+      ],
+      "forbidden_during_migration": [
+        "program_create",
+        "program_status_write",
+        "venue_write",
+        "event_write",
+        "session_write",
+        "ticket_price_write",
+        "integration_write",
+        "event_mark_sales_ready"
+      ]
     }
   ],
   "production_verified": {
     "date": "2026-10-01",
-    "plugin_version": "0.4.0",
+    "plugin_version": "0.5.0",
     "system_health": {
       "critical": 0,
       "warning": 0,
       "ok": 16,
       "info": 0
     },
-    "active_code_snippets": 51,
+    "active_code_snippets": 47,
     "installer_101_active": false,
     "bridge_sales": {
       "pursaklar": {
@@ -288,28 +295,8 @@
       "token_source": "MMC_KOMMO_TOKEN",
       "uses_legacy_token": false,
       "source_consistency_safe": true
-    }
+    },
+    "enabled_module_count": 17
   },
-  "captured_pending_migrations": [
-    {
-      "snippet_id": 72,
-      "source": "docs/live-captures/2026-10-01/snippet-72-program-venue-event-sales.php.txt",
-      "sha1": "a12c111c8ea5965bd4d7ab4ba706c240ba1b9404"
-    },
-    {
-      "snippet_id": 74,
-      "source": "docs/live-captures/2026-10-01/snippet-74-invoice-tracking.php.txt",
-      "sha1": "962eab394e4817bbd8a7392612da3f052fdbc54a"
-    },
-    {
-      "snippet_id": 75,
-      "source": "docs/live-captures/2026-10-01/snippet-75-school-promotion.php.txt",
-      "sha1": "2207e26bd5119ee777832c446234da2c9e1f9105"
-    },
-    {
-      "snippet_id": 77,
-      "source": "docs/live-captures/2026-10-01/snippet-77-v5-finance.php.txt",
-      "sha1": "b348c26d54163b87dbb852d091de94c78d7078d0"
-    }
-  ]
+  "captured_pending_migrations": []
 }

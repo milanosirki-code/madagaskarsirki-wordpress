@@ -83,3 +83,15 @@ Migration sırasında hiçbir create/update/link/delete/ensure/sales-ready abili
 4. #72 Program + Salon + Etkinlik + Satış
 
 #72 en geniş write yüzeyine sahip olduğu için en sona bırakılır.
+
+
+## Migration sonucu
+
+1 Ekim 2026'da bu dört yakalanmış kaynak v0.5.0 plugin modüllerine dönüştürüldü ve canlıda başarıyla devredildi:
+
+- #74 → invoice-tracking
+- #75 → school-promotion
+- #77 → v5-finance
+- #72 → program-venue-event-sales
+
+Tüm eski snippetler pasif bırakıldı; silinmedi. Son health 0 critical / 0 warning / 16 OK.
