@@ -72,3 +72,13 @@ Migration smoke testinde satış sync veya mapping write çalıştırılmaz.
 
 Bu modüller v0.3.0 içinde yalnız gate'e eklenir; production option'a otomatik eklenmez.
 Write abilities migration sırasında çağrılmaz.
+
+
+## Phase 4 — raporlama ve V4 güvenlik
+
+| Modül | Canlı snippet | Not |
+|---|---:|---|
+| reporting-customer | #78 | müşteri/bilet/satış audit + rapor okuma; report-send-now write çağrılmaz |
+| v4-operations-safety | #94 | satış durumu / erteleme mapping / preflight / transfer scan read-only güvenlik akışları |
+
+Bu modüller de gate ile kapalı gelir ve canlı option'a otomatik eklenmez.
