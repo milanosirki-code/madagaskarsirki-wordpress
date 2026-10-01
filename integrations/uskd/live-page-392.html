@@ -1,0 +1,109 @@
+
+
+<style>
+#uskd-upcoming{font-family:Arial,Helvetica,sans-serif;color:#1f1f1f;background:#fff;line-height:1.5}
+#uskd-upcoming *{box-sizing:border-box}
+#uskd-upcoming .u-wrap{width:min(1180px,calc(100% - 32px));margin:auto}
+#uskd-upcoming .u-hero{padding:42px 0 34px;background:linear-gradient(135deg,#fff 58%,#f7edef 100%);border-bottom:4px solid #c89d3c}
+#uskd-upcoming .u-kicker{font-size:12px;font-weight:800;letter-spacing:1.25px;text-transform:uppercase;color:#8b0e1a;margin-bottom:10px}
+#uskd-upcoming h1{font-size:clamp(36px,5vw,58px);line-height:1.04;margin:0 0 14px;font-weight:900}
+#uskd-upcoming h1 span{color:#8b0e1a}
+#uskd-upcoming .u-lead{max-width:780px;margin:0;font-size:18px;color:#626262}
+#uskd-upcoming .u-sec{padding:42px 0}
+#uskd-upcoming h2{font-size:34px;line-height:1.15;margin:0 0 10px}
+#uskd-upcoming .u-source-note{margin:0 0 24px;color:#6b6b6b;font-size:15px}
+#uskd-upcoming .u-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#uskd-upcoming .u-card{background:#fff;border:1px solid #e2e2e2;border-radius:16px;padding:22px;box-shadow:0 7px 22px rgba(0,0,0,.045)}
+#uskd-upcoming .u-city{color:#8b0e1a;font-size:13px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;margin-bottom:14px}
+#uskd-upcoming .u-date{font-size:30px;line-height:1.08;font-weight:900;margin-bottom:14px}
+#uskd-upcoming .u-venue{font-size:15px;line-height:1.45;color:#5f5f5f;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #ececec}
+#uskd-upcoming .u-session-label{display:block;font-size:10px;color:#747474;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+#uskd-upcoming .u-times{display:flex;flex-wrap:wrap;gap:8px}
+#uskd-upcoming .u-time{display:inline-flex;align-items:center;justify-content:center;min-width:74px;padding:9px 12px;background:#f6e9eb;color:#8b0e1a;font-size:14px;font-weight:900;border-radius:9px}
+#uskd-upcoming .u-loading,#uskd-upcoming .u-error{padding:22px;border-radius:12px;background:#f6f6f6;color:#555}
+#uskd-upcoming .u-footer{padding:28px 0 38px;background:#1f1f1f;color:#fff}
+#uskd-upcoming .u-footer p{margin:0;color:#d7d7d7}
+#uskd-upcoming .u-footer a{color:#fff;font-weight:800;text-decoration:underline}
+@media(max-width:900px){#uskd-upcoming .u-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+  #uskd-upcoming .u-wrap{width:calc(100% - 24px)}
+  #uskd-upcoming .u-hero{padding:30px 0}
+  #uskd-upcoming .u-sec{padding:32px 0}
+  #uskd-upcoming h1{font-size:34px!important}
+  #uskd-upcoming h2{font-size:27px!important}
+  #uskd-upcoming .u-lead{font-size:16px}
+  #uskd-upcoming .u-grid{grid-template-columns:1fr;gap:13px}
+  #uskd-upcoming .u-card{padding:18px}
+  #uskd-upcoming .u-date{font-size:27px}
+}
+</style>
+
+<div id="uskd-upcoming">
+  <section class="u-hero">
+    <div class="u-wrap">
+      <div class="u-kicker">USKD · Yaklaşan Etkinlikler</div>
+      <h1>Güncel <span>Etkinlik Programı</span></h1>
+      <p class="u-lead">Madagaskar Sirki şehirler programındaki güncel etkinliklerin şehir, tarih, salon ve seans bilgileri burada otomatik olarak gösterilir.</p>
+    </div>
+  </section>
+
+  <section class="u-sec">
+    <div class="u-wrap">
+      <h2>Yaklaşan Gösteriler</h2>
+      <p class="u-source-note">Program Madagaskar Sirki’nin güncel şehirler sayfasından otomatik alınır.</p>
+      <div id="uskd-live-events" class="u-grid">
+        <div class="u-loading">Güncel etkinlikler yükleniyor…</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="u-footer">
+    <div class="u-wrap">
+      <p>Etkinlik programının kaynak sayfası: <a href="https://madagaskarsirki.com/sehirler/" target="_blank" rel="noopener">madagaskarsirki.com/sehirler</a></p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const target = document.getElementById('uskd-live-events');
+  if (!target) return;
+  const endpoint = 'https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content';
+
+  function esc(s){
+    return String(s || '').replace(/[&<>"']/g,function(m){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];
+    });
+  }
+
+  fetch(endpoint,{credentials:'omit'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+      const rendered = data && data.content && data.content.rendered ? data.content.rendered : '';
+      const doc = new DOMParser().parseFromString(rendered,'text/html');
+      const cards = Array.from(doc.querySelectorAll('.msc-live-card'));
+      if(!cards.length) throw new Error('Güncel etkinlik bulunamadı');
+
+      target.innerHTML = cards.map(function(card){
+        const city = (card.querySelector('h3')?.textContent || '').trim();
+        const date = (card.querySelector('.msc-live-date')?.textContent || '').trim();
+        const venue = (card.querySelector('.msc-live-venue')?.textContent || '').trim();
+        const times = Array.from(card.querySelectorAll('.msc-session-row span'))
+          .map(function(x){return x.textContent.trim();}).filter(Boolean);
+
+        return '<article class="u-card">' +
+          '<div class="u-city">'+esc(city)+'</div>' +
+          '<div class="u-date">'+esc(date)+'</div>' +
+          '<div class="u-venue">'+esc(venue)+'</div>' +
+          '<span class="u-session-label">Seanslar</span>' +
+          '<div class="u-times">'+times.map(function(t){return '<span class="u-time">'+esc(t)+'</span>';}).join('')+'</div>' +
+        '</article>';
+      }).join('');
+    })
+    .catch(function(err){
+      target.innerHTML = '<div class="u-error">Güncel etkinlik listesi şu anda yüklenemedi. <a href="https://madagaskarsirki.com/sehirler/" target="_blank" rel="noopener">Madagaskar Sirki Şehirler</a> sayfasını açabilirsiniz.</div>';
+      console.error('USKD event sync:',err);
+    });
+})();
+</script>
+

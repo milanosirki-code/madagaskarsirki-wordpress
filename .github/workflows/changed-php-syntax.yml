@@ -1,0 +1,68 @@
+name: Changed PHP Syntax
+
+on:
+  pull_request:
+    paths:
+      - '**/*.php'
+      - '.github/workflows/changed-php-syntax.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.php'
+      - '.github/workflows/changed-php-syntax.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  php-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Determine PHP files to lint
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}" --depth=1
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="${{ github.event.before }}"
+            if [[ -z "$BASE" || "$BASE" == "0000000000000000000000000000000000000000" ]]; then
+              BASE="HEAD^"
+            fi
+          fi
+
+          git diff --name-only --diff-filter=ACMRT "$BASE"...HEAD             | grep -E '\.php$'             | while IFS= read -r file; do
+                [[ -f "$file" ]] && printf '%s\0' "$file"
+              done > /tmp/changed-php-files
+
+          if [[ -s /tmp/changed-php-files ]]; then
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint changed PHP files
+        if: steps.changed.outputs.has_files == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          xargs -0 -n1 php -l < /tmp/changed-php-files
+
+      - name: No PHP changes
+        if: steps.changed.outputs.has_files != 'true'
+        run: echo "No changed PHP files to lint."
