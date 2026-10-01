@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "plugin": {
+    "slug": "madagaskar-ai-abilities",
+    "source_version": "0.4.0",
+    "source_path": "wp-content/plugins/madagaskar-ai-abilities",
+    "production_known_version": "0.2.0",
+    "option_key": "mdg_ai_abilities_modules",
+    "default_behavior": "inert_when_option_empty"
+  },
+  "production_known_enabled_modules": [
+    "system-health-integrity",
+    "mmc-sales-ledger",
+    "mmc-dashboard",
+    "mmc-tasks"
+  ],
+  "production_known_disabled_snippets": [
+    80,
+    89,
+    81,
+    82,
+    101
+  ],
+  "migration_order": [
+    {
+      "module": "v4-refund-safety",
+      "snippet_id": 79,
+      "risk": "low",
+      "smoke": [
+        "madagaskar/refund-preflight",
+        "madagaskar/refund-cases-list",
+        "madagaskar/order-refunds-history"
+      ],
+      "forbidden_during_migration": [
+        "real_refund"
+      ]
+    },
+    {
+      "module": "v4-operations-safety",
+      "snippet_id": 94,
+      "risk": "low",
+      "smoke": [
+        "madagaskar/v4-sales-product-status",
+        "madagaskar/v4-postponement-preflight",
+        "madagaskar/v4-transfer-scan"
+      ],
+      "forbidden_during_migration": [
+        "transfer_write",
+        "postponement_write"
+      ]
+    },
+    {
+      "module": "reporting-customer",
+      "snippet_id": 78,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/customer-tickets-query",
+        "madagaskar/sales-system-audit",
+        "madagaskar/daily-report-snapshot",
+        "madagaskar/report-runs"
+      ],
+      "forbidden_during_migration": [
+        "madagaskar/report-send-now"
+      ]
+    },
+    {
+      "module": "mmc-region-population",
+      "snippet_id": 83,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/region-sources",
+        "madagaskar/region-districts",
+        "madagaskar/region-program-summary",
+        "madagaskar/population-lookup"
+      ],
+      "forbidden_during_migration": [
+        "region_target_write",
+        "region_metric_write"
+      ]
+    },
+    {
+      "module": "mmc-field",
+      "snippet_id": 84,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/field-summary",
+        "madagaskar/field-targets",
+        "madagaskar/field-routes",
+        "madagaskar/field-recent-visits"
+      ],
+      "forbidden_during_migration": [
+        "field_assignment_write",
+        "field_visit_write",
+        "share_token_write"
+      ]
+    },
+    {
+      "module": "mmc-operations",
+      "snippet_id": 85,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/operations-plan-get",
+        "madagaskar/operations-summary",
+        "madagaskar/operations-checklist-list",
+        "madagaskar/operations-schedule-list"
+      ],
+      "forbidden_during_migration": [
+        "operations_plan_write",
+        "resource_write",
+        "checklist_write",
+        "schedule_write"
+      ]
+    },
+    {
+      "module": "mmc-marketing",
+      "snippet_id": 86,
+      "risk": "medium",
+      "smoke": [
+        "madagaskar/marketing-pack-get",
+        "madagaskar/marketing-item-get",
+        "madagaskar/meta-plan-get"
+      ],
+      "forbidden_during_migration": [
+        "marketing_write",
+        "meta_write"
+      ]
+    },
+    {
+      "module": "mmc-mdg-bridge",
+      "snippet_id": 88,
+      "risk": "high",
+      "smoke": [
+        "madagaskar/mdg-bridge-status",
+        "madagaskar/mdg-bridge-candidates",
+        "madagaskar/mdg-publish-preview"
+      ],
+      "forbidden_during_migration": [
+        "auto_link",
+        "manual_link",
+        "create_draft"
+      ]
+    },
+    {
+      "module": "mmc-kommo",
+      "snippet_id": 87,
+      "risk": "high",
+      "smoke": [
+        "madagaskar/kommo-configuration",
+        "madagaskar/kommo-connection-diagnostics",
+        "madagaskar/kommo-source-consistency-check",
+        "madagaskar/kommo-stage-preview"
+      ],
+      "forbidden_during_migration": [
+        "kommo_sync_write",
+        "create_text_source",
+        "sync_ai_source",
+        "token_migration"
+      ]
+    }
+  ],
+  "uncaptured_live_snippets": [
+    {
+      "snippet_id": 72,
+      "name": "Program + Salon + Etkinlik + Satış",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 74,
+      "name": "Fatura Takip",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 75,
+      "name": "Okul Tanıtım",
+      "tracking_issue": 52
+    },
+    {
+      "snippet_id": 77,
+      "name": "V5 Finans",
+      "tracking_issue": 52
+    }
+  ],
+  "rollback": {
+    "sequence": [
+      "remove_failed_module_from_mdg_ai_abilities_modules",
+      "reactivate_matching_code_snippet",
+      "flush_object_cache",
+      "run_module_read_only_smoke_test",
+      "run_system_health_checks"
+    ]
+  }
+}
