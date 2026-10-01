@@ -1,0 +1,74 @@
+{
+  "captured_at": "2026-10-01",
+  "source": "verified_after_kommo_automation_live_migration",
+  "plugin": {
+    "slug": "madagaskar-kommo-automation",
+    "live_version": "0.1.1",
+    "github_main_version": "0.1.1",
+    "status": "active",
+    "enabled_modules": [
+      "location-menu-fix",
+      "location-answers",
+      "active-events-source",
+      "automatic-ticket-link"
+    ]
+  },
+  "snippets": {
+    "migrated_disabled": [
+      12,
+      66,
+      67,
+      70
+    ],
+    "temporary_installer": {
+      "id": 101,
+      "active": false
+    },
+    "active_code_snippets_total": 43,
+    "snippet_12_sanitized": {
+      "hardcoded_ms_token_present": false,
+      "jwt_literal_present": false,
+      "sha1": "eaa8b0df91f33989f8bff48e03462d75016d0360"
+    }
+  },
+  "runtime_secret": {
+    "storage": "WordPress option",
+    "option_name": "mmc_kommo_runtime_token",
+    "autoload": "off",
+    "secret_value_recorded_in_repository": false,
+    "fingerprint": "dbbe6d5a72399a3c"
+  },
+  "verification": {
+    "health": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0
+    },
+    "kommo": {
+      "configured": true,
+      "connected": true,
+      "http_ok": true,
+      "token_source": "MMC_KOMMO_TOKEN",
+      "uses_legacy_token": false
+    },
+    "active_events_source": {
+      "loaded": true,
+      "contains_pursaklar": true,
+      "contains_sessions": [
+        "17:30",
+        "19:30"
+      ],
+      "consistency_safe": true
+    },
+    "location_reply_program_3": {
+      "present": true,
+      "has_city": true,
+      "has_venue": true,
+      "has_maps": true
+    },
+    "ticket_link_scheduler": {
+      "historical_completed_actions": 113
+    }
+  }
+}
