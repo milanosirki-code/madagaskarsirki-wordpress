@@ -62,3 +62,10 @@ WordPress.com MCP eklenti dosyalarını okuyamadığı için canlı kod buradan 
 
 - Tek eklenti: WordPress.com eklenti ekranından önceki sürüme dönmek ya da önceki sürüm zip'ini yüklemek.
 - Tüm site: Jetpack Backup ile **01.10.2026 22:55** yedeğine dönmek. Bu, o andan sonraki sipariş verisini de geri alır; yalnızca son çare olarak kullanılmalı.
+
+## 7. İşletme sahibi kararları (2 Ekim)
+
+- Tickera Bridge ve Phone Number Validation güncellemeleri **yapılmayacak**.
+- Kommo chat butonu, Scan uyarısına rağmen **açık kalacak**.
+- MMC ve Okul Tanıtım canlı kodunun repoya alınması **sonraya** bırakıldı.
+- Not: Activity log'da "Invum POS Entegratör" (pasif) 1.0.9 → 1.0.13 güncellemesi "Server" aktörüyle görünüyor; Claude yapmadı.
