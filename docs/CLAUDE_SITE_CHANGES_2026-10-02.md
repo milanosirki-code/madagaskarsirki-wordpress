@@ -106,7 +106,7 @@ Değişiklikten önceki iki kaynak `docs/live-captures/2026-10-02/onceki/` altı
 | K1 — Bilet sorgulama formu | Canlıda (snippet V1). Gerçek siparişle deneme bekliyor. |
 | K2 — Yarım kalan ödeme hatırlatması | Deneme modu canlıda bildirildi; doğrulanmadı. Gönderim aşaması yazılmadı. |
 | K3 — Etkinlik sayfasını sadeleştirme | Başlanmadı. Kaynak depoda yok. |
-| K4 — Şehirler ve Bilet Al listesinin birleşmesi | Başlanmadı. Kaynak depoda yok. |
+| K4 — Şehirler ve Bilet Al listesinin birleşmesi | Kaynak bulundu: tarihsel MS Şehirler Dinamik V2 kaynağı `docs/recovered-sources/2026-10-02/` altına alındı. Canlı Snippet #30 exact capture ve Issue #87 tarih guard doğrulaması WPVibe açılınca yapılacak. |
 | K5 — Ana sayfa | Canlıda (snippet V3.2). |
 | K6 — Alt bilgi snippet'i | Canlıda (snippet V3.2). |
 | K7 — Ankara sayfasının başlık ve açıklaması hâlâ "26 Eylül 2026" | Açık. Değeri bir snippet basıyor; envanterdeki #25/#26/#27 veya #15 olası kaynak. |
@@ -118,5 +118,5 @@ Değişiklikten önceki iki kaynak `docs/live-captures/2026-10-02/onceki/` altı
 
 1. Bu dosyadaki dört snippet canlıda Code Snippets içinde duruyor; plugin koduna taşınırken kaynak olarak `docs/live-captures/2026-10-02/` kullanılabilir.
 2. K1 ve K2 için canlı smoke test yapılmadı. Yapılacaklar: gerçek bir misafir siparişiyle bilet sorgulama; bir deneme siparişiyle ödeme akışı; 20 dakika sonra `madagaskar-odeme-hatirlatma` günlüğü.
-3. `ms_city_v2_live_cities()` ham tarih alanı veriyorsa `ms_home_v3_city_is_today()` o alana bağlanmalı.
+3. `ms_city_v2_live_cities()` kaynağı recovery dosyasından bulundu. Public geçmiş-event sızıntısı için Issue #87 açıldı; exact live Snippet #30 ve legacy session start_at/end_at WPVibe açılınca doğrulanmalı. `ms_home_v3_city_is_today()` mevcut `date` alanını okuyabiliyor.
 4. K7 ve K8 Claude'un erişimiyle çözülemiyor.
