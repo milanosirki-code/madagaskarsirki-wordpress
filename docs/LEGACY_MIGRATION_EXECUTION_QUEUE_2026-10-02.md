@@ -15,7 +15,7 @@ Canlı write migration'a geçmeden önce:
 
 | Sıra | MDG Event | Yer | Tarih | Salon | Seanslar | Public fiyat başlangıcı | Durum |
 | ---: | ---: | --- | --- | --- | --- | ---: | --- |
-| 1 | 7 | Ankara / Yenimahalle | 2026-10-04 | Yenimahalle Spor Kompleksi Salonu | 12:00, 14:00, 16:00 | 250 TL | bekliyor |
+| 1 | 7 | Ankara / Yenimahalle | 2026-10-04 | Yenimahalle Spor Kompleksi Salonu | 12:00, 14:00, 16:00 | 250 TL | **TAMAMLANDI — Program #9** |
 | 2 | 12 | Denizli / Pamukkale | 2026-10-08 | Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Salonu | 17:30, 19:30 | 250 TL | bekliyor |
 | 3 | 9 | Ankara / Mamak | 2026-10-10 | Prof Dr. Necmettin Erbakan Kongre Merkezi | 12:00, 14:00, 16:00, 18:00 | 250 TL | bekliyor |
 | 4 | 13 | Eskişehir / Odunpazarı | 2026-10-11 | Porsuk Kapalı Spor Salonu | 12:00, 14:00, 16:00 | 250 TL | bekliyor |
@@ -91,3 +91,16 @@ Bu guard yalnız public liste sonucunu etkiler; sipariş, ürün, Tickera, Kommo
 - Issue #87 — geçmiş event public liste guard
 - Issue #82 — Kommo source limit
 - Issue #77 — transition/hotfix plugin source audit
+
+
+## Yenimahalle kapanış sonucu
+
+2 Ekim 2026 canlı migration:
+- Program #9 / `PRG-2026-ANK-YENIMA-001`
+- 6/6 mapping
+- bridge linked=true / stale=false
+- paid reconciliation 9/9 order, 26/26 ticket, 10.000 TL, revenue_diff 0
+- post-migration health 0 critical / 0 warning / 16 OK
+- Snippet #101 tekrar active=false
+
+Sonraki hedef: **Denizli MDG #12**.

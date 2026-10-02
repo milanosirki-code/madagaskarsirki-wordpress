@@ -389,3 +389,61 @@ Google Drive ana rehber revision 21, PR #86 kapanış kaydı ile birlikte:
 içeriyor.
 
 Bu bölüm ile GitHub master-status artık PR #86 ve Drive revision 21 ile kapsam olarak eşlenmiştir.
+
+
+## 18. Yenimahalle legacy MDG → MMC migration — TAMAMLANDI (2 Ekim 2026)
+
+Canlı işlem başarıyla tamamlandı.
+
+- MDG Event: **#7**
+- Yer: Ankara / Yenimahalle
+- Tarih: **4 Ekim 2026**
+- MMC Program ID: **9**
+- Program kodu: `PRG-2026-ANK-YENIMA-001`
+- MMC Event ID: **9**
+- Program venue ID: **9**
+- Program durumu: **sales_open**
+- Seans: **3** — 12:00, 14:00, 16:00
+- Aktif legacy bilet kodları: `adult`, `child`
+- Mapping coverage: **6/6 complete**
+- Legacy WooCommerce order bulundu/senkronlandı: **11 / 11**
+
+MMC ledger:
+- orders_count: **11**
+- ticket_count: **26**
+- sold_capacity: **26**
+- gross_revenue: **12.750 TL**
+- refunded: **0 TL**
+- net_revenue: **10.000 TL**
+- failed_orders metric: **2**
+
+Ücretli MDG↔MMC reconciliation:
+- paid orders: **9 / 9**
+- items: **17 / 17**
+- tickets: **26 / 26**
+- capacity units: **26 / 26**
+- missing_in_mmc: **[]**
+- extra_in_mmc: **[]**
+- revenue: **10.000 TL / 10.000 TL**
+- revenue_diff: **0 TL**
+
+Bridge:
+- linked=true
+- stale=false
+- identity 6/6
+- session_time_match=true
+- province/district/date/venue eşleşmeleri temiz
+
+Post-migration sistem sağlığı:
+- **0 kritik / 0 uyarı / 16 OK**
+
+Geçici Snippet #101 işlem sonrası tekrar kapatıldı ve canlı read-back ile **active=false** doğrulandı.
+
+Kalan legacy migration sırası artık:
+1. Denizli MDG #12
+2. Mamak MDG #9
+3. Eskişehir MDG #13
+4. İzmir MDG #10
+
+Ayrıntılı rapor:
+`docs/YENIMAHALLE_MMC_MIGRATION_2026-10-02.md`
