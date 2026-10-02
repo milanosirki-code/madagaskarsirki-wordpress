@@ -1,6 +1,6 @@
 {
-  "captured_at": "2026-10-01T20:22:00+03:00",
-  "source": "verified_live_state_after_sincan_legacy_migration_canary",
+  "captured_at": "2026-10-02T15:41:30+03:00",
+  "source": "verified_live_state_after_yenimahalle_legacy_migration",
   "plugin": {
     "slug": "madagaskar-ai-abilities",
     "live_version": "0.6.1",
@@ -50,8 +50,8 @@
     "temporary_runner": {
       "id": 101,
       "name": "GEÇİCİ — Legacy MDG → MMC Migration Runner",
-      "last_confirmed_active": true,
-      "state_note": "Sincan canary ran successfully. Immediate post-run deactivation attempt was blocked by WPVibe daily cap before state could be changed/verified. First next live action: verify and deactivate #101."
+      "last_confirmed_active": false,
+      "state_note": "Yenimahalle migration completed successfully on 2 Oct 2026. Snippet #101 was explicitly deactivated immediately afterward; live read-back confirmed active=false."
     }
   },
   "health": {
@@ -61,7 +61,14 @@
       "ok": 16,
       "info": 0
     },
-    "post_sincan_note": "No separate post-run health call completed because WPVibe daily fair-use limit was reached. The migration transaction itself completed and passed bridge plus paid-sales reconciliation checks."
+    "post_sincan_note": "Post-Sincan verification completed on 2 Oct 2026 before Yenimahalle migration: 0 critical / 0 warning / 16 OK. Program #8 remained linked, non-stale and paid-sales reconciliation exact.",
+    "latest_post_yenimahalle": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0,
+      "checked_at": "2026-10-02T15:41:25+03:00"
+    }
   },
   "sincancanary": {
     "mdg_event_id": 11,
@@ -113,14 +120,23 @@
       "mdg_revenue_ex_tax": 36000,
       "mmc_revenue": 36000,
       "revenue_diff": 0
+    },
+    "latest_verification": {
+      "checked_at": "2026-10-02T15:00:00+03:00",
+      "program_status": "sales_open",
+      "bridge_linked": true,
+      "bridge_stale": false,
+      "identity_expected": 6,
+      "identity_matched": 6,
+      "paid_orders_mdg": 33,
+      "paid_orders_mmc": 33,
+      "tickets_mdg": 100,
+      "tickets_mmc": 100,
+      "revenue_ex_tax": 41000,
+      "revenue_diff": 0
     }
   },
   "remaining_legacy_migrations": [
-    {
-      "mdg_event_id": 7,
-      "place": "Ankara / Yenimahalle",
-      "date": "2026-10-04"
-    },
     {
       "mdg_event_id": 12,
       "place": "Denizli / Pamukkale",
@@ -144,19 +160,73 @@
   ],
   "blockers": {
     "wpvibe_daily_cap": {
-      "active": true,
-      "next_expected_window": "2026-10-02 around 10:10 UTC",
-      "first_actions": [
-        "verify Code Snippet #101 state and deactivate if active",
-        "run system health",
-        "verify Program #8 bridge/dashboard read-only",
-        "only then continue remaining migrations one event at a time"
-      ]
+      "active": false,
+      "cleared_on": "2026-10-02",
+      "note": "WPVibe access restored; #101 verified/deactivated, health checked, Sincan verified, Yenimahalle migrated successfully."
     }
   },
   "tracking": {
     "legacy_migration_issue": 81,
     "kommo_source_limit_issue": 82,
     "transition_plugin_audit_issue": 77
+  },
+  "yenimahalle_migration": {
+    "mdg_event_id": 7,
+    "program_id": 9,
+    "program_code": "PRG-2026-ANK-YENIMA-001",
+    "program_status": "sales_open",
+    "event_id": 9,
+    "program_venue_id": 9,
+    "sessions": 3,
+    "active_ticket_codes": [
+      "adult",
+      "child"
+    ],
+    "mappings": {
+      "required": 6,
+      "mapped": 6,
+      "complete": true
+    },
+    "orders_found": 11,
+    "orders_synced": 11,
+    "ledger": {
+      "orders_count": 11,
+      "ticket_count": 26,
+      "sold_capacity": 26,
+      "gross_revenue": 12750,
+      "refunded_amount": 0,
+      "net_revenue": 10000,
+      "failed_orders": 2
+    },
+    "bridge": {
+      "linked": true,
+      "stale": false,
+      "identity_expected": 6,
+      "identity_matched": 6,
+      "session_time_match": true
+    },
+    "reconciliation": {
+      "ok": true,
+      "mdg_paid_orders": 9,
+      "mmc_paid_orders": 9,
+      "mdg_items": 17,
+      "mmc_items": 17,
+      "mdg_tickets": 26,
+      "mmc_tickets": 26,
+      "mdg_units": 26,
+      "mmc_units": 26,
+      "missing_in_mmc": [],
+      "extra_in_mmc": [],
+      "mdg_revenue_ex_tax": 10000,
+      "mmc_revenue": 10000,
+      "revenue_diff": 0
+    },
+    "post_migration_health": {
+      "critical": 0,
+      "warning": 0,
+      "ok": 16,
+      "info": 0
+    },
+    "temporary_runner_active_after": false
   }
 }
