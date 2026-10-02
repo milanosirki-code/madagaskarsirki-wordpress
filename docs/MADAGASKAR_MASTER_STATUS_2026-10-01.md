@@ -263,3 +263,22 @@ Drive belgesi:
 - Read-back doğrulaması: v0.6.1, Sincan program kodu, #101 uyarısı, Yenimahalle başlangıçlı kalan sıra, Issue #82 ve bu master dosya adı dokümanda bulundu.
 
 Bu nedenle bu PR merge edildikten sonra GitHub ve Drive 1 Ekim 2026 kapanış durumu bakımından senkron kabul edilir.
+
+
+## 15. 2 Ekim 2026 sabah devam notu
+
+10:30 TSİ civarında WPVibe tekrar denendi; rolling 24-hour Free fair-use limiti hâlâ kapalıdır. Sistem daha fazla kullanımın yaklaşık 10:10 UTC / 13:10 TSİ civarında açılacağını bildirdi. Bu nedenle canlı write yapılmadı.
+
+Kota beklerken public liste zinciri incelendi. `MS Şehirler Dinamik V2` kaynağı recovery dosyasından bulundu. `ms_city_v2_event_sessions()` yalnız legacy `end_at >= now_utc` filtresine güvendiği için stale/yanlış end_at değerlerinde geçmiş tarihli session'lar public listeye sızabilir.
+
+Yeni takip:
+- Issue #87 — geçmiş legacy event'leri public şehir/bilet listelerinden güvenli şekilde çıkar
+- `docs/PUBLIC_EVENT_DATE_GUARD_2026-10-02.md`
+- `docs/LEGACY_MIGRATION_EXECUTION_QUEUE_2026-10-02.md`
+
+Canlıya ilk dönüş sırası değişmedi:
+1. #101 state oku ve aktifse kapat
+2. system health
+3. Sincan Program #8 read-only kontrol
+4. Issue #87 için exact live Snippet #30 + legacy session start/end teşhisi
+5. Yenimahalle ile kalan migration sırasına devam
