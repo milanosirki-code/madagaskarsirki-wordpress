@@ -282,3 +282,19 @@ Canlıya ilk dönüş sırası değişmedi:
 3. Sincan Program #8 read-only kontrol
 4. Issue #87 için exact live Snippet #30 + legacy session start/end teşhisi
 5. Yenimahalle ile kalan migration sırasına devam
+
+
+## 16. Snippet #30 kaynak recovery — 2 Ekim 2026
+
+`MS Şehirler Dinamik V2` tarihsel kaynak kodu eski dosya arşivinden bulundu ve GitHub'a alındı.
+
+Kaynaklar:
+- `docs/recovered-sources/2026-10-02/snippet-30-ms-sehirler-dinamik-v2-recovered.php.txt`
+- `docs/recovered-sources/2026-10-02/snippet-30-ms-sehirler-dinamik-v2.1-date-guard-candidate.php.txt`
+- `docs/recovered-sources/2026-10-02/README.md`
+
+Bu kaynak **2 Ekim canlı Snippet #30 exact capture olarak kabul edilmez**; tarihsel karşılaştırma tabanıdır.
+
+V2.1 adayındaki tek davranış değişikliği: local session tarihi bugünden eskiyse public listeye eklememek. Sipariş, ürün, Tickera, Kommo veya event status write yoktur.
+
+WPVibe açıldığında exact live #30 okunacak, recovered source ile diff alınacak ve yalnız uyumluysa Issue #87 patch'i uygulanacaktır.
