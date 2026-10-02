@@ -1,0 +1,2144 @@
+/**
+ * ==========================================================
+ * MADAGASKAR SİRKİ
+ * ANASAYFA TAM SAYFA V3
+ * ==========================================================
+ *
+ * Veri kaynağı:
+ * MS Şehirler Dinamik V2
+ * +
+ * Madagaskar Bilet Yönetimi events/sessions
+ * +
+ * WordPress Instagram Akışı sayfası
+ *
+ * SADECE OKUMA YAPAR.
+ *
+ * - Etkinlik oluşturmaz
+ * - Seans değiştirmez
+ * - Ürün değiştirmez
+ * - Siparişe dokunmaz
+ * - Tickera'ya dokunmaz
+ * - Kommo'ya dokunmaz
+ *
+ * Instagram:
+ * /instagram-akisi/ sayfasındaki
+ * Latest Instagram Posts bloğunu okur.
+ *
+ * Shortcode:
+ * [ms_anasayfa_v2]
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+/* =========================================================
+ * ANASAYFA
+ * ======================================================= */
+
+function ms_home_v2_render_page() {
+
+	/*
+	 * Şehirler Dinamik V2 hazır değilse
+	 * sayfayı kırma.
+	 */
+	$cities = array();
+
+	if ( function_exists( 'ms_city_v2_live_cities' ) ) {
+
+		$cities = ms_city_v2_live_cities();
+
+		/*
+		 * Anasayfada en yakın ilk 3 şehir.
+		 */
+		$cities = array_slice(
+			$cities,
+			0,
+			3,
+			true
+		);
+	}
+
+
+	/*
+	 * =====================================================
+	 * INSTAGRAM AKIŞI
+	 * =====================================================
+	 *
+	 * /instagram-akisi/ sayfasının içeriğini okur.
+	 * Instagram erişim anahtarı veya şifre
+	 * bu snippet içinde tutulmaz.
+	 */
+
+	$instagram_feed = '';
+
+	$instagram_page = get_page_by_path(
+		'instagram-akisi',
+		OBJECT,
+		'page'
+	);
+
+	if (
+		$instagram_page instanceof WP_Post &&
+		! empty( $instagram_page->post_content )
+	) {
+
+		$instagram_feed = do_blocks(
+			$instagram_page->post_content
+		);
+	}
+
+
+	ob_start();
+	?>
+
+<style id="ms-home-v3-css">
+
+/* =========================================================
+   MOBİL TAM EKRAN SON DÜZELTME
+   ======================================================= */
+
+@media (max-width:700px){
+
+	.msh-v2{
+		position:relative !important;
+
+		width:100vw !important;
+		max-width:100vw !important;
+
+		margin-left:calc(50% - 50vw) !important;
+		margin-right:calc(50% - 50vw) !important;
+
+		background:#f5f0e6 !important;
+
+		overflow-x:hidden !important;
+	}
+
+	body.home .wp-block-post-content,
+	body.home .entry-content{
+		margin:0 !important;
+		padding:0 !important;
+		max-width:none !important;
+		background:#f5f0e6 !important;
+	}
+
+}
+
+
+/* =========================================================
+   TEMEL
+   ======================================================= */
+
+.msh-v2{
+	--ms-red:#c84b3b;
+	--ms-red-dark:#a93a2e;
+	--ms-black:#101017;
+	--ms-cream:#f5f0e6;
+	--ms-soft:#ece5d8;
+	--ms-white:#ffffff;
+	--ms-muted:#66666f;
+	--ms-gold:#ffb800;
+
+	position:relative;
+
+	width:100vw !important;
+	max-width:100vw !important;
+
+	margin-left:calc(50% - 50vw) !important;
+	margin-right:calc(50% - 50vw) !important;
+
+	padding:0 !important;
+
+	background:var(--ms-cream);
+
+	color:var(--ms-black);
+
+	font-family:inherit;
+
+	overflow:hidden;
+}
+
+.msh-v2 *,
+.msh-v2 *::before,
+.msh-v2 *::after{
+	box-sizing:border-box;
+}
+
+.msh-v2 a{
+	text-decoration:none !important;
+}
+
+.msh-v2 .msh-container{
+	width:calc(100% - 48px) !important;
+	max-width:1280px !important;
+
+	margin-left:auto !important;
+	margin-right:auto !important;
+}
+
+
+/* =========================================================
+   HERO
+   ======================================================= */
+
+.msh-v2 .msh-hero{
+	padding:42px 0 46px !important;
+}
+
+.msh-v2 .msh-hero-grid{
+	display:grid !important;
+
+	grid-template-columns:
+		minmax(0,1.08fr)
+		minmax(400px,.92fr) !important;
+
+	gap:24px !important;
+
+	align-items:stretch !important;
+}
+
+.msh-v2 .msh-hero-copy,
+.msh-v2 .msh-hero-media{
+	min-height:565px;
+
+	background:#fff;
+
+	border-radius:26px;
+
+	box-shadow:
+		0 16px 45px
+		rgba(15,15,23,.08);
+}
+
+.msh-v2 .msh-hero-copy{
+	padding:48px !important;
+
+	display:flex !important;
+
+	flex-direction:column !important;
+
+	justify-content:space-between !important;
+}
+
+.msh-v2 .msh-kicker{
+	display:inline-flex;
+
+	width:max-content;
+	max-width:100%;
+
+	margin-bottom:25px;
+
+	padding:10px 15px;
+
+	border-radius:999px;
+
+	background:var(--ms-black);
+
+	color:#fff;
+
+	font-size:12px;
+
+	font-weight:900;
+
+	letter-spacing:1.3px;
+}
+
+.msh-v2 .msh-hero h1{
+	max-width:750px;
+
+	margin:0 0 25px !important;
+
+	color:var(--ms-black) !important;
+
+	font-size:clamp(50px,5.1vw,76px) !important;
+
+	line-height:.96 !important;
+
+	letter-spacing:-3px !important;
+}
+
+.msh-v2 .msh-lead{
+	max-width:720px;
+
+	margin:0 !important;
+
+	color:#37373e;
+
+	font-size:18px;
+
+	line-height:1.65;
+}
+
+.msh-v2 .msh-tags{
+	display:flex;
+
+	flex-wrap:wrap;
+
+	gap:9px;
+
+	margin-top:27px;
+}
+
+.msh-v2 .msh-tag{
+	display:inline-flex;
+
+	padding:9px 13px;
+
+	border:1px solid rgba(15,15,23,.08);
+
+	border-radius:999px;
+
+	background:var(--ms-cream);
+
+	color:var(--ms-black);
+
+	font-size:12px;
+
+	font-weight:850;
+}
+
+.msh-v2 .msh-actions{
+	display:flex;
+
+	flex-wrap:wrap;
+
+	gap:10px;
+
+	margin-top:34px;
+}
+
+
+/* =========================================================
+   BUTONLAR
+   ======================================================= */
+
+.msh-v2 .msh-btn{
+	display:inline-flex;
+
+	align-items:center;
+
+	justify-content:center;
+
+	min-height:50px;
+
+	padding:0 22px;
+
+	border-radius:999px;
+
+	font-size:14px;
+
+	font-weight:850;
+
+	transition:
+		transform .18s ease,
+		background .18s ease;
+}
+
+.msh-v2 .msh-btn:hover{
+	transform:translateY(-1px);
+}
+
+.msh-v2 .msh-btn-primary{
+	background:var(--ms-red);
+
+	color:#fff !important;
+
+	box-shadow:
+		0 10px 24px
+		rgba(200,75,59,.22);
+}
+
+.msh-v2 .msh-btn-primary:hover{
+	background:var(--ms-red-dark);
+}
+
+.msh-v2 .msh-btn-light{
+	background:#fff;
+
+	color:var(--ms-black) !important;
+
+	border:1px solid rgba(15,15,23,.10);
+}
+
+.msh-v2 .msh-btn-dark{
+	background:var(--ms-black);
+
+	color:#fff !important;
+}
+
+
+/* =========================================================
+   HERO FOTOĞRAF
+   ======================================================= */
+
+.msh-v2 .msh-hero-media{
+	padding:18px;
+
+	display:flex;
+
+	flex-direction:column;
+
+	gap:15px;
+}
+
+.msh-v2 .msh-photo{
+	position:relative;
+
+	flex:1;
+
+	min-height:420px;
+
+	overflow:hidden;
+
+	padding:30px;
+
+	border-radius:20px;
+
+	display:flex;
+
+	align-items:flex-end;
+
+	background-image:
+		linear-gradient(
+			180deg,
+			rgba(10,10,15,.02) 0%,
+			rgba(10,10,15,.10) 42%,
+			rgba(10,10,15,.90) 100%
+		),
+		url("https://madagaskarsirki.com/wp-content/uploads/2026/08/1001155378-1.jpg");
+
+	background-size:cover;
+
+	background-position:center 38%;
+
+	background-repeat:no-repeat;
+}
+
+.msh-v2 .msh-photo-label{
+	display:inline-flex;
+
+	margin-bottom:14px;
+
+	padding:8px 12px;
+
+	border-radius:999px;
+
+	background:rgba(15,15,23,.68);
+
+	color:#fff;
+
+	font-size:11px;
+
+	font-weight:900;
+}
+
+.msh-v2 .msh-photo h2{
+	max-width:480px;
+
+	margin:0 !important;
+
+	color:#fff !important;
+
+	font-size:42px !important;
+
+	line-height:1.02 !important;
+
+	letter-spacing:-1.4px !important;
+
+	text-shadow:
+		0 3px 18px
+		rgba(0,0,0,.45);
+}
+
+.msh-v2 .msh-stats{
+	display:grid;
+
+	grid-template-columns:
+		repeat(3,minmax(0,1fr));
+
+	gap:10px;
+}
+
+.msh-v2 .msh-stat{
+	min-height:92px;
+
+	padding:12px 8px;
+
+	border-radius:15px;
+
+	background:var(--ms-cream);
+
+	display:flex;
+
+	flex-direction:column;
+
+	align-items:center;
+
+	justify-content:center;
+
+	text-align:center;
+}
+
+.msh-v2 .msh-stat strong{
+	font-size:17px;
+}
+
+.msh-v2 .msh-stat span{
+	margin-top:4px;
+
+	color:var(--ms-muted);
+
+	font-size:10px;
+}
+
+
+/* =========================================================
+   GENEL BÖLÜMLER
+   ======================================================= */
+
+.msh-v2 .msh-section{
+	padding:48px 0 !important;
+}
+
+.msh-v2 .msh-soft{
+	background:var(--ms-soft);
+}
+
+.msh-v2 .msh-section-head{
+	display:flex;
+
+	align-items:flex-end;
+
+	justify-content:space-between;
+
+	gap:30px;
+
+	margin-bottom:24px;
+}
+
+.msh-v2 .msh-eyebrow{
+	display:block;
+
+	margin-bottom:8px;
+
+	color:var(--ms-red);
+
+	font-size:11px;
+
+	font-weight:900;
+
+	letter-spacing:1.15px;
+}
+
+.msh-v2 .msh-section-head h2{
+	margin:0 !important;
+
+	color:var(--ms-black) !important;
+
+	font-size:39px !important;
+
+	line-height:1.04 !important;
+
+	letter-spacing:-1.2px !important;
+}
+
+.msh-v2 .msh-section-head p{
+	max-width:700px;
+
+	margin:9px 0 0;
+
+	color:var(--ms-muted);
+
+	font-size:15px;
+
+	line-height:1.55;
+}
+
+.msh-v2 .msh-section-link{
+	flex:0 0 auto;
+
+	padding-bottom:5px;
+
+	color:var(--ms-red) !important;
+
+	font-size:14px;
+
+	font-weight:850;
+}
+
+
+/* =========================================================
+   YAKLAŞAN GÖSTERİLER
+   ======================================================= */
+
+.msh-v2 .msh-events{
+	display:grid !important;
+
+	grid-template-columns:
+		repeat(3,minmax(0,1fr)) !important;
+
+	gap:19px !important;
+}
+
+.msh-v2 .msh-event{
+	min-height:325px;
+
+	padding:28px;
+
+	border-radius:23px;
+
+	background:#fff;
+
+	box-shadow:
+		0 14px 38px
+		rgba(15,15,23,.07);
+
+	display:flex;
+
+	flex-direction:column;
+}
+
+.msh-v2 .msh-event-top{
+	display:flex;
+
+	align-items:flex-start;
+
+	justify-content:space-between;
+
+	gap:12px;
+}
+
+.msh-v2 .msh-event-city{
+	color:var(--ms-red);
+
+	font-size:11px;
+
+	font-weight:900;
+
+	letter-spacing:.8px;
+
+	text-transform:uppercase;
+}
+
+.msh-v2 .msh-sale{
+	display:inline-flex;
+
+	padding:7px 10px;
+
+	border-radius:999px;
+
+	background:var(--ms-red);
+
+	color:#fff;
+
+	font-size:9px;
+
+	font-weight:900;
+}
+
+.msh-v2 .msh-event h3{
+	margin:14px 0 8px !important;
+
+	color:var(--ms-black) !important;
+
+	font-size:30px !important;
+
+	line-height:1.05 !important;
+
+	letter-spacing:-.8px !important;
+}
+
+.msh-v2 .msh-event-venue{
+	margin:0;
+
+	min-height:42px;
+
+	color:var(--ms-muted);
+
+	font-size:14px;
+
+	line-height:1.5;
+}
+
+.msh-v2 .msh-sessions{
+	display:flex;
+
+	flex-wrap:wrap;
+
+	gap:7px;
+
+	margin-top:17px;
+}
+
+.msh-v2 .msh-sessions span{
+	min-width:62px;
+
+	padding:8px 11px;
+
+	border:1px solid rgba(15,15,23,.08);
+
+	border-radius:999px;
+
+	background:var(--ms-cream);
+
+	text-align:center;
+
+	color:var(--ms-black);
+
+	font-size:12px;
+
+	font-weight:850;
+}
+
+.msh-v2 .msh-price{
+	margin:14px 0 0;
+
+	color:var(--ms-black);
+
+	font-size:13px;
+}
+
+.msh-v2 .msh-event-actions{
+	margin-top:auto;
+
+	padding-top:22px;
+}
+
+.msh-v2 .msh-tour-card{
+	background:
+		linear-gradient(
+			145deg,
+			#fff,
+			#f4ede2
+		);
+}
+
+
+/* =========================================================
+   NEDEN MADAGASKAR
+   ======================================================= */
+
+.msh-v2 .msh-features{
+	display:grid;
+
+	grid-template-columns:
+		repeat(4,minmax(0,1fr));
+
+	gap:17px;
+}
+
+.msh-v2 .msh-feature{
+	min-height:245px;
+
+	padding:25px;
+
+	border-radius:22px;
+
+	background:#fff;
+
+	box-shadow:
+		0 13px 35px
+		rgba(15,15,23,.06);
+}
+
+.msh-v2 .msh-feature-icon{
+	width:48px;
+	height:48px;
+
+	margin-bottom:18px;
+
+	border-radius:15px;
+
+	background:var(--ms-cream);
+
+	display:flex;
+
+	align-items:center;
+
+	justify-content:center;
+
+	font-size:23px;
+}
+
+.msh-v2 .msh-feature h3{
+	margin:0 0 9px !important;
+
+	color:var(--ms-black) !important;
+
+	font-size:21px !important;
+}
+
+.msh-v2 .msh-feature p{
+	margin:0;
+
+	color:var(--ms-muted);
+
+	font-size:14px;
+
+	line-height:1.6;
+}
+
+
+/* =========================================================
+   GÜVEN BANDI
+   ======================================================= */
+
+.msh-v2 .msh-trust{
+	display:grid;
+
+	grid-template-columns:
+		repeat(4,minmax(0,1fr));
+
+	overflow:hidden;
+
+	margin-top:19px;
+
+	border-radius:22px;
+
+	background:var(--ms-black);
+}
+
+.msh-v2 .msh-trust-item{
+	padding:25px 14px;
+
+	text-align:center;
+
+	border-right:
+		1px solid
+		rgba(255,255,255,.09);
+}
+
+.msh-v2 .msh-trust-item:last-child{
+	border-right:none;
+}
+
+.msh-v2 .msh-trust-item strong{
+	display:block;
+
+	margin-bottom:5px;
+
+	color:#fff;
+
+	font-size:14px;
+}
+
+.msh-v2 .msh-trust-item span{
+	color:rgba(255,255,255,.63);
+
+	font-size:11px;
+}
+
+
+/* =========================================================
+   INSTAGRAM / SOSYAL MEDYA
+   ======================================================= */
+
+.msh-v2 .msh-social-section{
+	background:#101017;
+
+	color:#fff;
+}
+
+.msh-v2 .msh-social-section .msh-eyebrow{
+	color:var(--ms-gold);
+}
+
+.msh-v2 .msh-social-section .msh-section-head h2{
+	color:#fff !important;
+}
+
+.msh-v2 .msh-social-section .msh-section-head p{
+	color:rgba(255,255,255,.68);
+}
+
+.msh-v2 .msh-social-section .msh-section-link{
+	color:var(--ms-gold) !important;
+}
+
+.msh-v2 .msh-social-wrap{
+	padding:22px;
+
+	border:1px solid rgba(255,255,255,.08);
+
+	border-radius:24px;
+
+	background:#181820;
+
+	box-shadow:
+		0 16px 42px
+		rgba(0,0,0,.18);
+}
+
+.msh-v2 .msh-instagram-feed{
+	width:100%;
+
+	max-width:100%;
+
+	overflow:hidden;
+}
+
+.msh-v2 .msh-instagram-feed img{
+	max-width:100%;
+
+	height:auto;
+
+	border-radius:14px;
+
+	transition:
+		transform .22s ease,
+		opacity .22s ease;
+}
+
+.msh-v2 .msh-instagram-feed a:hover img{
+	transform:scale(1.018);
+
+	opacity:.92;
+}
+
+.msh-v2 .msh-social-actions{
+	display:flex;
+
+	justify-content:center;
+
+	margin-top:24px;
+}
+
+.msh-v2 .msh-instagram-btn{
+	background:#fff;
+
+	color:#101017 !important;
+}
+
+.msh-v2 .msh-instagram-btn:hover{
+	background:#f5f0e6;
+}
+
+.msh-v2 .msh-social-empty{
+	padding:34px 20px;
+
+	border:
+		1px dashed
+		rgba(255,255,255,.18);
+
+	border-radius:17px;
+
+	text-align:center;
+
+	color:rgba(255,255,255,.68);
+
+	font-size:14px;
+
+	line-height:1.6;
+}
+
+
+/* =========================================================
+   SSS
+   ======================================================= */
+
+.msh-v2 .msh-faq-grid{
+	display:grid;
+
+	grid-template-columns:
+		repeat(2,minmax(0,1fr));
+
+	gap:16px;
+}
+
+.msh-v2 .msh-faq{
+	min-height:135px;
+
+	padding:24px;
+
+	border-radius:20px;
+
+	background:#fff;
+
+	box-shadow:
+		0 10px 30px
+		rgba(15,15,23,.05);
+}
+
+.msh-v2 .msh-faq h3{
+	margin:0 0 8px !important;
+
+	color:var(--ms-black) !important;
+
+	font-size:18px !important;
+}
+
+.msh-v2 .msh-faq p{
+	margin:0;
+
+	color:var(--ms-muted);
+
+	font-size:14px;
+
+	line-height:1.55;
+}
+
+
+/* =========================================================
+   SON CTA
+   ======================================================= */
+
+.msh-v2 .msh-final{
+	padding:13px 0 58px;
+}
+
+.msh-v2 .msh-final-box{
+	padding:40px;
+
+	border-radius:27px;
+
+	background:
+		linear-gradient(
+			135deg,
+			#101018,
+			#202028
+		);
+
+	display:grid;
+
+	grid-template-columns:
+		minmax(0,1.15fr)
+		minmax(0,.85fr);
+
+	gap:25px;
+
+	align-items:center;
+}
+
+.msh-v2 .msh-final-box h2{
+	margin:0 0 10px !important;
+
+	color:#fff !important;
+
+	font-size:38px !important;
+
+	line-height:1.05 !important;
+}
+
+.msh-v2 .msh-final-box p{
+	max-width:640px;
+
+	margin:0;
+
+	color:rgba(255,255,255,.70);
+
+	font-size:15px;
+
+	line-height:1.6;
+}
+
+.msh-v2 .msh-final-actions{
+	display:flex;
+
+	flex-wrap:wrap;
+
+	justify-content:flex-end;
+
+	gap:10px;
+}
+
+
+/* =========================================================
+   TABLET
+   ======================================================= */
+
+@media(max-width:980px){
+
+	.msh-v2 .msh-hero-grid{
+		grid-template-columns:1fr !important;
+	}
+
+	.msh-v2 .msh-hero-copy,
+	.msh-v2 .msh-hero-media{
+		min-height:auto;
+	}
+
+	.msh-v2 .msh-events{
+		grid-template-columns:
+			repeat(2,minmax(0,1fr)) !important;
+	}
+
+	.msh-v2 .msh-features{
+		grid-template-columns:
+			repeat(2,minmax(0,1fr));
+	}
+
+}
+
+
+/* =========================================================
+   TELEFON
+   ======================================================= */
+
+@media(max-width:700px){
+
+	.msh-v2 .msh-container{
+		width:calc(100% - 22px) !important;
+	}
+
+	.msh-v2 .msh-hero{
+		padding:15px 0 28px !important;
+	}
+
+	.msh-v2 .msh-hero-copy{
+		padding:26px !important;
+	}
+
+	.msh-v2 .msh-hero h1{
+		font-size:43px !important;
+
+		letter-spacing:-1.6px !important;
+	}
+
+	.msh-v2 .msh-lead{
+		font-size:16px;
+	}
+
+	.msh-v2 .msh-actions{
+		display:grid;
+
+		grid-template-columns:1fr;
+	}
+
+	.msh-v2 .msh-actions .msh-btn{
+		width:100%;
+	}
+
+	.msh-v2 .msh-photo{
+		min-height:390px;
+
+		padding:23px;
+	}
+
+	.msh-v2 .msh-photo h2{
+		font-size:32px !important;
+	}
+
+	.msh-v2 .msh-section{
+		padding:37px 0 !important;
+	}
+
+	.msh-v2 .msh-section-head{
+		display:block;
+	}
+
+	.msh-v2 .msh-section-link{
+		display:inline-block;
+
+		margin-top:15px;
+	}
+
+	.msh-v2 .msh-section-head h2{
+		font-size:32px !important;
+	}
+
+	.msh-v2 .msh-events,
+	.msh-v2 .msh-features,
+	.msh-v2 .msh-faq-grid,
+	.msh-v2 .msh-final-box{
+		grid-template-columns:1fr !important;
+	}
+
+	.msh-v2 .msh-trust{
+		grid-template-columns:1fr 1fr;
+	}
+
+	.msh-v2 .msh-final-actions{
+		display:grid;
+
+		grid-template-columns:1fr;
+
+		width:100%;
+	}
+
+	.msh-v2 .msh-final-actions .msh-btn{
+		width:100%;
+	}
+
+	.msh-v2 .msh-social-wrap{
+		padding:12px;
+
+		border-radius:18px;
+	}
+
+	.msh-v2 .msh-social-actions{
+		display:grid;
+
+		grid-template-columns:1fr;
+
+		width:100%;
+	}
+
+	.msh-v2 .msh-social-actions .msh-btn{
+		width:100%;
+	}
+
+}
+
+
+/* =========================================================
+   MOBİL SON DÜZELTME
+   ======================================================= */
+
+@media (max-width:700px){
+
+	html,
+	body{
+		max-width:100% !important;
+		overflow-x:hidden !important;
+	}
+
+	.msh-v2{
+		width:100% !important;
+		max-width:100% !important;
+		margin-left:0 !important;
+		margin-right:0 !important;
+		overflow-x:hidden !important;
+	}
+
+	.msh-v2 .msh-container{
+		width:calc(100% - 24px) !important;
+		max-width:100% !important;
+		margin-left:auto !important;
+		margin-right:auto !important;
+	}
+
+	.msh-v2 .msh-hero-grid{
+		grid-template-columns:minmax(0,1fr) !important;
+		width:100% !important;
+		gap:14px !important;
+	}
+
+	.msh-v2 .msh-hero-copy,
+	.msh-v2 .msh-hero-media{
+		width:100% !important;
+		max-width:100% !important;
+		min-width:0 !important;
+		overflow:hidden !important;
+	}
+
+	.msh-v2 .msh-hero-copy{
+		padding:24px !important;
+	}
+
+	.msh-v2 .msh-kicker{
+		display:flex !important;
+		width:100% !important;
+		max-width:100% !important;
+		justify-content:center !important;
+		text-align:center !important;
+		padding:11px 10px !important;
+		font-size:10px !important;
+		line-height:1.3 !important;
+		letter-spacing:.65px !important;
+		white-space:normal !important;
+	}
+
+	.msh-v2 .msh-hero h1{
+		width:100% !important;
+		max-width:100% !important;
+		font-size:42px !important;
+		line-height:.98 !important;
+		letter-spacing:-1.5px !important;
+		word-break:normal !important;
+	}
+
+	.msh-v2 .msh-lead{
+		width:100% !important;
+		max-width:100% !important;
+		font-size:16px !important;
+		line-height:1.55 !important;
+	}
+
+	.msh-v2 .msh-tags{
+		display:grid !important;
+		grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+		gap:8px !important;
+		width:100% !important;
+	}
+
+	.msh-v2 .msh-tag{
+		width:100% !important;
+		min-width:0 !important;
+		justify-content:center !important;
+		text-align:center !important;
+		padding:9px 6px !important;
+		font-size:11px !important;
+		line-height:1.2 !important;
+	}
+
+	.msh-v2 .msh-actions{
+		display:grid !important;
+		grid-template-columns:1fr !important;
+		width:100% !important;
+		gap:9px !important;
+	}
+
+	.msh-v2 .msh-actions .msh-btn{
+		width:100% !important;
+	}
+
+	.msh-v2 .msh-hero-media{
+		padding:10px !important;
+	}
+
+	.msh-v2 .msh-photo{
+		width:100% !important;
+		max-width:100% !important;
+		min-height:360px !important;
+		padding:21px !important;
+		background-position:center center !important;
+	}
+
+	.msh-v2 .msh-photo h2{
+		max-width:100% !important;
+		font-size:31px !important;
+		line-height:1.03 !important;
+	}
+
+	.msh-v2 .msh-stats{
+		grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+		gap:6px !important;
+		width:100% !important;
+	}
+
+	.msh-v2 .msh-stat{
+		width:100% !important;
+		min-width:0 !important;
+		padding:10px 3px !important;
+	}
+
+	.msh-v2 .msh-stat strong{
+		font-size:14px !important;
+	}
+
+	.msh-v2 .msh-stat span{
+		font-size:9px !important;
+	}
+
+	.msh-v2 .msh-events,
+	.msh-v2 .msh-features,
+	.msh-v2 .msh-faq-grid{
+		grid-template-columns:1fr !important;
+	}
+
+	.msh-v2 .msh-event,
+	.msh-v2 .msh-feature,
+	.msh-v2 .msh-faq{
+		width:100% !important;
+		min-width:0 !important;
+		min-height:0 !important;
+	}
+
+	.msh-v2 .msh-event-actions .msh-btn{
+		width:100% !important;
+	}
+
+}
+
+
+/* =========================================================
+   MOBİL TAM GENİŞLİK DÜZELTMESİ
+   ======================================================= */
+
+@media (max-width:700px){
+
+	body.home .wp-site-blocks,
+	body.home main,
+	body.home .wp-block-post-content,
+	body.home .entry-content{
+		max-width:none !important;
+		margin-left:0 !important;
+		margin-right:0 !important;
+		padding-left:0 !important;
+		padding-right:0 !important;
+	}
+
+	.msh-v2{
+		position:relative !important;
+
+		width:100vw !important;
+		max-width:100vw !important;
+
+		margin-left:calc(50% - 50vw) !important;
+		margin-right:calc(50% - 50vw) !important;
+
+		background:#f5f0e6 !important;
+
+		overflow-x:hidden !important;
+	}
+
+	body.home .wp-block-post-content{
+		background:#f5f0e6 !important;
+	}
+
+	.msh-v2 .msh-hero{
+		padding-top:18px !important;
+		padding-bottom:26px !important;
+	}
+
+}
+
+</style>
+
+
+<main class="msh-v2">
+
+	<!-- ===================================================
+	     HERO
+	     ================================================= -->
+
+	<section class="msh-hero">
+
+		<div class="msh-container msh-hero-grid">
+
+
+			<div class="msh-hero-copy">
+
+				<div>
+
+					<span class="msh-kicker">
+						AİLECE · ŞAŞKINLIK · KAHKAHA · HEYECAN
+					</span>
+
+					<h1>
+						Madagaskar Sirki Türkiye’de
+					</h1>
+
+					<p class="msh-lead">
+						Dünyanın farklı ülkelerinden gelen
+						yetenekli sanatçılar, nefes kesen
+						akrobasi gösterileri, kahkaha ve
+						heyecanı aynı sahnede buluşturuyor.
+					</p>
+
+
+					<div class="msh-tags">
+
+						<span class="msh-tag">
+							Yaklaşık 60 Dakika
+						</span>
+
+						<span class="msh-tag">
+							Aile Dostu
+						</span>
+
+						<span class="msh-tag">
+							Hayvansız Gösteri
+						</span>
+
+						<span class="msh-tag">
+							Uluslararası Sanatçılar
+						</span>
+
+					</div>
+
+				</div>
+
+
+				<div class="msh-actions">
+
+					<a
+						href="/sehirler/"
+						class="msh-btn msh-btn-primary"
+					>
+						Şehrini Seç ve Bilet Al
+					</a>
+
+					<a
+						href="/biletlerim/"
+						class="msh-btn msh-btn-light"
+					>
+						Biletlerimi Gör
+					</a>
+
+				</div>
+
+			</div>
+
+
+			<div class="msh-hero-media">
+
+				<div class="msh-photo">
+
+					<div>
+
+						<span class="msh-photo-label">
+							MADAGASKAR SİRKİ
+						</span>
+
+						<h2>
+							Ailece şaşkınlık,
+							kahkaha ve heyecan
+							dolu yaklaşık 60 dakika.
+						</h2>
+
+					</div>
+
+				</div>
+
+
+				<div class="msh-stats">
+
+					<div class="msh-stat">
+						<strong>≈ 60 dk</strong>
+						<span>Gösteri süresi</span>
+					</div>
+
+					<div class="msh-stat">
+						<strong>Hayvansız</strong>
+						<span>Sahne gösterisi</span>
+					</div>
+
+					<div class="msh-stat">
+						<strong>Ailece</strong>
+						<span>Ortak deneyim</span>
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- ===================================================
+	     DİNAMİK YAKLAŞAN GÖSTERİLER
+	     ================================================= -->
+
+	<section
+		class="msh-section"
+		id="gosteriler"
+	>
+
+		<div class="msh-container">
+
+
+			<div class="msh-section-head">
+
+				<div>
+
+					<span class="msh-eyebrow">
+						TURNE TAKVİMİ
+					</span>
+
+					<h2>
+						Yaklaşan gösteriler
+					</h2>
+
+					<p>
+						Satışa açılmış gösteriler
+						otomatik olarak burada görünür.
+						Tarih, salon, seans ve başlangıç
+						fiyatları güncel bilet sisteminden alınır.
+					</p>
+
+				</div>
+
+
+				<a
+					href="/sehirler/"
+					class="msh-section-link"
+				>
+					Tüm şehirleri gör →
+				</a>
+
+			</div>
+
+
+			<div class="msh-events">
+
+
+				<?php if ( $cities ) : ?>
+
+
+					<?php foreach ( $cities as $city ) : ?>
+
+						<article class="msh-event">
+
+							<div class="msh-event-top">
+
+								<span class="msh-event-city">
+									<?php
+									echo esc_html(
+										$city['name']
+									);
+									?>
+								</span>
+
+								<span class="msh-sale">
+									SATIŞTA
+								</span>
+
+							</div>
+
+
+							<h3>
+								<?php
+								echo esc_html(
+									$city['date_label']
+								);
+								?>
+							</h3>
+
+
+							<?php if ( $city['venue'] ) : ?>
+
+								<p class="msh-event-venue">
+									<?php
+									echo esc_html(
+										$city['venue']
+									);
+									?>
+								</p>
+
+							<?php endif; ?>
+
+
+							<?php if ( ! empty( $city['times'] ) ) : ?>
+
+								<div class="msh-sessions">
+
+									<?php foreach ( $city['times'] as $time ) : ?>
+
+										<span>
+											<?php
+											echo esc_html(
+												$time
+											);
+											?>
+										</span>
+
+									<?php endforeach; ?>
+
+								</div>
+
+							<?php endif; ?>
+
+
+							<?php if ( $city['price'] !== null ) : ?>
+
+								<p class="msh-price">
+
+									<strong>
+										Başlangıç:
+									</strong>
+
+									<?php
+									echo wp_kses_post(
+										function_exists(
+											'wc_price'
+										)
+											? wc_price(
+												$city['price']
+											)
+											: number_format_i18n(
+												$city['price'],
+												2
+											) . ' ₺'
+									);
+									?>
+
+								</p>
+
+							<?php endif; ?>
+
+
+							<div class="msh-event-actions">
+
+								<?php if ( ! empty( $city['url'] ) ) : ?>
+
+									<a
+										href="<?php echo esc_url( $city['url'] ); ?>"
+										class="msh-btn msh-btn-primary"
+									>
+										<?php
+										echo esc_html(
+											$city['name']
+										);
+										?>
+										Biletlerini İncele
+									</a>
+
+								<?php endif; ?>
+
+							</div>
+
+						</article>
+
+					<?php endforeach; ?>
+
+
+				<?php endif; ?>
+
+
+				<?php if ( count( $cities ) < 3 ) : ?>
+
+					<article class="msh-event msh-tour-card">
+
+						<div class="msh-event-top">
+
+							<span class="msh-event-city">
+								TÜRKİYE TURNESİ
+							</span>
+
+						</div>
+
+
+						<h3>
+							Yeni şehirler
+						</h3>
+
+						<p class="msh-event-venue">
+							Madagaskar Sirki Türkiye turnesi
+							devam ediyor. Yeni şehir ve gösteri
+							tarihleri satışa açıldıkça otomatik
+							olarak yayınlanır.
+						</p>
+
+
+						<div class="msh-event-actions">
+
+							<a
+								href="/sehirler/"
+								class="msh-btn msh-btn-dark"
+							>
+								Turne Takvimini Gör
+							</a>
+
+						</div>
+
+					</article>
+
+				<?php endif; ?>
+
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- ===================================================
+	     NEDEN MADAGASKAR
+	     ================================================= -->
+
+	<section class="msh-section msh-soft">
+
+		<div class="msh-container">
+
+
+			<div class="msh-section-head">
+
+				<div>
+
+					<span class="msh-eyebrow">
+						MADAGASKAR SİRKİ
+					</span>
+
+					<h2>
+						Gösteriye neden ailece gelmelisiniz?
+					</h2>
+
+					<p>
+						Madagaskar Sirki yalnızca izlenen
+						bir gösteri değil, ailece birlikte
+						yaşanan bir deneyimdir.
+					</p>
+
+				</div>
+
+			</div>
+
+
+			<div class="msh-features">
+
+
+				<article class="msh-feature">
+
+					<div class="msh-feature-icon">
+						🎪
+					</div>
+
+					<h3>
+						Yaklaşık 60 dakikalık gösteri
+					</h3>
+
+					<p>
+						Akrobasi, denge, eğlence ve
+						görsel performanslardan oluşan
+						tempolu bir sahne deneyimi.
+					</p>
+
+				</article>
+
+
+				<article class="msh-feature">
+
+					<div class="msh-feature-icon">
+						👨‍👩‍👧‍👦
+					</div>
+
+					<h3>
+						Aile dostu
+					</h3>
+
+					<p>
+						Çocukların ve yetişkinlerin
+						birlikte keyifle izleyebileceği
+						aile odaklı bir etkinlik.
+					</p>
+
+				</article>
+
+
+				<article class="msh-feature">
+
+					<div class="msh-feature-icon">
+						🌍
+					</div>
+
+					<h3>
+						Uluslararası sanatçılar
+					</h3>
+
+					<p>
+						Dünyanın farklı ülkelerinden
+						gelen profesyonel sanatçıların
+						performansları aynı sahnede buluşuyor.
+					</p>
+
+				</article>
+
+
+				<article class="msh-feature">
+
+					<div class="msh-feature-icon">
+						✨
+					</div>
+
+					<h3>
+						Hayvansız gösteri
+					</h3>
+
+					<p>
+						Gösterinin merkezinde insan
+						yeteneği, akrobasi ve sahne
+						performansı bulunuyor.
+					</p>
+
+				</article>
+
+
+			</div>
+
+
+			<div class="msh-trust">
+
+				<div class="msh-trust-item">
+					<strong>Güvenli Ödeme</strong>
+					<span>Online ödeme altyapısı</span>
+				</div>
+
+				<div class="msh-trust-item">
+					<strong>Dijital Bilet</strong>
+					<span>Biletlerim alanından erişim</span>
+				</div>
+
+				<div class="msh-trust-item">
+					<strong>WhatsApp Destek</strong>
+					<span>Bilet işlemlerinde destek</span>
+				</div>
+
+				<div class="msh-trust-item">
+					<strong>Türkiye Turnesi</strong>
+					<span>Yeni şehir ve tarihler</span>
+				</div>
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- ===================================================
+	     INSTAGRAM / SOSYAL MEDYA
+	     ================================================= -->
+
+	<section class="msh-section msh-social-section">
+
+		<div class="msh-container">
+
+
+			<div class="msh-section-head">
+
+				<div>
+
+					<span class="msh-eyebrow">
+						MADAGASKAR SİRKİ SOSYAL MEDYADA
+					</span>
+
+					<h2>
+						Sahnedeki heyecanı Instagram’da takip edin
+					</h2>
+
+					<p>
+						Turne yolculuğumuzdan, sahne arkasından
+						ve gösterilerimizden en yeni fotoğraf
+						ve videoları keşfedin.
+					</p>
+
+				</div>
+
+
+				<a
+					href="https://www.instagram.com/madagaskarsirkiturkiye/"
+					target="_blank"
+					rel="noopener"
+					class="msh-section-link"
+				>
+					@madagaskarsirkiturkiye →
+				</a>
+
+			</div>
+
+
+			<div class="msh-social-wrap">
+
+
+				<?php if ( ! empty( $instagram_feed ) ) : ?>
+
+					<div class="msh-instagram-feed">
+
+						<?php
+						/*
+						 * İçerik WordPress blok sisteminden
+						 * üretildiği için do_blocks çıktısıdır.
+						 */
+						echo $instagram_feed;
+						?>
+
+					</div>
+
+				<?php else : ?>
+
+					<div class="msh-social-empty">
+
+						Instagram akışı hazırlanıyor.
+						En yeni fotoğraf ve videolarımızı
+						Instagram hesabımızdan takip edebilirsiniz.
+
+					</div>
+
+				<?php endif; ?>
+
+
+				<div class="msh-social-actions">
+
+					<a
+						href="https://www.instagram.com/madagaskarsirkiturkiye/"
+						target="_blank"
+						rel="noopener"
+						class="msh-btn msh-instagram-btn"
+					>
+						Instagram’da Bizi Takip Edin
+					</a>
+
+				</div>
+
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- ===================================================
+	     SSS
+	     ================================================= -->
+
+	<section class="msh-section">
+
+		<div class="msh-container">
+
+
+			<div class="msh-section-head">
+
+				<div>
+
+					<span class="msh-eyebrow">
+						SSS
+					</span>
+
+					<h2>
+						Sık sorulan sorular
+					</h2>
+
+					<p>
+						Gösteri ve bilet işlemleri
+						hakkında temel bilgiler.
+					</p>
+
+				</div>
+
+
+				<a
+					href="/sik-sorulan-sorular-2/"
+					class="msh-section-link"
+				>
+					Tüm soruları gör →
+				</a>
+
+			</div>
+
+
+			<div class="msh-faq-grid">
+
+
+				<article class="msh-faq">
+
+					<h3>
+						Gösteri ne kadar sürüyor?
+					</h3>
+
+					<p>
+						Madagaskar Sirki gösterisi
+						yaklaşık 60 dakika sürmektedir.
+					</p>
+
+				</article>
+
+
+				<article class="msh-faq">
+
+					<h3>
+						Gösteride hayvan bulunuyor mu?
+					</h3>
+
+					<p>
+						Hayır. Madagaskar Sirki
+						hayvansız bir gösteridir.
+						Program insan yeteneği ve
+						sahne performanslarından oluşur.
+					</p>
+
+				</article>
+
+
+				<article class="msh-faq">
+
+					<h3>
+						Biletimi nereden görebilirim?
+					</h3>
+
+					<p>
+						Sipariş işleminiz sonrasında
+						Biletlerim alanından dijital
+						biletlerinize erişebilirsiniz.
+					</p>
+
+				</article>
+
+
+				<article class="msh-faq">
+
+					<h3>
+						Bilet desteği alabilir miyim?
+					</h3>
+
+					<p>
+						Evet. WhatsApp bilet destek
+						hattımız üzerinden bizimle
+						iletişim kurabilirsiniz.
+					</p>
+
+				</article>
+
+
+			</div>
+
+		</div>
+
+	</section>
+
+
+	<!-- ===================================================
+	     SON CTA
+	     ================================================= -->
+
+	<section class="msh-final">
+
+		<div class="msh-container">
+
+			<div class="msh-final-box">
+
+
+				<div>
+
+					<span class="msh-eyebrow">
+						MADAGASKAR SİRKİ
+					</span>
+
+					<h2>
+						Şehrindeki gösteriyi kaçırma.
+					</h2>
+
+					<p>
+						Şehrini seç, sana uygun gösteriyi
+						bul, biletini online al ve
+						Madagaskar Sirki’nin heyecanını
+						ailece yaşa.
+					</p>
+
+				</div>
+
+
+				<div class="msh-final-actions">
+
+					<a
+						href="/sehirler/"
+						class="msh-btn msh-btn-primary"
+					>
+						Şehrini Seç ve Bilet Al
+					</a>
+
+					<a
+						href="https://wa.me/903129113710"
+						target="_blank"
+						rel="noopener"
+						class="msh-btn msh-btn-light"
+					>
+						WhatsApp Bilet Desteği
+					</a>
+
+				</div>
+
+
+			</div>
+
+		</div>
+
+	</section>
+
+</main>
+
+	<?php
+
+	return ob_get_clean();
+}
+
+
+add_shortcode(
+	'ms_anasayfa_v2',
+	'ms_home_v2_render_page'
+);

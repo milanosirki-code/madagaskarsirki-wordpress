@@ -1,0 +1,718 @@
+/**
+ * Madagaskar Sirki – Global Alt Bilgi V3.2
+ * Eski tema alt bilgisini gizler ve kurumsal alt bilgiyi ekler.
+ *
+ * V3.1 (2 Ekim 2026):
+ * - Hızlı Bağlantılar'a Kurumsal, Blog ve Sık Sorulan Sorular eklendi.
+ * - Hukuki bağlantılarda İptal/İade sayfasının gerçek adresi
+ *   (iptal-iade-ve-bilet-teslimati) tanımlandı; Ön Bilgilendirme Formu,
+ *   Kullanım Koşulları ve Veri Silme Talimatları eklendi.
+ *
+ * V3.2 (2 Ekim 2026):
+ * - Çerez bildirimi bu snippet'e taşındı. Bildirim daha önce tema alt
+ *   bilgisinin içindeydi ve o alt bilgi gizlendiği için görünmüyordu.
+ *   Gizli kalan eski kopyayla çakışmaması için yeni id'ler kullanıldı
+ *   (ms-cerez-*). Tercih anahtarı aynı kaldı: kvkk_cookie_consent.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Eski tema alt bilgisini gizleyen stiller.
+ */
+add_action( 'wp_head', function () {
+    if ( is_admin() ) {
+        return;
+    }
+    ?>
+    <style id="ms-global-footer-v3-style">
+        /* Eski tema alt bilgisini gizle */
+        footer.wp-block-template-part,
+        .wp-site-blocks > footer,
+        footer.site-footer,
+        #colophon,
+        .site-footer:not(.ms-global-footer) {
+            display: none !important;
+        }
+
+        .ms-global-footer,
+        .ms-global-footer * {
+            box-sizing: border-box;
+        }
+
+        .ms-global-footer {
+            --ms-footer-dark: #100504;
+            --ms-footer-brown: #240b09;
+            --ms-footer-gold: #ffb800;
+            --ms-footer-red: #e54838;
+            --ms-footer-white: #ffffff;
+            --ms-footer-green: #107c34;
+
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: var(--ms-footer-dark);
+            color: var(--ms-footer-white);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .ms-footer-top {
+            padding: 64px 20px 50px;
+            border-top: 5px solid var(--ms-footer-red);
+            background:
+                radial-gradient(
+                    circle at 90% 20%,
+                    rgba(229,72,56,.18),
+                    transparent 32%
+                ),
+                var(--ms-footer-dark);
+        }
+
+        .ms-footer-container {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+        }
+
+        .ms-footer-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(280px, 1.35fr)
+                minmax(170px, .65fr)
+                minmax(260px, 1fr);
+            gap: 48px;
+        }
+
+        .ms-footer-brand h2 {
+            margin: 0 0 14px;
+            color: var(--ms-footer-gold);
+            font-size: 30px;
+            line-height: 1.2;
+            font-weight: 900;
+        }
+
+        .ms-footer-brand > p {
+            max-width: 520px;
+            margin: 0 0 24px;
+            color: rgba(255,255,255,.76);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .ms-footer-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 22px;
+        }
+
+        .ms-footer-badge {
+            padding: 8px 12px;
+            border: 1px solid rgba(255,184,0,.35);
+            border-radius: 30px;
+            color: var(--ms-footer-gold);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .5px;
+        }
+
+        .ms-footer-column h3 {
+            margin: 0 0 21px;
+            color: var(--ms-footer-white);
+            font-size: 18px;
+            line-height: 1.3;
+            font-weight: 900;
+        }
+
+        .ms-footer-links {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .ms-footer-links li {
+            margin: 0 0 12px;
+            padding: 0;
+        }
+
+        .ms-footer-links a {
+            color: rgba(255,255,255,.76) !important;
+            font-size: 15px;
+            line-height: 1.5;
+            text-decoration: none !important;
+            transition: color .2s ease;
+        }
+
+        .ms-footer-links a:hover {
+            color: var(--ms-footer-gold) !important;
+        }
+
+        .ms-footer-links a.ms-footer-cekilis {
+            color: var(--ms-footer-gold) !important;
+            font-weight: 800;
+        }
+
+        .ms-footer-links a.ms-footer-cekilis:hover {
+            color: var(--ms-footer-white) !important;
+        }
+
+        .ms-footer-contact {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .ms-footer-contact li {
+            margin-bottom: 16px;
+            color: rgba(255,255,255,.75);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .ms-footer-contact strong {
+            display: block;
+            margin-bottom: 3px;
+            color: var(--ms-footer-white);
+        }
+
+        .ms-footer-contact a {
+            color: var(--ms-footer-white) !important;
+            font-weight: 700;
+            text-decoration: none !important;
+        }
+
+        .ms-footer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 23px;
+        }
+
+        .ms-footer-button {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 17px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.2;
+            text-decoration: none !important;
+        }
+
+        .ms-footer-ticket {
+            background: var(--ms-footer-gold);
+            color: #180600 !important;
+        }
+
+        .ms-footer-whatsapp {
+            background: var(--ms-footer-green);
+            color: #ffffff !important;
+        }
+
+        .ms-footer-legal {
+            padding: 25px 20px;
+            border-top: 1px solid rgba(255,255,255,.1);
+            background: #080303;
+        }
+
+        .ms-footer-legal-inner {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+        }
+
+        .ms-footer-company {
+            margin: 0 0 13px;
+            color: rgba(255,255,255,.58);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .ms-footer-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 22px;
+        }
+
+        .ms-footer-copyright {
+            margin: 0;
+            color: rgba(255,255,255,.55);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .ms-footer-legal-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px 17px;
+        }
+
+        .ms-footer-legal-links a {
+            color: rgba(255,255,255,.65) !important;
+            font-size: 12px;
+            text-decoration: none !important;
+        }
+
+        .ms-footer-legal-links a:hover {
+            color: var(--ms-footer-gold) !important;
+        }
+
+        @media (max-width: 900px) {
+            .ms-footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ms-footer-brand {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .ms-footer-top {
+                padding: 50px 20px 38px;
+            }
+
+            .ms-footer-grid {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
+
+            .ms-footer-brand {
+                grid-column: auto;
+            }
+
+            .ms-footer-actions,
+            .ms-footer-button {
+                width: 100%;
+            }
+
+            .ms-footer-bottom-row {
+                display: block;
+            }
+
+            .ms-footer-legal-links {
+                justify-content: flex-start;
+                margin-top: 16px;
+            }
+        }
+    </style>
+    <?php
+}, 99 );
+
+
+/**
+ * Var olan hukuki sayfayı birden fazla olası URL içinden bulur.
+ */
+if ( ! function_exists( 'ms_footer_find_page_url' ) ) {
+    function ms_footer_find_page_url( $possible_slugs ) {
+        foreach ( $possible_slugs as $slug ) {
+            $page = get_page_by_path( $slug );
+
+            if (
+                $page instanceof WP_Post &&
+                'publish' === get_post_status( $page )
+            ) {
+                return get_permalink( $page );
+            }
+        }
+
+        return '';
+    }
+}
+
+
+/**
+ * Global alt bilgiyi oluştur.
+ */
+add_action( 'wp_footer', function () {
+
+    if ( is_admin() ) {
+        return;
+    }
+
+    $legal_pages = array(
+        'Gizlilik Politikası' => array(
+            'gizlilik-politikasi',
+            'privacy-policy'
+        ),
+        'KVKK Aydınlatma Metni' => array(
+            'kvkk-aydinlatma-metni',
+            'kvkk'
+        ),
+        'Çerez Politikası' => array(
+            'cerez-politikasi',
+            'cerez-aydinlatma-metni'
+        ),
+        'Mesafeli Satış Sözleşmesi' => array(
+            'mesafeli-satis-sozlesmesi',
+            'mesafeli-satis'
+        ),
+        'Ön Bilgilendirme Formu' => array(
+            'on-bilgilendirme-formu'
+        ),
+        'İptal, İade ve Bilet Teslimatı' => array(
+            'iptal-iade-ve-bilet-teslimati',
+            'iptal-ve-iade-kosullari',
+            'iptal-iade-politikasi',
+            'iade-ve-iptal-politikasi'
+        ),
+        'Kullanım Koşulları' => array(
+            'kullanim-kosullari'
+        ),
+        'Veri Silme Talimatları' => array(
+            'veri-silme-talebi'
+        ),
+    );
+
+    ?>
+    <div class="ms-global-footer" role="contentinfo">
+        <div class="ms-footer-top">
+            <div class="ms-footer-container">
+                <div class="ms-footer-grid">
+
+                    <div class="ms-footer-brand">
+                        <h2>🎪 Madagaskar Sirki Türkiye</h2>
+
+                        <p>
+                            Uluslararası sanatçılar, nefes kesen akrobasi,
+                            kahkaha ve heyecanla Türkiye turnesinde.
+                            Hayvan kullanılmayan, aile dostu ve unutulmaz
+                            bir sirk deneyimi.
+                        </p>
+
+                        <div class="ms-footer-badges">
+                            <span class="ms-footer-badge">HAYVANSIZ</span>
+                            <span class="ms-footer-badge">ULUSLARARASI</span>
+                            <span class="ms-footer-badge">AİLE DOSTU</span>
+                        </div>
+
+                        <div class="ms-footer-actions">
+
+                            <a class="ms-footer-button ms-footer-ticket"
+                               href="<?php echo esc_url(
+                                   home_url( '/sehirler/' )
+                               ); ?>">
+                                🎟 Şehrini Seç ve Bilet Al
+                            </a>
+
+                            <a class="ms-footer-button ms-footer-whatsapp"
+                               href="https://wa.me/903129113710?text=Merhaba%2C%20Madagaskar%20Sirki%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
+                               target="_blank"
+                               rel="noopener">
+                                💬 WhatsApp
+                            </a>
+
+                        </div>
+                    </div>
+
+
+                    <div class="ms-footer-column">
+                        <h3>Hızlı Bağlantılar</h3>
+
+                        <ul class="ms-footer-links">
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/' )
+                                ); ?>">
+                                    Ana Sayfa
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/sehirler/' )
+                                ); ?>">
+                                    Şehirler
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/gosteriler/' )
+                                ); ?>">
+                                    Gösteriler
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/galeri/' )
+                                ); ?>">
+                                    Galeri
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/hakkimizda/' )
+                                ); ?>">
+                                    Hakkımızda
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/kurumsal/' )
+                                ); ?>">
+                                    Kurumsal
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/madagaskar-blog/' )
+                                ); ?>">
+                                    Blog
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/sik-sorulan-sorular-2/' )
+                                ); ?>">
+                                    Sık Sorulan Sorular
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="ms-footer-cekilis"
+                                   href="<?php echo esc_url(
+                                       home_url( '/cekilis-sonuclari/' )
+                                   ); ?>">
+                                    🎟 Çekiliş Sonuçları
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="<?php echo esc_url(
+                                    home_url( '/iletisim-2/' )
+                                ); ?>">
+                                    İletişim
+                                </a>
+                            </li>
+
+                        </ul>
+                    </div>
+
+
+                    <div class="ms-footer-column">
+                        <h3>İletişim</h3>
+
+                        <ul class="ms-footer-contact">
+
+                            <li>
+                                <strong>Telefon</strong>
+                                <a href="tel:+905060343874">
+                                    +90 506 034 38 74
+                                </a>
+                            </li>
+
+                            <li>
+                                <strong>WhatsApp</strong>
+                                <a href="https://wa.me/903129113710"
+                                   target="_blank"
+                                   rel="noopener">
+                                    +90 312 911 37 10
+                                </a>
+                            </li>
+
+                            <li>
+                                <strong>E-posta</strong>
+                                <a href="mailto:bilgi@madagaskarsirki.com">
+                                    bilgi@madagaskarsirki.com
+                                </a>
+                            </li>
+
+                            <li>
+                                <strong>Instagram</strong>
+                                <a href="https://www.instagram.com/madagaskarsirkiturkiye/"
+                                   target="_blank"
+                                   rel="noopener">
+                                    @madagaskarsirkiturkiye
+                                </a>
+                            </li>
+
+                            <li>
+                                <strong>Merkez Adresi</strong>
+                                Kızılay Mahallesi, Menekşe 1 Caddesi,
+                                Şeref Apartmanı No: 3, İç Kapı No: 11,
+                                Çankaya / Ankara
+                            </li>
+
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="ms-footer-legal">
+            <div class="ms-footer-legal-inner">
+
+                <p class="ms-footer-company">
+                    Dünya Organizasyon Medya Turizm Eğitim Danışmanlık
+                    Reklam Seyahat Acenteliği Ltd. Şti. ·
+                    Mithatpaşa Vergi Dairesi ·
+                    Vergi No: 3221008767
+                </p>
+
+                <div class="ms-footer-bottom-row">
+
+                    <p class="ms-footer-copyright">
+                        © <?php echo esc_html(
+                            wp_date( 'Y' )
+                        ); ?> Madagaskar Sirki.
+                        Tüm hakları saklıdır.
+                    </p>
+
+                    <nav class="ms-footer-legal-links"
+                         aria-label="Hukuki bağlantılar">
+
+                        <?php foreach ( $legal_pages as $label => $slugs ) : ?>
+
+                            <?php
+                            $legal_url = ms_footer_find_page_url( $slugs );
+
+                            if ( empty( $legal_url ) ) {
+                                continue;
+                            }
+                            ?>
+
+                            <a href="<?php echo esc_url( $legal_url ); ?>">
+                                <?php echo esc_html( $label ); ?>
+                            </a>
+
+                        <?php endforeach; ?>
+
+                    </nav>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <?php
+
+}, 99 );
+
+
+/**
+ * Çerez bildirimi.
+ * Tercih tarayıcıda saklanır; seçim yapıldıktan sonra tekrar gösterilmez.
+ */
+add_action( 'wp_footer', function () {
+
+    if ( is_admin() ) {
+        return;
+    }
+
+    $privacy_url = ms_footer_find_page_url(
+        array( 'gizlilik-politikasi', 'privacy-policy' )
+    );
+
+    if ( empty( $privacy_url ) ) {
+        $privacy_url = home_url( '/gizlilik-politikasi/' );
+    }
+
+    ?>
+    <div id="ms-cerez-banner"
+         role="region"
+         aria-label="Çerez bildirimi"
+         style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background-color:#111111;color:#e0e0e0;padding:12px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #333333;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;box-sizing:border-box;">
+
+        <p style="margin:0;flex:1 1 220px;max-width:80ch;color:#e0e0e0;">
+            Bu site, deneyiminizi iyileştirmek için çerezler kullanmaktadır.
+            Kişisel verilerinizin işlenmesine ilişkin detaylar için
+            <a href="<?php echo esc_url( $privacy_url ); ?>"
+               style="color:#ffb800;text-decoration:underline;font-weight:600;">Gizlilik Politikamızı</a>
+            inceleyebilirsiniz.
+        </p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;flex:0 0 auto;">
+
+            <button id="ms-cerez-accept"
+                    type="button"
+                    style="cursor:pointer;border:none;border-radius:999px;padding:10px 18px;min-height:44px;background-color:#ffffff;color:#000000;font-size:14px;font-weight:600;white-space:nowrap;">
+                Kabul Et
+            </button>
+
+            <button id="ms-cerez-reject"
+                    type="button"
+                    style="cursor:pointer;border:1px solid #ffffff;border-radius:999px;padding:10px 18px;min-height:44px;background-color:transparent;color:#ffffff;font-size:14px;font-weight:600;white-space:nowrap;">
+                Reddet
+            </button>
+
+        </div>
+    </div>
+
+    <script>
+    (function () {
+
+        var STORAGE_KEY = 'kvkk_cookie_consent';
+
+        function init() {
+            var banner = document.getElementById('ms-cerez-banner');
+
+            if (!banner) {
+                return;
+            }
+
+            var stored = null;
+
+            try {
+                stored = window.localStorage.getItem(STORAGE_KEY);
+            } catch (e) {
+                stored = null;
+            }
+
+            if (stored) {
+                return;
+            }
+
+            banner.style.display = 'flex';
+
+            function choose(value) {
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, value);
+                } catch (e) {
+                    // localStorage kullanılamıyorsa sessizce devam et
+                }
+
+                banner.style.display = 'none';
+            }
+
+            var acceptBtn = document.getElementById('ms-cerez-accept');
+            var rejectBtn = document.getElementById('ms-cerez-reject');
+
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function () {
+                    choose('accepted');
+                });
+            }
+
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', function () {
+                    choose('rejected');
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    })();
+    </script>
+    <?php
+
+}, 100 );

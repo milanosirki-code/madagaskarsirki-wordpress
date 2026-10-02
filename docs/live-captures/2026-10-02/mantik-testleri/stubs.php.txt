@@ -1,0 +1,31 @@
+<?php
+// Sahte WordPress / WooCommerce ortamı (yalnızca mantık testi için)
+define('ABSPATH','/x/'); define('DAY_IN_SECONDS',86400);
+$GLOBALS['T_FILE']=getenv('T_FILE')?:'/dev/null'; $GLOBALS['hooks']=[]; $GLOBALS['logs']=[]; $GLOBALS['sched']=[]; $GLOBALS['orders']=[];
+function _t(){ $f=$GLOBALS['T_FILE']; return ($f!=='/dev/null'&&file_exists($f))?(json_decode(file_get_contents($f),true)?:[]):($GLOBALS['_t']??[]); }
+function _ts($a){ $f=$GLOBALS['T_FILE']; if($f!=='/dev/null') file_put_contents($f,json_encode($a)); else $GLOBALS['_t']=$a; }
+function get_transient($k){ $a=_t(); return $a[$k]??false; }
+function set_transient($k,$v,$e=0){ $a=_t(); $a[$k]=$v; _ts($a); return true; }
+function add_action($h,$cb,$p=10,$n=1){ $GLOBALS['hooks'][$h][]=$cb; }
+function add_filter($h,$cb,$p=10,$n=1){ $GLOBALS['hooks'][$h][]=$cb; }
+function add_shortcode($t,$cb){} function shortcode_exists($t){return false;}
+function is_admin(){return false;} function is_feed(){return false;} function doing_action($a){return false;}
+function is_page($s){return $GLOBALS['is_page']??true;}
+function nocache_headers(){ $GLOBALS['nocache']=true; }
+function get_permalink(){return 'https://madagaskarsirki.com/biletlerim/';} function home_url($p='/'){return 'https://madagaskarsirki.com'.$p;}
+function esc_attr($s){return htmlspecialchars((string)$s,ENT_QUOTES);} function esc_url($s){return htmlspecialchars((string)$s,ENT_QUOTES);} function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES);}
+function wp_unslash($v){return is_string($v)?stripslashes($v):$v;} function absint($v){return abs((int)$v);}
+class FDate{ public $t; function __construct($t){$this->t=$t;} function getTimestamp(){return $this->t;} }
+class FItem{ public $n; function __construct($n){$this->n=$n;} function get_name(){return $this->n;} }
+class FOrder{ public $d; function __construct($d){$this->d=$d;}
+ function get_id(){return $this->d['id'];} function get_type(){return $this->d['type']??'shop_order';}
+ function get_status(){return $this->d['status'];} function has_status($s){return in_array($this->d['status'],(array)$s,true);}
+ function get_billing_phone(){return $this->d['phone']??'';} function get_total(){return $this->d['total']??'750';}
+ function get_created_via(){return $this->d['via']??'checkout';}
+ function get_date_created(){return new FDate($this->d['created']??time()-1500);} function get_date_modified(){return new FDate($this->d['modified']??time()-1500);}
+ function get_items(){return [new FItem('Sincan 12:00 Yetişkin')];} }
+function wc_get_order($id){ if(!empty($GLOBALS['throw'])) throw new Error('boom'); return isset($GLOBALS['orders'][$id])?new FOrder($GLOBALS['orders'][$id]):false; }
+function wc_get_orders($q){ $o=[]; foreach($GLOBALS['orders'] as $d){ if(in_array($d['status'],$q['status'],true)) $o[]=new FOrder($d);} return $o; }
+class FLog{ function info($m,$c=[]){ $GLOBALS['logs'][]=$m; } } function wc_get_logger(){return new FLog;}
+function as_next_scheduled_action($h,$a,$g){ foreach($GLOBALS['sched'] as $s){ if($s[1]===$a) return $s[0]; } return false; }
+function as_schedule_single_action($t,$h,$a,$g){ $GLOBALS['sched'][]=[$t,$a]; return 1; }

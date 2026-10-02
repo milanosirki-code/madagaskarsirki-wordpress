@@ -1,0 +1,33 @@
+<?php
+error_reporting(-1); ini_set('display_errors','1');
+define('ABSPATH','/x/'); define('OBJECT','OBJECT');
+class WP_Post{ public $post_content='IG'; }
+function add_shortcode($t,$cb){ $GLOBALS['sc'][$t]=$cb; }
+function get_page_by_path($p,$o=null,$t=null){ return null; }
+function do_blocks($c){ return $c; }
+function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES);} function esc_url($s){return htmlspecialchars((string)$s,ENT_QUOTES);}
+function wp_kses_post($s){return $s;} function wc_price($p){return '₺'.number_format($p,2,',','.');}
+function wp_date($f,$ts=null){ return $GLOBALS['TODAY']; }
+$GLOBALS['TODAY']='2026-10-02';
+function ms_city_v2_live_cities(){ return $GLOBALS['cities']; }
+require 'home.php';
+echo "== tarih okuma (bugün = 2026-10-02)\n";
+$cases=[['date_label'=>'2 Ekim 2026'],['date_label'=>'02 Ekim 2026'],['date_label'=>'2 EKİM 2026'],['date_label'=>'2 Ekim 2026, Cuma'],['date_label'=>'Cuma, 2 Ekim 2026'],['date_label'=>'3 Ekim 2026'],['date_label'=>'2 Kasım 2026'],['date_label'=>'2 Ekim 2025'],
+ ['date_label'=>'yakında'],['date_label'=>''],['date'=>'2026-10-02','date_label'=>'x'],['date'=>'2026-10-02 17:30:00','date_label'=>'3 Ekim 2026'],['date'=>'2026-10-03','date_label'=>'2 Ekim 2026'],['date_label'=>['a']],'metin',[]];
+foreach($cases as $c) echo str_pad(json_encode($c,JSON_UNESCAPED_UNICODE),62),' -> ',var_export(ms_home_v3_city_is_today($c),true),"\n";
+foreach(['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'] as $i=>$ay){ $GLOBALS['TODAY']=sprintf('2026-%02d-15',$i+1); foreach([$ay,mb_strtoupper($ay,'UTF-8'),strtr(mb_strtoupper($ay,'UTF-8'),['I'=>'İ'])] as $v){ if(!ms_home_v3_city_is_today(['date_label'=>"15 $v 2026"]) && !in_array($v,['MAYİS','KASİM','ARALİK','HAZIRAN','NISAN','EKIM'])) echo "AY OKUNAMADI: $v\n"; } }
+echo "ay adları tamam\n";
+$GLOBALS['TODAY']='2026-10-02';
+echo "\n== sayfa çıktısı\n";
+$GLOBALS['cities']=['a'=>['name'=>'Kırıkkale','date_label'=>'2 Ekim 2026','venue'=>'17 Ağustos Spor Salonu','times'=>['17:30','19:00'],'price'=>250,'url'=>'/etkinlik/k/'],
+ 'b'=>['name'=>'Ankara – Sincan','date_label'=>'3 Ekim 2026','venue'=>'Sinan Şamil Sam','times'=>['12:00'],'price'=>250,'url'=>'/etkinlik/s/'],
+ 'c'=>['name'=>'Yenimahalle','date_label'=>'4 Ekim 2026','venue'=>'','times'=>[],'price'=>null,'url'=>'']];
+$h=$GLOBALS['sc']['ms_anasayfa_v2']();
+echo 'uzunluk: ',strlen($h),"\n",'kart sayısı: ',substr_count($h,'<article class="msh-event">'),"\n",'BUGÜN rozeti: ',substr_count($h,'msh-today">'),"\n",'SATIŞTA rozeti: ',preg_match_all('/class="msh-sale">\s*SATIŞTA/u',$h),"\n",'SSS kartı: ',substr_count($h,'<article class="msh-faq">'),"\n";
+foreach(['Bilet fiyatları ne kadar?','0–2 yaş çocuklar için bilet gerekiyor mu?','Okulda verilen ücretsiz çocuk davetiyesini','Kapılar ne zaman açılıyor?','Gösteri ne kadar sürüyor?','Bilet desteği alabilir miyim?','Bilet almadan önce'] as $q) echo str_pad($q,48),': ',strpos($h,$q)!==false?'var':'yok',"\n";
+// açılan/kapanan etiket dengesi
+foreach(['main','section','article','div','span','a','p','h1','h2','h3','style'] as $t){ $o=preg_match_all('/<'.$t.'[\s>]/',$h); $c=substr_count($h,'</'.$t.'>'); if($o!==$c) echo "ETİKET DENGESİZ: $t $o/$c\n"; }
+echo "etiket dengesi tamam\n";
+// ilk kartın üst bölümü
+preg_match('/<div class="msh-event-top">.*?<\/div>/s',$h,$m); echo preg_replace('/\s+/',' ',$m[0]),"\n";
+// şehir fonksiyonu yokken de kırılmamalı
