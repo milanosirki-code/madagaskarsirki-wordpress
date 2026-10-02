@@ -26,6 +26,8 @@
 
 Güncellemelerden sonra Jetpack Monitor siteyi yine **up** gösterdi. Yeni Jetpack Scan 02.10.2026 12:57 UTC'de kuyruğa alındı.
 
+**Kommo tehdidi kapanmadı.** Scan, 1.3.2 kaydını "fixed" olarak işaretledi (12:51 UTC), ancak aynı açığı 1.3.3 için yeniden açtı (`fixable: false`). Açıklama hâlâ "<= 1.3.1" diyor; 1.3.2 ve 1.3.3 bu aralıkta değil. Bu, güvenlik açığı veritabanındaki sürüm aralığının hatalı olduğunu düşündürüyor, ama doğrulanmadı. Daha yeni bir sürüm çıkana kadar yapılabilecek bir güncelleme yok. Kesin çözüm, eklentiyi pasifleştirip chat butonunu kaldırmak olur; bu karar işletme sahibine aittir.
+
 ## 3. Bilerek yapılmayanlar
 
 | Eklenti | Bekleyen | Neden |
