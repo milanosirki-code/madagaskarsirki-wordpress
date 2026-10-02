@@ -312,13 +312,13 @@ Canlı capture klasörü:
 
 ### Canlıya alınmış/bildirilen snippet değişiklikleri
 
-1. **MS Global Alt Bilgi V3.2**
+1. **MS Global Alt Bilgi V3.3** (V3.2'nin yerini aldı, 2 Ekim 11:50)
    - Kurumsal, Blog ve SSS hızlı bağlantıları
-   - yasal bağlantılar
-   - çerez bildirimi
-   - kaynak: `ms-global-alt-bilgi-v3.2.php.txt`
+   - yasal bağlantılar; iki gizlilik sayfası ayrı etiketlerle (site politikası ve Meta/sosyal medya)
+   - çerez bildirimi, `/gizlilik-ve-cerez-politikasi/` bağlantısıyla
+   - kaynak: `ms-global-alt-bilgi-v3.3.php.txt` (V3.2: `onceki/ms-global-alt-bilgi-v3.2.php.txt`)
    - alt bilgi canlı görünümde doğrulandı
-   - çerez bildiriminin gizli sekmede görünmesi ayrıca doğrulanmalı
+   - çerez bildirimi ana sayfada ekranda göründü (ekran görüntüsü, 2 Ekim 11:55)
 
 2. **Snippet #35 — MS Anasayfa V3.2**
    - gösteri günü kartında `BUGÜN` rozeti

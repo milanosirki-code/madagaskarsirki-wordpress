@@ -6,11 +6,11 @@ Ayrıntılı kayıt: `docs/CLAUDE_SITE_CHANGES_2026-10-02.md`
 
 | Dosya | İçerik |
 |---|---|
-| `ms-global-alt-bilgi-v3.2.php.txt` | Alt bilgi ve çerez bildirimi |
+| `ms-global-alt-bilgi-v3.3.php.txt` | Alt bilgi ve çerez bildirimi (canlıdaki sürüm) |
 | `snippet-35-ms-anasayfa-v3.2.php.txt` | Ana sayfa (`[ms_anasayfa_v2]`) |
 | `ms-bilet-sorgulama-v1.php.txt` | Biletlerim sayfasındaki bilet sorgulama formu |
 | `ms-yarim-kalan-odeme-kaydi-v1-deneme.php.txt` | Yarım kalan ödeme kaydı, deneme modu (mesaj göndermez) |
-| `onceki/` | Alt bilgi ve ana sayfa snippet'lerinin değişiklikten önceki hali; geri alma için |
+| `onceki/` | Alt bilgi ve ana sayfa snippet'lerinin değişiklikten önceki hali ve alt bilginin ara sürümü V3.2; geri alma için |
 | `mantik-testleri/` | Sahte WordPress/WooCommerce fonksiyonlarıyla çalışan mantık testleri |
 
 ## Mantık testlerini çalıştırma
