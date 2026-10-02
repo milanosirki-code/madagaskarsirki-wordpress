@@ -1,0 +1,11 @@
+<?php
+require 'stubs.php';
+$s=json_decode($argv[1],true);
+$GLOBALS['orders']=[3735=>['id'=>3735,'status'=>'processing','phone'=>'0506 034 38 74'],3467=>['id'=>3467,'status'=>'failed','phone'=>'05321112233'],9001=>['id'=>9001,'status'=>'completed','phone'=>'05321112233','type'=>'shop_order_refund'],4000=>['id'=>4000,'status'=>'completed','phone'=>'123']];
+if(($s['url']??'ok')==='ok'){ function ms_biletlerim_url($id){ return 'https://madagaskarsirki.com/biletlerim/?t=abc&o='.$id; } }
+elseif($s['url']==='empty'){ function ms_biletlerim_url($id){ return ''; } }
+$_SERVER['REQUEST_METHOD']=$s['method']??'POST'; $_SERVER['REMOTE_ADDR']=$s['ip']??'1.2.3.4';
+$_POST=$s['post']??[];
+require 'ms-bilet-sorgulama-v1.php';
+$r=ms_bilet_sorgu_isle(); $html=ms_bilet_sorgu_html();
+echo json_encode(['durum'=>$r['durum'],'url'=>$r['url']??null,'form'=>strpos($html,'<form')!==false,'link'=>strpos($html,'Biletlerimi Aç')!==false,'len'=>strlen($html)],JSON_UNESCAPED_UNICODE),"\n";

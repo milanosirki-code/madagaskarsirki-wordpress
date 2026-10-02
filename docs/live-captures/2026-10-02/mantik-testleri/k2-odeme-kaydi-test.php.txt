@@ -1,0 +1,29 @@
+<?php
+error_reporting(-1); ini_set('display_errors','1');
+require 'stubs.php'; require 'ms-yarim-kalan-odeme-kaydi-v1-deneme.php';
+$now=time();
+function sc($ad,$orders,$id,$opt=[]){ global $now;
+  $GLOBALS['orders']=$orders; $GLOBALS['logs']=[]; $GLOBALS['sched']=[]; $GLOBALS['_t']=$opt['t']??[]; $GLOBALS['throw']=$opt['throw']??false;
+  $n=$opt['runs']??1; for($i=0;$i<$n;$i++) ms_oh_kontrol($id,$opt['ert']??0);
+  echo str_pad($ad,58),' | log: ',($GLOBALS['logs']?implode(' || ',array_map(fn($l)=>preg_replace('/^\[DENEME MODU\] /','',$l),$GLOBALS['logs'])):'(yok)'),
+       $GLOBALS['sched']?' | yeniden planlandı: +'.round(($GLOBALS['sched'][0][0]-time())/60).' dk, erteleme='.$GLOBALS['sched'][0][1][1]:'',"\n"; }
+$old=$now-1500; $new=$now-300;
+sc('1 pending, 25 dk',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10);
+sc('2 failed, 25 dk',[10=>['id'=>10,'status'=>'failed','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10);
+sc('3 ödenmiş (processing)',[10=>['id'=>10,'status'=>'processing','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10);
+sc('4 iptal (cancelled)',[10=>['id'=>10,'status'=>'cancelled','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10);
+sc('5 taslak (checkout-draft)',[10=>['id'=>10,'status'=>'checkout-draft','phone'=>'','created'=>$old,'modified'=>$old]],10);
+sc('6 pending ama 5 dk önce değişmiş',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$new]],10);
+sc('7 aynı, erteleme hakkı bitmiş',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$new]],10,['ert'=>3]);
+sc('8 yönetimden açılmış sipariş',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$old,'via'=>'admin']],10);
+sc('9 telefon yok',[10=>['id'=>10,'status'=>'pending','phone'=>'','created'=>$old,'modified'=>$old]],10);
+sc('10 aynı telefon sonradan ödemiş (farklı yazım)',[10=>['id'=>10,'status'=>'failed','phone'=>'0506 034 38 74','created'=>$old,'modified'=>$old],11=>['id'=>11,'status'=>'processing','phone'=>'+905060343874','created'=>$new,'modified'=>$new]],10);
+sc('11 başka telefon ödemiş',[10=>['id'=>10,'status'=>'failed','phone'=>'05060343874','created'=>$old,'modified'=>$old],11=>['id'=>11,'status'=>'processing','phone'=>'05321112233','created'=>$new,'modified'=>$new]],10);
+sc('12 aynı sipariş iki kez kontrol edilirse',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10,['runs'=>2]);
+sc('13 olmayan sipariş',[],99);
+sc('14 iade kaydı türü',[10=>['id'=>10,'status'=>'pending','type'=>'shop_order_refund','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10);
+sc('15 sipariş okunurken hata fırlarsa',[10=>['id'=>10,'status'=>'pending','phone'=>'05060343874','created'=>$old,'modified'=>$old]],10,['throw'=>true]);
+echo "\n== sipariş olayı: yalnızca planlama, tekrar planlamıyor\n";
+$GLOBALS['sched']=[]; $GLOBALS['throw']=false; ms_oh_olay(55); ms_oh_olay(55); ms_oh_olay('abc');
+echo 'planlanan: ',count($GLOBALS['sched']),' adet, +',round(($GLOBALS['sched'][0][0]-time())/60),' dk, args=',json_encode($GLOBALS['sched'][0][1]),"\n";
+echo 'kancalar: ',implode(', ',array_keys($GLOBALS['hooks'])),"\n";
