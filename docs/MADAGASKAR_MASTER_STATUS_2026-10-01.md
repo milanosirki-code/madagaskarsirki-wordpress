@@ -298,3 +298,94 @@ Bu kaynak **2 Ekim canlı Snippet #30 exact capture olarak kabul edilmez**; tari
 V2.1 adayındaki tek davranış değişikliği: local session tarihi bugünden eskiyse public listeye eklememek. Sipariş, ürün, Tickera, Kommo veya event status write yoktur.
 
 WPVibe açıldığında exact live #30 okunacak, recovered source ile diff alınacak ve yalnız uyumluysa Issue #87 patch'i uygulanacaktır.
+
+
+## 17. 2 Ekim 2026 canlı site/snippet değişiklikleri — PR #86 ile doğrulandı
+
+GitHub PR #86 (`Record Claude site changes and live snippet captures (2026-10-02)`) merge edilmiştir. Merge kaydı commit `f099a855...` zincirindedir.
+
+Kanonik ayrıntılı kayıt:
+`docs/CLAUDE_SITE_CHANGES_2026-10-02.md`
+
+Canlı capture klasörü:
+`docs/live-captures/2026-10-02/`
+
+### Canlıya alınmış/bildirilen snippet değişiklikleri
+
+1. **MS Global Alt Bilgi V3.2**
+   - Kurumsal, Blog ve SSS hızlı bağlantıları
+   - yasal bağlantılar
+   - çerez bildirimi
+   - kaynak: `ms-global-alt-bilgi-v3.2.php.txt`
+   - alt bilgi canlı görünümde doğrulandı
+   - çerez bildiriminin gizli sekmede görünmesi ayrıca doğrulanmalı
+
+2. **Snippet #35 — MS Anasayfa V3.2**
+   - gösteri günü kartında `BUGÜN` rozeti
+   - dört yeni SSS
+   - ana sayfada krem arka plan
+   - kaynak: `snippet-35-ms-anasayfa-v3.2.php.txt`
+   - ekran görüntüsü/ziyaretçi görünümünde doğrulandı
+
+3. **MS Bilet Sorgulama V1**
+   - `/biletlerim/` üzerinde sipariş numarası + telefon ile bilet bağlantısı sorgulama
+   - salt-okunur
+   - rate-limit transientleri içerir
+   - kaynak: `ms-bilet-sorgulama-v1.php.txt`
+   - formun görünmesi doğrulandı
+   - gerçek misafir siparişiyle form gönderimi henüz doğrulanmadı
+   - `REMOTE_ADDR` gerçek ziyaretçi IP'sini veriyor mu ayrıca doğrulanmalı
+
+4. **MS Yarım Kalan Ödeme Kaydı V1 — DENEME MODU**
+   - müşteri mesajı göndermez
+   - Kommo'ya yazmaz
+   - siparişi değiştirmez
+   - Action Scheduler/WP-Cron ile 20 dakika sonra yalnız WooCommerce log'a `GÖNDERİLİRDİ/GÖNDERİLMEZDİ` kaydı üretir
+   - log source: `madagaskar-odeme-hatirlatma`
+   - kaynak: `ms-yarim-kalan-odeme-kaydi-v1-deneme.php.txt`
+   - işletme sahibi tarafından eklendiği bildirildi; canlı log henüz doğrulanmadı
+
+### İçerik / navigasyon değişiklikleri
+
+- Üst menü artık 5 öğe:
+  - Gösteriler
+  - Şehirler
+  - SSS
+  - İletişim
+  - Bilet Al
+- `/sehirler/` altındaki 11 statik şehir sayfası tarih/fiyat içermeyen genel içerikle güncellendi.
+- Header WhatsApp bağlantısı 1 Ekim çalışmasında güncellendi.
+- SSS sayfası 26 soru olarak güncellendi.
+- Blog içerik/SEO güncellemeleri PR #86 kaydında listelenmiştir.
+
+### Yeni/açık kontroller
+
+- K1: gerçek misafir siparişiyle Bilet Sorgulama testi
+- K2: deneme siparişi + 20 dakika sonra `madagaskar-odeme-hatirlatma` log kontrolü
+- K2 gönderim aşaması: mesaj metni ve Kommo WhatsApp gönderici adımı henüz yok
+- K3: etkinlik sayfası sadeleştirme açık
+- K4: Şehirler/Bilet Al kaynak işi — tarihsel Snippet #30 artık recovered; Issue #87 devam ediyor
+- K7: Ankara statik sayfa SEO çıktısı hâlâ 26 Eylül referansı taşıyabilir
+- K8: 26 Eylül geçmiş ürün sayfası hâlâ erişilebilir; satın alınabilirlik ayrıca incelenmeli
+- K9: ana sayfa kırmızı zemin V3.2 ile krem düzeltildi; site geneli karar ayrı
+- K10: header'daki çift `Bilet Al` telefon görünümü doğrulanınca ele alınacak
+- sarı yasal şerit ile alt bilgi yasal satırı tekrar içeriyor
+
+### Envanter uyarısı
+
+Önceki `36 aktif snippet` sayısı PR #86 öncesi son tam WPVibe doğrulamasıdır. K1/K2 gibi yeni snippet'ler sonrasında aktif snippet toplamı **yeniden doğrulanmamıştır**. WPVibe erişimi açıldığında güncel snippet sayısı ve ID'leri tekrar okunmalıdır.
+
+### Drive eşleşmesi
+
+Google Drive ana rehber revision 21, PR #86 kapanış kaydı ile birlikte:
+- V3.2 alt bilgi,
+- V3.2 ana sayfa,
+- K1 Bilet Sorgulama,
+- K2 ödeme hatırlatma deneme modu,
+- 5 öğeli menü,
+- 11 şehir sayfası,
+- K7/K8/K9/K10 açık işleri
+
+içeriyor.
+
+Bu bölüm ile GitHub master-status artık PR #86 ve Drive revision 21 ile kapsam olarak eşlenmiştir.
