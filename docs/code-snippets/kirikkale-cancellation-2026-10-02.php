@@ -47,7 +47,7 @@ add_action('admin_post_mdg_kirikkale_cancel_20261002', function () {
             }
         }
     }
-    $result = MMC_Program_Service::set_status(2, 'cancelled', 'Kullanıcı talimatı: Kırıkkale 02.10.2026 iptal. V4 satış kilitleri doğrulandı; 11 iade talebi ikinci onay bekliyor.');
+    $result = MMC_Program_Service::set_status(2, 'cancelled', 'Kullanıcı talimatı: Kırıkkale 02.10.2026 iptal. V4 satış kilitleri doğrulandı; iptal kararı geçerlidir.');
     if (is_wp_error($result)) { wp_die(esc_html($result->get_error_message())); }
     $after = MMC_Program_Service::get_program(2);
     if (!$after || 'cancelled' !== $after->status) { wp_die('Durum kaydı doğrulanamadı; manuel inceleme gerekli.'); }
@@ -57,9 +57,23 @@ add_action('admin_post_mdg_kirikkale_cancel_20261002', function () {
 add_action('template_redirect', function () {
     $path = wp_parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
     if ('/etkinlik/madagaskar-sirki-kirikkale-02-ekim-2026' !== untrailingslashit((string) $path)) { return; }
-    if (!class_exists('MMC_Program_Service')) { return; }
-    $program = MMC_Program_Service::get_program(2);
-    if (!$program || 'PRG-2026-KIR-MERKEZ-001' !== $program->program_code || 'cancelled' !== $program->status) { return; }
+    // Explicit organizer cancellation: never depend on a mutable integration status.
     nocache_headers();
     wp_die('<div style="text-align:center;padding:16px"><p>MADAGASKAR SİRKİ</p><h1>Kırıkkale gösterileri iptal edilmiştir</h1><p>2 Ekim 2026 · 17 Ağustos Spor Salonu<br>17:30 ve 19:00 seansları</p><p>Bu etkinlik için bilet satışı kapatılmıştır.</p><p>Bilet bedeli iade talepleri oluşturulmuştur. İadeler onay ve ödeme kuruluşu işlemlerinin ardından tamamlanacaktır.</p></div>', 'Kırıkkale Gösterisi İptal Edildi — Madagaskar Sirki', array('response' => 200));
 }, -100);
+
+/**
+ * The integration verifier reset cancelled to sales_open (MMC log #424).
+ * Preserve the organizer's cancellation for this one program only.
+ * Remove this guard only after a separately authorized reopening decision.
+ */
+add_action('mmc_program_logged', function ($program_id, $action, $entity_type, $entity_id, $old_value, $new_value) {
+    if (2 !== (int) $program_id || 'program_status_changed' !== $action
+        || 'program' !== $entity_type || 2 !== (int) $entity_id
+        || 'sales_open' !== $new_value || !class_exists('MMC_Program_Service')) { return; }
+    $program = MMC_Program_Service::get_program(2);
+    if (!$program || 'PRG-2026-KIR-MERKEZ-001' !== $program->program_code
+        || 'Kırıkkale' !== $program->province_name || 'Merkez' !== $program->district_name
+        || '2026-10-02' !== $program->planned_date || 'sales_open' !== $program->status) { return; }
+    MMC_Program_Service::set_status(2, 'cancelled', 'Kırıkkale iptal koruması: entegrasyon kontrolü organizatörün iptal kararını değiştiremez.');
+}, 1000, 6);
