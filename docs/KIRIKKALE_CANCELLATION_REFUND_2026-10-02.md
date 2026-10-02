@@ -84,3 +84,17 @@ No gateway refund has been executed. Consequently all 11 orders remain processin
 ## Source control
 
 Operational source and report are recorded on `ops/kirikkale-cancellation-2026-10-02`, draft PR **#92**. This is a production operation record; the draft PR is not claimed as merged.
+
+## Follow-up: refunds completed and cancellation status regression fixed
+
+The user completed the second-admin V4 flow. Live readonly checks around 14:08–14:10 TSİ verified **11/11 success**, **11/11 WooCommerce refunded**, full refunds totaling **TRY 13,750**, remaining refund amount **0**, one refund per order, and **46/46 tickets invalidated** with the respective V4 case reason. WooCommerce refund IDs: **3958–3968**. These results supersede the earlier pending-approval snapshot above; card-bank posting was not independently verified.
+
+At the organizer's 15:11 TSİ follow-up, parents 2848/2852 remained purchasable=false, but MMC Program 2 had reverted to sales_open. MMC log **424**, timestamp **13:53:39**, records cancelled → sales_open with note “WooCommerce, Tickera ve PayTR gerçek satış entegrasyonu doğrulandı.” This made snippet 104's formerly status-dependent cancellation notice disappear.
+
+Correction:
+- Updated snippet 104 and its repository source: exact-URL cancellation notice no longer depends on the mutable MMC integration status or frontend MMC class availability.
+- Added a tightly scoped mmc_program_logged guard for Program 2 / exact code / Kırıkkale / Merkez / date. A sales_open transition is returned to cancelled using MMC_Program_Service::set_status. Other programs/transitions are untouched. The guard's own cancelled transition exits immediately, avoiding recursion.
+- Used the existing nonce-protected operation to restore Program 2 to cancelled; admin readback verified.
+- Public event page verified with cancellation heading and no purchase form. All six variations rechecked purchasable=false; parents were already false.
+- Live snippet update returned active=true and code_error=null. No live reopening was induced for testing. No order/refund/ticket writes were made in this correction.
+- This guard enforces the current explicit cancellation decision. Any future authorized reopening must also revise/remove snippet 104's cancellation guard and notice; deactivating it alone does not reopen V4 product locks.
