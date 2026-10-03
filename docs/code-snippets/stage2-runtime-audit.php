@@ -59,7 +59,7 @@ function mdg_stage2_read( $input ) {
     }
     if ( $mode === 'hashes' ) {
         $out=array();
-        foreach(array('madagaskar-management-center','madagaskar-bilet-yonetimi','madagaskar-ai-abilities','madagaskar-checkout-customizations','madagaskar-kommo-automation','madagaskar-aile-paketi-22') as $slug) {
+        foreach(array('madagaskar-management-center','madagaskar-bilet-yonetimi','madagaskar-bilet-yonetimi-v4','madagaskar-ai-abilities','madagaskar-checkout-customizations','madagaskar-kommo-automation','madagaskar-aile-paketi-22') as $slug) {
             $dir=WP_PLUGIN_DIR.'/'.$slug;
             if(!is_dir($dir))continue;
             $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,FilesystemIterator::SKIP_DOTS));
