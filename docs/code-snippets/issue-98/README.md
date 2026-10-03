@@ -1,25 +1,34 @@
-# Issue #98: staged canonical datetime module
+# Issue #98: canonical purchased-session datetime — deployed
 
-This proposal is **not deployed**. The module is integrated into the draft canonical plugin source. No live plugin file or active snippet has been changed.
+The shared module is live in Madagaskar Bilet Yönetimi. The standalone Ticket Session Datetime Fix v1.0.0 is deactivated, retained for reversible rollback. Temporary admin verification snippet #118 is inactive.
 
-## Problem reproduced
-A controlled fixture for an order item purchased at 19:30, with generic event_time=17:30, returns 17:30 through the exact standalone v1.0.0. Generic ticket data is scanned before the order item. This is a code regression reproduction, not evidence that a particular live customer's PDF is wrong.
+## Resolution and ownership
 
-## Canonical module
-Port all five current hooks from exact live standalone SHA256 9c8449c59915ef7e171c0c1d043944e10548044b41c5f5316a934531fea6acce into MDG_Ticket_Session_Datetime. Existing callbacks, priorities 9/20, accepted arguments, PDF-generator flow and corrected fields are retained. Before/after source assessment is archived in PR #107.
+Tickera Bridge stores the Woo variation ID in ticket_type_id and does not supply order_item_id for the tested tickets. Normalize variation/parent IDs, then resolve a unique exact Woo order item. Resolve order_id + item_id through MDG order_map with matching event/session IDs; format UTC in Europe/Istanbul and preserve actual end_at. Purchased item/variation metadata remains the legacy fallback. Ambiguous items or invalid canonical mappings preserve existing ticket data.
 
-Resolution order: exact MDG order_id + order_item_id -> order_map -> session, requiring matching event IDs; then legacy exact WooCommerce order item / purchased variation before generic event fields. Multiple canonical session matches preserve existing data; invalid UTC dates/durations preserve existing data. MDG dates convert from UTC to Europe/Istanbul, preserving actual end_at; absent end_at retains the old +1 hour fallback. Exact variation matching avoids taking the first item that merely shares a parent product. Legacy parser itself is retained.
+All five original date filters now have exactly one canonical callback and zero standalone callbacks. Priorities and argument counts remain pre-generation 9/6 and data filters 20/4. Verified live namespaced Tickera Designer classes are preferred, with global compatibility retained. QR payload, payment, ticket metadata and check-in state are not changed by this module.
 
-Public resolve_order_item() and format_utc_session() are shared entry points for later PDF and session-display consumers. QR/location payloads and checkout/payment flows are untouched.
+## Live evidence, 3 October 2026
 
-## Ownership / deployment sequence
-1. Capture and reconcile the **complete** live Madagaskar Bilet Yönetimi plugin into its canonical repository directory. Completed: all 47 editor-listed live source files have now been captured into wp-content/plugins/madagaskar-bilet-yonetimi/ without modifications; SHA256/byte manifest is docs/live-captures/2026-10-03/mdg-canonical-before-manifest.json. No active runtime source was changed.
-2. Completed in draft source: includes/class-mdg-ticket-session-datetime.php is required from the exact captured bootstrap, with hook registration on plugins_loaded priority 20. The rest of the 47 captured files remain unchanged.
-3. With standalone active, canonical hooks() returns without registering anything; the unique working hotfix remains owner. No duplicate hooks or function redeclaration.
-4. On staging/canary, deactivate standalone and verify canonical ownership: five filters only, pre-generate priority 9/6 arguments and four data filters priority 20/4 arguments.
-5. Generate actual existing two-session ticket PDFs and inspect rendered date/time, QR/link and template output; compare against exact purchased order-item/session mapping. Unit PDF-generator fixture is **not** a real PDF smoke test.
-6. Only after that canary passes, deactivate standalone on live and repeat read-only PDF/session checks. Do not create orders, charge cards, send WhatsApp or change sales mappings for this validation.
-7. Rollback: reactivate standalone. Canonical hook registration automatically yields to its existing callback on the next request.
+Paid ticket4202 → order4194 → item540 → session124: 15 Ekim2026 17:30–18:30.
+Paid ticket4069 → order4065 → item506 → session125: 15 Ekim2026 19:30–20:30.
 
-## Validation
-22 isolated checks passed with PHP 8.5 WASM locally: hook counts/priorities, mapped 19:30 fields, actual duration, legacy order-item precedence, second variation selection, ambiguous/invalid mapping handling, Turkey date rollover, PDF-generator input, existing pre-generated response and standalone ownership. Native PHP CI runs the same suite plus lint. No source has been installed on production; Complete 47-file canonical capture is included; Issue #98 stays open for actual rendered PDF canary and controlled deployment.
+Both actual PDFs were generated through the production tickera_ticket_designer_pre_generate filter chain after standalone deactivation. Rendered dates/times and printed-code/entry-QR agreement passed; embedded venue QR assets are present. Ticket metadata hash and order status stayed unchanged in both runs. No real payment, WhatsApp, refund or check-in action. Customer PDFs/QR codes are excluded from GitHub and Drive.
+
+Before bootstrap SHA256: 991e3b78d8f9a9f2e36c3b689bd7c57c4175dafd9d4cade25f5095522abdc116
+After bootstrap SHA256: 9863ef7feaab4096051471047cf4061ee89dc71f44deaa43e043dff1667bc23d
+Canonical module SHA256: f2ed98b99b5d65e210f386e1b244a85190ff3e75c999e53d2de0496cd9379e82
+
+Exact live 47-file baseline was captured before migration. Only bootstrap integration plus this new module were deployed; other captured files were preserved. Archives: docs/live-backups/2026-10-03/ticket-datetime/. Admin-only nonce/capability and hash-guarded deployment sources were archived before use.
+
+Native PHP CI passed the complete MDG lint and 30 isolated regression checks, including Tickera variation normalization, unique/ambiguous item lookup, namespace compatibility, actual duration and ownership handoff. Anonymous final smoke: home, /sehirler/, /bilet-al/, /ankara/ and the actual Denizli event URL all HTTP200 without admin bar or PHP errors.
+
+## Editor incident and recovery
+
+The first WordPress editor save rejected duplicated PHP source. A subsequent editor save unexpectedly left the bootstrap empty. Its empty SHA256 was detected; the exact prior live bootstrap was immediately restored and verified. Deployment then used reviewed hash-guarded atomic file replacement, verified after hash and actual production PDF generation. The native editor was not used again.
+
+## Rollback
+
+Reactivate the retained standalone plugin; canonical registration yields on the next request. Restore the archived pre-migration bootstrap if reverting module loading is needed. Do not install older repository/plugin versions over live.
+
+Refs #98; PR #110.
