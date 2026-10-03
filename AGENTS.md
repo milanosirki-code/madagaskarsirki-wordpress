@@ -85,6 +85,7 @@ WPVibe/WordPress üzerinde canlı değişiklik gerekiyorsa GitHub koduyla fark b
 ## İlgili dokümanlar
 
 - `docs/CODEX_MASTER_WORKFLOW.md`
-- PR #46 içindeki staged AI aktivasyon runbook'u: `docs/MDG_AI_ACTIVATION_RUNBOOK.md` (henüz main'de olmayabilir)
+- PR #46, 1 Ekim 2026'da merge edildi; `docs/MDG_AI_ACTIVATION_RUNBOOK.md` tarihsel aktivasyon referansıdır.
+- Güncel devir kaydı: `docs/CODEX_PROJECT_STATE.md`. Yeni işe güncel main ve canlı okuma ile başla.
 
 Bu dosyadaki güvenlik ve deployment kuralları alt klasörlerdeki talimatlardan aksi açıkça belirtilmedikçe geçerlidir.
