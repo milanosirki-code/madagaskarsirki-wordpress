@@ -1,0 +1,1078 @@
+{
+  "date": "2026-10-03",
+  "scope": "Authenticated read-only rediscovery; temporary diagnostic retirement",
+  "main_sha": "6e21a5e4217c085d6668f6932a874f846845a7de",
+  "snippets": [
+    {
+      "id": 1,
+      "name": "Make upload filenames lowercase",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 2,
+      "name": "Disable admin bar",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 3,
+      "name": "Allow smilies",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 4,
+      "name": "Current year",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 5,
+      "name": "Madagaskar Bilet Tipi Kısaltma",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 6,
+      "name": "Google Gemini API Timeout 90 Seconds",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 7,
+      "name": "Madagaskar Bilet WhatsApp Destek Hattı",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 8,
+      "name": "WooCommerce Telefon Zorunlu",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 9,
+      "name": "MS Bilet Diagnostic",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 10,
+      "name": "MS Biletlerim",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 11,
+      "name": "MS Kommo Test",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 12,
+      "name": "MS Kommo Otomatik Bilet Linki",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 13,
+      "name": "MS Özel Sayfalar Noindex ve Sitemap Temizliği",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 14,
+      "name": "MS Eski Sayfa Yönlendirmeleri",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 15,
+      "name": "ı: MS Ana Sayfa ve Turne SEO Ayarları",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 16,
+      "name": "MS Şehir URL Standardizasyonu",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 17,
+      "name": "MS Tek Sosyal Paylaşım Görseli",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 18,
+      "name": "MS İletişim Resmi Adres Düzeltmesi",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 19,
+      "name": "MS Hukuki Sayfalar",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 20,
+      "name": "MS Güvenli Sayfa Önbelleği",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 21,
+      "name": "MS Global Alt Bilgi V3.3",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 22,
+      "name": "MS Temiz XML Sitemap V2",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 23,
+      "name": "MS Güvenli Performans V4",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 24,
+      "name": "MS SSS Dokunma Alanı V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 25,
+      "name": "MS Ankara Event Schema 12 V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 26,
+      "name": "MS Ankara Event Schema 14 V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 27,
+      "name": "MS Ankara Event Schema 16 V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 28,
+      "name": "Madagaskar - Tickera Teknik Analiz",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 29,
+      "name": "Madagaskar Etkinlik Yayınla V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 30,
+      "name": "MS Dinamik Şehirler ve Biletler V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 31,
+      "name": "MS Eski Şehirler Kodunu Bul – GEÇİCİ",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 32,
+      "name": "S mdg-cities Dosya Bul – GEÇİCİ",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 33,
+      "name": "MS Public Cities Dosyasını Oku – GEÇİCİ",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 34,
+      "name": "MS Şehirler Sayfa Şablonu Serbest Bırak V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 35,
+      "name": "MS Anasayfa v3",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 36,
+      "name": "MS Gösteriler CSS Yükleyici V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 37,
+      "name": "MS Akrobasi Detay Sayfası V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 38,
+      "name": "MS Gösteri Detay Sayfaları V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 39,
+      "name": "MS Gösteri Detay Sayfaları V2",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 40,
+      "name": "MS Galeri Sayfası V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 41,
+      "name": "MS Hakkımızda Sayfası V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 42,
+      "name": "MS Kurumsal Sayfası V5",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 43,
+      "name": "MS SSS Sayfası V2",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 44,
+      "name": "MS SSS Sayfası V3",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 45,
+      "name": "MS İletişim Sayfası V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 46,
+      "name": "MS İletişim Sayfası V2",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 47,
+      "name": "MS Blog Sayfası V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 48,
+      "name": "MS Blog Sayfası V3",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 49,
+      "name": "MS Bilet Al Sayfası Tasarım V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 50,
+      "name": "MS Bilet Al Sayfası V2",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 51,
+      "name": "MS Bilet Al Sayfası V4",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 52,
+      "name": "MADAGASKAR — BLOG TEKİL YAZI TASARIMI V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 53,
+      "name": "MADAGASKAR — GLOBAL SOSYAL PAYLAŞIM V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 54,
+      "name": "Madagaskar test etkinlik kapat v1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 55,
+      "name": "hukuki sayfalar iletişim",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 56,
+      "name": "Madagaskar Bilet Al Cache Temizleme V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 57,
+      "name": "Madagaskar Bilet PDF Adres Fix V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 58,
+      "name": "Madagaskar PayTR Bekleme Kilidi V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 59,
+      "name": "MS WhatsApp ve Biletlerim Erişim Düzeltmesi V1",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 60,
+      "name": "MS Eskişehir 3 Ekim 2026 İptal Duyurusu",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 61,
+      "name": "MS Etkinlik Tarihi Düzenleme V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 62,
+      "name": "MS Altınpark 10 Ekim 2026 İptal Duyurusu",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 63,
+      "name": "Mamak 10 Ekim 2026 Afiş Güncellemesi — Tek Sefer",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 64,
+      "name": "MS Etkinlik SEO Düzeltmesi ve Mamak 301 — 2026-09-20",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 65,
+      "name": "Madagaskar Rota Tek Link Paylaşımı",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 66,
+      "name": "Madagaskar Kommo Konum Cevapları",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 67,
+      "name": "Madagaskar Kommo Konum Menü Kaydı Fix",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 68,
+      "name": "Madagaskar Kommo AI Source Auto Refresh",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 69,
+      "name": "Madagaskar Kommo Force Source Refresh Trigger",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 70,
+      "name": "Madagaskar Kommo Active Events Unified Source",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 71,
+      "name": "Madagaskar Finans API",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 72,
+      "name": "Madagaskar AI İşlem Katmanı — Program + Salon + Etkinlik + Satış",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 73,
+      "name": "MDG Venue Introspector — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 74,
+      "name": "Madagaskar AI İşlem Katmanı — Fatura Takip",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 75,
+      "name": "Madagaskar AI İşlem Katmanı — Okul Tanıtım",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 76,
+      "name": "MDG Modül Introspector — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 77,
+      "name": "Madagaskar AI İşlem Katmanı — V5 Finans",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 78,
+      "name": "Madagaskar AI İşlem Katmanı — Raporlar ve Müşteri/Bilet",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 79,
+      "name": "Madagaskar AI İşlem Katmanı — V4 İade Güvenliği",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 80,
+      "name": "Madagaskar AI İşlem Katmanı — Sistem Sağlığı",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 81,
+      "name": "Madagaskar AI İşlem Katmanı — MMC Genel Bakış",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 82,
+      "name": "Madagaskar AI İşlem Katmanı — MMC Görevler",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 83,
+      "name": "Madagaskar AI İşlem Katmanı — Bölge ve Nüfus",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 84,
+      "name": "Madagaskar AI İşlem Katmanı — MMC Saha",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 85,
+      "name": "Madagaskar AI İşlem Katmanı — MMC Operasyon",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 86,
+      "name": "Madagaskar AI İşlem Katmanı — Pazarlama / Meta",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 87,
+      "name": "Madagaskar AI İşlem Katmanı — Kommo Güvenli Köprü",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 88,
+      "name": "Madagaskar AI İşlem Katmanı — MMC-MDG Köprüsü",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 89,
+      "name": "Madagaskar AI İşlem Katmanı — MMC Satış Defteri",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 90,
+      "name": "MDG AI Probe — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 91,
+      "name": "MMC Smoke Check — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 92,
+      "name": "MMC Smoke Report — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 93,
+      "name": "MDG V4 Runtime Reflection — geçici",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 94,
+      "name": "Madagaskar AI İşlem Katmanı — V4 Satış / Erteleme / Aktarım",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 95,
+      "name": "ACİL - MMC Checkout Koruması",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 96,
+      "name": "GEÇİCİ — MMC MDG Bridge Link Once",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 97,
+      "name": "GEÇİCİ — MMC Staging Fix Deploy Once",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 98,
+      "name": "GEÇİCİ — MMC Region Guard Patch",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 99,
+      "name": "ACIL - MMC Region Service Restore",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 100,
+      "name": "ACIL - MMC Admin Region Guard Installer",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 101,
+      "name": "GEÇİCİ — Legacy MDG → MMC Migration Runner",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 102,
+      "name": "MS Bilet Sorgulama V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 103,
+      "name": "MS Yarım Kalan Ödeme Kaydı V1 ",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 104,
+      "name": "Kırıkkale Program #2 İptal ve Duyuru — 2026-10-02",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 105,
+      "name": "GEÇİCİ — AI Source-Aware Salon Guard",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 106,
+      "name": "Madagaskar Çekiliş — Tek Kişilik Yeniden Seçim V1",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 107,
+      "name": "GEÇİCİ — MMC Live Source Snapshot Reader",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 108,
+      "name": "GEÇİCİ — MMC Runtime Class Diagnostics",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 109,
+      "name": "GEÇİCİ — MMC selected_venue Kalıcı Patch",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 110,
+      "name": "Madagaskar Kommo Unified Source V2 — MMC Canonical",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 111,
+      "name": "GEÇİCİ — MMC Kommo Unified V2 Guard Patch",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 112,
+      "name": "GEÇİCİ — Transition Plugin Audit Reader",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 113,
+      "name": "GEÇİCİ — Transition Runtime Hook Audit",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 114,
+      "name": "GEÇİCİ — SKU Patch State Audit",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 115,
+      "name": "Madagaskar MMC Yeni Etkinlik Excel Şablonu — İade/Değişiklik Kuralları",
+      "active": true,
+      "code_error": null
+    },
+    {
+      "id": 116,
+      "name": "GEÇİCİ — Residual Hotfix Audit",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 117,
+      "name": "GEÇİCİ — Ticket Datetime Source Reader",
+      "active": false,
+      "code_error": null
+    },
+    {
+      "id": 118,
+      "name": "GEÇİCİ — Bilet PDF Seans Kontrolü — Salt Okunur",
+      "active": false,
+      "code_error": null
+    }
+  ],
+  "active_source_hashes_before_retirement": [
+    {
+      "id": "6",
+      "name": "Google Gemini API Timeout 90 Seconds",
+      "active": "1",
+      "sha256": "867575bb933abe2025034003294734762f58a7dfc35a4ee573dd85e315418e91",
+      "bytes": "200"
+    },
+    {
+      "id": "13",
+      "name": "MS Özel Sayfalar Noindex ve Sitemap Temizliği",
+      "active": "1",
+      "sha256": "990ba01ac225eb739e2b8012c323dca5356a7ffda5f78c47b79313c9fa588512",
+      "bytes": "3115"
+    },
+    {
+      "id": "14",
+      "name": "MS Eski Sayfa Yönlendirmeleri",
+      "active": "1",
+      "sha256": "5b7fa46d946d29be0a128b8b6bc2e12517d346222f7a999ba00e238100ab2341",
+      "bytes": "8216"
+    },
+    {
+      "id": "15",
+      "name": "ı: MS Ana Sayfa ve Turne SEO Ayarları",
+      "active": "1",
+      "sha256": "5acb5d1cb93419dcacd6d1e2d0a6981b3c1ebdd6623199101b31ce921f3ec862",
+      "bytes": "2571"
+    },
+    {
+      "id": "16",
+      "name": "MS Şehir URL Standardizasyonu",
+      "active": "1",
+      "sha256": "ad7d764fa5ef7d933d2f7dd688cbf21e286fdd12f62c567f414a312937d7a7d7",
+      "bytes": "3329"
+    },
+    {
+      "id": "17",
+      "name": "MS Tek Sosyal Paylaşım Görseli",
+      "active": "1",
+      "sha256": "02af1a8b76d9ed13c01dbcb323bbf1610f7a773150c77c4e90f72402cbcb7c3d",
+      "bytes": "2997"
+    },
+    {
+      "id": "18",
+      "name": "MS İletişim Resmi Adres Düzeltmesi",
+      "active": "1",
+      "sha256": "0656a16c6c5d1bec620552a31e07851f2ef67140fa3050aaca6a3c91a7f09ecf",
+      "bytes": "1501"
+    },
+    {
+      "id": "19",
+      "name": "MS Hukuki Sayfalar",
+      "active": "1",
+      "sha256": "838b8763cda70ae2bd11335030a103fa601ae744db25fd1229d7365dcacca7a1",
+      "bytes": "17288"
+    },
+    {
+      "id": "20",
+      "name": "MS Güvenli Sayfa Önbelleği",
+      "active": "1",
+      "sha256": "2173d7e55106044c3bb3e70e19883232117936fc85332ac9f690ccb616017996",
+      "bytes": "8817"
+    },
+    {
+      "id": "21",
+      "name": "MS Global Alt Bilgi V3.3",
+      "active": "1",
+      "sha256": "c9887f98fe3a64caec389758206a631ee0140df394632f73ba3231ad0261d0f5",
+      "bytes": "22612"
+    },
+    {
+      "id": "22",
+      "name": "MS Temiz XML Sitemap V2",
+      "active": "1",
+      "sha256": "a28ecd8b35283c76606c162fbf224969145b53c25b871bc21d64baf450cf371f",
+      "bytes": "4091"
+    },
+    {
+      "id": "23",
+      "name": "MS Güvenli Performans V4",
+      "active": "1",
+      "sha256": "f491a9db35f0379b86f3a20eaca0296aacfb1dbfb065940d80f18269e35f112d",
+      "bytes": "5640"
+    },
+    {
+      "id": "24",
+      "name": "MS SSS Dokunma Alanı V1",
+      "active": "1",
+      "sha256": "1fae9242f6f3f558a3b5ac02d34cfa2c21f3e600902dfa9e3f2712a8663a0557",
+      "bytes": "1959"
+    },
+    {
+      "id": "25",
+      "name": "MS Ankara Event Schema 12 V1",
+      "active": "1",
+      "sha256": "a9c2a5effb950c54cfbf76ad483c09e5dbe44dfd16d2d1b1cd13e64e44b09e33",
+      "bytes": "2933"
+    },
+    {
+      "id": "26",
+      "name": "MS Ankara Event Schema 14 V1",
+      "active": "1",
+      "sha256": "5c1713ad6d5b5676586d9f5f358f44fb43771f22c29b685835e909bb37adf360",
+      "bytes": "2924"
+    },
+    {
+      "id": "27",
+      "name": "MS Ankara Event Schema 16 V1",
+      "active": "1",
+      "sha256": "2d313743a108d7b6ce21d917e73a8b4e9edd85dcee40ca81a20071fd9d61e0e4",
+      "bytes": "2933"
+    },
+    {
+      "id": "30",
+      "name": "MS Dinamik Şehirler ve Biletler V1",
+      "active": "1",
+      "sha256": "4230a64ae7a17e8eed98c22b4a99212212e6ca6d46cf6ce72e0a5ed71c39a9d6",
+      "bytes": "30471"
+    },
+    {
+      "id": "34",
+      "name": "MS Şehirler Sayfa Şablonu Serbest Bırak V1",
+      "active": "1",
+      "sha256": "a4286b50e29d302680cc0ffd04a11e764379bab1bd8317891d475109aaeca945",
+      "bytes": "1755"
+    },
+    {
+      "id": "35",
+      "name": "MS Anasayfa v3",
+      "active": "1",
+      "sha256": "8f62f04c5ba766ad8e5eb4b1c5f31d96378dabceb6c154190d52d9497d0aefe8",
+      "bytes": "36576"
+    },
+    {
+      "id": "36",
+      "name": "MS Gösteriler CSS Yükleyici V1",
+      "active": "1",
+      "sha256": "52b68e45477219425cf0969a5f8331dadc7c2bec9ee15d167bebd546c95faad6",
+      "bytes": "15724"
+    },
+    {
+      "id": "39",
+      "name": "MS Gösteri Detay Sayfaları V2",
+      "active": "1",
+      "sha256": "a10bfff07422dd92ac06b8f5813f2a58da11363ac82ff24b1244419701b4f96d",
+      "bytes": "54977"
+    },
+    {
+      "id": "40",
+      "name": "MS Galeri Sayfası V1",
+      "active": "1",
+      "sha256": "b6f6ed69762dc48735432f9975ff007315a0aadbefcba4d30181bbad4315456d",
+      "bytes": "32677"
+    },
+    {
+      "id": "41",
+      "name": "MS Hakkımızda Sayfası V1",
+      "active": "1",
+      "sha256": "3e8872c2db441b566c819697f119dffaebbbb484360c9fc50bf9e19bf9963b99",
+      "bytes": "39790"
+    },
+    {
+      "id": "42",
+      "name": "MS Kurumsal Sayfası V5",
+      "active": "1",
+      "sha256": "5eb123b3995d30bb47726b5d23ca71d46ae994b64a1c5243e2062e584bed8349",
+      "bytes": "109329"
+    },
+    {
+      "id": "44",
+      "name": "MS SSS Sayfası V3",
+      "active": "1",
+      "sha256": "76fdb26be0bb0978133a4f27003e18b9e07ad4b0418e76473a3f4dc5f795a517",
+      "bytes": "65059"
+    },
+    {
+      "id": "46",
+      "name": "MS İletişim Sayfası V2",
+      "active": "1",
+      "sha256": "289ba13978bccfa53ea18d3f7be756e039f113b86157c1d25663efc64b6822c0",
+      "bytes": "44961"
+    },
+    {
+      "id": "48",
+      "name": "MS Blog Sayfası V3",
+      "active": "1",
+      "sha256": "e52252dde157e4ece1a72b20962b997f1941e68edcc4eb7c6bab37743047f45c",
+      "bytes": "32064"
+    },
+    {
+      "id": "52",
+      "name": "MADAGASKAR — BLOG TEKİL YAZI TASARIMI V1",
+      "active": "1",
+      "sha256": "b3f9e70e87af5492313f5ec085e87b77bea3a60aa4b917c1ad8c4ae83f461021",
+      "bytes": "13443"
+    },
+    {
+      "id": "53",
+      "name": "MADAGASKAR — GLOBAL SOSYAL PAYLAŞIM V1",
+      "active": "1",
+      "sha256": "c7123341eb990e017390197e2e8b75a087820f9af531001b4a0fac3077b482b2",
+      "bytes": "8381"
+    },
+    {
+      "id": "55",
+      "name": "hukuki sayfalar iletişim",
+      "active": "1",
+      "sha256": "b57a2cdc837a83f4c05d8b8c6fc5d8a3b9827e483fe422ee2622f2f37e7df7b8",
+      "bytes": "4044"
+    },
+    {
+      "id": "60",
+      "name": "MS Eskişehir 3 Ekim 2026 İptal Duyurusu",
+      "active": "1",
+      "sha256": "18444d4180df10dc91b91f91333dae24a7e48f6f5b4fc9ce18b677f765c70927",
+      "bytes": "1542"
+    },
+    {
+      "id": "61",
+      "name": "MS Etkinlik Tarihi Düzenleme V1",
+      "active": "1",
+      "sha256": "6a65e6fe84288c638ce314fbc63275162f9bd3d947040bf870c59136a6b6fdbb",
+      "bytes": "18918"
+    },
+    {
+      "id": "62",
+      "name": "MS Altınpark 10 Ekim 2026 İptal Duyurusu",
+      "active": "1",
+      "sha256": "83a0e08ec53ee24977c0f031b167854436c8e0e47fd6b76fcb104c814a4086d4",
+      "bytes": "1569"
+    },
+    {
+      "id": "64",
+      "name": "MS Etkinlik SEO Düzeltmesi ve Mamak 301 — 2026-09-20",
+      "active": "1",
+      "sha256": "4e9af616c3bd985d1f9c02e627a5434eaab8b8a7b9255477945b0244a4906241",
+      "bytes": "4703"
+    },
+    {
+      "id": "65",
+      "name": "Madagaskar Rota Tek Link Paylaşımı",
+      "active": "1",
+      "sha256": "7ff3b07f212edc11414807aa8ba70a7c42352686ec138d388e65159d6f9b975b",
+      "bytes": "12759"
+    },
+    {
+      "id": "71",
+      "name": "Madagaskar Finans API",
+      "active": "1",
+      "sha256": "e053d948777c14e7e295ae7b4856ca95e415cfe662f7871eba631098ad1cfb5f",
+      "bytes": "6799"
+    },
+    {
+      "id": "102",
+      "name": "MS Bilet Sorgulama V1",
+      "active": "1",
+      "sha256": "c685584f400b7a8f9a8d32e1281a64cd62faa7b774aeae2dd34a5aed6912bd34",
+      "bytes": "13158"
+    },
+    {
+      "id": "103",
+      "name": "MS Yarım Kalan Ödeme Kaydı V1 ",
+      "active": "1",
+      "sha256": "8cd9a896fddf714bb240a15cb9d508347da24b668bb02441d7c8f1a19c7f9496",
+      "bytes": "13224"
+    },
+    {
+      "id": "104",
+      "name": "Kırıkkale Program #2 İptal ve Duyuru — 2026-10-02",
+      "active": "1",
+      "sha256": "b5c7486319b437f60abb2d6a16d37b212789072c5f48b5fb67e7179cdd03682e",
+      "bytes": "5754"
+    },
+    {
+      "id": "106",
+      "name": "Madagaskar Çekiliş — Tek Kişilik Yeniden Seçim V1",
+      "active": "1",
+      "sha256": "df2afbfff4bafc8279e907d2935c5bad8d655e459b9697f6d36e5bc33cb7610c",
+      "bytes": "16701"
+    },
+    {
+      "id": "110",
+      "name": "Madagaskar Kommo Unified Source V2 — MMC Canonical",
+      "active": "1",
+      "sha256": "292e0c542a3f185119d28ba5639e1786d5bdf0fecaac8fdba3c4fc86e47956dd",
+      "bytes": "19000"
+    },
+    {
+      "id": "115",
+      "name": "Madagaskar MMC Yeni Etkinlik Excel Şablonu — İade/Değişiklik Kuralları",
+      "active": "1",
+      "sha256": "a191d8d4449a531084c693664086ac5f0a34c5afeb5bcba5c8954fbb26858867",
+      "bytes": "16358"
+    },
+    {
+      "id": "117",
+      "name": "GEÇİCİ — Ticket Datetime Source Reader",
+      "active": "1",
+      "sha256": "8be83268c77d2f633fcf4565ad8594f19cf5b3b84162fd6db03c2fe2f6678d09",
+      "bytes": "2349"
+    }
+  ],
+  "live_versions": {
+    "wordpress": "7.1.2",
+    "php": "8.4.26",
+    "mmc": "1.3.47",
+    "ai_abilities": "0.6.1",
+    "family_package": "1.1.2"
+  },
+  "verification": {
+    "health_before": {
+      "ok": 16,
+      "warning": 0,
+      "critical": 0
+    },
+    "health_after": {
+      "ok": 16,
+      "warning": 0,
+      "critical": 0
+    },
+    "cart_after": {
+      "errors": [],
+      "full_checkout_verified": false
+    },
+    "snippet117": {
+      "active": false,
+      "code_error": null,
+      "write_response_http": 500,
+      "readback_confirmed": true,
+      "origin_error_cause": "unknown"
+    },
+    "mdg_bootstrap_sha256": "9863ef7feaab4096051471047cf4061ee89dc71f44deaa43e043dff1667bc23d",
+    "mdg_bootstrap_matches_main": true,
+    "pr107_matches_live_snippets": [
+      15,
+      30,
+      103
+    ],
+    "program9": {
+      "mapping_coverage": "6/6",
+      "session_match": "3/3",
+      "paid_orders": 21,
+      "items": 38,
+      "tickets": 62,
+      "capacity_units": 62,
+      "revenue_difference": 0
+    },
+    "kommo_program9": {
+      "preview_safe": true,
+      "session_source_ok": true,
+      "remote_agent_retrieval_tested": false,
+      "family_package_detected": false
+    }
+  },
+  "limits": [
+    "No anonymous HTML or full checkout/payment/ticket-generation test in this session.",
+    "No fresh full MMC file capture; PR108 same-day manifest is historical evidence.",
+    "No fresh remote Kommo agent retrieval test; consistency ability previews local generated text.",
+    "No PayTR independent settlement, Biletinial or POS reconciliation.",
+    "Local PHP unavailable; shell HTTPS proxy unreachable."
+  ],
+  "rollback117": "Reactivate retained snippet #117 through owning Code Snippets UI/API if source reader is needed."
+}
