@@ -16,10 +16,10 @@ Canlı write migration'a geçmeden önce:
 | Sıra | MDG Event | Yer | Tarih | Salon | Seanslar | Public fiyat başlangıcı | Durum |
 | ---: | ---: | --- | --- | --- | --- | ---: | --- |
 | 1 | 7 | Ankara / Yenimahalle | 2026-10-04 | Yenimahalle Spor Kompleksi Salonu | 12:00, 14:00, 16:00 | 250 TL | **TAMAMLANDI — Program #9** |
-| 2 | 12 | Denizli / Pamukkale | 2026-10-08 | Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Salonu | 17:30, 19:30 | 250 TL | bekliyor |
-| 3 | 9 | Ankara / Mamak | 2026-10-10 | Prof Dr. Necmettin Erbakan Kongre Merkezi | 12:00, 14:00, 16:00, 18:00 | 250 TL | bekliyor |
-| 4 | 13 | Eskişehir / Odunpazarı | 2026-10-11 | Porsuk Kapalı Spor Salonu | 12:00, 14:00, 16:00 | 250 TL | bekliyor |
-| 5 | 10 | İzmir / Konak | 2026-11-08 | Halkapınar Spor Salonu | 12:00, 14:00, 16:00 | 300 TL | bekliyor |
+| 2 | 12 | Denizli / Pamukkale | 2026-10-08 | Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Salonu | 17:30, 19:30 | 250 TL | **TAMAMLANDI — Program #10** |
+| 3 | 9 | Ankara / Mamak | 2026-10-10 | Prof Dr. Necmettin Erbakan Kongre Merkezi | 12:00, 14:00, 16:00, 18:00 | 250 TL | **TAMAMLANDI — Program #11** |
+| 4 | 13 | Eskişehir / Odunpazarı | 2026-10-11 | Porsuk Kapalı Spor Salonu | 12:00, 14:00, 16:00 | 250 TL | **TAMAMLANDI — Program #12** |
+| 5 | 10 | İzmir / Konak | 2026-11-08 | Halkapınar Spor Salonu | 12:00, 14:00, 16:00 | 300 TL | **TAMAMLANDI — Program #13** |
 
 Not: Denizli public source metninde "Özay Gönlüm Sakonu" yazım hatası görülmüştür. Migration salon kimliğini MDG venue ID üzerinden kullanmalı; metin eşleşmesine güvenilmemelidir.
 
@@ -103,4 +103,4 @@ Bu guard yalnız public liste sonucunu etkiler; sipariş, ürün, Tickera, Kommo
 - post-migration health 0 critical / 0 warning / 16 OK
 - Snippet #101 tekrar active=false
 
-Sonraki hedef: **Denizli MDG #12**.
+Legacy migration kuyruğu **tamamlandı**. Son doğrulanan durum: Denizli #12 → Program #10, Mamak #9 → Program #11, Eskişehir #13 → Program #12, İzmir #10 → Program #13. Geçici migration runner Snippet #101 inactive; sistem sağlığı 0 kritik / 0 uyarı / 16 OK. Issue #81 tamamlanarak kapatıldı. Canlı MMC v1.3.47 exact-source reconciliation takibi Issue #72 üzerinden sürüyor.
