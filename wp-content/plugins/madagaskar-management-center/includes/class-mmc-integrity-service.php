@@ -145,13 +145,14 @@ class MMC_Integrity_Service {
         $expected = 0; $mapped = 0; $mapping_mismatch = 0;
         if ( $event ) {
             $session_count = self::count_where( 'mmc_sessions', 'event_id', (int) $event->id, " AND status='active'" );
-            $ticket_count  = self::count_where( 'mmc_ticket_types', 'event_id', (int) $event->id, " AND is_active=1" );
+            $ticket_count  = self::count_where( 'mmc_ticket_types', 'event_id', (int) $event->id, " AND is_active=1 AND ticket_code<>'family_2_2'" );
             $expected = $session_count * $ticket_count;
             if ( self::table_exists( $wpdb->prefix . 'mmc_sales_mappings' ) ) {
                 $mapped = (int) $wpdb->get_var( $wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_mappings
-                     WHERE program_id=%d AND event_id=%d AND is_active=1
-                       AND wc_product_id>0 AND wc_variation_id>0 AND tickera_event_id>0",
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_mappings m
+                     INNER JOIN {$wpdb->prefix}mmc_ticket_types t ON t.id=m.ticket_type_id
+                     WHERE m.program_id=%d AND m.event_id=%d AND m.is_active=1
+                       AND m.wc_product_id>0 AND m.wc_variation_id>0 AND m.tickera_event_id>0 AND t.ticket_code<>'family_2_2'",
                     $program_id, (int) $event->id
                 ) );
                 $mapping_mismatch = (int) $wpdb->get_var( $wpdb->prepare(
@@ -349,37 +350,15 @@ class MMC_Integrity_Service {
         $bridge = $s['bridge'];
         $mdg_event = $s['event'];
         $bridge_mismatch = $mmc_event && (int)$bridge->mmc_event_id !== (int)$mmc_event->id;
-
-        $onsale_structural = array();
-        if ( $mdg_event && 'draft' === (string)$mdg_event->status ) {
-            foreach ( (array) MMC_MDG_Bridge_Service::candidates( $program_id ) as $candidate ) {
-                if ( (int)$candidate['event_id'] === (int)$bridge->mdg_event_id ) { continue; }
-                if ( 'onsale' !== (string)($candidate['status'] ?? '') ) { continue; }
-                if ( empty($candidate['province_match']) || empty($candidate['district_match'])
-                    || empty($candidate['date_match']) || empty($candidate['venue_match']) ) { continue; }
-                if ( (int)($candidate['session_count'] ?? 0) !== (int)($s['sessions_mmc'] ?? 0) ) { continue; }
-                $onsale_structural[] = $candidate;
-            }
-        }
-
-        $bridge_sev = $bridge_mismatch ? 'critical' : ( $onsale_structural ? 'warning' : 'ok' );
-        $bridge_detail =
+        $rows[] = self::row(
+            'mdg_bridge',
+            'MMC ↔ MDG Etkinlik Köprüsü',
+            $bridge_mismatch ? 'critical' : 'ok',
             'MMC Program #' . (int)$program_id . ' / Event #' . (int)$bridge->mmc_event_id .
             ' ↔ MDG Event #' . (int)$bridge->mdg_event_id .
             ( $mdg_event ? ' · ' . $mdg_event->title : ' · MDG etkinliği bulunamadı' ) .
             ' · yöntem: ' . $bridge->match_method .
-            ( $bridge_mismatch ? ' · MMC EVENT UYUŞMUYOR' : '' );
-
-        if ( $onsale_structural ) {
-            $ids = array_map( static function( $row ){ return '#' . (int)$row['event_id']; }, $onsale_structural );
-            $bridge_detail .= ' · DİKKAT: köprü draft kayıtta; aynı yapıdaki satıştaki MDG event ' . implode(', ', $ids) . ' bulundu. Satış mapping/köprü kaynağını doğrulayın.';
-        }
-
-        $rows[] = self::row(
-            'mdg_bridge',
-            'MMC ↔ MDG Etkinlik Köprüsü',
-            $bridge_sev,
-            $bridge_detail,
+            ( $bridge_mismatch ? ' · MMC EVENT UYUŞMUYOR' : '' ),
             $url
         );
 
@@ -430,6 +409,7 @@ class MMC_Integrity_Service {
             $identity_sev,
             'Satış eşleştirmesi ' . $matched . '/' . $expected .
             ' · MMC seans ' . (int)$s['sessions_mmc'] . ' · MDG seans ' . (int)$s['sessions_mdg'] .
+            ( !empty($s['sales_source_event_id']) && (int)$s['sales_source_event_id'] !== (int)$s['event']->id ? ' · içerik MDG #' . (int)$s['event']->id . ' · satış MDG #' . (int)$s['sales_source_event_id'] : '' ) .
             ( $expected && $matched !== $expected ? ' · ÜRÜN/VARYASYON/TICKERA EŞLEŞMESİ FARKLI' : '' ),
             $url
         );

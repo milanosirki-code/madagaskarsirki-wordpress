@@ -80,13 +80,12 @@ final class MMC_Publish_Content_Excel {
                 array( 'KURAL', 'YAYIN_ICERIGI ve SSS sayfalarını düzenleyin.', 'Program/salon/tarih/seans/fiyat tekrar yazılmaz.' ),
                 array( 'KURAL', 'Değişkenleri {{...}} biçiminde bırakabilirsiniz.', 'İçe aktarımda MMC verisiyle doldurulur.' ),
                 array( 'KURAL', 'Boş içerik hücresi mevcut veriyi silmez.', 'Yalnız bağlı MDG taslağının içeriği güncellenir.' ),
-                array( 'KURAL', 'İptal/iade/değişiklik ve kullanılmayan bilet kuralları yeni etkinlik şablonuna standart olarak eklenir.', 'Etkinliğe özel farklı bir karar varsa yayın öncesi güncelleyin.' ),
             ),
             'YAYIN_ICERIGI' => array(
                 array( 'alan', 'deger', 'aciklama' ),
                 array( 'short_description', 'Madagaskar Sirki {{YER}}’de! {{TARIH_UZUN}} günü {{SALON}}’nda {{SEANSLAR}} seanslarıyla. Uluslararası sanatçılar • Hayvansız modern sirk • Ailece eğlence.', 'Kısa açıklama' ),
                 array( 'long_description', '{{ETKINLIK_ADI}}, {{TARIH_UZUN}} günü {{SALON}}’nda seyircisiyle buluşuyor. Uluslararası sirk sanatçılarını aynı sahnede buluşturan gösteride akrobasi, denge, jonglörlük, hula hoop, palyaço ve görsel sahne performansları yer alır. Hayvan gösterisi içermeyen modern sirk programı yaklaşık 60 dakikalık aile eğlencesidir. Tarih: {{TARIH_UZUN}}. Seanslar: {{SEANSLAR}}. Salon: {{SALON}}. Adres: {{ADRES}}. Biletler: {{BILET_OZETI}}. Online bilet: {{BILET_LINKI}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Uzun açıklama' ),
-                array( 'rules', 'Oturma: {{OTURMA}}. Salon kapıları gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır. Gösteri süresi yaklaşık 60 dakikadır. 0–2 yaş ücretsizdir; 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Aile Paketi 2 yetişkin + 2 çocuktan oluşur. Satın alınan bilet yalnızca üzerinde belirtilen etkinlik tarihi ve seans için geçerlidir. Organizatör tarafından iptal, erteleme veya tarih/seans değişikliği yapılmadığı sürece satın alınan biletlerde iptal, iade veya değişiklik yapılmaz; ilgili mevzuattan doğan zorunlu haklar saklıdır. Belirtilen gün ve saatte kullanılmayan biletler geçersiz sayılır ve kullanılmayan biletler için bilet bedeli iadesi veya seans değişikliği yapılmaz. Organizatör kaynaklı iptal, erteleme veya tarih/seans değişikliği halinde iade/değişiklik süreci biletin satın alındığı satış kanalının kurallarına ve organizatör duyurusuna göre yürütülür. Üçüncü taraf satış kanallarında varsa hizmet bedeli iadesi ilgili kanalın koşullarına tabidir. Biletler: {{BILET_OZETI}}. Salon: {{SALON}} — {{ADRES}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Kurallar' ),
+                array( 'rules', 'Oturma: {{OTURMA}}. Salon kapıları gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır. Gösteri süresi yaklaşık 60 dakikadır. 0–2 yaş ücretsizdir; 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Aile Paketi 2 yetişkin + 2 çocuktan oluşur. Biletler: {{BILET_OZETI}}. Salon: {{SALON}} — {{ADRES}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Kurallar' ),
                 array( 'seo_title', 'Madagaskar Sirki {{YER}} Biletleri | {{TARIH_UZUN}}', 'SEO başlığı' ),
                 array( 'seo_description', 'Madagaskar Sirki {{YER}}: {{TARIH_UZUN}}, {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler: {{BILET_OZETI}}.', 'SEO açıklaması' ),
                 array( 'video_url', '', 'İsteğe bağlı video URL’si' ),
@@ -98,9 +97,7 @@ final class MMC_Publish_Content_Excel {
                 array( '3', 'Aile paketi nedir?', 'Aile Paketi 2 yetişkin + 2 çocuk için geçerlidir. Güncel fiyat: {{AILE_FIYATI}} TL.', 'Evet' ),
                 array( '4', 'Oturma düzeni nasıl?', '{{OTURMA}}. Kapılar gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır.', 'Evet' ),
                 array( '5', 'Çocuklar tek başına katılabilir mi?', 'Hayır. Çocuklar etkinliğe yetişkin eşliğinde katılır. Bilgi hattı: {{BILGI_HATTI}}.', 'Evet' ),
-                array( '6', 'Biletlerde iptal, iade veya değişiklik yapılabilir mi?', 'Organizatör tarafından iptal, erteleme veya tarih/seans değişikliği yapılmadığı sürece satın alınan biletlerde iptal, iade veya değişiklik yapılmaz. İlgili mevzuattan doğan zorunlu haklar saklıdır.', 'Evet' ),
-                array( '7', 'Biletimi gününde veya seans saatinde kullanmazsam ne olur?', 'Bilet yalnızca üzerinde belirtilen tarih ve seans için geçerlidir. Belirtilen gün ve saatte kullanılmayan biletler geçersiz sayılır; kullanılmayan biletler için bilet bedeli iadesi veya seans değişikliği yapılmaz.', 'Evet' ),
-                array( '8', 'Etkinlik iptal edilir, ertelenir veya program değişirse ne olur?', 'Organizatör kaynaklı iptal, erteleme veya tarih/seans değişikliği halinde iade ya da değişiklik süreci biletin satın alındığı satış kanalının kurallarına ve organizatör duyurusuna göre yürütülür. Üçüncü taraf satış kanallarında varsa hizmet bedeli iadesi ilgili kanalın koşullarına tabidir.', 'Evet' ),
+                array( '6', '', '', 'Hayır' ),
             ),
             'DEGISKENLER' => array(
                 array( 'degisken', 'kaynak', 'aciklama' ),
@@ -156,14 +153,19 @@ final class MMC_Publish_Content_Excel {
 
         $book = $this->read_xlsx( $file['tmp_name'] );
         if ( is_wp_error( $book ) ) { $this->fail( $program_id, $book->get_error_message() ); }
+        $book = $this->normalize_workbook( $book );
         if ( empty( $book['YAYIN_ICERIGI'] ) ) { $this->fail( $program_id, 'YAYIN_ICERIGI sayfası bulunamadı.' ); }
 
         $vars = $this->variables( $preview );
         $allowed = array( 'short_description', 'long_description', 'rules', 'seo_title', 'seo_description', 'video_url' );
         $fields = array();
-        foreach ( array_slice( $book['YAYIN_ICERIGI'], 1 ) as $row ) {
-            $key = sanitize_key( (string) ( $row[0] ?? '' ) );
-            $value = trim( (string) ( $row[1] ?? '' ) );
+        $content_rows = (array) $book['YAYIN_ICERIGI'];
+        $content_header = $this->header_map( array_shift( $content_rows ) );
+        $field_col = $this->header_column( $content_header, array( 'alan', 'field', 'key' ), 0 );
+        $value_col = $this->header_column( $content_header, array( 'deger', 'value', 'icerik', 'content' ), 1 );
+        foreach ( $content_rows as $row ) {
+            $key = sanitize_key( (string) ( $row[ $field_col ] ?? '' ) );
+            $value = trim( (string) ( $row[ $value_col ] ?? '' ) );
             if ( ! in_array( $key, $allowed, true ) || '' === $value ) { continue; }
             $value = strtr( $value, $vars );
             if ( 'video_url' === $key ) { $fields[ $key ] = esc_url_raw( $value ); }
@@ -172,16 +174,25 @@ final class MMC_Publish_Content_Excel {
         }
 
         $faqs = array();
-        foreach ( (array) ( $book['SSS'] ?? array() ) as $i => $row ) {
-            if ( 0 === $i ) { continue; }
-            $question = trim( (string) ( $row[1] ?? '' ) );
-            $answer = trim( (string) ( $row[2] ?? '' ) );
-            if ( ! $this->truthy( $row[3] ?? '' ) || '' === $question || '' === $answer ) { continue; }
-            $faqs[] = array(
-                'question' => sanitize_text_field( strtr( $question, $vars ) ),
-                'answer' => sanitize_textarea_field( strtr( $answer, $vars ) ),
-            );
-            if ( count( $faqs ) >= 30 ) { break; }
+        $faq_rows = (array) ( $book['SSS'] ?? array() );
+        if ( $faq_rows ) {
+            $faq_header = $this->header_map( array_shift( $faq_rows ) );
+            $sort_col = $this->header_column( $faq_header, array( 'sira', 'sort_order', 'order' ), 0 );
+            $question_col = $this->header_column( $faq_header, array( 'soru', 'question' ), 1 );
+            $answer_col = $this->header_column( $faq_header, array( 'cevap', 'answer' ), 2 );
+            $active_col = $this->header_column( $faq_header, array( 'aktif', 'active', 'import_enabled' ), 3 );
+            foreach ( $faq_rows as $row ) {
+                $question = trim( (string) ( $row[ $question_col ] ?? '' ) );
+                $answer = trim( (string) ( $row[ $answer_col ] ?? '' ) );
+                $active = ! array_key_exists( $active_col, $row ) || '' === trim( (string) $row[ $active_col ] ) || $this->truthy( $row[ $active_col ] );
+                if ( ! $active || '' === $question || '' === $answer ) { continue; }
+                $faqs[] = array(
+                    'question' => sanitize_text_field( strtr( $question, $vars ) ),
+                    'answer' => sanitize_textarea_field( strtr( $answer, $vars ) ),
+                    'sort_order' => max( 1, absint( $row[ $sort_col ] ?? ( count( $faqs ) + 1 ) * 10 ) ),
+                );
+                if ( count( $faqs ) >= 30 ) { break; }
+            }
         }
         if ( $faqs ) { $fields['faq_json'] = wp_json_encode( $faqs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); }
         if ( ! $fields ) { $this->fail( $program_id, 'Excel’de uygulanabilir dolu yayın içeriği bulunamadı.' ); }
@@ -247,6 +258,37 @@ final class MMC_Publish_Content_Excel {
             '{{BILET_LINKI}}' => 'https://madagaskarsirki.com/bilet-al/',
             '{{ETKINLIK_ADI}}' => $event_name,
         );
+    }
+
+    private function normalize_workbook( $book ) {
+        $normalized = array();
+        foreach ( (array) $book as $name => $rows ) {
+            $key = strtoupper( remove_accents( trim( (string) $name ) ) );
+            $key = trim( preg_replace( '/[^A-Z0-9]+/', '_', $key ), '_' );
+            if ( $key ) { $normalized[ $key ] = $rows; }
+        }
+        return $normalized;
+    }
+
+    private function normalize_column( $value ) {
+        $value = strtolower( remove_accents( trim( (string) $value ) ) );
+        return trim( preg_replace( '/[^a-z0-9]+/', '_', $value ), '_' );
+    }
+
+    private function header_map( $row ) {
+        $map = array();
+        foreach ( (array) $row as $index => $value ) {
+            $key = $this->normalize_column( $value );
+            if ( $key ) { $map[ $key ] = (int) $index; }
+        }
+        return $map;
+    }
+
+    private function header_column( $map, $aliases, $fallback ) {
+        foreach ( (array) $aliases as $alias ) {
+            if ( array_key_exists( $alias, $map ) ) { return (int) $map[ $alias ]; }
+        }
+        return (int) $fallback;
     }
 
     private function truthy( $value ) {
