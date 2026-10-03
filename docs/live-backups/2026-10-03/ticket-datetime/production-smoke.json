@@ -1,0 +1,32 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "logged_out": true,
+    "php_error": false
+  },
+  {
+    "path": "/sehirler/",
+    "status": 200,
+    "logged_out": true,
+    "php_error": false
+  },
+  {
+    "path": "/bilet-al/",
+    "status": 200,
+    "logged_out": true,
+    "php_error": false
+  },
+  {
+    "path": "/ankara/",
+    "status": 200,
+    "logged_out": true,
+    "php_error": false
+  },
+  {
+    "path": "/etkinlik/madagaskar-sirki-denizli-08-ekim-2026/",
+    "status": 200,
+    "logged_out": true,
+    "php_error": false
+  }
+]
