@@ -6,6 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * Read-only: no order, ticket, capacity, status or payment writes.
  */
 final class MDG_Ticket_Session_Datetime {
+    public static function designer_class( $name ) {
+        $namespaced = 'Tickera\\' . $name;
+        return class_exists( $namespaced ) ? $namespaced : $name;
+    }
     public static function hooks() {
         // Run after all plugins load. Existing standalone remains sole owner until retired.
         if ( function_exists( 'mdg_tdfix_pre_generate' ) ) { return; }
@@ -56,10 +60,13 @@ public static function pre_generate( $pre = null, $ticket_instance_id = 0, $tick
 		return $pre;
 	}
 
+	$template_class = self::designer_class( 'TC_Ticket_Designer_Template' );
+	$generator_class = self::designer_class( 'TC_Ticket_Designer_PDF_Generator' );
+	$fields_class = self::designer_class( 'TC_Ticket_Designer_Fields' );
 	if (
-		! class_exists( 'TC_Ticket_Designer_Template' )
-		|| ! class_exists( 'TC_Ticket_Designer_PDF_Generator' )
-		|| ! class_exists( 'TC_Ticket_Designer_Fields' )
+		! class_exists( $template_class )
+		|| ! class_exists( $generator_class )
+		|| ! class_exists( $fields_class )
 	) {
 		return $pre;
 	}
@@ -70,7 +77,7 @@ public static function pre_generate( $pre = null, $ticket_instance_id = 0, $tick
 		return $pre;
 	}
 
-	$template = new TC_Ticket_Designer_Template( $designer_template_id );
+	$template = new $template_class( $designer_template_id );
 
 	if ( method_exists( $template, 'get_id' ) && ! $template->get_id() ) {
 		return $pre;
@@ -80,7 +87,7 @@ public static function pre_generate( $pre = null, $ticket_instance_id = 0, $tick
 		return $pre;
 	}
 
-	$ticket_data = TC_Ticket_Designer_Fields::resolve_ticket_data( (int) $ticket_instance_id );
+	$ticket_data = $fields_class::resolve_ticket_data( (int) $ticket_instance_id );
 
 	if ( ! is_array( $ticket_data ) || empty( $ticket_data ) ) {
 		return $pre;
@@ -88,7 +95,7 @@ public static function pre_generate( $pre = null, $ticket_instance_id = 0, $tick
 
 	$ticket_data = self::correct_ticket_data( $ticket_data, (int) $ticket_instance_id );
 
-	return TC_Ticket_Designer_PDF_Generator::generate(
+	return $generator_class::generate(
 		$template,
 		$ticket_data,
 		$output ? $output : 'S',
@@ -600,3 +607,4 @@ public static function normalize_space( $value ) {
 }
 
 }
+
