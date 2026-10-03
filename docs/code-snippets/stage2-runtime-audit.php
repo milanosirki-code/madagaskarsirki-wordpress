@@ -81,6 +81,10 @@ function mdg_stage2_read( $input ) {
                 $fp=fopen($p,'rb'); if($fp) {
                     $size=filesize($p); fseek($fp,max(0,$size-2097152)); $tail=stream_get_contents($fp); fclose($fp);
                     foreach(explode("\n",$tail) as $line) {
+                        if(preg_match('/^#(\\d+) ([^\\s]+\\.php)\\((\\d+)\\): ([A-Za-z0-9_\\\\\\\\:>\\-]+)\\(/',$line,$frame)&&!empty($row['entries'])) {
+                            $last=count($row['entries'])-1;
+                            $row['entries'][$last]['frames'][]=array('index'=>(int)$frame[1],'file'=>mdg_stage2_path($frame[2]),'line'=>(int)$frame[3],'callback'=>$frame[4]);
+                        }
                         if(!preg_match('/2026-10-03|03-Oct-2026/i',$line))continue;
                         if(preg_match('/(?:Fatal error|Uncaught)[^\r\n]*?(?:in|at) ([^\s]+\.php)(?::| on line )(\d+)/i',$line,$m)) {
                             $entry=array('file'=>mdg_stage2_path($m[1]),'line'=>(int)$m[2]);
@@ -101,9 +105,16 @@ function mdg_stage2_read( $input ) {
             'region'=>WP_PLUGIN_DIR.'/madagaskar-management-center/includes/class-mmc-region-service.php',
             'bridge'=>WP_PLUGIN_DIR.'/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php',
             'live-sales'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-live-sales.php',
-            'snippet-controller'=>WP_PLUGIN_DIR.'/code-snippets/php/rest-api/class-snippets-rest-controller.php'
+            'snippet-controller'=>WP_PLUGIN_DIR.'/code-snippets/php/REST_API/Snippets/Snippets_REST_Controller.php',
+            'rest-core'=>ABSPATH.'wp-includes/rest-api.php',
+            'tickera-bridge'=>WP_PLUGIN_DIR.'/bridge-for-woocommerce/bridge-for-woocommerce.php'
         );
-        $key=$input['target']??''; if(!isset($map[$key])||!is_readable($map[$key])) return new WP_Error('source_missing','Whitelisted source unavailable.');
+        $key=$input['target']??'';
+        if($key==='snippet-controller'&&!is_readable($map[$key])) {
+            $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator(WP_PLUGIN_DIR.'/code-snippets',FilesystemIterator::SKIP_DOTS));
+            foreach($it as $file){if($file->isFile()&&!$file->isLink()&&$file->getFilename()==='Snippets_REST_Controller.php'){$map[$key]=$file->getPathname();break;}}
+        }
+        if(!isset($map[$key])||!is_readable($map[$key])) return new WP_Error('source_missing','Whitelisted source unavailable.');
         $s=file_get_contents($map[$key]);
         return array('target'=>$key,'sha256'=>hash('sha256',$s),'content'=>$s);
     }
@@ -139,7 +150,7 @@ function mdg_stage2_guest_probe( $input ) {
         if(!$initial||$initial['status']!==200||!empty($initial['data']['items']))return array('steps'=>$steps,'stopped'=>'Fresh empty guest cart not established.');
         if(!$nonce&&!$cart_token)return array('steps'=>$steps,'stopped'=>'No guest Store API authorization header.');
         $added=$call('cart/add-item','POST',array('id'=>$variation_id,'quantity'=>1));
-        if(!$added||$added['status']!==200)return array('steps'=>$steps,'stopped'=>'Add-item did not succeed.');
+        if(!$added||!in_array($added['status'],array(200,201),true))return array('steps'=>$steps,'stopped'=>'Add-item did not succeed.');
         foreach($added['data']['items']??array() as $item) {
             if((int)$item['id']===$variation_id)$key=$item['key'];
         }
