@@ -453,6 +453,14 @@ class MMC_Sales_Service {
     private static function evaluate_sales_open( $event_id ) {
         global $wpdb;
         $event = MMC_Event_Service::get_event( $event_id ); if ( ! $event ) return;
+
+        // Integration health may advance a normal program to sales_open, but it must
+        // never override an explicit organizer cancellation.
+        $program = MMC_Program_Service::get_program( (int) $event->program_id );
+        if ( ! $program || 'cancelled' === (string) $program->status ) {
+            return;
+        }
+
         $rows = MMC_Event_Service::integrations( $event_id );
         $required = array( 'woocommerce','tickera','paytr' );
         foreach ( $required as $channel ) {
