@@ -16,7 +16,7 @@ Mimari korunur: WordPress → WooCommerce → PayTR → Tickera → QR/check-in.
 - WordPress karşılığı: Code Snippets #117, `GEÇİCİ — Ticket Datetime Source Reader`; final `active=false`, `code_error=null`. #76/#118 ve eski AI migration snippet'leri zaten pasif; tekrar değiştirilmedi.
 - Branch: `codex/current-system-audit-20261003`; başlangıç main SHA `6e21a5e4217c085d6668f6932a874f846845a7de`.
 - Yedek commit: `4f843d1bd371165bc6f93955a755b71e0c0e8bad`; denetim kaydı commit: `8b787e46d6e00a8e9be6abbeaa793beae2bfd56f`. Bu durum dosyasının commit'i GitHub geçmişindedir; dosya kendi commit SHA'sını içeremez.
-- PR: oluşturma sonrası bu alana numara/link kaydedilir.
+- PR: [#111](https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/111), draft; merge edilmedi. Son manifest commit: `cab00ddb84210e95e8921c8c0becb36b10972068`.
 - Rollback: ihtiyaç halinde mevcut #117'yi owning Code Snippets yönetiminden yeniden etkinleştir; kaynak aynı kalmıştır. Belge değişikliklerini ilgili commit üzerinden geri al.
 
 ## Doğrulanan durum
@@ -40,7 +40,7 @@ Mimari korunur: WordPress → WooCommerce → PayTR → Tickera → QR/check-in.
 
 Bu oturumda canlı authenticated GET sepet API, ability sağlık, bridge/sales-summary ve Kommo kaynak önizlemeleri çalıştı. #117 pasifleştirme isteği HTTP500 döndürdü; yazma tekrarlanmadı. Hemen hedef GET readback `active=false/code_error=null` doğruladı; sonraki sağlık ve sepet API başarılı. HTTP500'ün PHP/host/eklenti nedenini belirleyen origin log kanıtı yok.
 
-Yerel SHA256 karşılaştırmaları başarılı; belge/manifest kontrolleri çalıştırılır. Yerel PHP CLI yok ve shell HTTPS proxy bağlantısı kurulamadı; GitHub connector kullanıldı. Anonim HTML/admin menü tarayıcı smoke, dolu yeni sepet → checkout → PayTR → sipariş → bilet zinciri bu oturumda doğrulanmadı. “Checkout fatal yok / ödeme-bilet akışı çözüldü” sonucu çıkarılmaz. Daha önceki #110 PDF/QR canlı kanıtı aynı gün tarihsel referanstır, yeni test değildir.
+Yerel SHA256 karşılaştırmaları ve Python JSON/envanter/Markdown/tarihsel talimat kontrolleri başarılı. Yerel PHP CLI yok ve shell HTTPS proxy bağlantısı kurulamadı; GitHub connector kullanıldı. Anonim HTML/admin menü tarayıcı smoke, dolu yeni sepet → checkout → PayTR → sipariş → bilet zinciri bu oturumda doğrulanmadı. “Checkout fatal yok / ödeme-bilet akışı çözüldü” sonucu çıkarılmaz. Daha önceki #110 PDF/QR canlı kanıtı aynı gün tarihsel referanstır, yeni test değildir.
 
 Kommo canlı ajan retrieval'ı bu oturumda test edilmedi. Yerel source consistency ile uzak AI'nın aynı kaynağı kullandığı varsayılmaz. PayTR bağımsız mutabakat, Biletinial, gişe/POS ve tüm program satış eşitliği kontrol edilmedi. Tam canlı kaynak drift'i sıfır denemez.
 
