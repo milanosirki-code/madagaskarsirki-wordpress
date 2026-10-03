@@ -61,8 +61,8 @@ check('PDF generator receives purchased session',$pdf_data['event_time'],'19:30'
 check('existing pre-generated response retained',MDG_Ticket_Session_Datetime::pre_generate('existing',44,0,'d_7'),'existing');
 check('legacy global designer class fallback',MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_Fields'),'TC_Ticket_Designer_Fields');
 foreach (array('TC_Ticket_Designer_Template','TC_Ticket_Designer_PDF_Generator','TC_Ticket_Designer_Fields') as $cls) {
-    class_alias($cls,'Tickera\\\\'.$cls);
-    check('live namespaced designer preferred '.$cls,MDG_Ticket_Session_Datetime::designer_class($cls),'Tickera\\\\'.$cls);
+    class_alias($cls,'Tickera\\'.$cls);
+    check('live namespaced designer preferred '.$cls,MDG_Ticket_Session_Datetime::designer_class($cls),'Tickera\\'.$cls);
 }
 $pdf_data=json_decode(MDG_Ticket_Session_Datetime::pre_generate(null,44,0,'d_7'),true);
 check('namespaced PDF generator receives purchased session',$pdf_data['event_time'],'19:30');
