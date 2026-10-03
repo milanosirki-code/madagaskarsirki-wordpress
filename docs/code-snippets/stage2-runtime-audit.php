@@ -65,7 +65,8 @@ function mdg_stage2_read( $input ) {
             $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,FilesystemIterator::SKIP_DOTS));
             foreach($it as $file) {
                 if($file->isLink() || !$file->isFile() || !in_array(strtolower($file->getExtension()),array('php','js','css','json','md','txt','csv'),true))continue;
-                $out[]=array('path'=>'wp-content/plugins/'.$slug.'/'.substr($file->getPathname(),strlen($dir)+1),'git_blob_sha'=>sha1('blob '.$file->getSize().chr(0).file_get_contents($file->getPathname())),'sha256'=>hash_file('sha256',$file->getPathname()),'bytes'=>$file->getSize());
+                $raw=file_get_contents($file->getPathname());$trim=rtrim($raw,"\r\n");
+                $out[]=array('git_blob_no_final_newline'=>sha1('blob '.strlen($trim).chr(0).$trim),'git_blob_one_final_newline'=>sha1('blob '.strlen($trim."\n").chr(0).$trim."\n"),'path'=>'wp-content/plugins/'.$slug.'/'.substr($file->getPathname(),strlen($dir)+1),'git_blob_sha'=>sha1('blob '.$file->getSize().chr(0).file_get_contents($file->getPathname())),'sha256'=>hash_file('sha256',$file->getPathname()),'bytes'=>$file->getSize());
             }
         }
         return array('files'=>$out);
@@ -107,7 +108,10 @@ function mdg_stage2_read( $input ) {
             'live-sales'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-live-sales.php',
             'snippet-controller'=>WP_PLUGIN_DIR.'/code-snippets/php/REST_API/Snippets/Snippets_REST_Controller.php',
             'rest-core'=>ABSPATH.'wp-includes/rest-api.php',
-            'tickera-bridge'=>WP_PLUGIN_DIR.'/bridge-for-woocommerce/bridge-for-woocommerce.php'
+            'tickera-bridge'=>WP_PLUGIN_DIR.'/bridge-for-woocommerce/bridge-for-woocommerce.php',
+            'family'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php',
+            'ai-bootstrap'=>WP_PLUGIN_DIR.'/madagaskar-ai-abilities/madagaskar-ai-abilities.php',
+            'transition'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php'
         );
         $key=$input['target']??'';
         if($key==='snippet-controller'&&!is_readable($map[$key])) {
