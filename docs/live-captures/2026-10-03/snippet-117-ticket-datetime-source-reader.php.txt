@@ -1,0 +1,42 @@
+/**
+ * GEÇİCİ — Ticket Datetime Source Reader
+ * Read-only, whitelisted files only, for Issue #98.
+ */
+if ( ! defined('ABSPATH') ) { exit; }
+
+if ( ! function_exists('mdg_ticket_datetime_source_reader') ) {
+    function mdg_ticket_datetime_source_reader( $input=array() ) {
+        if(!current_user_can('manage_options')) return new WP_Error('forbidden','Yönetici yetkisi gerekir.');
+        $map=array(
+            'fix'=>WP_PLUGIN_DIR.'/madagaskar-ticket-session-datetime-fix/madagaskar-ticket-session-datetime-fix.php',
+            'binder'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php',
+            'venue_qr'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-venue-qr.php',
+            'main'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/madagaskar-bilet-yonetimi.php',
+        );
+        $key=sanitize_key($input['target']??'');
+        if(!isset($map[$key])) return new WP_Error('invalid','Geçersiz hedef.');
+        $file=realpath($map[$key]);
+        if(!$file||!is_file($file)||!is_readable($file)) return new WP_Error('missing','Dosya okunamıyor.');
+        $content=file_get_contents($file);
+        return array(
+            'target'=>$key,
+            'path'=>str_replace(WP_PLUGIN_DIR.'/','',$file),
+            'size'=>strlen($content),
+            'sha256'=>hash('sha256',$content),
+            'content'=>$content,
+        );
+    }
+}
+add_action('wp_abilities_api_init',function(){
+    if(!function_exists('wp_register_ability'))return;
+    wp_register_ability('madagaskar/ticket-datetime-source-reader',array(
+        'label'=>'Ticket Datetime Source Reader',
+        'description'=>'Issue #98 için yalnız whitelist edilmiş datetime/ticket kaynak dosyalarını salt-okunur getirir.',
+        'category'=>'madagaskar-saglik',
+        'input_schema'=>array('type'=>'object','properties'=>array('target'=>array('type'=>'string','enum'=>array('fix','binder','venue_qr','main'))),'required'=>array('target')),
+        'output_schema'=>array('type'=>'object'),
+        'execute_callback'=>'mdg_ticket_datetime_source_reader',
+        'permission_callback'=>function(){return current_user_can('manage_options');},
+        'meta'=>array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'public'=>true,'show_in_rest'=>true),
+    ));
+});
