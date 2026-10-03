@@ -151,7 +151,10 @@ function mdg_stage2_guest_probe( $input ) {
         if($draft_id) {
             $ticket_count=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} m ON m.post_id=p.ID WHERE p.post_type='tc_tickets_instances' AND m.meta_key IN ('tc_order_id','order_id','_order_id') AND m.meta_value=%s",(string)$draft_id));
         }
-        return array('utc'=>gmdate('c'),'variation_id'=>$variation_id,'session_id'=>(int)$future,'steps'=>$steps,'cart_item_confirmed'=>(bool)$key,'cart_error_count'=>count($cart['data']['errors']??array()),'order_id'=>$draft_id,'order_status'=>$checkout['data']['status']??null,'payment_methods'=>$cart['data']['payment_methods']??array(),'ticket_count_by_known_order_keys'=>$ticket_count,'payment_submitted'=>false,'order_submission_posted'=>false,'limit'=>'Checkout GET draft initialization only. No checkout POST, PayTR token request, payment callback or ticket creation test.');
+        $cleanup=$call('cart/remove-item','POST',array('key'=>$key));
+        $key='';
+        $cleared=$call('cart');
+        return array('cart_cleanup_status'=>$cleanup['status']??null,'cart_empty_after_cleanup'=>empty($cleared['data']['items'])&&($cleared['status']??0)===200,'utc'=>gmdate('c'),'variation_id'=>$variation_id,'session_id'=>(int)$future,'steps'=>$steps,'cart_item_confirmed'=>(bool)$key,'cart_error_count'=>count($cart['data']['errors']??array()),'order_id'=>$draft_id,'order_status'=>$checkout['data']['status']??null,'payment_methods'=>$cart['data']['payment_methods']??array(),'ticket_count_by_known_order_keys'=>$ticket_count,'payment_submitted'=>false,'order_submission_posted'=>false,'limit'=>'Checkout GET draft initialization only. No checkout POST, PayTR token request, payment callback or ticket creation test.');
     } finally {
         if($key) $call('cart/remove-item','POST',array('key'=>$key));
     }
