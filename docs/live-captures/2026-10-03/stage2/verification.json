@@ -1,0 +1,1721 @@
+{
+  "date_utc": "2026-10-03",
+  "main_sha": "6e21a5e4217c085d6668f6932a874f846845a7de",
+  "checkout": {
+    "cart_cleanup_status": 200,
+    "cart_empty_after_cleanup": true,
+    "utc": "2026-10-03T16:42:16+00:00",
+    "variation_id": 2278,
+    "session_id": 60,
+    "steps": [
+      {
+        "path": "cart",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "cart/add-item",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "path": "cart",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "checkout",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "cart/remove-item",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "cart",
+        "method": "GET",
+        "status": 200
+      }
+    ],
+    "cart_item_confirmed": true,
+    "checkout_response_fields": [
+      "order_id",
+      "status",
+      "order_key",
+      "order_number",
+      "customer_note",
+      "customer_id",
+      "billing_address",
+      "shipping_address",
+      "payment_method",
+      "payment_result",
+      "additional_fields",
+      "__experimentalCart",
+      "extensions"
+    ],
+    "cart_error_count": 0,
+    "order_id": 0,
+    "order_status": "checkout-draft",
+    "payment_methods": [
+      "paytr_payment_gateway"
+    ],
+    "ticket_count_by_known_order_keys": null,
+    "payment_submitted": false,
+    "order_submission_posted": false,
+    "limit": "Checkout GET draft initialization only. No checkout POST, PayTR token request, payment callback or ticket creation test."
+  },
+  "http500": {
+    "cause": "Code Snippets activation/deactivation returns a Code_Snippets Snippet object; core _fields filtering expects an array.",
+    "exception": "TypeError",
+    "file": "wp-includes/rest-api.php",
+    "line": 930,
+    "chain": [
+      "Code_Snippets REST activate_item/deactivate_item commits write",
+      "rest_filter_response_fields :989",
+      "_rest_array_intersect_key_recursive :930",
+      "array_intersect_key TypeError"
+    ],
+    "timestamps_utc": [
+      "2026-10-03T15:32:05Z",
+      "2026-10-03T16:33:54Z",
+      "2026-10-03T16:37:32Z"
+    ],
+    "logs": {
+      "debug_log_enabled": false,
+      "logs": [
+        {
+          "file": "debug.log",
+          "exists": false,
+          "readable": false,
+          "entries": []
+        },
+        {
+          "file": "php-error.log",
+          "exists": false,
+          "readable": false,
+          "entries": []
+        },
+        {
+          "file": "php-errors",
+          "exists": true,
+          "readable": true,
+          "entries": [
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "03-Oct-2026 15:32:05 UTC",
+              "frames": [
+                {
+                  "index": 0,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 930,
+                  "callback": "array_intersect_key"
+                },
+                {
+                  "index": 1,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 989,
+                  "callback": "_rest_array_intersect_key_recursive"
+                },
+                {
+                  "index": 2,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_filter_response_fields"
+                },
+                {
+                  "index": 3,
+                  "file": "wp-includes/plugin.php",
+                  "line": 206,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 4,
+                  "file": "wp-includes/rest-api/class-wp-rest-server.php",
+                  "line": 464,
+                  "callback": "apply_filters"
+                },
+                {
+                  "index": 5,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 488,
+                  "callback": "WP_REST_Server->serve_request"
+                },
+                {
+                  "index": 6,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_api_loaded"
+                },
+                {
+                  "index": 7,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 377,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 8,
+                  "file": "wp-includes/plugin.php",
+                  "line": 571,
+                  "callback": "WP_Hook->do_action"
+                },
+                {
+                  "index": 9,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 418,
+                  "callback": "do_action_ref_array"
+                },
+                {
+                  "index": 10,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 822,
+                  "callback": "WP->parse_request"
+                },
+                {
+                  "index": 11,
+                  "file": "wp-includes/functions.php",
+                  "line": 1352,
+                  "callback": "WP->main"
+                },
+                {
+                  "index": 12,
+                  "file": "wp-blog-header.php",
+                  "line": 16,
+                  "callback": "wp"
+                },
+                {
+                  "index": 13,
+                  "file": "index.php",
+                  "line": 17,
+                  "callback": "require"
+                }
+              ]
+            },
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "03-Oct-2026 16:33:54 UTC",
+              "frames": [
+                {
+                  "index": 0,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 930,
+                  "callback": "array_intersect_key"
+                },
+                {
+                  "index": 1,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 989,
+                  "callback": "_rest_array_intersect_key_recursive"
+                },
+                {
+                  "index": 2,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_filter_response_fields"
+                },
+                {
+                  "index": 3,
+                  "file": "wp-includes/plugin.php",
+                  "line": 206,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 4,
+                  "file": "wp-includes/rest-api/class-wp-rest-server.php",
+                  "line": 464,
+                  "callback": "apply_filters"
+                },
+                {
+                  "index": 5,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 488,
+                  "callback": "WP_REST_Server->serve_request"
+                },
+                {
+                  "index": 6,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_api_loaded"
+                },
+                {
+                  "index": 7,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 377,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 8,
+                  "file": "wp-includes/plugin.php",
+                  "line": 571,
+                  "callback": "WP_Hook->do_action"
+                },
+                {
+                  "index": 9,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 418,
+                  "callback": "do_action_ref_array"
+                },
+                {
+                  "index": 10,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 822,
+                  "callback": "WP->parse_request"
+                },
+                {
+                  "index": 11,
+                  "file": "wp-includes/functions.php",
+                  "line": 1352,
+                  "callback": "WP->main"
+                },
+                {
+                  "index": 12,
+                  "file": "wp-blog-header.php",
+                  "line": 16,
+                  "callback": "wp"
+                },
+                {
+                  "index": 13,
+                  "file": "index.php",
+                  "line": 17,
+                  "callback": "require"
+                }
+              ]
+            },
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "03-Oct-2026 16:37:32 UTC",
+              "frames": [
+                {
+                  "index": 0,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 930,
+                  "callback": "array_intersect_key"
+                },
+                {
+                  "index": 1,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 989,
+                  "callback": "_rest_array_intersect_key_recursive"
+                },
+                {
+                  "index": 2,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_filter_response_fields"
+                },
+                {
+                  "index": 3,
+                  "file": "wp-includes/plugin.php",
+                  "line": 206,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 4,
+                  "file": "wp-includes/rest-api/class-wp-rest-server.php",
+                  "line": 464,
+                  "callback": "apply_filters"
+                },
+                {
+                  "index": 5,
+                  "file": "wp-includes/rest-api.php",
+                  "line": 488,
+                  "callback": "WP_REST_Server->serve_request"
+                },
+                {
+                  "index": 6,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 353,
+                  "callback": "rest_api_loaded"
+                },
+                {
+                  "index": 7,
+                  "file": "wp-includes/class-wp-hook.php",
+                  "line": 377,
+                  "callback": "WP_Hook->apply_filters"
+                },
+                {
+                  "index": 8,
+                  "file": "wp-includes/plugin.php",
+                  "line": 571,
+                  "callback": "WP_Hook->do_action"
+                },
+                {
+                  "index": 9,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 418,
+                  "callback": "do_action_ref_array"
+                },
+                {
+                  "index": 10,
+                  "file": "wp-includes/class-wp.php",
+                  "line": 822,
+                  "callback": "WP->parse_request"
+                },
+                {
+                  "index": 11,
+                  "file": "wp-includes/functions.php",
+                  "line": 1352,
+                  "callback": "WP->main"
+                },
+                {
+                  "index": 12,
+                  "file": "wp-blog-header.php",
+                  "line": 16,
+                  "callback": "wp"
+                },
+                {
+                  "index": 13,
+                  "file": "index.php",
+                  "line": 17,
+                  "callback": "require"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "fatal-errors-2026-10-03-c574a731e4a272b8de73d0b651a3c852.log",
+          "exists": true,
+          "readable": true,
+          "entries": [
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "2026-10-03T15:32:05+00:00"
+            },
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "2026-10-03T16:33:54+00:00"
+            },
+            {
+              "file": "wp-includes/rest-api.php",
+              "line": 930,
+              "exception": "TypeError",
+              "timestamp": "2026-10-03T16:37:32+00:00"
+            }
+          ]
+        }
+      ]
+    },
+    "workaround_verified": "Omit fields/_fields for Code Snippets action POST; response {} without error, then GET id/active/code_error separately. Do not retry already committed writes.",
+    "root_owner": "Code Snippets REST payload + WordPress response field filtering; not MMC, shutdown, timeout or PayTR."
+  },
+  "ticket_observation": {
+    "failed_unpaid_orders": 43,
+    "published_instances": 104,
+    "cancelled_unpaid_orders": 8,
+    "trashed_instances": 25,
+    "query_join": "wc_orders -> posts.post_parent; tc_tickets_instances; wc_order_operational_data.date_paid_gmt IS NULL",
+    "issue": 112,
+    "limitation": "Counts and live source show risk, not proof of unauthorized access or complete payment history; no customer order or ticket changed."
+  },
+  "drift": {
+    "exact_files": 119,
+    "format_only_files": 2,
+    "total_live_files": 126,
+    "files": [
+      {
+        "git_blob_no_final_newline": "d611db6cf36bfc181dfb3043d321a551da70b5f6",
+        "git_blob_one_final_newline": "8481a9bfe582d8bda91f6ce59553e73b17ce7cc2",
+        "path": "wp-content/plugins/madagaskar-management-center/assets/admin.css",
+        "git_blob_sha": "8481a9bfe582d8bda91f6ce59553e73b17ce7cc2",
+        "sha256": "55cd7f634a0f9c3c4619ac0db69614aea1697ce852f8d657fb11480e32da75c4",
+        "bytes": 9557,
+        "main_blob": "8481a9bfe582d8bda91f6ce59553e73b17ce7cc2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "e18d8aec50a2cdacdedb6a5e6fef8b15f0ea07f2",
+        "git_blob_one_final_newline": "74de1d1b45be08d858effac04f190243639ae899",
+        "path": "wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php",
+        "git_blob_sha": "74de1d1b45be08d858effac04f190243639ae899",
+        "sha256": "54b45517ecffc4d8bb2f9b452d2685f8aa73e3cc1b329059d1db5da0f8ea0c08",
+        "bytes": 7524,
+        "main_blob": "74de1d1b45be08d858effac04f190243639ae899",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "c8bfeb8c43e59306f4ff6fead7eec75f19f0f659",
+        "git_blob_one_final_newline": "ab83fbe303686f5e57fd41229882554f77d12f42",
+        "path": "wp-content/plugins/madagaskar-management-center/templates/schools-template.csv",
+        "git_blob_sha": "ab83fbe303686f5e57fd41229882554f77d12f42",
+        "sha256": "b2e05c1de5320a3a83316a5beca29defea9be1da14933d7945a5ce9aacc3e6a3",
+        "bytes": 305,
+        "main_blob": "ab83fbe303686f5e57fd41229882554f77d12f42",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "eb5aebcd8689d855f3dd07725181f32987619baf",
+        "git_blob_one_final_newline": "ab8b121e6118a04efcca594a6a4001863136032f",
+        "path": "wp-content/plugins/madagaskar-management-center/templates/region-metrics-template.csv",
+        "git_blob_sha": "ab8b121e6118a04efcca594a6a4001863136032f",
+        "sha256": "a9d29024af8c9dc8f2dd4864d5d89478c13ec988ab1227506b8b203c4db172db",
+        "bytes": 542,
+        "main_blob": "ab8b121e6118a04efcca594a6a4001863136032f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "49db158f2f6014bc5c792299fd17c0825bb8b2ca",
+        "git_blob_one_final_newline": "c12a250a772319cfe42e7df41abbdfe71158d701",
+        "path": "wp-content/plugins/madagaskar-management-center/uninstall.php",
+        "git_blob_sha": "c12a250a772319cfe42e7df41abbdfe71158d701",
+        "sha256": "0a7cce534f5801bcd12580605e1bca21d6fe5e017900a0e203bb134e083d91a7",
+        "bytes": 225,
+        "main_blob": "c12a250a772319cfe42e7df41abbdfe71158d701",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "0aa3d08e68628c2c1121c7a78409357494e3db81",
+        "git_blob_one_final_newline": "0fec5ddc5f01fb39965d60cfa44710017a8823ea",
+        "path": "wp-content/plugins/madagaskar-management-center/README.md",
+        "git_blob_sha": "0fec5ddc5f01fb39965d60cfa44710017a8823ea",
+        "sha256": "86df8f7697e34001fa34392c3b1470822326b4530809d91baf638cd68a92d7ca",
+        "bytes": 45387,
+        "main_blob": "0fec5ddc5f01fb39965d60cfa44710017a8823ea",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "fcf1b36ddff728fcc40f9d8eaa43366a1f08f698",
+        "git_blob_one_final_newline": "10418343eb9cc162e6c463a37f70bd040e9d5f07",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+        "git_blob_sha": "10418343eb9cc162e6c463a37f70bd040e9d5f07",
+        "sha256": "54e1bd23c808b6fe3222bd7cacf16d1f29a54a6c03f44da1cf6c27d91980c1b0",
+        "bytes": 89536,
+        "main_blob": "10418343eb9cc162e6c463a37f70bd040e9d5f07",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ead8d5a1c37c8794735a9e68fc2c3f4bda0c7300",
+        "git_blob_one_final_newline": "fbb71c959363d6f7bd40c7e76a2ccda585217b6a",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php",
+        "git_blob_sha": "fbb71c959363d6f7bd40c7e76a2ccda585217b6a",
+        "sha256": "96845be2aa3a9459a39d7e568a4a123f065e1c484a0713557289418427f81dbb",
+        "bytes": 42808,
+        "main_blob": "fbb71c959363d6f7bd40c7e76a2ccda585217b6a",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "8b1ae8eab60b526e47c4b3bebb57aea67a84b961",
+        "git_blob_one_final_newline": "d736338ed3d9feb3b9a55fde36fdb577a001a359",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-publish-admin.php",
+        "git_blob_sha": "d736338ed3d9feb3b9a55fde36fdb577a001a359",
+        "sha256": "35d86d65653b81e05215c6c857b12e034cf0e70a91372579c0aa059b1d7c7049",
+        "bytes": 10742,
+        "main_blob": "d736338ed3d9feb3b9a55fde36fdb577a001a359",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "b24d39b10ef565ba60515a8c8ade1094154fe2cb",
+        "git_blob_one_final_newline": "1af29700f0281f64c1d490fc7398b0408b812684",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php",
+        "git_blob_sha": "1af29700f0281f64c1d490fc7398b0408b812684",
+        "sha256": "8af41d4457cc8fe911d63124bd6adfc0905f5096134b0d3e31580ef349834a77",
+        "bytes": 27825,
+        "main_blob": "1af29700f0281f64c1d490fc7398b0408b812684",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "dc2c69cd5f3ab7e950174a6414e0b8db7e6aa32f",
+        "git_blob_one_final_newline": "a24ba438d81c4ba355309383c2658b10f2501fd9",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-admin.php",
+        "git_blob_sha": "a24ba438d81c4ba355309383c2658b10f2501fd9",
+        "sha256": "35cf341b12bba1883e31983795bcec4606a87465fd726612cc70e993522d0a55",
+        "bytes": 15103,
+        "main_blob": "a24ba438d81c4ba355309383c2658b10f2501fd9",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "239e3e282ed9fefc5b2b6d281312db586f508fde",
+        "git_blob_one_final_newline": "53c336af77ab1f5e5eed3f3cc5689adf300dd7cd",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php",
+        "git_blob_sha": "53c336af77ab1f5e5eed3f3cc5689adf300dd7cd",
+        "sha256": "504f6d2e3b2c3ded41eab74c044ff91ed2375969471081b1c9438c664e3a3c4b",
+        "bytes": 9647,
+        "main_blob": "53c336af77ab1f5e5eed3f3cc5689adf300dd7cd",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "e0bf1167889d1ef8cf4fdd7012067c992d5626a7",
+        "git_blob_one_final_newline": "246b927e9aec16673087c5abaf34f915e31e17b0",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php",
+        "git_blob_sha": "246b927e9aec16673087c5abaf34f915e31e17b0",
+        "sha256": "6865482bcad9ff8a1e9464e5e1f2c049ab1109abf7e9b01a8420c8f952b8f4a7",
+        "bytes": 48003,
+        "main_blob": "246b927e9aec16673087c5abaf34f915e31e17b0",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "2899cbdd8e116be670257b008123ee837b6a5ace",
+        "git_blob_one_final_newline": "767998f9fb0f761494a41e6107d520c70683146b",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php",
+        "git_blob_sha": "767998f9fb0f761494a41e6107d520c70683146b",
+        "sha256": "97ca626901c7d4f0a110becd3d6028d6ef59415d98972e843c358ab36989981e",
+        "bytes": 41173,
+        "main_blob": "767998f9fb0f761494a41e6107d520c70683146b",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "7cf7e9c1e441bfa208e27ba022b84d928ea1766a",
+        "git_blob_one_final_newline": "b25a6e62f70fd05d9e1997c6f85b745b481905c4",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php",
+        "git_blob_sha": "b25a6e62f70fd05d9e1997c6f85b745b481905c4",
+        "sha256": "2e12369ab82d451679be45275260c3ef60776c10ecd4d5399e68dc15291e97ad",
+        "bytes": 12049,
+        "main_blob": "b25a6e62f70fd05d9e1997c6f85b745b481905c4",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d163031dd6044a33d832de8221a06ed3617855ff",
+        "git_blob_one_final_newline": "114ca6b4152bf51c34bd049281ba1ce866254a1d",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-marketing-service.php",
+        "git_blob_sha": "114ca6b4152bf51c34bd049281ba1ce866254a1d",
+        "sha256": "2f1f6841344f45e3ac3dd3bd1ac237ba4e9eec94a3d57185be6f29b64fc80e1f",
+        "bytes": 19683,
+        "main_blob": "114ca6b4152bf51c34bd049281ba1ce866254a1d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "69016da6d3004ba04bc86673121cddf6c01f6e26",
+        "git_blob_one_final_newline": "6e7130f0aa60c449ce2b916fb09ad675e585db93",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-service.php",
+        "git_blob_sha": "6e7130f0aa60c449ce2b916fb09ad675e585db93",
+        "sha256": "5129549b1c5bd9d1fca1a4e0edfd597a8b0dd63f45ec28f33b7ad8e685d0ebea",
+        "bytes": 34582,
+        "main_blob": "6e7130f0aa60c449ce2b916fb09ad675e585db93",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "f54cd2347d179c9c095effb769114204cf892b6f",
+        "git_blob_one_final_newline": "f7b085561a564e29bca3001f0d4e15dd30908af8",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php",
+        "git_blob_sha": "f7b085561a564e29bca3001f0d4e15dd30908af8",
+        "sha256": "51f1687b883907f638a195476e6ccb317ac6c34df969f46a65aca5328fdcc8f9",
+        "bytes": 34424,
+        "main_blob": "f7b085561a564e29bca3001f0d4e15dd30908af8",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "bd4e0fd86c3c465ca11a2489494a587c8049f6e0",
+        "git_blob_one_final_newline": "a090dd848c31f9e277d382a7e50d3d69f0709f9e",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-service.php",
+        "git_blob_sha": "a090dd848c31f9e277d382a7e50d3d69f0709f9e",
+        "sha256": "7a9ee563bb473d073557e5615d470a77f4942fda76196165964924f95ec45bfe",
+        "bytes": 29303,
+        "main_blob": "a090dd848c31f9e277d382a7e50d3d69f0709f9e",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "36de90ff2da490355934d0fda23f3a9b3b2715d4",
+        "git_blob_one_final_newline": "623243f6ba585cbf8b3a45367593e6b8ec03bb70",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php",
+        "git_blob_sha": "623243f6ba585cbf8b3a45367593e6b8ec03bb70",
+        "sha256": "9f989d8f9faa27c0be6ce93276ce78803f0d6aba4952e4f9e6ef1f825f6bc4ae",
+        "bytes": 29285,
+        "main_blob": "623243f6ba585cbf8b3a45367593e6b8ec03bb70",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "704d17dcd6435bcaa16a6c30076965f35f267b62",
+        "git_blob_one_final_newline": "aa7a1c90b986e1194e0b56dd9f94c6b7eb321c2d",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php",
+        "git_blob_sha": "aa7a1c90b986e1194e0b56dd9f94c6b7eb321c2d",
+        "sha256": "09e9225628cb7160f1862d43b05beda92338c9a407dde8b09acf7a031603482a",
+        "bytes": 12869,
+        "main_blob": "aa7a1c90b986e1194e0b56dd9f94c6b7eb321c2d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "b23f82d40060ca206575fb4b64e763698669a4a1",
+        "git_blob_one_final_newline": "baac75d4faa799395f8ed57ca1de26d34a3d4a5d",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-meb-source-service.php",
+        "git_blob_sha": "baac75d4faa799395f8ed57ca1de26d34a3d4a5d",
+        "sha256": "f67b3d85c371a0864302f292eed1ab3953b957100dcba361c0a775e05906bcdf",
+        "bytes": 12271,
+        "main_blob": "baac75d4faa799395f8ed57ca1de26d34a3d4a5d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "cb47e9b7e77007ef1342d5cac20ca8db0e128084",
+        "git_blob_one_final_newline": "81c1d62cfacd636818bd06dbbe8af4a184a4c6ef",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-marketing-admin.php",
+        "git_blob_sha": "81c1d62cfacd636818bd06dbbe8af4a184a4c6ef",
+        "sha256": "ee97b7314fa0a38ff52dbc1526bbcf73a2a4997911da35c8324d5e9387d3e27f",
+        "bytes": 9621,
+        "main_blob": "81c1d62cfacd636818bd06dbbe8af4a184a4c6ef",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "edbf8d0a97a26ca49d38a04c57561413f7a78f87",
+        "git_blob_one_final_newline": "62863ad4418302516d7027ade105557c5f17e104",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-field-admin.php",
+        "git_blob_sha": "62863ad4418302516d7027ade105557c5f17e104",
+        "sha256": "dd4d066612ae6879b43352148f7441976561520f31bdbff5d0b0250f0c554718",
+        "bytes": 19359,
+        "main_blob": "62863ad4418302516d7027ade105557c5f17e104",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "77197f50d807a155b16f9f6a77723402c0687967",
+        "git_blob_one_final_newline": "f29e882650b5d07dd8b4d9fa6225e30379d0d7e6",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-admin.php",
+        "git_blob_sha": "f29e882650b5d07dd8b4d9fa6225e30379d0d7e6",
+        "sha256": "930a4253bef6e2ada622e9fa90a63c151d946d256182c0adf0a0c7f33553121d",
+        "bytes": 29407,
+        "main_blob": "f29e882650b5d07dd8b4d9fa6225e30379d0d7e6",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "87fc4dfd0c6037b574ccdf05aeadac40915a3056",
+        "git_blob_one_final_newline": "e46aac955e8024e90e3ca3904f80cb1095e6ba1c",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-admin.php",
+        "git_blob_sha": "e46aac955e8024e90e3ca3904f80cb1095e6ba1c",
+        "sha256": "59ae4ad66b09544ea5e19eabf032f072832b3cf7e0c0c8c7c9a988d1520c8d62",
+        "bytes": 14515,
+        "main_blob": "e46aac955e8024e90e3ca3904f80cb1095e6ba1c",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "abbf63bb919a9c3a4beb2310d8d5892bfd34b1da",
+        "git_blob_one_final_newline": "65a34b4f408ce6792ab1b3c9beed9f91f0b81a2a",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-population-source-service.php",
+        "git_blob_sha": "65a34b4f408ce6792ab1b3c9beed9f91f0b81a2a",
+        "sha256": "48e2aed628402cbcb83049b103776ce9e73fde28146555968334f44245d3065f",
+        "bytes": 6237,
+        "main_blob": "65a34b4f408ce6792ab1b3c9beed9f91f0b81a2a",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "6d714ef5f60f562e10f16cca30fd99d37c7ae7f1",
+        "git_blob_one_final_newline": "271dd10cb373a9f696d27178954d9bbc0840b433",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-school-source-service.php",
+        "git_blob_sha": "271dd10cb373a9f696d27178954d9bbc0840b433",
+        "sha256": "4feadf44df5c54e8b45d0aa4481880eb9dbc9ba173e1ab410a82909402e847ec",
+        "bytes": 19461,
+        "main_blob": "271dd10cb373a9f696d27178954d9bbc0840b433",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "a8225e9e6cc9094c2fd47a519cc0169178da81b4",
+        "git_blob_one_final_newline": "d1f8423abddd74f2f515c02c58f4407a63f7e7e9",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php",
+        "git_blob_sha": "d1f8423abddd74f2f515c02c58f4407a63f7e7e9",
+        "sha256": "4aa489021d8665932158ff30294906607a4f82c64cf5d132d7e6f612eadbe159",
+        "bytes": 28193,
+        "main_blob": "d1f8423abddd74f2f515c02c58f4407a63f7e7e9",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1feeb5815a74efcbbf45fe48f613f97a8858b6e5",
+        "git_blob_one_final_newline": "d422e7b7731ed4d0ea08d2d0479d66e5b7e1d0eb",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-field-service.php",
+        "git_blob_sha": "d422e7b7731ed4d0ea08d2d0479d66e5b7e1d0eb",
+        "sha256": "bb25575aee12ef9bede3f893ac1bad0e36baba49379fe5933be6508c01cb87dc",
+        "bytes": 40896,
+        "main_blob": "d422e7b7731ed4d0ea08d2d0479d66e5b7e1d0eb",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "703f4b65dfc5490d7d945fbd273bf5f92e2312da",
+        "git_blob_one_final_newline": "59c3876fffc0951180a5c906ec9abd00fa205655",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-activator.php",
+        "git_blob_sha": "59c3876fffc0951180a5c906ec9abd00fa205655",
+        "sha256": "a2cd8827a6fb103d79f4ad9760b19cb2a882b54fb366b578265c7147ad8e51a2",
+        "bytes": 47996,
+        "main_blob": "59c3876fffc0951180a5c906ec9abd00fa205655",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "fece9214c17535e52fad49d5c69c221b655cae35",
+        "git_blob_one_final_newline": "2b697d047f4d735721652fb7ad6d2d6a7731933f",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php",
+        "git_blob_sha": "2b697d047f4d735721652fb7ad6d2d6a7731933f",
+        "sha256": "2f0b3d4159d5b361e8db9752ee3dbbe70751db6bfa9c8bcc55d1d4fdac44447b",
+        "bytes": 36258,
+        "main_blob": "2b697d047f4d735721652fb7ad6d2d6a7731933f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "c391e1f3478eb95ba4d7b3e8e43341aa8e38db06",
+        "git_blob_one_final_newline": "31e3ec27b9c359e6c431e173c8670ab654c897ab",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php",
+        "git_blob_sha": "31e3ec27b9c359e6c431e173c8670ab654c897ab",
+        "sha256": "01dee63edbaeaace47363f9d905960ecb54df8595d7a92385df32ddc7423302a",
+        "bytes": 7643,
+        "main_blob": "31e3ec27b9c359e6c431e173c8670ab654c897ab",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "0a7ecee299fd019a9fd151ac1814efa465b76b1b",
+        "git_blob_one_final_newline": "af71db363ecc0be27e7a8b8d752726ef78701ef2",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-report-service.php",
+        "git_blob_sha": "af71db363ecc0be27e7a8b8d752726ef78701ef2",
+        "sha256": "c5c5c36f4a238bf3aa3c0683f6724103bca5cd5ebbc9516b6dfb7fe5bc0f5d81",
+        "bytes": 43571,
+        "main_blob": "af71db363ecc0be27e7a8b8d752726ef78701ef2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1917a957c5834761e3fc7feabcf3d08bdc4fe206",
+        "git_blob_one_final_newline": "fdb65b756a2c23d0d0357ad9e423f5c40a154cc2",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-report-admin.php",
+        "git_blob_sha": "fdb65b756a2c23d0d0357ad9e423f5c40a154cc2",
+        "sha256": "2408cb39908e4079e78550ccfd3de4d94f82079b48d056ef596c32e6f299a726",
+        "bytes": 8858,
+        "main_blob": "fdb65b756a2c23d0d0357ad9e423f5c40a154cc2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "091061f2cd63c6e75e10fb080e4e36764d47a695",
+        "git_blob_one_final_newline": "73df712614fc52c2bc86bdfc41ac8cf309cfcd64",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php",
+        "git_blob_sha": "73df712614fc52c2bc86bdfc41ac8cf309cfcd64",
+        "sha256": "2a7629a4ff99ab6a370f87999049a2d0c8828b8201376a5724312d1c8658b05b",
+        "bytes": 30554,
+        "main_blob": "73df712614fc52c2bc86bdfc41ac8cf309cfcd64",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "c7d0aee04e071c71c6abe6b85c4bbb8bdb157433",
+        "git_blob_one_final_newline": "2c8614e38d4bb0dad58af7924b28290993ad3447",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php",
+        "git_blob_sha": "2c8614e38d4bb0dad58af7924b28290993ad3447",
+        "sha256": "89c3f9a48c56f8892b490afdd1112d780bd2597eb02abf7c340abe8ae11a69ac",
+        "bytes": 20937,
+        "main_blob": "2c8614e38d4bb0dad58af7924b28290993ad3447",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "01f8f4a655ac521c6f16ffa8a3fe2c0112a52236",
+        "git_blob_one_final_newline": "4f50032aee7e92cfdaca0861eb47f1ba975f1481",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php",
+        "git_blob_sha": "4f50032aee7e92cfdaca0861eb47f1ba975f1481",
+        "sha256": "e622ac15f37cb949f9bb38acd3c91f78d9bc8633a1a351a0a112e99f2cd3f72d",
+        "bytes": 34293,
+        "main_blob": "4f50032aee7e92cfdaca0861eb47f1ba975f1481",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "776ed53f9f7c9b49c0d177b7a53afbed49cb8509",
+        "git_blob_one_final_newline": "25e02d42ba4d7ef50a73697591b2d118bc1f2937",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-service.php",
+        "git_blob_sha": "25e02d42ba4d7ef50a73697591b2d118bc1f2937",
+        "sha256": "d789677220f36d8fcad7c79aa368b0e36d3ee6b2932a9fc2a3893c94b5f8e860",
+        "bytes": 23184,
+        "main_blob": "25e02d42ba4d7ef50a73697591b2d118bc1f2937",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "be279bbf05bf494b64ee0a2a91f8a46b087b52a4",
+        "git_blob_one_final_newline": "6a081adca9ec34a86b653b149c13eed35dfe3646",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-region-service.php",
+        "git_blob_sha": "6a081adca9ec34a86b653b149c13eed35dfe3646",
+        "sha256": "9bb32699e753dee2bf39ef116bc3abccc97694542da2ff1859276ba54bb1588a",
+        "bytes": 28449,
+        "main_blob": "6a081adca9ec34a86b653b149c13eed35dfe3646",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "07a4d64c049b858682d26b1018dff474d36642da",
+        "git_blob_one_final_newline": "75ab111fbad82e7675b95e20c4bbb98d4104dc59",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-dashboard-admin.php",
+        "git_blob_sha": "75ab111fbad82e7675b95e20c4bbb98d4104dc59",
+        "sha256": "8432ae87e7702d3bd77d14c380338ffc2a59dd7f59cbcff2343c9daef855afdd",
+        "bytes": 10896,
+        "main_blob": "75ab111fbad82e7675b95e20c4bbb98d4104dc59",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "7e4eab03cf39b0b36627fd91776df6284de92ea1",
+        "git_blob_one_final_newline": "94a6a375cc6b9070a12eb4fba24781709456b420",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-admin.php",
+        "git_blob_sha": "94a6a375cc6b9070a12eb4fba24781709456b420",
+        "sha256": "76c3288004358df3dba941387136f984b380f0504b2fa7eb0129dcdbf6002147",
+        "bytes": 22531,
+        "main_blob": "94a6a375cc6b9070a12eb4fba24781709456b420",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "6bb15e62d339edfb0bb0adfd30266e1812c88d49",
+        "git_blob_one_final_newline": "a5b440ae52c6b455a08274ca6c46c0559349d3aa",
+        "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-dashboard-service.php",
+        "git_blob_sha": "a5b440ae52c6b455a08274ca6c46c0559349d3aa",
+        "sha256": "a37a9f289b125eeb410e9c0ca23cc637717570657dad2ad753d3d8a108156edf",
+        "bytes": 17405,
+        "main_blob": "a5b440ae52c6b455a08274ca6c46c0559349d3aa",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ddc60057bf2b5c41aef4616a5cb37d10e3161880",
+        "git_blob_one_final_newline": "f54c58dec01d504598d47c9652685f6438e72b95",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/madagaskar-bilet-yonetimi.php",
+        "git_blob_sha": "f54c58dec01d504598d47c9652685f6438e72b95",
+        "sha256": "9863ef7feaab4096051471047cf4061ee89dc71f44deaa43e043dff1667bc23d",
+        "bytes": 3818,
+        "main_blob": "f54c58dec01d504598d47c9652685f6438e72b95",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "478f37e95ada35d0023b6389541af6514661ce12",
+        "git_blob_one_final_newline": "0b04ab9d2849f648c52ea45ea9d7e1d46c219e20",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/readme.txt",
+        "git_blob_sha": "0b04ab9d2849f648c52ea45ea9d7e1d46c219e20",
+        "sha256": "385c75bcb43746d37b825a01ed1970238660fc9c0c1e5955ce95a25578e7b499",
+        "bytes": 15992,
+        "main_blob": "0b04ab9d2849f648c52ea45ea9d7e1d46c219e20",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "13cd45b44fa8e9ffa50aca5cb0c48566be39738c",
+        "git_blob_one_final_newline": "3c48a72285767e779f659a054c03a14dd6fdb57d",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-cities.css",
+        "git_blob_sha": "3c48a72285767e779f659a054c03a14dd6fdb57d",
+        "sha256": "fa122e2cc2c5104b290f58651ec340e48d666035d33b4c59386f7ce507331bf9",
+        "bytes": 3204,
+        "main_blob": "3c48a72285767e779f659a054c03a14dd6fdb57d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "993e88f396640f881b69f98db7a4d17401ef83ca",
+        "git_blob_one_final_newline": "d5f3ca88b0dc3a7c59f3061a4189249d6180481e",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/vendor/qrcodejs/qrcode.min.js",
+        "git_blob_sha": "993e88f396640f881b69f98db7a4d17401ef83ca",
+        "sha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+        "bytes": 19927,
+        "main_blob": "993e88f396640f881b69f98db7a4d17401ef83ca",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "4e65ef9109b8d5d9608708c22274d1c1fb776326",
+        "git_blob_one_final_newline": "25e569239b3db22a02fffab4fe814a8cecbaa13a",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/checkout-ux.css",
+        "git_blob_sha": "25e569239b3db22a02fffab4fe814a8cecbaa13a",
+        "sha256": "df46cc2dd31591bee498e24b91d5bf0452c64c259d3cec02e4c66d4be7c0ec3a",
+        "bytes": 564,
+        "main_blob": "25e569239b3db22a02fffab4fe814a8cecbaa13a",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "81c569092f7186c9cd9cedb3da2d68978acd2aa2",
+        "git_blob_one_final_newline": "e3456f18c7531c2fdf87740c21325d517946ca88",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-tickets.css",
+        "git_blob_sha": "e3456f18c7531c2fdf87740c21325d517946ca88",
+        "sha256": "19ab383c7b06fed57901ecea70a0b51494662fc7638e0736e0a58a02e3f464b8",
+        "bytes": 4136,
+        "main_blob": "e3456f18c7531c2fdf87740c21325d517946ca88",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "7aca6562a9efc5654561627b291f90779261f95a",
+        "git_blob_one_final_newline": "e2355cb4591dbc3b7bc2395490e3d5455c42b509",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/checkout-ux.js",
+        "git_blob_sha": "e2355cb4591dbc3b7bc2395490e3d5455c42b509",
+        "sha256": "3f9299dd527b1eb5e2b4a9553e5244dc2c6cc02ad97a9139f1a38de8277cbd53",
+        "bytes": 10037,
+        "main_blob": "e2355cb4591dbc3b7bc2395490e3d5455c42b509",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "71f87beb3d0e5926a1743ef4e2bfaa2ce889f089",
+        "git_blob_one_final_newline": "6871ee87b338fd8a122f88d034de734842d0ec71",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/admin.js",
+        "git_blob_sha": "6871ee87b338fd8a122f88d034de734842d0ec71",
+        "sha256": "66aebb4a3c8a0c20f7ca627bed79ce486e41b0834e8458b6e7e7befaf03cab08",
+        "bytes": 30005,
+        "main_blob": "6871ee87b338fd8a122f88d034de734842d0ec71",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "7b279afeddffe63a8790e6da9aba38b882305fb7",
+        "git_blob_one_final_newline": "2533c829d83c64749469dd5fa448b4f6436a94a4",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-event.js",
+        "git_blob_sha": "2533c829d83c64749469dd5fa448b4f6436a94a4",
+        "sha256": "cb7425628897dc9415a87016a9cf96902b552933fc85242d8844f5d5d238244f",
+        "bytes": 7719,
+        "main_blob": "2533c829d83c64749469dd5fa448b4f6436a94a4",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "382a21c523db79fcc650ec4806f9283ba9ad9788",
+        "git_blob_one_final_newline": "f2b4a45a74088123bc152c037d8ab9912c0b08ea",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/admin.css",
+        "git_blob_sha": "f2b4a45a74088123bc152c037d8ab9912c0b08ea",
+        "sha256": "07409c273122273dc3512916a0195d993c1e464a0cc343bbb0632a0c48128859",
+        "bytes": 8845,
+        "main_blob": "f2b4a45a74088123bc152c037d8ab9912c0b08ea",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "8848ed2dca5d18e21eaaa17264ca70d05c2317fc",
+        "git_blob_one_final_newline": "e90f9e3743a6f28e645ff57346df154a28d4e709",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-event.css",
+        "git_blob_sha": "e90f9e3743a6f28e645ff57346df154a28d4e709",
+        "sha256": "f19fe0925ec3e136ed1101f40e89b9b90a8de32f73b7cccc0eb6eccd2f990a93",
+        "bytes": 13161,
+        "main_blob": "dc067bf0e4325933c5b465b3ef7b7b92517489e4",
+        "category": "SAME",
+        "format_only": true,
+        "reason": "Live leading newline; otherwise trim-exact main."
+      },
+      {
+        "git_blob_no_final_newline": "ac1d6264170b2eb76eed990586c64ea8d59be7eb",
+        "git_blob_one_final_newline": "c88685909244ab6ccb0f75bdd16cc8e5e83600ab",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-cities.php",
+        "git_blob_sha": "c88685909244ab6ccb0f75bdd16cc8e5e83600ab",
+        "sha256": "9a1459fbd2c039b3f56981c5550c11788df1ea5364f679a114c468552c8e59cc",
+        "bytes": 8969,
+        "main_blob": "c88685909244ab6ccb0f75bdd16cc8e5e83600ab",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "428e9e1d5b32501d0a40fd16bfaa4a0b0bfd20ed",
+        "git_blob_one_final_newline": "6222ed3d3fc9c921fcb34ed61ae8435de996d362",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-audit.php",
+        "git_blob_sha": "6222ed3d3fc9c921fcb34ed61ae8435de996d362",
+        "sha256": "e87a0da84efe4a31e422fe3142cd8db7626c508c5d425b29442f06c553c9b4fe",
+        "bytes": 9144,
+        "main_blob": "6222ed3d3fc9c921fcb34ed61ae8435de996d362",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "aa86d7dc2b19bb672cec9c50b13c7e0363a16719",
+        "git_blob_one_final_newline": "6e2824a97969d8506e0d481d54a0d79748afc811",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-venue-importer.php",
+        "git_blob_sha": "6e2824a97969d8506e0d481d54a0d79748afc811",
+        "sha256": "38a783a3dd944c00ca1490a7bb1666463315445e5ac61f77b0ebe9e6bf36f7a7",
+        "bytes": 26457,
+        "main_blob": "6e2824a97969d8506e0d481d54a0d79748afc811",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "2e5329496ee47e07aa2f210a5e2192e93a778c06",
+        "git_blob_one_final_newline": "bfe88c4ad1f4bf843e0051580a1ab8b7b0b12df5",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-plugin.php",
+        "git_blob_sha": "bfe88c4ad1f4bf843e0051580a1ab8b7b0b12df5",
+        "sha256": "7192ef7d259adf53d585adb646eae8f02b6cbe4abb5e58bc01399d858649688f",
+        "bytes": 2789,
+        "main_blob": "bfe88c4ad1f4bf843e0051580a1ab8b7b0b12df5",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "3422b5f5bef436c9318266bc5eefae6b4045f66b",
+        "git_blob_one_final_newline": "62a22165440c66f0ecee8adf261a1e7d4ca99f3f",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-event-importer.php",
+        "git_blob_sha": "62a22165440c66f0ecee8adf261a1e7d4ca99f3f",
+        "sha256": "a6a7a329a084568f4e66a12ed92170aa3babb46a4023372716d529174ebc975c",
+        "bytes": 35959,
+        "main_blob": "62a22165440c66f0ecee8adf261a1e7d4ca99f3f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "139f95710c4d853373b8829657701557b7f8b440",
+        "git_blob_one_final_newline": "4a98ebafaf674788452b911e40fdb8b6031437ef",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-refund-preview.php",
+        "git_blob_sha": "4a98ebafaf674788452b911e40fdb8b6031437ef",
+        "sha256": "c635eac18b657b3683805c4a21c7fe41d101bcabb747ad1cd438e75ee595863a",
+        "bytes": 29066,
+        "main_blob": "4a98ebafaf674788452b911e40fdb8b6031437ef",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "6948e50e1fbf5408abd0454a94ec3af75cbf338f",
+        "git_blob_one_final_newline": "6a724a53336be22d21605b5c4f35d78eef925906",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-adopter.php",
+        "git_blob_sha": "6a724a53336be22d21605b5c4f35d78eef925906",
+        "sha256": "4519dbda11c9e68b451fa4861b0f7eb20ccc9935ef80436780f5eb7ed748cb49",
+        "bytes": 24712,
+        "main_blob": "6a724a53336be22d21605b5c4f35d78eef925906",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d3e68793231ab208adc381f855537559619d02cb",
+        "git_blob_one_final_newline": "f0dc82a7d822685cb10bc646cf8bbe7d26549792",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php",
+        "git_blob_sha": "f0dc82a7d822685cb10bc646cf8bbe7d26549792",
+        "sha256": "a3a495389e99b68193d2044afa5d33043efa78e67668933bd07a39628a6c11b8",
+        "bytes": 22451,
+        "main_blob": "f0dc82a7d822685cb10bc646cf8bbe7d26549792",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "52ea52ede735380643f609ec98d8aadf77734555",
+        "git_blob_one_final_newline": "4230cdc718df976373b85997c1d0b56a33467e3f",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php",
+        "git_blob_sha": "4230cdc718df976373b85997c1d0b56a33467e3f",
+        "sha256": "67c1d25366b9f86fff709514a0576060ce265154bf730534a1e374710a6c00e2",
+        "bytes": 10667,
+        "main_blob": "4230cdc718df976373b85997c1d0b56a33467e3f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ecdb77af2509c223bc2d98cce391a4ea40b8dd80",
+        "git_blob_one_final_newline": "093338fa145dd02357e1fef6d58ea4f261b76352",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-tickets.php",
+        "git_blob_sha": "093338fa145dd02357e1fef6d58ea4f261b76352",
+        "sha256": "9c7794e0ffe0e1bb1b3a1fd5f7ed98d91d9d641992b65fecb3578fe9775fc767",
+        "bytes": 9903,
+        "main_blob": "093338fa145dd02357e1fef6d58ea4f261b76352",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "6237788c9a7655f5c9642545eb852bdd9d1c500d",
+        "git_blob_one_final_newline": "d674c98f4861dc85c0de886b25284b0141c8d91d",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-invalidation-dry-run.php",
+        "git_blob_sha": "d674c98f4861dc85c0de886b25284b0141c8d91d",
+        "sha256": "b2c7c7ff5ff94f2113ebe12d50ecafa26f9049bc02c5860fe0cfac7cc6d82bc2",
+        "bytes": 21180,
+        "main_blob": "d674c98f4861dc85c0de886b25284b0141c8d91d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "532a1306d14ce63a31414d8c94ef379dd331de13",
+        "git_blob_one_final_newline": "90b0e2fce3ad51b392af39bc17493a38266d62ea",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-admin.php",
+        "git_blob_sha": "90b0e2fce3ad51b392af39bc17493a38266d62ea",
+        "sha256": "dee65ed13195160ab5a40fbd188298892e7f7e9c649425b55e6d48d47a5e5a9b",
+        "bytes": 47626,
+        "main_blob": "90b0e2fce3ad51b392af39bc17493a38266d62ea",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "932de259a231f7265eb6304763584984619f8392",
+        "git_blob_one_final_newline": "014d2f2de1314e0d310486a3afad9ef48e6be063",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-qr.php",
+        "git_blob_sha": "014d2f2de1314e0d310486a3afad9ef48e6be063",
+        "sha256": "3a8eb28f5eff9671ca2ad8b5e6196c4faef6e12a28046152d094132a7dd1cc99",
+        "bytes": 3458,
+        "main_blob": "014d2f2de1314e0d310486a3afad9ef48e6be063",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "510e5f478edcb645b36d0e697940d3e76baaa395",
+        "git_blob_one_final_newline": "6e201b941b09e4c924bf68bb6d5dc6f2e77059b9",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-production-readiness.php",
+        "git_blob_sha": "6e201b941b09e4c924bf68bb6d5dc6f2e77059b9",
+        "sha256": "32d5072fd2fc0c9a1d4b5efda36d515f332274f94f9edc84aa852ae19ca97ae4",
+        "bytes": 17994,
+        "main_blob": "6e201b941b09e4c924bf68bb6d5dc6f2e77059b9",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "44f24fb634c04863a9381e30e3fa6705af5272d8",
+        "git_blob_one_final_newline": "2d7e62e0dff11509cadd2777de252f254b502747",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-venues.php",
+        "git_blob_sha": "2d7e62e0dff11509cadd2777de252f254b502747",
+        "sha256": "4b57d54090ba4f0a245ba63277059a7c84c1a0d7077bac74e3a54682b50f5fb7",
+        "bytes": 20005,
+        "main_blob": "2d7e62e0dff11509cadd2777de252f254b502747",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "fd61f4c9bad9e5bab3112d4a3d1333dd97c092f7",
+        "git_blob_one_final_newline": "912e799cdf004ec6be8df28534b4550f08f60819",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-venue-qr-element.php",
+        "git_blob_sha": "912e799cdf004ec6be8df28534b4550f08f60819",
+        "sha256": "7077251cab46ab64df85e8a0873fb94c0fc022bd2e65984e1ff4852e372531bd",
+        "bytes": 3122,
+        "main_blob": "912e799cdf004ec6be8df28534b4550f08f60819",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "370ac0b7af2f7195278eb5decf55bc245c373c69",
+        "git_blob_one_final_newline": "d821ea77a1c7fc60616e0f39b17161fe3b69f9ab",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-reports.php",
+        "git_blob_sha": "d821ea77a1c7fc60616e0f39b17161fe3b69f9ab",
+        "sha256": "d583bd2cb38c6663b81d37f9700fcb0b127960db53008bd3231ed91e3990af0c",
+        "bytes": 15848,
+        "main_blob": "d821ea77a1c7fc60616e0f39b17161fe3b69f9ab",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "26661ae4db58db626736ec05dbd34923ef318ba3",
+        "git_blob_one_final_newline": "09ffd35dfd172f5e78229637029791b12f5fbb04",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-cart-test.php",
+        "git_blob_sha": "09ffd35dfd172f5e78229637029791b12f5fbb04",
+        "sha256": "b4d7824fe61de1ee4a33d87d97be89549d2b5f29fc3d4bd260aebada60536717",
+        "bytes": 25361,
+        "main_blob": "09ffd35dfd172f5e78229637029791b12f5fbb04",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "dd5ce59fb7a254d8fdf880e4d15842797392646a",
+        "git_blob_one_final_newline": "32909ea0615c98e72b91ad61146f755ced079814",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-events.php",
+        "git_blob_sha": "32909ea0615c98e72b91ad61146f755ced079814",
+        "sha256": "c71fc80e706dc61f3fef616697292a7efdcee74b6907a1cd49e03f5e7ea9f06f",
+        "bytes": 16046,
+        "main_blob": "32909ea0615c98e72b91ad61146f755ced079814",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "21e8ee6050f073ab94ce381a792d718dd0ad8698",
+        "git_blob_one_final_newline": "7d91f2471295dc58fe2d5795a4052c5ab6f92a7d",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-refund-test.php",
+        "git_blob_sha": "7d91f2471295dc58fe2d5795a4052c5ab6f92a7d",
+        "sha256": "6d29111b670e9d6f8c260b2489935977ef9faa4cc6aae9dd259143a690101af8",
+        "bytes": 19548,
+        "main_blob": "7d91f2471295dc58fe2d5795a4052c5ab6f92a7d",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "5e8e7a35c9f3549d623956ffeff591d41552fe5f",
+        "git_blob_one_final_newline": "7f8f9bcf39913cde26c9603224ea2525ce298e68",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-event.php",
+        "git_blob_sha": "7f8f9bcf39913cde26c9603224ea2525ce298e68",
+        "sha256": "6c884499ffa9a5ca6fa22254c494af38e01df9dea638a1236ccf35bd75456cc0",
+        "bytes": 23624,
+        "main_blob": "7f8f9bcf39913cde26c9603224ea2525ce298e68",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "a384934b829ff2114f5a4054db1ccf51ff882a8d",
+        "git_blob_one_final_newline": "37c12218c0461ccac277c77b65a12b046f914ab2",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-designer-diagnostic.php",
+        "git_blob_sha": "37c12218c0461ccac277c77b65a12b046f914ab2",
+        "sha256": "f5241113421d7d405e5febda82611f5dbeb314bd38a6b5ac0aa223c24876fad0",
+        "bytes": 10873,
+        "main_blob": "37c12218c0461ccac277c77b65a12b046f914ab2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "f3586c4220c13addf9511b9d658b82eb2f466f08",
+        "git_blob_one_final_newline": "6c6f112d8249d3e46e2eb47243abbd0baf21062d",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-session-datetime.php",
+        "git_blob_sha": "87c71c5fa05b5bc5c678f1f32ac0ec0c159b2e4d",
+        "sha256": "f2ed98b99b5d65e210f386e1b244a85190ff3e75c999e53d2de0496cd9379e82",
+        "bytes": 21366,
+        "main_blob": "1aef32d2d62a347d1745acbad95c1967618e11df",
+        "category": "SAME",
+        "format_only": true,
+        "reason": "Live extra terminal newline; otherwise trim-exact main."
+      },
+      {
+        "git_blob_no_final_newline": "d0965bf4465db30dbd00b7fb3247f13d447cb519",
+        "git_blob_one_final_newline": "d017a5a8134de47956fa6db42d6ee72419e57ab0",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-checkout-ux.php",
+        "git_blob_sha": "d017a5a8134de47956fa6db42d6ee72419e57ab0",
+        "sha256": "44a970a62fb547adfc569123a9902b48cd1613816e00b00f13d6edb40e0ca327",
+        "bytes": 12897,
+        "main_blob": "d017a5a8134de47956fa6db42d6ee72419e57ab0",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1c3792baf9f3fc564d0412f12edd14a2d4ab06cf",
+        "git_blob_one_final_newline": "9068e2685739180402fc068a98eab3534fa3c52b",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-activator.php",
+        "git_blob_sha": "9068e2685739180402fc068a98eab3534fa3c52b",
+        "sha256": "4cc08679a5350dcb742658fce60415ef399e24bc5a624ce0eeddf75da8cb8c6a",
+        "bytes": 9714,
+        "main_blob": "9068e2685739180402fc068a98eab3534fa3c52b",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "4b157fa303c92346f089fc39c57195b065197161",
+        "git_blob_one_final_newline": "8eb936c88d9bdf3c6612e997cb38f331cf313767",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-draft-producer.php",
+        "git_blob_sha": "8eb936c88d9bdf3c6612e997cb38f331cf313767",
+        "sha256": "9bf360ffca50abf8dd3d2f6e2598d75c09ee786c6bc059b40eb12bc508cf4c33",
+        "bytes": 33979,
+        "main_blob": "8eb936c88d9bdf3c6612e997cb38f331cf313767",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ff96932024adb60a93ddbec6b9f0dfa9bacb13df",
+        "git_blob_one_final_newline": "9c1fc58a603ab80ebcdac7d0b5b78aaeb2371647",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-customer-tickets.php",
+        "git_blob_sha": "9c1fc58a603ab80ebcdac7d0b5b78aaeb2371647",
+        "sha256": "c087e24cd4d0fcbbc516503016fbd43746bfe7e72dd53090dfb5d2f58365b8d5",
+        "bytes": 40179,
+        "main_blob": "9c1fc58a603ab80ebcdac7d0b5b78aaeb2371647",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "c635fed902b782147b47e62cd6df37990f2e4719",
+        "git_blob_one_final_newline": "226a465ce4b5608b7e45397709fbd0b2f0dccca8",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-db.php",
+        "git_blob_sha": "226a465ce4b5608b7e45397709fbd0b2f0dccca8",
+        "sha256": "dc2edf4e9a974a100980d1875ccbb7efe3d4e6405e9898bb011a4f6db7aa2a6f",
+        "bytes": 547,
+        "main_blob": "226a465ce4b5608b7e45397709fbd0b2f0dccca8",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1c431462c5214417a12225ea79ce6019ac82b7c2",
+        "git_blob_one_final_newline": "74dc9c8fd08c9c8d166a02aa43e6ef63cddf9823",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-venue-qr.php",
+        "git_blob_sha": "74dc9c8fd08c9c8d166a02aa43e6ef63cddf9823",
+        "sha256": "885f1e94e616a05cd7673f5f058c8d83e9c71ed2d03b62821e28263f550ecb68",
+        "bytes": 11754,
+        "main_blob": "74dc9c8fd08c9c8d166a02aa43e6ef63cddf9823",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "38a0e54ffef773c45134b19d165b61baab5bdc2d",
+        "git_blob_one_final_newline": "ab8e6f9963ede0dab8bc1315b4fa3ddef2e36b3f",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-dry-run.php",
+        "git_blob_sha": "ab8e6f9963ede0dab8bc1315b4fa3ddef2e36b3f",
+        "sha256": "c49871c37108513e771e4c953b61943048bebcff2ab53e99525224191f98aded",
+        "bytes": 17578,
+        "main_blob": "ab8e6f9963ede0dab8bc1315b4fa3ddef2e36b3f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d3554037e19ed4b5bb8a3118c5a6340b2cf65eb5",
+        "git_blob_one_final_newline": "a6f873b870a644b1ad45faefc2d04a2e7981a0c4",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-production-plan.php",
+        "git_blob_sha": "a6f873b870a644b1ad45faefc2d04a2e7981a0c4",
+        "sha256": "db5b71d91450e7f4a8fff519b7ca51c0a3dceffe40b566e6ee60717fb3999aa5",
+        "bytes": 31901,
+        "main_blob": "a6f873b870a644b1ad45faefc2d04a2e7981a0c4",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d08584b1bc6d5897b165cf88ffbd81cb1f1692b0",
+        "git_blob_one_final_newline": "5d0fd65f59115e2ae9b0a269c5aed00c21211470",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-status.php",
+        "git_blob_sha": "5d0fd65f59115e2ae9b0a269c5aed00c21211470",
+        "sha256": "93db88c5344e470b3bae82217e01b6acc2ec04e5e20277d382296a50d552a3bd",
+        "bytes": 855,
+        "main_blob": "5d0fd65f59115e2ae9b0a269c5aed00c21211470",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "59e04d902d58bb5de93429babbefd7198b15bc71",
+        "git_blob_one_final_newline": "ddd315b3652cbb2b430f6a16fa7221a30e437892",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php",
+        "git_blob_sha": "ddd315b3652cbb2b430f6a16fa7221a30e437892",
+        "sha256": "24d8d506d98c85ea4dce151e6ba5c868081e84345b372664706788e25bfd8b7f",
+        "bytes": 5754,
+        "main_blob": "ddd315b3652cbb2b430f6a16fa7221a30e437892",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "616b3a7bf9a34629a29db41b0673762ffea86e13",
+        "git_blob_one_final_newline": "774acbdd83e3b7d9ea00d7a2623ae55ea532b578",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-production-publisher.php",
+        "git_blob_sha": "774acbdd83e3b7d9ea00d7a2623ae55ea532b578",
+        "sha256": "f9f29e715550de72a1035aae3bc3e9504ef912f9d9e082915136cc8c8f1fd6b3",
+        "bytes": 12130,
+        "main_blob": "774acbdd83e3b7d9ea00d7a2623ae55ea532b578",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "fa179c82a3d552b14681f962363f008a938aa4a9",
+        "git_blob_one_final_newline": "3bc39eaf1dd20132c954af4eaecd165aa24489a9",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-live-sales.php",
+        "git_blob_sha": "3bc39eaf1dd20132c954af4eaecd165aa24489a9",
+        "sha256": "54d376a1b76c9106557adf1061821f71dd551eba7f582cf63645b44b332c0eb4",
+        "bytes": 18739,
+        "main_blob": "3bc39eaf1dd20132c954af4eaecd165aa24489a9",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d2e4e898d1a649714c77ad031ea49d958d076552",
+        "git_blob_one_final_newline": "c4159913a4db0b51f62aa3f35b19dbfbe2891be5",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/templates/public-tickets.php",
+        "git_blob_sha": "c4159913a4db0b51f62aa3f35b19dbfbe2891be5",
+        "sha256": "f67434c3b5196730db47e527312f292c916301579b4cd380abc6b3349184b165",
+        "bytes": 1428,
+        "main_blob": "c4159913a4db0b51f62aa3f35b19dbfbe2891be5",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "917fe293af491234dd0e5429f3edff0f4c6a2a5e",
+        "git_blob_one_final_newline": "aa03c9137b41bfb3c4df36800301b322619dd135",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi/templates/public-cities.php",
+        "git_blob_sha": "aa03c9137b41bfb3c4df36800301b322619dd135",
+        "sha256": "8ca89a68083e2679c54ceb0475ac9e9daa0a3f3b773f69a61cc3d375545b72e8",
+        "bytes": 1404,
+        "main_blob": "aa03c9137b41bfb3c4df36800301b322619dd135",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ebc52dd7b8f094359a06d4d6d1005ae85825b584",
+        "git_blob_one_final_newline": "7830cb37ef2201275edbc7d882bf28ca1f4aa729",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php",
+        "git_blob_sha": "7830cb37ef2201275edbc7d882bf28ca1f4aa729",
+        "sha256": "9ee9e9be8b8b49c439c291c05bff17ae568acf28ed23ca13fbd270060b4ef27c",
+        "bytes": 196293,
+        "main_blob": null,
+        "category": "HOTFIX ONLY",
+        "reason": "Active4.0.14-transition legacy operations runtime has no same-path main owner; captured as exact source, no deployment."
+      },
+      {
+        "git_blob_no_final_newline": "c82ca509ffcca08addc2cbb44267cb00a7abec4b",
+        "git_blob_one_final_newline": "bc83f923849f2111c6526259b10961e3afb0ccff",
+        "path": "wp-content/plugins/madagaskar-bilet-yonetimi-v4/readme.txt",
+        "git_blob_sha": "bc83f923849f2111c6526259b10961e3afb0ccff",
+        "sha256": "0999ea598a574d95c84cf168782e128d5af06ddf2ec57dcae9bbfe6e5ced53d4",
+        "bytes": 13443,
+        "main_blob": null,
+        "category": "HOTFIX ONLY",
+        "reason": "Active4.0.14-transition legacy operations runtime has no same-path main owner; captured as exact source, no deployment."
+      },
+      {
+        "git_blob_no_final_newline": "0fa2307aaeb71d237b6e0f62dcf7f1e6fa02969d",
+        "git_blob_one_final_newline": "4ed3c5faac91986af358df742fae762a5ec59b20",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php",
+        "git_blob_sha": "4ed3c5faac91986af358df742fae762a5ec59b20",
+        "sha256": "c87a74be682687299b46d12f2fbd87a72dcd5493e581c9fa8b5eb7bf955a8750",
+        "bytes": 3088,
+        "main_blob": "791f610d9fef495985f7d4429de25eb354698a7c",
+        "category": "MAIN AHEAD",
+        "reason": "Live0.6.1 vs main0.7.0: legacy-mdg-mmc-migrate write module absent live; do not auto-enable."
+      },
+      {
+        "git_blob_no_final_newline": "765010ee9c5c3441edae5b27dcef89e9943a41b4",
+        "git_blob_one_final_newline": "f272f977babfff2823a96026b5fb026a4d660f12",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-mdg-bridge.php",
+        "git_blob_sha": "f272f977babfff2823a96026b5fb026a4d660f12",
+        "sha256": "90a55c46ca473f3cba3edc3199fa818b64f5d82cc92a411079eae195287e05c3",
+        "bytes": 12526,
+        "main_blob": "f272f977babfff2823a96026b5fb026a4d660f12",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "7929325a6c63991c26ee00d00be3a5fc09a5b0ef",
+        "git_blob_one_final_newline": "c40b9351d9a389e4820a2d1dc39bae35766de07b",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/system-health-integrity.php",
+        "git_blob_sha": "c40b9351d9a389e4820a2d1dc39bae35766de07b",
+        "sha256": "781f6b5862b57bf69aee84403d3ee84c633aa1c32923ab92e6cc4fd2e2698f21",
+        "bytes": 9734,
+        "main_blob": "c40b9351d9a389e4820a2d1dc39bae35766de07b",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "f341658c50a36e0816998f49e5e8cbb799386963",
+        "git_blob_one_final_newline": "67a3acc0ddddfb1232c30c023358e31d601af462",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-marketing.php",
+        "git_blob_sha": "67a3acc0ddddfb1232c30c023358e31d601af462",
+        "sha256": "c3590dc502d6a41c5201c7acac91153610a28ef99893fd441da9e83956c44a4b",
+        "bytes": 12448,
+        "main_blob": "67a3acc0ddddfb1232c30c023358e31d601af462",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "a3bdea6dec2555fed9a2f93e7cde2378e83d71db",
+        "git_blob_one_final_newline": "afd8cc379a86b095f5d4e93be08031ff6998b90e",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-region-population.php",
+        "git_blob_sha": "afd8cc379a86b095f5d4e93be08031ff6998b90e",
+        "sha256": "aa99e1a326889dc780feb3be9680fb0a060eb88acd5c26868cb756e917e060be",
+        "bytes": 18321,
+        "main_blob": "afd8cc379a86b095f5d4e93be08031ff6998b90e",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "e1aa16bed8943961718837c172b746b269242b81",
+        "git_blob_one_final_newline": "5dc033f68e636fad3829d54da28f009e13886888",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php",
+        "git_blob_sha": "5dc033f68e636fad3829d54da28f009e13886888",
+        "sha256": "75e651a89350505f8bfdc33ae4ebb37dddf7c62c6966cca4eef2c1fadff18112",
+        "bytes": 80975,
+        "main_blob": "5dc033f68e636fad3829d54da28f009e13886888",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ed8bd3075b74d200242e48bcdc257622a94e64e0",
+        "git_blob_one_final_newline": "d8896469bd49504470d28537be96ef6bc3e178c3",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/invoice-tracking.php",
+        "git_blob_sha": "d8896469bd49504470d28537be96ef6bc3e178c3",
+        "sha256": "f58411aa789834d455b038d60df079c107cec606dd21da01ad78fa67f07deedc",
+        "bytes": 22240,
+        "main_blob": "d8896469bd49504470d28537be96ef6bc3e178c3",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "bfa4d55cf6b05eb65b17e19b1cffe3192be66228",
+        "git_blob_one_final_newline": "18d45a4c14675676d3a65ae76df8a805a10d38f3",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-tasks.php",
+        "git_blob_sha": "18d45a4c14675676d3a65ae76df8a805a10d38f3",
+        "sha256": "2927cfbd67faf9f46cb0d48234f43e44421699ec632492fc457c127d55cfec7c",
+        "bytes": 17297,
+        "main_blob": "18d45a4c14675676d3a65ae76df8a805a10d38f3",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1fe6f7a27ea04d67118f5969223e570f9e329135",
+        "git_blob_one_final_newline": "a2cd085bda5e8dc622481c1bf7d9b12b3a6372f9",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-field.php",
+        "git_blob_sha": "a2cd085bda5e8dc622481c1bf7d9b12b3a6372f9",
+        "sha256": "22c1604cb31ad61d1e1c0e30a43bcb098478e5091e734ff63e3617bf3a440db0",
+        "bytes": 19284,
+        "main_blob": "a2cd085bda5e8dc622481c1bf7d9b12b3a6372f9",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "f0ff58b95d4684bfb116d789a2275cbed333fd9f",
+        "git_blob_one_final_newline": "22fae9f82a82c9ed511dca9397ecb1951dbbc739",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-operations.php",
+        "git_blob_sha": "22fae9f82a82c9ed511dca9397ecb1951dbbc739",
+        "sha256": "d7aa0e5be37ecf683a542980a3a9d80470f8f2bdd05ed7ac993cee9cd144e25c",
+        "bytes": 27848,
+        "main_blob": "22fae9f82a82c9ed511dca9397ecb1951dbbc739",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "d36328bddc2c2df73abb84635c78cb23447758d0",
+        "git_blob_one_final_newline": "40f375c02d2df1f74c69f2360e957b8435121782",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/school-promotion.php",
+        "git_blob_sha": "40f375c02d2df1f74c69f2360e957b8435121782",
+        "sha256": "d9c2d906527d3340c52e9911e4da57b715c5ac49bdb4b0f44362e81a516c1418",
+        "bytes": 26784,
+        "main_blob": "40f375c02d2df1f74c69f2360e957b8435121782",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "1754add243783eda6b35a7e5ee042733cd9d3900",
+        "git_blob_one_final_newline": "b9d028ee848805629bb82d54d22322658c26c3f5",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/reporting-customer.php",
+        "git_blob_sha": "b9d028ee848805629bb82d54d22322658c26c3f5",
+        "sha256": "810057161f44387defaf2b2eb516c8889de74203ecbc60dadb16d528158b1999",
+        "bytes": 16936,
+        "main_blob": "b9d028ee848805629bb82d54d22322658c26c3f5",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "3e6df87d31e52de12cb34fd3802f58985fbff935",
+        "git_blob_one_final_newline": "2a72b6cdccb5ec931204f58976abc4eb5edc17c3",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/legacy-mdg-mmc-preview.php",
+        "git_blob_sha": "2a72b6cdccb5ec931204f58976abc4eb5edc17c3",
+        "sha256": "dfcface9123399e5bede9ab696ec86222f7273b94d7637909d5891f030dcf955",
+        "bytes": 12383,
+        "main_blob": "2a72b6cdccb5ec931204f58976abc4eb5edc17c3",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "891fafa2726c31bd1be496c1daee0d8e4028fe68",
+        "git_blob_one_final_newline": "824c7e0d2798c7e63f6a134369d3c005361310e0",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-kommo.php",
+        "git_blob_sha": "824c7e0d2798c7e63f6a134369d3c005361310e0",
+        "sha256": "166f73dcb8cd530a20977ab0b35a433c54494eee8e8d86800bc620725b0595f6",
+        "bytes": 26877,
+        "main_blob": "824c7e0d2798c7e63f6a134369d3c005361310e0",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "38ec6cc1c5245dc904c79a473b519bbe2a428ff3",
+        "git_blob_one_final_newline": "685ab6b880ff6a30a90c100b1e8869791329ac54",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-dashboard.php",
+        "git_blob_sha": "685ab6b880ff6a30a90c100b1e8869791329ac54",
+        "sha256": "d161e59a259e25420356dbf6bacede0b247926855b6a3dd5cc22938d073e2f82",
+        "bytes": 4656,
+        "main_blob": "685ab6b880ff6a30a90c100b1e8869791329ac54",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "18cf5624f9733a6b21a3356556f9abaf572a0e57",
+        "git_blob_one_final_newline": "99a5999a90735e21cde7bcb1fc2bbfd63d6f04b5",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/v4-refund-safety.php",
+        "git_blob_sha": "99a5999a90735e21cde7bcb1fc2bbfd63d6f04b5",
+        "sha256": "1315c5e4f6c31f5032a204fc3588a268621de5e47feec828d79e03687def95d9",
+        "bytes": 14893,
+        "main_blob": "99a5999a90735e21cde7bcb1fc2bbfd63d6f04b5",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "ffbe16df2f57be03314e486a78520e7c44760878",
+        "git_blob_one_final_newline": "334c50898540f439963e92ddf3dc8ecc62ea68a5",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/mmc-sales-ledger.php",
+        "git_blob_sha": "334c50898540f439963e92ddf3dc8ecc62ea68a5",
+        "sha256": "5f19d29e742ef26d023abc239de69adfdb280b616307e3b8ca8ccb574e3de1af",
+        "bytes": 25208,
+        "main_blob": "334c50898540f439963e92ddf3dc8ecc62ea68a5",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "0e3fd4f17e352c75dbf0bb33054599122770fc79",
+        "git_blob_one_final_newline": "7449fd4a4c57f6a689027a32798235aea696fce4",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/v4-operations-safety.php",
+        "git_blob_sha": "7449fd4a4c57f6a689027a32798235aea696fce4",
+        "sha256": "258abe14d599df7e1683b31b15ef5dc1d1963b65bc6cbee8ea0516aa0b4ac84f",
+        "bytes": 10839,
+        "main_blob": "7449fd4a4c57f6a689027a32798235aea696fce4",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "e05b952ff39a3c167823f23d29c06f153e0713fc",
+        "git_blob_one_final_newline": "5d044220b27c9a24dd3e5a805db3fa8e6ff2fd42",
+        "path": "wp-content/plugins/madagaskar-ai-abilities/modules/v5-finance.php",
+        "git_blob_sha": "5d044220b27c9a24dd3e5a805db3fa8e6ff2fd42",
+        "sha256": "22150197e00d3957b68792fe37907f31e65cceb7c4681cfe8580fe237dac38f7",
+        "bytes": 27248,
+        "main_blob": "5d044220b27c9a24dd3e5a805db3fa8e6ff2fd42",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "62c2a1023fba88833e29b9a82d9fd8c51527b29b",
+        "git_blob_one_final_newline": "337ab09d68185e49b2ee56b4369070ca2f4136b2",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/madagaskar-checkout-customizations.php",
+        "git_blob_sha": "337ab09d68185e49b2ee56b4369070ca2f4136b2",
+        "sha256": "07e0b1d4e16038692fee3f4b09dab1392ccafb07807dd10cdda25f54fc460736",
+        "bytes": 1788,
+        "main_blob": "337ab09d68185e49b2ee56b4369070ca2f4136b2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "120996d046206e37c348b989d9594450e8683922",
+        "git_blob_one_final_newline": "7afa7352b0dcb4ab5997b16a190376386cb9db1c",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/ticket-buy-cache-clear.php",
+        "git_blob_sha": "120996d046206e37c348b989d9594450e8683922",
+        "sha256": "859c3d2b23b27afa87a658171e3ea2bc385450f2cb22a4c58568621d0ed9ed69",
+        "bytes": 1318,
+        "main_blob": "120996d046206e37c348b989d9594450e8683922",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "3b4cc5265cf731a9cd85cef7b7bfeb252f1e519f",
+        "git_blob_one_final_newline": "1ba25edd9f824b1c3d279b3c475e4f803cfbb128",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/ticket-buy-page-v4.php",
+        "git_blob_sha": "3b4cc5265cf731a9cd85cef7b7bfeb252f1e519f",
+        "sha256": "90075413e7726bc473d58179d409f357c293de8e2f4ec35e25faa12a2db33ba6",
+        "bytes": 40451,
+        "main_blob": "3b4cc5265cf731a9cd85cef7b7bfeb252f1e519f",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "a49075b76c75006c7601c78e25e8cce1701d1940",
+        "git_blob_one_final_newline": "cc9ea797dd062c53656c25e0fcc9c873c9e9e7ae",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/ticket-pdf-address-fix.php",
+        "git_blob_sha": "a49075b76c75006c7601c78e25e8cce1701d1940",
+        "sha256": "4a3596c71c530d21ba4732f87a81ce0b0f42bf27015c6cf111b8d2867012a66e",
+        "bytes": 2089,
+        "main_blob": "a49075b76c75006c7601c78e25e8cce1701d1940",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "e720e033641481f0210d2b2522550054e5119766",
+        "git_blob_one_final_newline": "5819cb1fa1b27d637f97271409aa25c8d204f140",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/ticket-type-short.php",
+        "git_blob_sha": "e720e033641481f0210d2b2522550054e5119766",
+        "sha256": "88d382ed118b8d924bdb7910797c88ad7c2170e7b92851e610ff194391e33fe7",
+        "bytes": 858,
+        "main_blob": "e720e033641481f0210d2b2522550054e5119766",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "607795b22855ad29bda63e7e6139dafdd3aaaea2",
+        "git_blob_one_final_newline": "d8bedf694e9a3e1af06327faf5b1884b6268bdb7",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/whatsapp-ticket-access-fix.php",
+        "git_blob_sha": "607795b22855ad29bda63e7e6139dafdd3aaaea2",
+        "sha256": "e1734a684e11b5fb1c18e5158a49de7b4c4bd36f7e0c8acd1cf9ec3494c5db20",
+        "bytes": 2248,
+        "main_blob": "607795b22855ad29bda63e7e6139dafdd3aaaea2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "066dd7310d875fec2ecd4777e7579779991a86bc",
+        "git_blob_one_final_newline": "622e7c7b028da2818c3470cb0a651e76ab54b9e5",
+        "path": "wp-content/plugins/madagaskar-checkout-customizations/modules/checkout-phone-required.php",
+        "git_blob_sha": "066dd7310d875fec2ecd4777e7579779991a86bc",
+        "sha256": "5c4a7d0dd8a69f35af53bde5f360fd21685f64240ddddbaa2f3232bbc45b4918",
+        "bytes": 222,
+        "main_blob": "066dd7310d875fec2ecd4777e7579779991a86bc",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "90ad2488a932381eb016babf39520c2fb6c2c586",
+        "git_blob_one_final_newline": "0c9eece7021f710266fce2adb0527e6b56a64eba",
+        "path": "wp-content/plugins/madagaskar-kommo-automation/madagaskar-kommo-automation.php",
+        "git_blob_sha": "0c9eece7021f710266fce2adb0527e6b56a64eba",
+        "sha256": "3333297ea7ea5663d784de9b95ce2b43525405984b50971a52ecb6ca1b1262fa",
+        "bytes": 2115,
+        "main_blob": "0c9eece7021f710266fce2adb0527e6b56a64eba",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "59ad0348a7484943c620701e50bc3a201c076960",
+        "git_blob_one_final_newline": "165e41559ebbe8b74b3ead7fe2ea0f58488976d1",
+        "path": "wp-content/plugins/madagaskar-kommo-automation/modules/location-menu-fix.php",
+        "git_blob_sha": "165e41559ebbe8b74b3ead7fe2ea0f58488976d1",
+        "sha256": "bc10dd07bfd0e3dc6c8f0d752024b113e24df9808df23c3acf8a0d2971207fc3",
+        "bytes": 1724,
+        "main_blob": "165e41559ebbe8b74b3ead7fe2ea0f58488976d1",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "2404bdd408823b407c793a66ebd2f53abb2d1fd1",
+        "git_blob_one_final_newline": "2295b42d6833351cbf9da1579e746a8553ca06c2",
+        "path": "wp-content/plugins/madagaskar-kommo-automation/modules/location-answers.php",
+        "git_blob_sha": "2295b42d6833351cbf9da1579e746a8553ca06c2",
+        "sha256": "4b294b7a7bcbea20e5c60d34d74e70dfd781e31a05296baf262018d66be3e5c6",
+        "bytes": 8492,
+        "main_blob": "2295b42d6833351cbf9da1579e746a8553ca06c2",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "760f370bacf1f56576efb59a603233effad2bf99",
+        "git_blob_one_final_newline": "7703a275f615057e3bb51d1f496905fc1e086748",
+        "path": "wp-content/plugins/madagaskar-kommo-automation/modules/automatic-ticket-link.php",
+        "git_blob_sha": "760f370bacf1f56576efb59a603233effad2bf99",
+        "sha256": "34d56944c562461515baa115555cc858c2c086d4b85ac8f4fb52c1d2c670eebd",
+        "bytes": 12385,
+        "main_blob": "760f370bacf1f56576efb59a603233effad2bf99",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "f5f66c4599d856c44107368f4565fc137a0427b6",
+        "git_blob_one_final_newline": "f3ffbf4031b322c33424f3541278497baf822946",
+        "path": "wp-content/plugins/madagaskar-kommo-automation/modules/active-events-source.php",
+        "git_blob_sha": "f3ffbf4031b322c33424f3541278497baf822946",
+        "sha256": "f2a8028c0f96dd43713cdc7b7807bfe6b9dedb5205dac2181f586253c55f43c9",
+        "bytes": 71102,
+        "main_blob": "f3ffbf4031b322c33424f3541278497baf822946",
+        "category": "SAME"
+      },
+      {
+        "git_blob_no_final_newline": "5a67343c31475d155739cd0265886cc106ae2e3a",
+        "git_blob_one_final_newline": "e74e6e95128266baa0c26b8cf9296b8514be36c6",
+        "path": "wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php",
+        "git_blob_sha": "e74e6e95128266baa0c26b8cf9296b8514be36c6",
+        "sha256": "f5e0dbce95ce12329a5b24e1c15588b8e92c8f629bee3ee75de25a6d36ff110f",
+        "bytes": 37595,
+        "main_blob": "9a8217b8260c7a7610116d0ec7fc2af5733766d4",
+        "category": "MAIN AHEAD",
+        "reason": "Live1.1.2 vs main1.1.3: main adds guarded MMC family price lookup; not deployed or overwritten."
+      },
+      {
+        "git_blob_no_final_newline": "bee76bdf1c5065ebae610c28f500cb733b198faa",
+        "git_blob_one_final_newline": "c6a954746ede043a743ba9a445365d6a6766a0bb",
+        "path": "wp-content/plugins/madagaskar-aile-paketi-22/readme.txt",
+        "git_blob_sha": "c6a954746ede043a743ba9a445365d6a6766a0bb",
+        "sha256": "7cfae58a7c846d2faea5adfa076ad402c418e27fe042562f327d9df89f63d548",
+        "bytes": 580,
+        "main_blob": null,
+        "category": "LIVE AHEAD",
+        "reason": "Documentation only, no executable main path."
+      }
+    ],
+    "main_missing_live": [
+      "wp-content/plugins/madagaskar-ai-abilities/modules/legacy-mdg-mmc-migrate.php"
+    ],
+    "snippet_matches_pr107": [
+      15,
+      30,
+      103
+    ],
+    "snippet110": "LIVE AHEAD source owner not present in main; old main active-events source is a different legacy implementation; preserve it as historical, do not substitute.",
+    "kommo_risk": "Canonical V2 preview includes today's Sincan after last16:00 session while public ticket listing omits it; date-only filter, session/status sunset needs review. Preview does not prove indexed retrieval freshness.",
+    "pr107": "Draft archive only, not merged. Old main1.3.30 comparison obsolete after PR108; datetime standalone capture obsolete after PR110; after-snippets15/30/103 still exactly match live."
+  },
+  "final": {
+    "diagnostic_id": 119,
+    "active": false,
+    "code_error": null,
+    "snippet117_active": false,
+    "health_ok": 16,
+    "real_payment": false,
+    "new_order_created": false,
+    "customer_order_writes": false,
+    "ticket_writes": false,
+    "production_code_replaced": false
+  }
+}
