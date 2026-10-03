@@ -1,5 +1,7 @@
 # Kırıkkale cancellation and refund operation — 2026-10-02
 
+> **Final status:** The later verification in this report supersedes the initial pending snapshot below: 11/11 WooCommerce refunds completed for **TRY 13,750**, remaining refundable amount is **0**, refund IDs are **3958–3968**, and **46/46 tickets were invalidated**. Card/bank posting was not independently verified. The public cancellation notice was subsequently updated with the bank-posting wording plus Home and WhatsApp recovery links.
+
 ## Live result
 
 - Scope: MMC Program **2**, `PRG-2026-KIR-MERKEZ-001`; MMC Event **2** bridged to MDG Event **15**; Kırıkkale / Merkez; **2026-10-02**, **17 Ağustos Spor Salonu**, sessions **17:30 / 19:00**.
