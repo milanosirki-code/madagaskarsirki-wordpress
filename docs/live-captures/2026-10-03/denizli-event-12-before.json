@@ -1,0 +1,13 @@
+{
+  "event": {
+    "id": "12",
+    "venue_id": "134",
+    "venue_name": "Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Sakonu",
+    "status": "onsale",
+    "public_uuid": "759056dc-6ac5-452f-9200-9d4603c1e574"
+  },
+  "venue": {
+    "id": "134",
+    "name": "Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Salonu"
+  }
+}
