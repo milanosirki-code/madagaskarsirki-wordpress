@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-03",
+  "version": "1.3.47",
+  "files": [
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php",
+      "match": true,
+      "sha256": "54b45517ecffc4d8bb2f9b452d2685f8aa73e3cc1b329059d1db5da0f8ea0c08",
+      "bytes": 7524
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/assets/admin.css",
+      "match": true,
+      "sha256": "55cd7f634a0f9c3c4619ac0db69614aea1697ce852f8d657fb11480e32da75c4",
+      "bytes": 9557
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/uninstall.php",
+      "match": true,
+      "sha256": "0a7cce534f5801bcd12580605e1bca21d6fe5e017900a0e203bb134e083d91a7",
+      "bytes": 225
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/README.md",
+      "match": true,
+      "sha256": "86df8f7697e34001fa34392c3b1470822326b4530809d91baf638cd68a92d7ca",
+      "bytes": 45387
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+      "match": true,
+      "sha256": "54e1bd23c808b6fe3222bd7cacf16d1f29a54a6c03f44da1cf6c27d91980c1b0",
+      "bytes": 89536
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php",
+      "match": true,
+      "sha256": "96845be2aa3a9459a39d7e568a4a123f065e1c484a0713557289418427f81dbb",
+      "bytes": 42808
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-publish-admin.php",
+      "match": true,
+      "sha256": "35d86d65653b81e05215c6c857b12e034cf0e70a91372579c0aa059b1d7c7049",
+      "bytes": 10742
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php",
+      "match": true,
+      "sha256": "8af41d4457cc8fe911d63124bd6adfc0905f5096134b0d3e31580ef349834a77",
+      "bytes": 27825
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-admin.php",
+      "match": true,
+      "sha256": "35cf341b12bba1883e31983795bcec4606a87465fd726612cc70e993522d0a55",
+      "bytes": 15103
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php",
+      "match": true,
+      "sha256": "504f6d2e3b2c3ded41eab74c044ff91ed2375969471081b1c9438c664e3a3c4b",
+      "bytes": 9647
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-admin.php",
+      "match": true,
+      "sha256": "6865482bcad9ff8a1e9464e5e1f2c049ab1109abf7e9b01a8420c8f952b8f4a7",
+      "bytes": 48003
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php",
+      "match": true,
+      "sha256": "97ca626901c7d4f0a110becd3d6028d6ef59415d98972e843c358ab36989981e",
+      "bytes": 41173
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php",
+      "match": true,
+      "sha256": "2e12369ab82d451679be45275260c3ef60776c10ecd4d5399e68dc15291e97ad",
+      "bytes": 12049
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-marketing-service.php",
+      "match": true,
+      "sha256": "2f1f6841344f45e3ac3dd3bd1ac237ba4e9eec94a3d57185be6f29b64fc80e1f",
+      "bytes": 19683
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-service.php",
+      "match": true,
+      "sha256": "5129549b1c5bd9d1fca1a4e0edfd597a8b0dd63f45ec28f33b7ad8e685d0ebea",
+      "bytes": 34582
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-service.php",
+      "match": true,
+      "sha256": "51f1687b883907f638a195476e6ccb317ac6c34df969f46a65aca5328fdcc8f9",
+      "bytes": 34424
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-service.php",
+      "match": true,
+      "sha256": "7a9ee563bb473d073557e5615d470a77f4942fda76196165964924f95ec45bfe",
+      "bytes": 29303
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php",
+      "match": true,
+      "sha256": "9f989d8f9faa27c0be6ce93276ce78803f0d6aba4952e4f9e6ef1f825f6bc4ae",
+      "bytes": 29285
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php",
+      "match": true,
+      "sha256": "09e9225628cb7160f1862d43b05beda92338c9a407dde8b09acf7a031603482a",
+      "bytes": 12869
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-meb-source-service.php",
+      "match": true,
+      "sha256": "f67b3d85c371a0864302f292eed1ab3953b957100dcba361c0a775e05906bcdf",
+      "bytes": 12271
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-marketing-admin.php",
+      "match": true,
+      "sha256": "ee97b7314fa0a38ff52dbc1526bbcf73a2a4997911da35c8324d5e9387d3e27f",
+      "bytes": 9621
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-field-admin.php",
+      "match": true,
+      "sha256": "dd4d066612ae6879b43352148f7441976561520f31bdbff5d0b0250f0c554718",
+      "bytes": 19359
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-venue-admin.php",
+      "match": true,
+      "sha256": "930a4253bef6e2ada622e9fa90a63c151d946d256182c0adf0a0c7f33553121d",
+      "bytes": 29407
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-admin.php",
+      "match": true,
+      "sha256": "59ae4ad66b09544ea5e19eabf032f072832b3cf7e0c0c8c7c9a988d1520c8d62",
+      "bytes": 14515
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-population-source-service.php",
+      "match": true,
+      "sha256": "48e2aed628402cbcb83049b103776ce9e73fde28146555968334f44245d3065f",
+      "bytes": 6237
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-school-source-service.php",
+      "match": true,
+      "sha256": "4feadf44df5c54e8b45d0aa4481880eb9dbc9ba173e1ab410a82909402e847ec",
+      "bytes": 19461
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-admin.php",
+      "match": true,
+      "sha256": "4aa489021d8665932158ff30294906607a4f82c64cf5d132d7e6f612eadbe159",
+      "bytes": 28193
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-field-service.php",
+      "match": true,
+      "sha256": "bb25575aee12ef9bede3f893ac1bad0e36baba49379fe5933be6508c01cb87dc",
+      "bytes": 40896
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-activator.php",
+      "match": true,
+      "sha256": "a2cd8827a6fb103d79f4ad9760b19cb2a882b54fb366b578265c7147ad8e51a2",
+      "bytes": 47996
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php",
+      "match": true,
+      "sha256": "2f0b3d4159d5b361e8db9752ee3dbbe70751db6bfa9c8bcc55d1d4fdac44447b",
+      "bytes": 36258
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php",
+      "match": true,
+      "sha256": "01dee63edbaeaace47363f9d905960ecb54df8595d7a92385df32ddc7423302a",
+      "bytes": 7643
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-report-service.php",
+      "match": true,
+      "sha256": "c5c5c36f4a238bf3aa3c0683f6724103bca5cd5ebbc9516b6dfb7fe5bc0f5d81",
+      "bytes": 43571
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-report-admin.php",
+      "match": true,
+      "sha256": "2408cb39908e4079e78550ccfd3de4d94f82079b48d056ef596c32e6f299a726",
+      "bytes": 8858
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php",
+      "match": true,
+      "sha256": "2a7629a4ff99ab6a370f87999049a2d0c8828b8201376a5724312d1c8658b05b",
+      "bytes": 30554
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php",
+      "match": true,
+      "sha256": "89c3f9a48c56f8892b490afdd1112d780bd2597eb02abf7c340abe8ae11a69ac",
+      "bytes": 20937
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php",
+      "match": true,
+      "sha256": "e622ac15f37cb949f9bb38acd3c91f78d9bc8633a1a351a0a112e99f2cd3f72d",
+      "bytes": 34293
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-service.php",
+      "match": true,
+      "sha256": "d789677220f36d8fcad7c79aa368b0e36d3ee6b2932a9fc2a3893c94b5f8e860",
+      "bytes": 23184
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-region-service.php",
+      "match": true,
+      "sha256": "9bb32699e753dee2bf39ef116bc3abccc97694542da2ff1859276ba54bb1588a",
+      "bytes": 28449
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-dashboard-admin.php",
+      "match": true,
+      "sha256": "8432ae87e7702d3bd77d14c380338ffc2a59dd7f59cbcff2343c9daef855afdd",
+      "bytes": 10896
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-admin.php",
+      "match": true,
+      "sha256": "76c3288004358df3dba941387136f984b380f0504b2fa7eb0129dcdbf6002147",
+      "bytes": 22531
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-dashboard-service.php",
+      "match": true,
+      "sha256": "a37a9f289b125eeb410e9c0ca23cc637717570657dad2ad753d3d8a108156edf",
+      "bytes": 17405
+    }
+  ]
+}
