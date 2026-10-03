@@ -1,10 +1,12 @@
 # Madagaskar AI Abilities — Canlıya Alma Runbook
 
-Bu belge `ai-abilities-staging-2026-09-28` dalındaki staged abilities için production aktivasyon sırasını tanımlar.
+Bu belge `ai-abilities-staging-2026-09-28` dalının tarihsel aktivasyon referansıdır.
+
+> Güncel durum — 3 Ekim 2026: PR #46, 1 Ekim 2026 06:04:07 UTC tarihinde merge edildi (merge commit `bcfe8f97b97dff542fcf334ef51919e4f80d5ddc`). AI abilities kalıcı plugin katmanına taşındı; canlı v0.6.1, main v0.7.0. Eski snippet aktivasyon adımları otomatik tekrar uygulanmaz. Güncel kaynaklar: [proje durumu](CODEX_PROJECT_STATE.md), [migration runbook](AI_ABILITIES_LIVE_MIGRATION_RUNBOOK.md) ve [üretim kaydı](../deploy/ai-abilities/production-state-2026-10-01.json). Şehir/program/kimlik örnekleri tarihsel olup her işlem öncesi canlıda doğrulanmalıdır.
 
 ## Temel kurallar
 
-- PR #46 doğrudan merge edilmemeli; önce production Code Snippets üzerinde modül bazlı smoke test yapılmalı.
+- PR #46 merge edilmiştir. Yeni değişiklik güncel main tabanlı `codex/...` branch, test ve PR ile hazırlanır; merge canlı deployment kanıtı değildir.
 - Ability kaydı oluşturmak veri değiştirmez. Destructive işaretli ability'ler yalnız açık kullanıcı talebiyle çalıştırılmalı.
 - Gerçek para iadesi için ability yoktur ve eklenmemelidir; V4'ün iki-yönetici güvenlik akışı korunur.
 - Kommo secret/token değerleri hiçbir çıktıda gösterilmemelidir.
@@ -12,16 +14,16 @@ Bu belge `ai-abilities-staging-2026-09-28` dalındaki staged abilities için pro
 - Kommo AI source consistency check bu doğru `family_2_2` standardını hata saymamalı; yalnız tanım/kod/kapasite tutarsızlığında unsafe dönmelidir.
 - MMC satış defteri senkronu, MMC↔MDG köprüsü ve satış mapping kapsamı doğrulanmadan çalıştırılmamalıdır.
 
-## 1. Temizlik
+## 1. Tarihsel temizlik adımları
 
-Production bağlantısı açıldığında ilk iş:
+Aşağıdaki adımlar eski aktivasyon planıdır; güncel aktif/pasif durum okunmadan çalıştırılmaz. 3 Ekim yeniden keşfinde #76 pasif ve eski AI snippet'leri pasiftir.
 1. Geçici Code Snippet #76 — `MDG Modül Introspector — geçici` — deaktive edilir.
 2. Daha önceki geçici introspection snippet'lerinin aktif olmadığı doğrulanır.
 3. Mevcut canlı abilities sayısı ve Code Snippet code_error alanları kontrol edilir.
 
 ## 2. Önce salt-okunur / düşük riskli katmanlar
 
-Aşağıdaki snippet'ler tek tek eklenip aktifleştirilir. Her aktivasyondan sonra ability discovery ve bir read-only smoke test yapılır:
+Tarihsel plan aşağıdaki snippet'leri kapsıyordu. Güncel kalıcı plugin modülü ile aynı snippet birlikte etkinleştirilmez. Yeni aktivasyonda migration runbook kullanılır; ability discovery ve read-only smoke test yapılır:
 
 - `mdg-ai-v4-refund-safety.php`
 - `mdg-ai-system-health-integrity.php`
@@ -171,6 +173,6 @@ Bir staged snippet aktivasyonunda PHP/ability hatası oluşursa:
 1. Yalnız o snippet deaktive edilir.
 2. Diğer çalışan canlı Madagaskar abilities korunur.
 3. Domain verisi test amacıyla değiştirilmediyse veri rollback gerekmez.
-4. Hata staging dalında düzeltilip tekrar smoke test edilir.
+4. Hata güncel main tabanlı yeni `codex/...` dalında düzeltilip tekrar smoke test edilir.
 
 MMC satış sync veri yazmışsa kayıtları körlemesine silmek yerine önce ledger/mapping/log farkı incelenir; sync upsert/idempotent olduğundan doğru mapping ile yeniden çalıştırma tercih edilir.
