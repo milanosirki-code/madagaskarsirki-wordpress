@@ -4,6 +4,8 @@
 **Kapsam:** `madagaskarsirki.com` üzerinde Claude'un WordPress.com bağlantısıyla yaptığı içerik ve şablon değişiklikleri ile işletme sahibinin Code Snippets'e yapıştırdığı snippet güncellemeleri.
 **Drive karşılığı:** `Madagaskar + USKD Codex Çalışma ve Yedek Rehberi` (Doc ID `1Q6-mOKbbkYZgWVcxFYK3yy9zLFjqEZEwKTJ14Z1PiZI`), "Claude" başlıklı bölümler.
 
+**Sonraki inceleme:** `docs/CLAUDE_SITE_REVIEW_2026-10-03.md` (3 Ekim; K7 ve K8 dahil canlıda görülen açık sorunlar).
+
 Bu dosya canlıda olanın kaydıdır. Buradaki snippet kaynakları plugin koduna taşınmamıştır; `docs/live-captures/2026-10-02/` altında canlı kopya olarak durur.
 
 ## 1. Çalışma biçimi ve sınırlar
