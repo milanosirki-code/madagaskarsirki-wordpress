@@ -1065,6 +1065,16 @@
       "session_source_ok": true,
       "remote_agent_retrieval_tested": false,
       "family_package_detected": false
+    },
+    "family_capacity": {
+      "ticket_code": "family_2_2",
+      "capacity_units": 4,
+      "mmc_rows": 13
+    },
+    "kommo_cancelled_program2": {
+      "preview_safe": false,
+      "cancellation_text_present": true,
+      "reason": "Active-program family/session validator rejects intentionally shortened cancellation source; do not reintroduce sales details."
     }
   },
   "limits": [
