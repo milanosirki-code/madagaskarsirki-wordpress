@@ -111,7 +111,11 @@ function mdg_stage2_read( $input ) {
             'tickera-bridge'=>WP_PLUGIN_DIR.'/bridge-for-woocommerce/bridge-for-woocommerce.php',
             'family'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php',
             'ai-bootstrap'=>WP_PLUGIN_DIR.'/madagaskar-ai-abilities/madagaskar-ai-abilities.php',
-            'transition'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php'
+            'transition'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php',
+            'public-css'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/assets/public-event.css',
+            'datetime'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-session-datetime.php',
+            'transition-readme'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/readme.txt',
+            'family-readme'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/readme.txt'
         );
         $key=$input['target']??'';
         if($key==='snippet-controller'&&!is_readable($map[$key])) {
