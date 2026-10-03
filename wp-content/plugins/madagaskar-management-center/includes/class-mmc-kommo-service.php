@@ -245,7 +245,7 @@ class MMC_Kommo_Service {
         $lines[] = 'SEANSLAR';
         if ( $sessions ) {
             foreach ( $sessions as $s ) {
-                $lines[] = '- ' . substr( (string) $s->session_time, 11, 5 ) . ' | Kapasite: ' . (int)$s->capacity;
+                $lines[] = '- ' . wp_date( 'H:i', strtotime($s->session_time) ) . ' | Kapasite: ' . (int)$s->capacity;
             }
         } else {
             $lines[] = '- Seanslar henüz kesinleşmedi.';
@@ -259,15 +259,11 @@ class MMC_Kommo_Service {
         $lines[] = '- Çocuklar yetişkin eşliğinde katılır.';
         foreach ( $tickets as $t ) {
             if ( ! (int)$t->is_active ) continue;
-            if ( 'family_2_2' === $t->ticket_code ) {
-                $row = '- Aile Paketi: 2 yetişkin + 2 çocuk | Fiyat: ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
-            } else {
-                $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
-            }
+            $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
             if ( isset($bmap[(int)$t->id]) && null !== $bmap[(int)$t->id]->channel_price ) {
                 $row .= ' | Biletinial: ' . number_format_i18n((float)$bmap[(int)$t->id]->channel_price, 2) . ' TL + varsa hizmet bedeli';
             }
-            if ( 'family_2_2' === $t->ticket_code ) $row .= ' | Kapasite tüketimi: 4 kişi';
+            if ( 'family_2_2' === $t->ticket_code ) $row .= ' | 2 yetişkin + 2 çocuk, 4 kişi kapasite tüketir';
             $lines[] = $row;
         }
         $lines[] = 'Resmî merkezi bilet sayfası: https://madagaskarsirki.com/bilet-al/';
@@ -723,6 +719,25 @@ class MMC_Kommo_Service {
         $profile = self::ensure_profile( $program_id );
         if ( is_wp_error( $profile ) ) return $profile;
         if ( ! self::configured() ) return new WP_Error( 'mmc_kommo_not_configured', 'Kommo subdomain/token yapılandırılmadı.' );
+
+        // Unified Source V2: keep per-program profiles/leads, but do not create
+        // additional Kommo AI sources. Existing source IDs are preserved for
+        // audit/rollback. The canonical live knowledge source is the stable
+        // unified URL backed by MMC program/event/venue/session/ticket data.
+        if ( (bool) get_option( 'mdg_kommo_unified_v2_enabled', false ) ) {
+            $wpdb->update(
+                $wpdb->prefix . 'mmc_kommo_profiles',
+                array(
+                    'ai_source_status' => 'unified',
+                    'ai_synced_hash'   => (string) $profile->source_hash,
+                    'last_synced_at'   => current_time( 'mysql' ),
+                    'last_error'       => '',
+                    'updated_at'       => current_time( 'mysql' ),
+                ),
+                array( 'id' => (int) $profile->id )
+            );
+            return true;
+        }
 
         if ( 'text' === self::ai_transport_mode( $program_id ) ) {
             $state = self::direct_text_source_state( $program_id );

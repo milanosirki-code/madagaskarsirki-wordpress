@@ -3,6 +3,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// MMC Region Service load guard: admin pages call MMC_Region_Service directly.
+if ( ! class_exists( 'MMC_Region_Service', false ) ) {
+    $mmc_region_file = __DIR__ . '/class-mmc-region-service.php';
+    if ( is_readable( $mmc_region_file ) ) {
+        require_once $mmc_region_file;
+    }
+}
+
+
 class MMC_Admin {
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'menu' ) );
@@ -218,7 +227,7 @@ class MMC_Admin {
 
         <div class="mmc-panel">
             <h2>Sonraki adım</h2>
-            <p>Tanıtım havzası ve temel veri kapsaması yeterliyse <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-venue-flow', 'program_id'=>$program->id ), admin_url( 'admin.php' ) ) ); ?>">Salon Araştırması & Tahsise Geç</a></p>
+            <p>Tanıtım havzası ve temel veri kapsaması yeterliyse <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-venue-flow', 'program_id'=>$program->id ), admin_url( 'admin.php' ) ) ); ?>">Salon Seçimi & Tahsise Geç</a></p>
         </div>
         <?php
     }
@@ -357,7 +366,6 @@ class MMC_Admin {
         $roles = array(
             'Madagaskar Yönetici' => 'Tüm MMC modülleri ve Bölge Veri Ambarı',
             'Madagaskar Operasyon' => 'Program görüntüleme, salon, etkinlik/seans, Kommo kontrolü, görev ve operasyon',
-            'Madagaskar Pazarlama' => 'Program görüntüleme, pazarlama/Meta hazırlığı ve görev yönetimi',
             'Madagaskar Saha' => 'Program görüntüleme ve saha',
             'Madagaskar Finans' => 'Program görüntüleme, finans ve rapor',
             'Madagaskar Görüntüleyici' => 'Salt okunur dashboard/program/rapor',

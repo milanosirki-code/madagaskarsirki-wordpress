@@ -1,0 +1,19 @@
+name: MMC live reconciliation checks
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'tests/mmc/**'
+      - '.github/workflows/mmc-live-reconcile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lint-and-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint captured MMC PHP
+        run: find wp-content/plugins/madagaskar-management-center -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test cancellation guard without WordPress or database writes
+        run: php tests/mmc/cancelled-sales-open.php

@@ -124,6 +124,9 @@ class MMC_Report_Service {
         $prev_date = wp_date( 'Y-m-d', strtotime( $report_date . ' -1 day' ) );
         $day = self::daily_sales( $report_date );
         $prev = self::daily_sales( $prev_date );
+        $woo = self::woocommerce_sales( $report_date );
+        $woo_previous = self::woocommerce_sales( $prev_date );
+        $legacy_events = self::upcoming_mdg_events( $report_date );
         $issues = self::daily_issues( $report_date );
         $rows = MMC_Dashboard_Service::program_rows( array() );
         $daily_by_program = self::daily_sales_by_program( $report_date );
@@ -198,7 +201,33 @@ class MMC_Report_Service {
             );
         }
 
+        foreach($legacy_events as &$legacy){
+            $legacy['shadow_program']='';
+            if($legacy['program_id']){continue;}
+            foreach($programs as $program){
+                if($program['event_date']===$legacy['date'] && sanitize_title($program['location'])===sanitize_title($legacy['province'].' / '.$legacy['district'])){
+                    $legacy['shadow_program']=$program['program_code']; break;
+                }
+            }
+        }
+        unset($legacy);
         $alerts = MMC_Dashboard_Service::critical_alerts( 20 );
+        $morning=(new DateTimeImmutable($report_date.' 00:00:00',wp_timezone()))->modify('+1 day');
+        $urgent=array();
+        if('verified'!==$woo['status'] || $woo['orders_count']!==$day['orders_count'] || abs($woo['net_revenue']-$day['net_revenue'])>0.01){
+            $urgent[]=array('level'=>'critical','program_id'=>0,'program_code'=>'SATIŞ SİSTEMİ','location'=>'WooCommerce / MMC','message'=>'WooCommerce doğrudan satış doğrulaması ile MMC defteri eşleşmiyor; satış, doluluk ve fatura kararlarında MMC sıfırını kullanmayın.','date'=>$report_date);
+        }
+        $event_sales=array();
+        foreach(($woo['events']??array()) as $sold){$event_sales[sanitize_title($sold['name'])]=(int)$sold['ticket_count'];}
+        $urgent_events=array();
+        foreach($legacy_events as $legacy){
+            if($legacy['date']<$morning->format('Y-m-d') || $legacy['date']>$morning->modify('+2 days')->format('Y-m-d')){continue;}
+            if(!$legacy['program_id']){
+                $urgent_events[]=array('level'=>'high','program_id'=>0,'program_code'=>'MDG #'.$legacy['id'],'location'=>$legacy['name'],'message'=>($legacy['shadow_program']?'Aynı tarih ve konumda '.$legacy['shadow_program'].' var; satıştaki MDG etkinliği farklı köprüye bağlı. ':'').'Yaklaşan gösteri MMC satış/doluluk ve operasyon listesine bağlı değil; saha hazırlığını MDG kaydıyla doğrulayın.','date'=>$legacy['date'],'paid_tickets'=>$event_sales[sanitize_title($legacy['name'])]??0);
+            }
+        }
+        usort($urgent_events,function($a,$b){return ($b['paid_tickets']<=>$a['paid_tickets']) ?: strcmp($a['date'],$b['date']);});
+        $alerts=array_slice(array_merge($urgent,$urgent_events,$alerts),0,20);
         $priorities = array_slice( $alerts, 0, 3 );
         if ( count( $priorities ) < 3 ) {
             $extra = self::fallback_priorities( 3 - count( $priorities ) );
@@ -216,7 +245,10 @@ class MMC_Report_Service {
         $overdue_tasks = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_tasks t INNER JOIN {$wpdb->prefix}mmc_programs p ON p.id=t.program_id WHERE t.status='open' AND t.due_at IS NOT NULL AND t.due_at<%s AND p.status NOT IN ('completed','cancelled')", current_time('mysql') ) );
 
         return array(
-            'schema_version' => '1.2',
+            'schema_version' => '1.3',
+            'woocommerce_verification' => $woo,
+            'previous_woocommerce_verification' => $woo_previous,
+            'mdg_upcoming_events' => $legacy_events,
             'report_date' => $report_date,
             'generated_at' => current_time( 'mysql' ),
             'site_timezone' => wp_timezone_string(),
@@ -238,6 +270,115 @@ class MMC_Report_Service {
             'critical_alerts' => $alerts,
             'top_priorities' => $priorities,
         );
+    }
+
+    /** Read paid WooCommerce orders via CRUD, including HPOS stores, without changing orders. */
+    private static function woocommerce_sales( $date ) {
+        $result = array( 'status'=>'unavailable', 'message'=>'WooCommerce API kullanılamıyor.', 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0, 'events'=>array(), 'invoice_coverage'=>array('tracked'=>0,'pending'=>0,'issued'=>0,'untracked'=>0) );
+        if ( ! function_exists( 'wc_get_orders' ) ) { return $result; }
+        $start = new DateTimeImmutable( $date . ' 00:00:00', wp_timezone() );
+        $end = $start->modify( '+1 day' );
+        $range = $start->getTimestamp() . '...' . ( $end->getTimestamp() - 1 );
+        $events = array();
+        $paid_order_ids = array();
+        $catalog = self::mdg_product_catalog();
+        try {
+            for ( $page=1; $page<=50; $page++ ) {
+                $orders = wc_get_orders( array( 'status'=>array('processing','completed'), 'date_paid'=>$range, 'limit'=>100, 'page'=>$page, 'return'=>'objects' ) );
+                if ( ! is_array($orders) ) { throw new RuntimeException('WooCommerce sipariş sorgusu sonuç vermedi.'); }
+                foreach ( $orders as $order ) {
+                    $paid = $order->get_date_paid();
+                    if ( ! $paid || $paid->getTimestamp()<$start->getTimestamp() || $paid->getTimestamp()>=$end->getTimestamp() ) { continue; }
+                    $result['orders_count']++;
+                    $paid_order_ids[] = (int)$order->get_id();
+                    $result['net_revenue'] += max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
+                    $order_events = array();
+                    $order_amounts = array();
+                    foreach ( $order->get_items('line_item') as $item_id=>$item ) {
+                        $quantity = max(0,(int)$item->get_quantity()-(method_exists($order,'get_qty_refunded_for_item')?abs((int)$order->get_qty_refunded_for_item($item_id)):0));
+                        $result['ticket_count'] += $quantity;
+                        $product_id = (int)$item->get_product_id();
+                        $variation_id = (int)$item->get_variation_id();
+                        $match = $catalog[$variation_id] ?? $catalog[$product_id] ?? null;
+                        $key = $match ? 'mdg:'.$match['id'] : 'product:'.$product_id;
+                        if ( ! isset($events[$key]) ) {
+                            $events[$key] = array('name'=>$match?$match['name']:(string)$item->get_name(), 'program_id'=>$match?$match['program_id']:0, 'orders_count'=>0, 'ticket_count'=>0, 'net_revenue'=>0.0);
+                        }
+                        $events[$key]['ticket_count'] += $quantity;
+                        $order_amounts[$key] = ($order_amounts[$key]??0) + max(0,(float)$item->get_total()+(float)$item->get_total_tax()-(method_exists($order,'get_total_refunded_for_item')?abs((float)$order->get_total_refunded_for_item($item_id)):0));
+                        $order_events[$key] = true;
+                    }
+                    $allocated = 0.0; $keys = array_keys($order_events); $weight_total = array_sum($order_amounts);
+                    foreach ($keys as $index=>$key) {
+                        $events[$key]['orders_count']++;
+                        $order_net = max(0,(float)$order->get_total()-(float)$order->get_total_refunded());
+                        $portion = $index===count($keys)-1 ? $order_net-$allocated : ($weight_total>0 ? round($order_net*$order_amounts[$key]/$weight_total,2) : 0);
+                        $events[$key]['net_revenue'] += $portion; $allocated += $portion;
+                    }
+                }
+                if (count($orders)<100) { break; }
+                if ($page===50) { throw new RuntimeException('Sipariş tarama sınırı aşıldı; kısmi sonuç kullanılmaz.'); }
+            }
+        } catch ( Throwable $e ) {
+            $result['message'] = 'WooCommerce sipariş sorgusu tamamlanamadı (' . esc_html(get_class($e)) . ', satır ' . (int)$e->getLine() . ').';
+            return $result;
+        }
+        $result['invoice_coverage']=self::invoice_coverage($paid_order_ids);
+        $result['status']='verified';
+        $result['message']='Ödenmiş siparişler okundu.';
+        $result['net_revenue']=round($result['net_revenue'],2);
+        foreach($events as &$event){$event['net_revenue']=round($event['net_revenue'],2);}unset($event);
+        $result['events']=array_values($events);
+        return $result;
+    }
+
+    /** Count only invoice records explicitly tracked for the paid orders in this report. */
+    private static function invoice_coverage( $order_ids ) {
+        global $wpdb;
+        $coverage=array('tracked'=>0,'pending'=>0,'issued'=>0,'untracked'=>count($order_ids));
+        if(!$order_ids){return $coverage;}
+        $table=$wpdb->prefix.'mmc_invoices';
+        $placeholders=implode(',',array_fill(0,count($order_ids),'%d'));
+        $sql=$wpdb->prepare("SELECT source_id,status FROM {$table} WHERE source_type='woo_order' AND source_id IN ({$placeholders})",$order_ids);
+        $found=array();
+        foreach((array)$wpdb->get_results($sql) as $row){$found[(int)$row->source_id][(string)$row->status]=true;}
+        $coverage['tracked']=count($found);
+        foreach($found as $statuses){
+            if(isset($statuses['issued'])){$coverage['issued']++;}
+            elseif(isset($statuses['pending'])){$coverage['pending']++;}
+        }
+        $coverage['untracked']=max(0,count($order_ids)-count($found));
+        return $coverage;
+    }
+
+    /** Use the MDG product and variation identities to group legacy sales. */
+    private static function mdg_product_catalog() {
+        global $wpdb;
+        if ( ! class_exists('MMC_MDG_Bridge_Service') || ! MMC_MDG_Bridge_Service::legacy_available() ) { return array(); }
+        $events=MDG_DB::table('events'); $sessions=MDG_DB::table('sessions'); $types=MDG_DB::table('ticket_types');
+        $rows=$wpdb->get_results("SELECT e.id,e.title,s.wc_product_id,t.wc_variation_id FROM {$events} e JOIN {$sessions} s ON s.event_id=e.id LEFT JOIN {$types} t ON t.session_id=s.id", ARRAY_A);
+        $catalog=array();
+        foreach((array)$rows as $r){
+            $entry=array('id'=>(int)$r['id'],'name'=>(string)$r['title'],'program_id'=>MMC_MDG_Bridge_Service::program_for_mdg_event((int)$r['id']));
+            foreach(array('wc_product_id','wc_variation_id') as $column){if((int)$r[$column]){$catalog[(int)$r[$column]]=$entry;}}
+        }
+        return $catalog;
+    }
+
+    private static function upcoming_mdg_events( $date ) {
+        global $wpdb;
+        if ( ! class_exists('MMC_MDG_Bridge_Service') || ! MMC_MDG_Bridge_Service::legacy_available() ) { return array(); }
+        $events=MDG_DB::table('events'); $sessions=MDG_DB::table('sessions');
+        $rows=$wpdb->get_results("SELECT e.id,e.title,e.status,e.province_name,e.district,s.start_at FROM {$events} e JOIN {$sessions} s ON s.event_id=e.id WHERE s.start_at IS NOT NULL ORDER BY s.start_at ASC LIMIT 500", ARRAY_A);
+        $out=array(); $cutoff=(new DateTimeImmutable($date.' 00:00:00',wp_timezone()))->modify('+31 days')->format('Y-m-d');
+        foreach((array)$rows as $r){
+            if(in_array((string)$r['status'],array('draft','cancelled','archived'),true)){continue;}
+            $local=get_date_from_gmt((string)$r['start_at'],'Y-m-d');
+            if($local<$date||$local>$cutoff){continue;}
+            $key=(int)$r['id'];
+            if(!isset($out[$key])){$out[$key]=array('id'=>$key,'name'=>(string)$r['title'],'date'=>$local,'program_id'=>MMC_MDG_Bridge_Service::program_for_mdg_event($key),'province'=>(string)$r['province_name'],'district'=>(string)$r['district']);}
+        }
+        return array_values($out);
     }
 
     private static function daily_sales( $date ) {
@@ -362,6 +503,9 @@ class MMC_Report_Service {
     public static function render_html( $s ) {
         $money = function($v){ return number_format_i18n((float)$v,2).' TL'; };
         $d=$s['daily_sales']; $prev=$s['previous_day_sales']; $issues=$s['daily_issues']; $meta=$s['meta_totals']; $delta=$s['meta_delta_from_prior_report'];
+        $woo=$s['woocommerce_verification']??array('status'=>'unavailable','events'=>array(),'orders_count'=>0,'ticket_count'=>0,'net_revenue'=>0);
+        $woo_prev=$s['previous_woocommerce_verification']??array('status'=>'unavailable');
+        $verified='verified'===$woo['status'];
         ob_start();
         ?>
 <!doctype html><html><body style="margin:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827">
@@ -369,18 +513,28 @@ class MMC_Report_Service {
   <div style="background:#111827;color:white;padding:22px;border-radius:12px 12px 0 0"><h1 style="margin:0;font-size:24px">MADAGASKAR GECE RAPORU</h1><p style="margin:7px 0 0">Rapor tarihi: <strong><?php echo esc_html(wp_date('d.m.Y',strtotime($s['report_date']))); ?></strong> · Oluşturma: <?php echo esc_html(wp_date('d.m.Y H:i',strtotime($s['generated_at']))); ?></p></div>
   <div style="background:white;padding:22px;border-radius:0 0 12px 12px">
     <h2>1. Günlük Yönetim Özeti</h2>
+    <p><strong><?php echo $verified?'WooCommerce ödenmiş sipariş doğrulaması':'Satış doğrulanamadı'; ?></strong> · MMC kayıtları ayrıca aşağıda gösterilir.</p>
     <table style="width:100%;border-collapse:collapse"><tr>
-      <?php self::email_kpi('Sipariş',$d['orders_count'],'Önceki gün '.$prev['orders_count'].' · '.self::change_text($s['sales_change']['orders'])); ?>
-      <?php self::email_kpi('Satılan Bilet',$d['ticket_count'],$d['audience_units'].' kişi kapasitesi'); ?>
-      <?php self::email_kpi('Net Ciro',$money($d['net_revenue']),'Önceki gün '.$money($prev['net_revenue']).' · '.self::change_text($s['sales_change']['revenue'])); ?>
-      <?php self::email_kpi('Başarısız / İade',$issues['failed_orders'].' / '.$issues['refund_orders'],$money($issues['refund_amount']).' iade'); ?>
+      <?php self::email_kpi('Sipariş',$verified?$woo['orders_count']:'—',$verified&&'verified'===($woo_prev['status']??'')?'Önceki gün '.$woo_prev['orders_count']:'Doğrulama bekleniyor'); ?>
+      <?php self::email_kpi('Satılan Bilet',$verified?$woo['ticket_count']:'—','WooCommerce ürün adedi; paket kişi sayısı ayrıca doğrulanmalı'); ?>
+      <?php self::email_kpi('Net Ciro',$verified?$money($woo['net_revenue']):'—',$verified&&'verified'===($woo_prev['status']??'')?'Önceki gün '.$money($woo_prev['net_revenue']):'Doğrulama bekleniyor'); ?>
+      <?php self::email_kpi('MMC Başarısız / İade',$verified&&$woo['orders_count']===$d['orders_count']?$issues['failed_orders'].' / '.$issues['refund_orders']:'Doğrulanmadı','Yalnız MMC defteri; WooCommerce işlem durumları ayrıca kontrol edilmeli'); ?>
     </tr></table>
-    <p><strong>Fatura:</strong> <?php echo esc_html($s['pending_invoices']); ?> bekleyen · <strong>Operasyon:</strong> <?php echo esc_html($s['open_operations']); ?> zorunlu açık/problem · <strong>Görev:</strong> <?php echo esc_html($s['open_tasks']); ?> açık, <?php echo esc_html($s['overdue_tasks']); ?> gecikmiş.</p>
+    <p><strong>Fatura:</strong> <?php echo $verified&&$woo['orders_count']===$d['orders_count']?esc_html($s['pending_invoices']).' MMC defterinde bekleyen':'WooCommerce ile fatura kuyruğu mutabık değil; ayrıca doğrulayın (MMC: '.esc_html($s['pending_invoices']).')'; ?> · <strong>MMC defteri:</strong> <?php echo esc_html($d['orders_count'].' sipariş / '.$d['ticket_count'].' bilet / '.$money($d['net_revenue'])); ?> · <strong>Operasyon:</strong> <?php echo esc_html($s['open_operations']); ?> zorunlu açık/problem · <strong>Görev:</strong> <?php echo esc_html($s['open_tasks']); ?> açık, <?php echo esc_html($s['overdue_tasks']); ?> gecikmiş.</p>
 
-    <h2>2. Meta Reklam Özeti</h2>
+    <?php if($verified): $ic=$woo['invoice_coverage']; ?><p><strong>Fatura izleme kapsamı (bu günün ödenmiş siparişleri):</strong> <?php echo esc_html($ic['tracked']); ?> takipte · <?php echo esc_html($ic['pending']); ?> bekleyen · <?php echo esc_html($ic['issued']); ?> kesilmiş olarak işaretli · <strong><?php echo esc_html($ic['untracked']); ?> takip kaydı yok.</strong> Faturanın harici portaldaki gerçek durumu burada doğrulanmaz.</p><?php endif; ?>
+    <h2>2. WooCommerce Doğrudan Satış Doğrulaması</h2>
+    <?php if(!$verified): ?><p style="color:#b91c1c">WooCommerce doğrulaması başarısız: <?php echo esc_html($woo['message']??'Kaynak kullanılamıyor.'); ?>. MMC satış sıfırı gerçek satış olarak yorumlanamaz.</p><?php else: ?>
+    <p><strong><?php echo esc_html($woo['orders_count']); ?> ödenmiş sipariş · <?php echo esc_html($woo['ticket_count']); ?> ürün adedi · <?php echo esc_html($money($woo['net_revenue'])); ?></strong> · MMC farkı: <?php echo esc_html($woo['orders_count']-$d['orders_count']); ?> sipariş, <?php echo esc_html($money($woo['net_revenue']-$d['net_revenue'])); ?>. Tarih ölçütü: WooCommerce ödeme zamanı, site yerel saati. İade tutarı düşülür; ürün adedi aile paketinde kişi sayısı değildir.</p>
+    <?php if($woo['orders_count']!=$d['orders_count']||abs($woo['net_revenue']-$d['net_revenue'])>0.01): ?><p style="color:#b91c1c"><strong>Mutabakat uyarısı:</strong> MMC satış defteri WooCommerce ile eşleşmiyor; doluluk ve fatura sıfırları kesin veri değildir.</p><?php endif; ?>
+    <table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">MDG etkinlik / ürün</th><th>Sipariş</th><th>Ürün adedi</th><th>Tutar</th><th>MMC bağlantısı</th></tr></thead><tbody><?php foreach($woo['events'] as $e): ?><tr><td><?php echo esc_html($e['name']); ?></td><td style="text-align:center"><?php echo esc_html($e['orders_count']); ?></td><td style="text-align:center"><?php echo esc_html($e['ticket_count']); ?></td><td style="text-align:center"><?php echo esc_html($money($e['net_revenue'])); ?></td><td style="text-align:center"><?php echo esc_html($e['program_id']?'MMC #'.$e['program_id']:'Eşleşmedi'); ?></td></tr><?php endforeach; ?></tbody></table>
+    <?php endif; ?>
+    <h2>3. Meta Reklam Özeti</h2>
+    <p><strong>Kaynak:</strong> MMC Meta plan kayıtları; Meta Ads canlı harcama doğrulaması yok. Buradaki sıfır, reklamlarda harcama olmadığı anlamına gelmez.</p>
     <p><strong>Toplam aktif harcama:</strong> <?php echo esc_html($money($meta['spend'])); ?> · <strong>Satın alma:</strong> <?php echo esc_html($meta['purchases']); ?> · <strong>CPA:</strong> <?php echo $meta['purchases']?esc_html($money($meta['cpa'])):'—'; ?> · <strong>ROAS:</strong> <?php echo $meta['spend']?esc_html(number_format_i18n($meta['roas'],2)):'—'; ?><?php if(null!==$delta['spend']): ?> · <strong>Son rapordan harcama farkı:</strong> <?php echo esc_html($money($delta['spend'])); ?><?php endif; ?></p>
 
-    <h2>3. Program Bazlı Durum</h2>
+    <h2>4. Program Bazlı Durum (yalnız MMC)</h2>
+    <p>Satış ve doluluk MMC eşlemesine bağlıdır; WooCommerce mutabakatı yoksa sıfırlar kesin değildir.</p>
     <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f3f4f6"><th style="padding:8px;text-align:left">Program</th><th>Gösteri</th><th>Günlük Satış</th><th>Toplam Doluluk</th><th>Saha</th><th>Operasyon</th><th>Finans</th><th>Risk</th></tr></thead><tbody>
     <?php foreach($s['programs'] as $p): ?>
       <tr style="border-bottom:1px solid #e5e7eb"><td style="padding:8px"><strong><?php echo esc_html($p['program_code']); ?></strong><br><?php echo esc_html($p['location']); ?></td><td style="text-align:center"><?php if($p['event_date']): echo esc_html(wp_date('d.m.Y',strtotime($p['event_date']))); if(null!==$p['days_to_show']): ?><br><small><?php echo $p['days_to_show']===0?'Bugün':($p['days_to_show']>0?esc_html($p['days_to_show'].' gün kaldı'):esc_html(abs($p['days_to_show']).' gün önce')); ?></small><?php endif; else: echo '—'; endif; ?></td><td style="text-align:center"><?php echo esc_html($p['daily_sales']['orders_count'].' sipariş / '.$money($p['daily_sales']['net_revenue'])); ?></td><td style="text-align:center"><?php echo esc_html($p['sales']['sold_capacity'].' / '.$p['sales']['capacity'].' · %'.number_format_i18n($p['sales']['occupancy'],1)); ?></td><td style="text-align:center"><?php echo $p['field']['target_schools']?esc_html($p['field']['visited_schools'].'/'.$p['field']['target_schools'].' · %'.number_format_i18n($p['field']['visit_percent'],1)):'—'; ?></td><td style="text-align:center"><?php echo $p['operations']['pre_total']?esc_html('%'.number_format_i18n($p['operations']['pre_percent'],1).' · '.$p['operations']['problems'].' sorun'):'—'; ?></td><td style="text-align:center"><?php echo esc_html($money($p['finance']['profit'])); ?><br><small><?php echo esc_html('%'.number_format_i18n($p['finance']['margin'],1).' marj'); ?></small></td><td style="text-align:center"><strong><?php echo esc_html(strtoupper($p['risk_level'])); ?></strong></td></tr>
@@ -388,13 +542,15 @@ class MMC_Report_Service {
     <?php endforeach; ?>
     </tbody></table>
 
-    <h2>4. Kritik Riskler</h2>
+    <h2>5. Yaklaşan MDG Etkinlikleri (aktif turne)</h2>
+    <?php if(empty($s['mdg_upcoming_events'])): ?><p>MDG etkinlikleri doğrulanamadı veya yaklaşan etkinlik yok.</p><?php else: ?><table style="width:100%"><thead><tr><th style="text-align:left">Etkinlik</th><th>Tarih</th><th>MMC</th></tr></thead><tbody><?php foreach($s['mdg_upcoming_events'] as $e): ?><tr><td><?php echo esc_html($e['name']); ?></td><td><?php echo esc_html($e['date']); ?></td><td><?php echo esc_html($e['program_id']?'#'.$e['program_id']:($e['shadow_program']?'Aynı konum/tarih: '.$e['shadow_program'].'; farklı MDG kaydı':'Bağlı değil')); ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
+    <h2>6. Kritik Riskler</h2>
     <?php if(!$s['critical_alerts']): ?><p>Kritik/yüksek uyarı yok.</p><?php else: ?><ul><?php foreach($s['critical_alerts'] as $a): ?><li><strong><?php echo esc_html($a['program_code'].' · '.$a['location']); ?>:</strong> <?php echo esc_html($a['message']); ?></li><?php endforeach; ?></ul><?php endif; ?>
 
-    <h2>5. İlk 3 Öncelik</h2>
+    <h2>7. İlk 3 Öncelik</h2>
     <?php if(!$s['top_priorities']): ?><p>Kritik öncelik bulunmuyor.</p><?php else: ?><ol><?php foreach($s['top_priorities'] as $a): ?><li><strong><?php echo esc_html(($a['program_code']??'Genel').' · '.($a['location']??'')); ?></strong> — <?php echo esc_html($a['message']); ?></li><?php endforeach; ?></ol><?php endif; ?>
 
-    <h2>6. ChatGPT İçin Yapılandırılmış Özet</h2>
+    <h2>8. ChatGPT İçin Yapılandırılmış Özet</h2>
     <pre style="white-space:pre-wrap;background:#f9fafb;border:1px solid #e5e7eb;padding:12px;border-radius:8px;font-size:12px"><?php echo esc_html(self::machine_summary($s)); ?></pre>
     <p style="color:#6b7280;font-size:12px">Bu rapor MMC kayıtlarından otomatik oluşturulmuştur. WordPress wp_mail() başarısı e-postanın posta sunucusuna teslim talebinin kabul edildiğini gösterir; nihai Gmail teslimi site e-posta yapılandırmasına bağlıdır.</p>
   </div>
@@ -410,21 +566,32 @@ class MMC_Report_Service {
     private static function machine_summary($s){
         $lines=array(); $d=$s['daily_sales'];
         $lines[]='REPORT_DATE='.$s['report_date'];
-        $lines[]='DAILY_ORDERS='.$d['orders_count'];
-        $lines[]='DAILY_TICKETS='.$d['ticket_count'];
+        $w=$s['woocommerce_verification']??array('status'=>'unavailable');
+        $lines[]='SALES_SOURCE=woocommerce_paid_date';
+        $lines[]='WOOCOMMERCE_VERIFICATION='.$w['status'];
+        $lines[]='WOOCOMMERCE_ORDERS='.('verified'===$w['status']?$w['orders_count']:'UNVERIFIED');
+        $lines[]='WOOCOMMERCE_TICKETS='.('verified'===$w['status']?$w['ticket_count']:'UNVERIFIED');
+        $lines[]='WOOCOMMERCE_NET_REVENUE='.('verified'===$w['status']?round($w['net_revenue'],2):'UNVERIFIED');
+        $lines[]='MMC_LEDGER_ORDERS='.$d['orders_count'];
+        $lines[]='DAILY_ORDERS='.('verified'===$w['status']?$w['orders_count']:'UNVERIFIED');
+        $lines[]='DAILY_TICKETS='.('verified'===$w['status']?$w['ticket_count']:'UNVERIFIED');
         $lines[]='DAILY_AUDIENCE_UNITS='.$d['audience_units'];
-        $lines[]='DAILY_NET_REVENUE='.round($d['net_revenue'],2);
-        $lines[]='FAILED_ORDERS='.$s['daily_issues']['failed_orders'];
-        $lines[]='REFUND_ORDERS='.$s['daily_issues']['refund_orders'];
-        $lines[]='REFUND_AMOUNT='.round($s['daily_issues']['refund_amount'],2);
-        $lines[]='PENDING_INVOICES='.$s['pending_invoices'];
+        $lines[]='DAILY_NET_REVENUE='.('verified'===$w['status']?round($w['net_revenue'],2):'UNVERIFIED');
+        $lines[]='FAILED_ORDERS=UNVERIFIED';
+        $lines[]='REFUND_ORDERS=UNVERIFIED';
+        $lines[]='REFUND_AMOUNT=UNVERIFIED';
+        $lines[]='PENDING_INVOICES='.('verified'===$w['status']&&$w['orders_count']===$d['orders_count']?$s['pending_invoices']:'UNVERIFIED');
+        $lines[]='INVOICE_TRACKING_UNTRACKED='.('verified'===$w['status']?$w['invoice_coverage']['untracked']:'UNVERIFIED');
+        $lines[]='INVOICE_TRACKING_PENDING='.('verified'===$w['status']?$w['invoice_coverage']['pending']:'UNVERIFIED');
+        foreach($s['mdg_upcoming_events']??array() as $e){$lines[]='MDG_UPCOMING|'.$e['date'].'|'.$e['name'].'|mmc='.$e['program_id'].'|same_date_program='.($e['shadow_program']??'');}
         $lines[]='OPEN_OPERATIONS='.$s['open_operations'];
         $lines[]='OPEN_TASKS='.$s['open_tasks'];
         $lines[]='OVERDUE_TASKS='.$s['overdue_tasks'];
-        $lines[]='META_SPEND='.round($s['meta_totals']['spend'],2);
-        $lines[]='META_PURCHASES='.$s['meta_totals']['purchases'];
-        $lines[]='META_CPA='.round($s['meta_totals']['cpa'],2);
-        $lines[]='META_ROAS='.round($s['meta_totals']['roas'],2);
+        $lines[]='META_SOURCE=MMC_MANUAL_PLAN_NOT_LIVE';
+        $lines[]='META_SPEND=UNVERIFIED';
+        $lines[]='META_PURCHASES=UNVERIFIED';
+        $lines[]='META_CPA=UNVERIFIED';
+        $lines[]='META_ROAS=UNVERIFIED';
         foreach($s['programs'] as $p){$lines[]='PROGRAM|'.$p['program_code'].'|'.$p['location'].'|date='.($p['event_date']?:'').'|occupancy='.$p['sales']['occupancy'].'|daily_revenue='.round($p['daily_sales']['net_revenue'],2).'|field='.$p['field']['visit_percent'].'|ops='.$p['operations']['pre_percent'].'|profit='.round($p['finance']['profit'],2).'|risk='.$p['risk_level'];}
         return implode("\n",$lines);
     }
