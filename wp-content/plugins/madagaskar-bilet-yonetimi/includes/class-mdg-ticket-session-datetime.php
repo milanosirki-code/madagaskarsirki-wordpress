@@ -169,6 +169,7 @@ public static function correct_ticket_data( array $ticket_data, $ticket_instance
 public static function resolve_session_datetime( array $ticket_data, $ticket_instance_id, $current_datetime ) {
 	$meta = $ticket_instance_id > 0 && function_exists( 'get_post_meta' ) ? (array) get_post_meta( $ticket_instance_id ) : array();
 	$ids = self::resolve_ids( $ticket_data, $meta, $ticket_instance_id );
+	if ( ! empty( $ids['item_ambiguous'] ) ) { return array(); }
 	$canonical = self::resolve_order_item( $ids['order_id'], $ids['item_id'] );
 	if ( null !== $canonical ) { return $canonical; }
 	$sources     = self::collect_sources( $ticket_data, $ticket_instance_id );
@@ -364,6 +365,33 @@ public static function resolve_ids( array $ticket_data, array $ticket_meta, $tic
 			$ids['order_id'] = (int) $post->post_parent;
 		}
 	}
+
+
+    // Tickera Bridge stores the purchased WooCommerce variation as ticket_type_id.
+    if ( ! empty( $ids['product_id'] ) && function_exists( 'wc_get_product' ) ) {
+        $product = wc_get_product( $ids['product_id'] );
+        if ( $product && method_exists( $product, 'get_parent_id' ) && (int) $product->get_parent_id() > 0 ) {
+            if ( empty( $ids['variation_id'] ) ) { $ids['variation_id'] = $ids['product_id']; }
+            $ids['product_id'] = (int) $product->get_parent_id();
+        }
+    }
+    if ( empty( $ids['item_id'] ) && ! empty( $ids['order_id'] ) && function_exists( 'wc_get_order' ) ) {
+        $order = wc_get_order( $ids['order_id'] );
+        $matches = array();
+        if ( $order ) {
+            foreach ( $order->get_items( 'line_item' ) as $item_key => $candidate ) {
+                $matches_identity = ! empty( $ids['variation_id'] )
+                    ? (int) $candidate->get_variation_id() === (int) $ids['variation_id']
+                    : ( ! empty( $ids['product_id'] ) && (int) $candidate->get_product_id() === (int) $ids['product_id'] );
+                if ( $matches_identity ) {
+                    $item_id = method_exists( $candidate, 'get_id' ) ? (int) $candidate->get_id() : (int) $item_key;
+                    if ( $item_id > 0 ) { $matches[] = $item_id; }
+                }
+            }
+        }
+        if ( count( $matches ) === 1 ) { $ids['item_id'] = $matches[0]; }
+        elseif ( count( $matches ) > 1 ) { $ids['item_ambiguous'] = true; }
+    }
 
 	return $ids;
 }
