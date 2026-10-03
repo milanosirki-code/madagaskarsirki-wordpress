@@ -36,7 +36,7 @@ Güncellemelerden sonra Jetpack Monitor siteyi yine **up** gösterdi. Yeni Jetpa
 | Phone Number Validation | 1.10.0 → 1.10.1 | Checkout telefon alanını doğrular; hata checkout'u kilitleyebilir. Aynı neden. |
 | WooCommerce PayPal Payments | 4.1.2 → 4.1.3 | Pasif. İşletme sahibi güncelleme isteğini reddetti. |
 
-Bu iki checkout eklentisi, smoke test yapılabilecek bir anda güncellenmeli ve ardından sepet → checkout → PayTR ödeme sayfası açılışı denenmelidir.
+İşletme sahibi kararıyla Tickera Bridge ve Phone Number Validation güncellemeleri yapılmayacak. Bu karar ileride değişirse, güncelleme yalnız sepet → checkout → PayTR ödeme sayfası smoke testiyle birlikte ele alınmalıdır.
 
 ## 4. Canlı ↔ repo sürüm farkı
 
@@ -55,7 +55,7 @@ WordPress.com MCP eklenti dosyalarını okuyamadığı için canlı kod buradan 
 ## 5. Diğer gözlemler (değişiklik yapılmadı)
 
 - İki bilet yönetimi eklentisi birlikte aktif: "Madagaskar Bilet Yönetimi" `3.6.3-ticket-invalidation-dry-run` ve "V4.0" `4.0.14-transition`.
-- İki SKU hotfix'i birlikte aktif: "İlçe Bazlı SKU Hotfix" 1.0.0 ve "V2" 2.0.0.
+- Bu satır ilk gözlem anındaki durumu gösteriyordu. Takipte, 2 Ekim 22:51–22:56 arasında "İlçe Bazlı SKU Hotfix" 1.0.0 ve "V2" 2.0.0 pasifleştirildi; ayrıca "Manuel Salon Seçimi Hotfix" 1.0.0 pasifleştirildi. Dosyalar silinmedi; rollback için yeniden etkinleştirilebilir.
 - 66 pasif eklentinin büyük kısmı eski dry-run / denetim sürümleridir (V3.6.4–V3.9.0.4).
 
 ## 6. Geri alma
