@@ -1,0 +1,9 @@
+{
+  "checked_at": "2026-10-03",
+  "id": 134,
+  "name": "Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Sakonu",
+  "province_name": "Denizli",
+  "district": "Pamukkale",
+  "is_active": 1,
+  "change_scope": "name only: Sakonu → Salonu; preserve venue ID and all mappings"
+}
