@@ -59,7 +59,7 @@ add_action('template_redirect', function () {
     if ('/etkinlik/madagaskar-sirki-kirikkale-02-ekim-2026' !== untrailingslashit((string) $path)) { return; }
     // Explicit organizer cancellation: never depend on a mutable integration status.
     nocache_headers();
-    wp_die('<div style="text-align:center;padding:16px"><p>MADAGASKAR SİRKİ</p><h1>Kırıkkale gösterileri iptal edilmiştir</h1><p>2 Ekim 2026 · 17 Ağustos Spor Salonu<br>17:30 ve 19:00 seansları</p><p>Bu etkinlik için bilet satışı kapatılmıştır.</p><p>Bilet bedeli iade talepleri oluşturulmuştur. İadeler onay ve ödeme kuruluşu işlemlerinin ardından tamamlanacaktır.</p></div>', 'Kırıkkale Gösterisi İptal Edildi — Madagaskar Sirki', array('response' => 200));
+    wp_die('<div style="max-width:680px;margin:40px auto;text-align:center;padding:24px"><p>MADAGASKAR SİRKİ</p><h1>Kırıkkale gösterileri iptal edilmiştir</h1><p>2 Ekim 2026 · 17 Ağustos Spor Salonu<br>17:30 ve 19:00 seansları</p><p>Bu etkinlik için bilet satışı kapatılmıştır.</p><p>Bilet bedeli iadeleri başlatılmıştır. Tutarın kartınıza yansıması bankanıza göre birkaç iş günü sürebilir.</p><p><a href="https://madagaskarsirki.com/">Ana Sayfaya Dön</a> · <a href="https://wa.me/903129113710">WhatsApp Destek</a></p></div>', 'Kırıkkale Gösterisi İptal Edildi — Madagaskar Sirki', array('response' => 200));
 }, -100);
 
 /**
