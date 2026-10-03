@@ -1,0 +1,74 @@
+{
+  "site": "https://madagaskarsirki.com",
+  "cache_purge": "WordPress.com global edge and object cache, UI success notifications",
+  "anonymous": {
+    "bilet": {
+      "anonymous": true,
+      "old_name": false,
+      "correct_name": true,
+      "past_bolu": false,
+      "past_pursaklar": false,
+      "kirikkale": false,
+      "usak": true,
+      "articles": 10
+    },
+    "cities": {
+      "anonymous": true,
+      "old_name": false,
+      "correct_name": true,
+      "past_bolu": false,
+      "past_pursaklar": false,
+      "kirikkale": false,
+      "usak": true,
+      "articles": 13
+    },
+    "home": {
+      "anonymous": true,
+      "old_name": false,
+      "correct_name": true,
+      "past_bolu": false,
+      "past_pursaklar": false,
+      "kirikkale": false,
+      "usak": false,
+      "articles": 11
+    },
+    "denizli": {
+      "anonymous": true,
+      "old_name": false,
+      "correct_name": true,
+      "past_bolu": false,
+      "past_pursaklar": false,
+      "kirikkale": false,
+      "usak": false,
+      "articles": 1
+    }
+  },
+  "captures": {
+    "kirikkale": {
+      "sha256": "6a912d5ffb91ee1653c0eede9d0975a20543bb5c573df13f0dee2e07ec99c71c",
+      "title": "Kırıkkale Gösterisi İptal Edildi — Madagaskar Sirki"
+    },
+    "ankara": {
+      "sha256": "de9cafd2734bdfa8f019f54613fd40fc25cb175f5cec40b97ed6dbf5672a195e",
+      "title": "Ankara Sirk Gösterileri ve Güncel Biletler | Madagaskar Sirki"
+    },
+    "bilet": {
+      "sha256": "f557f78c57e3b680d02945c1c026b776d90fa6a488ad2d024de55a7fcf038e12",
+      "title": "Bilet Al | Madagaskar Sirki"
+    },
+    "cities": {
+      "sha256": "03f523193e47dcbe58fa2d84749ae4a1db8981efdfa2c0d20f5f43521876185b",
+      "title": "2026 Türkiye Turnesi ve Şehirler | Madagaskar Sirki"
+    },
+    "home": {
+      "sha256": "aac85f5ed9975f27e6c1cea634064f105e53692d49b010077a47c71f77db11f7",
+      "title": "Madagaskar Sirki 2026 Türkiye Turnesi ve Biletleri"
+    },
+    "denizli": {
+      "sha256": "e31cd5dda87172c08f72022bbd5344ce860c9680d46cbcf91e6d47d425f597fa",
+      "title": "Madagaskar Sirki Denizli Biletleri | 8 Ekim 2026 Perşembe"
+    }
+  },
+  "kirikkale_new_refund_text": true,
+  "kirikkale_home_support_links": true
+}

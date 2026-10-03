@@ -1,0 +1,17 @@
+KOMMO AKTİF PROGRAM KISA KAYNAĞI
+Şehir/tarih/salon/seans/fiyat için bu kaynak önceliklidir. Aşağıdaki şehir/ilçe varsa kesinlikle program yayımlanmadı deme. Her etkinlik yalnız bir kez listelenmiştir.
+Bolu | 27 Eylül 2026 | 17 Temmuz Kapalı Spor Salonu | 12:00/14:00/16:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Pursaklar / Ankara | 01 Ekim 2026 | Abdurrahim Karakoç Kongre ve Kültür Merkezi | 17:30/19:30 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Kırıkkale | 02 Ekim 2026 | 17 Ağustos Spor Salonu | 17:30/19:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Sincan | 03 Ekim 2026 | Sinan Şamil Sam Spor Salonu | 12:00/14:00/16:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Yenimahalle | 04 Ekim 2026 | Yenimahalle Spor Kompleksi Salonu | 12:00/14:00/16:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Denizli | 08 Ekim 2026 | Denizli Büyükşehir Belediyesi Kongre ve Kültür Merkezi Özay Gönlüm Salonu | 17:30/19:30 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Mamak | 10 Ekim 2026 | Prof Dr. Necmettin Erbakan Kongre Merkezi | 12:00/14:00/16:00/18:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Eskişehir | 11 Ekim 2026 | Porsuk Kapalı Spor Salonu | 12:00/14:00/16:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Uşak | 15 Ekim 2026 | Merkez Spor salonu | 17:30/19:30 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+Aydın / Efeler | 17 Ekim 2026 | Mimar Sinan Kapalı Spor Salonu | 12:00/14:00/16:00 | Çocuk 250 TL; Yetişkin 500 TL; Aile Paketi 1.100 TL
+İzmir | 08 Kasım 2026 | Halkapınar Spor Salonu | 12:00/14:00/16:00 | Çocuk 300 TL; Yetişkin 600 TL; Aile Paketi 1.300 TL
+ANKARA: Müşteri yalnız Ankara derse şu aktif Ankara etkinliklerini listele: Pursaklar / Ankara 01 Ekim 2026 | Sincan 03 Ekim 2026 | Yenimahalle 04 Ekim 2026 | Mamak 10 Ekim 2026.
+FİYAT: Her etkinliğin kendi satırındaki fiyatı kullan; başka şehrin fiyatını taşıma.
+ÜCRETSİZ ÇOCUK: Okuldan verilen ücretsiz çocuk bileti şehirden bağımsız genel kuraldır; aktif gösterilerde bireysel kullanımda geçerlidir. 1 ücretli yetişkin yanında en fazla 2 ücretsiz çocuk bileti kullanılabilir; çocuk tek başına giremez; toplu katılımda geçersizdir.
+BİLET: Tüm online satışlar için yalnız https://madagaskarsirki.com/bilet-al/ adresini paylaş.

@@ -1,0 +1,289 @@
+[
+  {
+    "file": "madagaskar-management-center/madagaskar-management-center.php",
+    "equal": false,
+    "liveLength": 7496,
+    "repoLength": 7496,
+    "repoSha": "09938c8585454ee15162228243753e252645fcb0"
+  },
+  {
+    "file": "madagaskar-management-center/assets/admin.css",
+    "equal": true,
+    "liveLength": 9553,
+    "repoLength": 9553,
+    "repoSha": "8481a9bfe582d8bda91f6ce59553e73b17ce7cc2"
+  },
+  {
+    "file": "madagaskar-management-center/uninstall.php",
+    "equal": true,
+    "liveLength": 214,
+    "repoLength": 214,
+    "repoSha": "c12a250a772319cfe42e7df41abbdfe71158d701"
+  },
+  {
+    "file": "madagaskar-management-center/README.md",
+    "equal": true,
+    "liveLength": 42270,
+    "repoLength": 42270,
+    "repoSha": "0fec5ddc5f01fb39965d60cfa44710017a8823ea"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-kommo-service.php",
+    "equal": false,
+    "liveLength": 89008,
+    "repoLength": 88299,
+    "repoSha": "627c00f9e3be8769ddd7e3f8f650a98773083d5a"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php",
+    "equal": false,
+    "liveLength": 42644,
+    "repoLength": 39589,
+    "repoSha": "3f9df818606edc272870b7d5f7d2351fe9227c69"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-mdg-publish-admin.php",
+    "equal": true,
+    "liveLength": 10628,
+    "repoLength": 10628,
+    "repoSha": "d736338ed3d9feb3b9a55fde36fdb577a001a359"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-sales-service.php",
+    "equal": false,
+    "liveLength": 27420,
+    "repoLength": 25453,
+    "repoSha": "f63033107cbce0ba738dc9a3bad84339a19e0c63"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-sales-admin.php",
+    "equal": false,
+    "liveLength": 14899,
+    "repoLength": 13378,
+    "repoSha": "8bcbf808310336563320b2cb1e395aeb52392cdf"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-program-service.php",
+    "equal": true,
+    "liveLength": 9579,
+    "repoLength": 9579,
+    "repoSha": "53c336af77ab1f5e5eed3f3cc5689adf300dd7cd"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-kommo-admin.php",
+    "equal": true,
+    "liveLength": 47381,
+    "repoLength": 47381,
+    "repoSha": "246b927e9aec16673087c5abaf34f915e31e17b0"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-admin.php",
+    "equal": false,
+    "liveLength": 40457,
+    "repoLength": 40272,
+    "repoSha": "e6899f7ff26acd7b1b5489fde4b9e3292fc041a2"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php",
+    "equal": true,
+    "liveLength": 11947,
+    "repoLength": 11947,
+    "repoSha": "b25a6e62f70fd05d9e1997c6f85b745b481905c4"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-marketing-service.php",
+    "equal": false,
+    "liveLength": 19445,
+    "repoLength": 18578,
+    "repoSha": "b5cbcc9839c04928c2f8d7ec090aa2f57fe1badc"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-finance-service.php",
+    "equal": false,
+    "liveLength": 34389,
+    "repoLength": 33748,
+    "repoSha": "492f996c723f0e15d3c9022e09e4033ad32cdf1b"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-venue-service.php",
+    "equal": false,
+    "liveLength": 34138,
+    "repoLength": 30775,
+    "repoSha": "85aee19b5d7ce620d49daf6c99e4c8f751c78592"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-integrity-service.php",
+    "equal": false,
+    "liveLength": 28994,
+    "repoLength": 29858,
+    "repoSha": "580d5d2f2f3f2f649957e0aa89c1f3d3688c6a07"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-publish-content-excel.php",
+    "equal": false,
+    "liveLength": 28918,
+    "repoLength": 28510,
+    "repoSha": "26b8ef192f14c21ba9e5c3303009d6559a2a0b4b"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-snippet-inventory-service.php",
+    "equal": true,
+    "liveLength": 12757,
+    "repoLength": 12757,
+    "repoSha": "aa7a1c90b986e1194e0b56dd9f94c6b7eb321c2d"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-meb-source-service.php",
+    "equal": true,
+    "liveLength": 12221,
+    "repoLength": 12221,
+    "repoSha": "baac75d4faa799395f8ed57ca1de26d34a3d4a5d"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-marketing-admin.php",
+    "equal": false,
+    "liveLength": 9531,
+    "repoLength": 9362,
+    "repoSha": "0762c40f67803d8cdfded0482ba9597ca0b2739c"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-field-admin.php",
+    "equal": false,
+    "liveLength": 19112,
+    "repoLength": 19328,
+    "repoSha": "e441abb87aa792b4b8daad1d023265add8ca8887"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-venue-admin.php",
+    "equal": false,
+    "liveLength": 29171,
+    "repoLength": 22475,
+    "repoSha": "e74ea21fffa1f65ac7f370d804e35e0a4c8057cd"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-integrity-admin.php",
+    "equal": true,
+    "liveLength": 14349,
+    "repoLength": 14349,
+    "repoSha": "e46aac955e8024e90e3ca3904f80cb1095e6ba1c"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-population-source-service.php",
+    "equal": true,
+    "liveLength": 6207,
+    "repoLength": 6207,
+    "repoSha": "65a34b4f408ce6792ab1b3c9beed9f91f0b81a2a"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-school-source-service.php",
+    "equal": true,
+    "liveLength": 19400,
+    "repoLength": 19400,
+    "repoSha": "271dd10cb373a9f696d27178954d9bbc0840b433"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-event-admin.php",
+    "equal": true,
+    "liveLength": 27900,
+    "repoLength": 27900,
+    "repoSha": "d1f8423abddd74f2f515c02c58f4407a63f7e7e9"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-field-service.php",
+    "equal": true,
+    "liveLength": 40703,
+    "repoLength": 40703,
+    "repoSha": "d422e7b7731ed4d0ea08d2d0479d66e5b7e1d0eb"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-activator.php",
+    "equal": true,
+    "liveLength": 47986,
+    "repoLength": 47986,
+    "repoSha": "59c3876fffc0951180a5c906ec9abd00fa205655"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-navigation-admin.php",
+    "equal": false,
+    "liveLength": 35897,
+    "repoLength": 34804,
+    "repoSha": "f41741f01420e50cc54cac360fa5007cc7d6e442"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-snippet-inventory-admin.php",
+    "equal": true,
+    "liveLength": 7599,
+    "repoLength": 7599,
+    "repoSha": "31e3ec27b9c359e6c431e173c8670ab654c897ab"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-report-service.php",
+    "equal": false,
+    "liveLength": 43226,
+    "repoLength": 27670,
+    "repoSha": "4392275db08823d76a883b44bf2545595c91172d"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-report-admin.php",
+    "equal": false,
+    "liveLength": 8759,
+    "repoLength": 7787,
+    "repoSha": "e2f4f48ceebb433c0c288c34fc3cccc1ef6ab982"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-health-service.php",
+    "equal": false,
+    "liveLength": 30166,
+    "repoLength": 30025,
+    "repoSha": "991b4aa3aef8c146fa3fc37d70e39e0214281c71"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-operations-admin.php",
+    "equal": false,
+    "liveLength": 20768,
+    "repoLength": 20617,
+    "repoSha": "0b20dd85ea60c0c4ba787b02aa4362a344923f10"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-operations-service.php",
+    "equal": false,
+    "liveLength": 34018,
+    "repoLength": 33814,
+    "repoSha": "270c5e259f2ccfa2155808de304b32d5e71f3e9f"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-event-service.php",
+    "equal": true,
+    "liveLength": 23083,
+    "repoLength": 23083,
+    "repoSha": "25e02d42ba4d7ef50a73697591b2d118bc1f2937"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-region-service.php",
+    "equal": true,
+    "liveLength": 28266,
+    "repoLength": 28266,
+    "repoSha": "6a081adca9ec34a86b653b149c13eed35dfe3646"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-dashboard-admin.php",
+    "equal": true,
+    "liveLength": 10783,
+    "repoLength": 10783,
+    "repoSha": "75ab111fbad82e7675b95e20c4bbb98d4104dc59"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-finance-admin.php",
+    "equal": false,
+    "liveLength": 22260,
+    "repoLength": 21542,
+    "repoSha": "f89ce062d0001b8adf9808578b08858e42b1b4bb"
+  },
+  {
+    "file": "madagaskar-management-center/includes/class-mmc-dashboard-service.php",
+    "equal": true,
+    "liveLength": 17374,
+    "repoLength": 17374,
+    "repoSha": "a5b440ae52c6b455a08274ca6c46c0559349d3aa"
+  }
+]

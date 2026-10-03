@@ -1,0 +1,7 @@
+KOMMO AKTİF ETKİNLİK KONUMLARI
+Salon/adres/konum sorularında bu kaynak önceliklidir. Şehir veya ilçe eşleşirse salon, açık adres ve varsa doğrulanmış Google Maps bağlantısını ver; bağlantı yoksa uydurma.
+Pursaklar / Ankara | Salon: Abdurrahim Karakoç Kongre ve Kültür Merkezi | Adres: Merkez, Şht. Salim Akgül Cd. No:11, 06145 Pursaklar/Ankara, Pursaklar, Ankara | Konum: https://maps.app.goo.gl/hS35HFmV2vfvumHR9
+Kırıkkale | Salon: 17 Ağustos Spor Salonu | Adres: Başpınar Mevki, Kırıkkale
+İtfaiye yanında., Merkez, Kırıkkale | Konum: https://maps.app.goo.gl/hD5jvrH8KHtZRU7g8
+Uşak | Salon: Merkez Spor salonu | Adres: Fatih, Yavuz Sultan Selim Cd No:46, 64100 Uşak, Merkez, Uşak | Konum: https://maps.app.goo.gl/QEoBiRWN6qehcpPT7
+Aydın / Efeler | Salon: Mimar Sinan Kapalı Spor Salonu | Adres: No:, Mimar Sinan, Ünal Özgödek Blv. No:16, 09100 Aydın, Efeler, Aydın | Konum: https://maps.app.goo.gl/3T8Mv8Fdzfw5tcaS7
