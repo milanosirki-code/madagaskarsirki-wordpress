@@ -359,6 +359,7 @@ function ms_city_v2_live_cities() {
 				ON s.event_id = e.id
 			WHERE e.status = %s
               AND e.id <> 6 /* 3 Ekim 2026 Eskişehir: organizatör iptali */
+              AND e.id <> 15 /* 2 Ekim 2026 Kırıkkale: iptal + tam iade (PR #92) */
 			  AND s.end_at >= %s
 			GROUP BY e.id
 			ORDER BY MIN(s.start_at) ASC, e.id ASC
