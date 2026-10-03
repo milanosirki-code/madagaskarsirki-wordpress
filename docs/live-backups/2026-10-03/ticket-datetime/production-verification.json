@@ -1,0 +1,71 @@
+{
+  "verified_at_timezone": "Europe/Istanbul",
+  "canonical_runtime": {
+    "canonical_class_loaded": true,
+    "class_file_matches_module": true,
+    "standalone_active": false,
+    "bootstrap_sha256": "9863ef7feaab4096051471047cf4061ee89dc71f44deaa43e043dff1667bc23d",
+    "module_sha256": "f2ed98b99b5d65e210f386e1b244a85190ff3e75c999e53d2de0496cd9379e82",
+    "hook_owners": {
+      "tickera_ticket_designer_pre_generate": {
+        "canonical": 1,
+        "legacy": 0
+      },
+      "tickera_ticket_designer_ticket_data": {
+        "canonical": 1,
+        "legacy": 0
+      },
+      "tickera_ticket_designer_resolved_ticket_data": {
+        "canonical": 1,
+        "legacy": 0
+      },
+      "tc_ticket_designer_ticket_data": {
+        "canonical": 1,
+        "legacy": 0
+      },
+      "tc_ticket_designer_resolved_ticket_data": {
+        "canonical": 1,
+        "legacy": 0
+      }
+    }
+  },
+  "pdf_checks": [
+    {
+      "ticket_id": 4202,
+      "resolved": {
+        "order_id": 4194,
+        "item_id": 540,
+        "product_id": 2951,
+        "variation_id": 2953
+      },
+      "pages": 1,
+      "sha256": "40d13470017b2f92a5e8ff981da4894f4fd80b47f1fb165a3bc052212e3314af",
+      "expected_date_time": "15 Ekim 2026 17:30 - 18:30",
+      "date_time_present": true,
+      "entry_qr_matches_printed_code": true,
+      "venue_qr_present": true,
+      "ticket_meta_and_order_status_unchanged": true,
+      "generation_path": "live tickera_ticket_designer_pre_generate filter chain"
+    },
+    {
+      "ticket_id": 4069,
+      "resolved": {
+        "order_id": 4065,
+        "item_id": 506,
+        "product_id": 2954,
+        "variation_id": 2956
+      },
+      "pages": 1,
+      "sha256": "8f78535db082a67dca8092ace1e9e8224af93a9c09fa3a7133d567d87b732d97",
+      "expected_date_time": "15 Ekim 2026 19:30 - 20:30",
+      "date_time_present": true,
+      "entry_qr_matches_printed_code": true,
+      "venue_qr_present": true,
+      "ticket_meta_and_order_status_unchanged": true,
+      "generation_path": "live tickera_ticket_designer_pre_generate filter chain"
+    }
+  ],
+  "private_pdf_files_published": false,
+  "real_payment_or_message_sent": false,
+  "notes": "No ticket meta or order status changed during either PDF run; no check-in request made."
+}
