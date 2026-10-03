@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint staged canonical module and tests
         run: |
-          php -l docs/code-snippets/issue-98/class-mdg-ticket-session-datetime.php
+          php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-session-datetime.php
           php -l tests/ticket-datetime/regression.php
           find wp-content/plugins/madagaskar-bilet-yonetimi -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Run isolated session and PDF-input regressions

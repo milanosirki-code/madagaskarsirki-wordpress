@@ -66,3 +66,7 @@ add_action( 'plugins_loaded', function () {
     MDG_Activator::maybe_upgrade();
     MDG_Plugin::instance()->boot();
 } );
+
+// Canonical datetime owner activates only after the standalone hotfix is retired.
+require_once MDG_BILET_DIR . 'includes/class-mdg-ticket-session-datetime.php';
+add_action( 'plugins_loaded', array( 'MDG_Ticket_Session_Datetime', 'hooks' ), 20 );

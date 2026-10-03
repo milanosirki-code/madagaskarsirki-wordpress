@@ -28,7 +28,7 @@ class FixtureOrder {
 function wc_get_order($id) { return $id===10 ? new FixtureOrder() : false; }
 function check($name,$actual,$expected) { if ($actual !== $expected) { throw new RuntimeException($name.': '.json_encode(array($actual,$expected))); } echo "PASS: $name\n"; }
 $repo = dirname(__DIR__,2);
-require $repo.'/docs/code-snippets/issue-98/class-mdg-ticket-session-datetime.php';
+require $repo.'/wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-session-datetime.php';
 MDG_Ticket_Session_Datetime::hooks();
 check('canonical registers exactly five filters',count($hooks),5);
 check('pre-generate priority and args',array_slice($hooks[0],2),array(9,6));

@@ -1,6 +1,6 @@
 # Issue #98: staged canonical datetime module
 
-This proposal is **not deployed**. Files under docs/code-snippets are reviewable staging source, not a new active WordPress snippet.
+This proposal is **not deployed**. The module is integrated into the draft canonical plugin source. No live plugin file or active snippet has been changed.
 
 ## Problem reproduced
 A controlled fixture for an order item purchased at 19:30, with generic event_time=17:30, returns 17:30 through the exact standalone v1.0.0. Generic ticket data is scanned before the order item. This is a code regression reproduction, not evidence that a particular live customer's PDF is wrong.
@@ -14,7 +14,7 @@ Public resolve_order_item() and format_utc_session() are shared entry points for
 
 ## Ownership / deployment sequence
 1. Capture and reconcile the **complete** live Madagaskar Bilet Yönetimi plugin into its canonical repository directory. Completed: all 47 editor-listed live source files have now been captured into wp-content/plugins/madagaskar-bilet-yonetimi/ without modifications; SHA256/byte manifest is docs/live-captures/2026-10-03/mdg-canonical-before-manifest.json. No active runtime source was changed.
-2. Add this reviewed module as includes/class-mdg-ticket-session-datetime.php, and require it from the exact live bootstrap. Register MDG_Ticket_Session_Datetime::hooks on plugins_loaded priority 20.
+2. Completed in draft source: includes/class-mdg-ticket-session-datetime.php is required from the exact captured bootstrap, with hook registration on plugins_loaded priority 20. The rest of the 47 captured files remain unchanged.
 3. With standalone active, canonical hooks() returns without registering anything; the unique working hotfix remains owner. No duplicate hooks or function redeclaration.
 4. On staging/canary, deactivate standalone and verify canonical ownership: five filters only, pre-generate priority 9/6 arguments and four data filters priority 20/4 arguments.
 5. Generate actual existing two-session ticket PDFs and inspect rendered date/time, QR/link and template output; compare against exact purchased order-item/session mapping. Unit PDF-generator fixture is **not** a real PDF smoke test.
@@ -22,4 +22,4 @@ Public resolve_order_item() and format_utc_session() are shared entry points for
 7. Rollback: reactivate standalone. Canonical hook registration automatically yields to its existing callback on the next request.
 
 ## Validation
-22 isolated checks passed with PHP 8.5 WASM locally: hook counts/priorities, mapped 19:30 fields, actual duration, legacy order-item precedence, second variation selection, ambiguous/invalid mapping handling, Turkey date rollover, PDF-generator input, existing pre-generated response and standalone ownership. Native PHP CI runs the same suite plus lint. No source has been installed on production; Complete 47-file canonical capture is included; Issue #98 stays open for module integration and actual rendered PDF canary.
+22 isolated checks passed with PHP 8.5 WASM locally: hook counts/priorities, mapped 19:30 fields, actual duration, legacy order-item precedence, second variation selection, ambiguous/invalid mapping handling, Turkey date rollover, PDF-generator input, existing pre-generated response and standalone ownership. Native PHP CI runs the same suite plus lint. No source has been installed on production; Complete 47-file canonical capture is included; Issue #98 stays open for actual rendered PDF canary and controlled deployment.
