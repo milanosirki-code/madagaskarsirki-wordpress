@@ -1,7 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
- * STAGED canonical module for MDG; not installed on live.
+ * Canonical purchased-session datetime module for MDG.
  * Ported from exact Ticket Session Datetime Fix v1.0.0 (SHA256 in README).
  * Read-only: no order, ticket, capacity, status or payment writes.
  */
