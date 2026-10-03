@@ -13,7 +13,7 @@ Resolution order: exact MDG order_id + order_item_id -> order_map -> session, re
 Public resolve_order_item() and format_utc_session() are shared entry points for later PDF and session-display consumers. QR/location payloads and checkout/payment flows are untouched.
 
 ## Ownership / deployment sequence
-1. Capture and reconcile the **complete** live Madagaskar Bilet Yönetimi plugin into its canonical repository directory. It is currently absent from this repository; a bootstrap alone is not a complete deployable plugin.
+1. Capture and reconcile the **complete** live Madagaskar Bilet Yönetimi plugin into its canonical repository directory. Completed: all 47 editor-listed live source files have now been captured into wp-content/plugins/madagaskar-bilet-yonetimi/ without modifications; SHA256/byte manifest is docs/live-captures/2026-10-03/mdg-canonical-before-manifest.json. No active runtime source was changed.
 2. Add this reviewed module as includes/class-mdg-ticket-session-datetime.php, and require it from the exact live bootstrap. Register MDG_Ticket_Session_Datetime::hooks on plugins_loaded priority 20.
 3. With standalone active, canonical hooks() returns without registering anything; the unique working hotfix remains owner. No duplicate hooks or function redeclaration.
 4. On staging/canary, deactivate standalone and verify canonical ownership: five filters only, pre-generate priority 9/6 arguments and four data filters priority 20/4 arguments.
@@ -22,4 +22,4 @@ Public resolve_order_item() and format_utc_session() are shared entry points for
 7. Rollback: reactivate standalone. Canonical hook registration automatically yields to its existing callback on the next request.
 
 ## Validation
-22 isolated checks passed with PHP 8.5 WASM locally: hook counts/priorities, mapped 19:30 fields, actual duration, legacy order-item precedence, second variation selection, ambiguous/invalid mapping handling, Turkey date rollover, PDF-generator input, existing pre-generated response and standalone ownership. Native PHP CI runs the same suite plus lint. No source has been installed on production; Issue #98 stays open for complete canonical capture and actual PDF canary.
+22 isolated checks passed with PHP 8.5 WASM locally: hook counts/priorities, mapped 19:30 fields, actual duration, legacy order-item precedence, second variation selection, ambiguous/invalid mapping handling, Turkey date rollover, PDF-generator input, existing pre-generated response and standalone ownership. Native PHP CI runs the same suite plus lint. No source has been installed on production; Complete 47-file canonical capture is included; Issue #98 stays open for module integration and actual rendered PDF canary.

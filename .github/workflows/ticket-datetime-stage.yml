@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'docs/code-snippets/issue-98/**'
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/**'
       - 'tests/ticket-datetime/**'
       - '.github/workflows/ticket-datetime-stage.yml'
   workflow_dispatch:
@@ -17,5 +18,6 @@ jobs:
         run: |
           php -l docs/code-snippets/issue-98/class-mdg-ticket-session-datetime.php
           php -l tests/ticket-datetime/regression.php
+          find wp-content/plugins/madagaskar-bilet-yonetimi -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Run isolated session and PDF-input regressions
         run: php tests/ticket-datetime/regression.php

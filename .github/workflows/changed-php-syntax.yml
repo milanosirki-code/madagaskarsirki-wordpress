@@ -37,8 +37,7 @@ jobs:
           set -euo pipefail
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch --no-tags origin "${{ github.base_ref }}" --depth=1
-            BASE="origin/${{ github.base_ref }}"
+            BASE="${{ github.event.pull_request.base.sha }}"
           else
             BASE="${{ github.event.before }}"
             if [[ -z "$BASE" || "$BASE" == "0000000000000000000000000000000000000000" ]]; then
@@ -46,9 +45,12 @@ jobs:
             fi
           fi
 
-          git diff --name-only --diff-filter=ACMRT "$BASE"...HEAD             | grep -E '\.php$'             | while IFS= read -r file; do
-                [[ -f "$file" ]] && printf '%s\0' "$file"
-              done > /tmp/changed-php-files
+          git diff --name-only -z --diff-filter=ACMRT "$BASE"...HEAD -- '*.php' |
+            while IFS= read -r -d '' file; do
+              if [[ -f "$file" ]]; then
+                printf '%s\0' "$file"
+              fi
+            done > /tmp/changed-php-files
 
           if [[ -s /tmp/changed-php-files ]]; then
             echo "has_files=true" >> "$GITHUB_OUTPUT"
