@@ -65,7 +65,7 @@ function mdg_stage2_read( $input ) {
             $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,FilesystemIterator::SKIP_DOTS));
             foreach($it as $file) {
                 if($file->isLink() || !$file->isFile() || !in_array(strtolower($file->getExtension()),array('php','js','css','json','md','txt','csv'),true))continue;
-                $out[]=array('path'=>'wp-content/plugins/'.$slug.'/'.substr($file->getPathname(),strlen($dir)+1),'sha256'=>hash_file('sha256',$file->getPathname()),'bytes'=>$file->getSize());
+                $out[]=array('path'=>'wp-content/plugins/'.$slug.'/'.substr($file->getPathname(),strlen($dir)+1),'git_blob_sha'=>sha1('blob '.$file->getSize().chr(0).file_get_contents($file->getPathname())),'sha256'=>hash_file('sha256',$file->getPathname()),'bytes'=>$file->getSize());
             }
         }
         return array('files'=>$out);
