@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "ticket_instance_id": 4202,
+      "pages": 1,
+      "datetime": "15 Ekim 2026 17:30 - 18:30",
+      "entry_qr_matches_printed_code": true,
+      "embedded_location_qr_verified": true,
+      "ticket_meta_and_order_status_unchanged": true,
+      "resolved_order_item_id": 0,
+      "pdf_sha256": "2f5e5b301b6b1cbf81b2fbabae6a782b5ee4e5cb5cb3abfecbea07520b7250be"
+    },
+    {
+      "ticket_instance_id": 4069,
+      "pages": 1,
+      "datetime": "15 Ekim 2026 19:30 - 20:30",
+      "entry_qr_matches_printed_code": true,
+      "embedded_location_qr_verified": true,
+      "ticket_meta_and_order_status_unchanged": true,
+      "resolved_order_item_id": 0,
+      "pdf_sha256": "63fbea8a4f9dd3067658f3bfcebfad7578f7c897543ebc16117c03ae3fcbe805"
+    }
+  ],
+  "same_venue_location_qr": true,
+  "scope": "admin-only direct canonical render; no global hooks installed; item_id=0 used legacy purchased variation fallback; canonical order_map live branch still requires verification"
+}

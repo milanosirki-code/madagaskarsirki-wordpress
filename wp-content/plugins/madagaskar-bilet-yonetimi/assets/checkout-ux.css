@@ -1,0 +1,24 @@
+/* Madagaskar ticket checkout: production micro polish. */
+.mdg-marketing-optin-row{
+    margin-top: 8px !important;
+    margin-bottom: 10px !important;
+}
+.mdg-marketing-optin-row label,
+.mdg-marketing-optin-row .wc-block-components-checkbox__label{
+    line-height: 1.4;
+}
+.mdg-invoice-fields-heading{
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+.mdg-invoice-fields-heading h3{
+    margin: 0 0 5px;
+    font-size: 1.35em;
+    line-height: 1.25;
+}
+.mdg-invoice-fields-heading p{
+    margin: 0;
+    opacity: .75;
+    font-size: .92em;
+    line-height: 1.45;
+}

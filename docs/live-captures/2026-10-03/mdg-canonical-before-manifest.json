@@ -1,0 +1,241 @@
+{
+  "captured_at": "2026-10-03",
+  "version": "3.6.3-ticket-invalidation-dry-run",
+  "files": [
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/madagaskar-bilet-yonetimi.php",
+      "sha256": "991e3b78d8f9a9f2e36c3b689bd7c57c4175dafd9d4cade25f5095522abdc116",
+      "bytes": 3570
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/readme.txt",
+      "sha256": "385c75bcb43746d37b825a01ed1970238660fc9c0c1e5955ce95a25578e7b499",
+      "bytes": 15992
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-cities.css",
+      "sha256": "fa122e2cc2c5104b290f58651ec340e48d666035d33b4c59386f7ce507331bf9",
+      "bytes": 3204
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/vendor/qrcodejs/qrcode.min.js",
+      "sha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "bytes": 19927
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/checkout-ux.css",
+      "sha256": "df46cc2dd31591bee498e24b91d5bf0452c64c259d3cec02e4c66d4be7c0ec3a",
+      "bytes": 564
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-tickets.css",
+      "sha256": "19ab383c7b06fed57901ecea70a0b51494662fc7638e0736e0a58a02e3f464b8",
+      "bytes": 4136
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/checkout-ux.js",
+      "sha256": "3f9299dd527b1eb5e2b4a9553e5244dc2c6cc02ad97a9139f1a38de8277cbd53",
+      "bytes": 10037
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/admin.js",
+      "sha256": "66aebb4a3c8a0c20f7ca627bed79ce486e41b0834e8458b6e7e7befaf03cab08",
+      "bytes": 30005
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-event.js",
+      "sha256": "cb7425628897dc9415a87016a9cf96902b552933fc85242d8844f5d5d238244f",
+      "bytes": 7719
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/admin.css",
+      "sha256": "07409c273122273dc3512916a0195d993c1e464a0cc343bbb0632a0c48128859",
+      "bytes": 8845
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-event.css",
+      "sha256": "b4c0f8104ae26d60220121177f72d9f4a8c64185b79f32bfee908164d96bd776",
+      "bytes": 13160
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-cities.php",
+      "sha256": "9a1459fbd2c039b3f56981c5550c11788df1ea5364f679a114c468552c8e59cc",
+      "bytes": 8969
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-audit.php",
+      "sha256": "e87a0da84efe4a31e422fe3142cd8db7626c508c5d425b29442f06c553c9b4fe",
+      "bytes": 9144
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-venue-importer.php",
+      "sha256": "38a783a3dd944c00ca1490a7bb1666463315445e5ac61f77b0ebe9e6bf36f7a7",
+      "bytes": 26457
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-plugin.php",
+      "sha256": "7192ef7d259adf53d585adb646eae8f02b6cbe4abb5e58bc01399d858649688f",
+      "bytes": 2789
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-event-importer.php",
+      "sha256": "a6a7a329a084568f4e66a12ed92170aa3babb46a4023372716d529174ebc975c",
+      "bytes": 35959
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-refund-preview.php",
+      "sha256": "c635eac18b657b3683805c4a21c7fe41d101bcabb747ad1cd438e75ee595863a",
+      "bytes": 29066
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-adopter.php",
+      "sha256": "4519dbda11c9e68b451fa4861b0f7eb20ccc9935ef80436780f5eb7ed748cb49",
+      "bytes": 24712
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php",
+      "sha256": "a3a495389e99b68193d2044afa5d33043efa78e67668933bd07a39628a6c11b8",
+      "bytes": 22451
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php",
+      "sha256": "67c1d25366b9f86fff709514a0576060ce265154bf730534a1e374710a6c00e2",
+      "bytes": 10667
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-tickets.php",
+      "sha256": "9c7794e0ffe0e1bb1b3a1fd5f7ed98d91d9d641992b65fecb3578fe9775fc767",
+      "bytes": 9903
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-invalidation-dry-run.php",
+      "sha256": "b2c7c7ff5ff94f2113ebe12d50ecafa26f9049bc02c5860fe0cfac7cc6d82bc2",
+      "bytes": 21180
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-admin.php",
+      "sha256": "dee65ed13195160ab5a40fbd188298892e7f7e9c649425b55e6d48d47a5e5a9b",
+      "bytes": 47626
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-qr.php",
+      "sha256": "3a8eb28f5eff9671ca2ad8b5e6196c4faef6e12a28046152d094132a7dd1cc99",
+      "bytes": 3458
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-production-readiness.php",
+      "sha256": "32d5072fd2fc0c9a1d4b5efda36d515f332274f94f9edc84aa852ae19ca97ae4",
+      "bytes": 17994
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-venues.php",
+      "sha256": "4b57d54090ba4f0a245ba63277059a7c84c1a0d7077bac74e3a54682b50f5fb7",
+      "bytes": 20005
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-venue-qr-element.php",
+      "sha256": "7077251cab46ab64df85e8a0873fb94c0fc022bd2e65984e1ff4852e372531bd",
+      "bytes": 3122
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-reports.php",
+      "sha256": "d583bd2cb38c6663b81d37f9700fcb0b127960db53008bd3231ed91e3990af0c",
+      "bytes": 15848
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-cart-test.php",
+      "sha256": "b4d7824fe61de1ee4a33d87d97be89549d2b5f29fc3d4bd260aebada60536717",
+      "bytes": 25361
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-events.php",
+      "sha256": "c71fc80e706dc61f3fef616697292a7efdcee74b6907a1cd49e03f5e7ea9f06f",
+      "bytes": 16046
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-refund-test.php",
+      "sha256": "6d29111b670e9d6f8c260b2489935977ef9faa4cc6aae9dd259143a690101af8",
+      "bytes": 19548
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-event.php",
+      "sha256": "6c884499ffa9a5ca6fa22254c494af38e01df9dea638a1236ccf35bd75456cc0",
+      "bytes": 23624
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-designer-diagnostic.php",
+      "sha256": "f5241113421d7d405e5febda82611f5dbeb314bd38a6b5ac0aa223c24876fad0",
+      "bytes": 10873
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-checkout-ux.php",
+      "sha256": "44a970a62fb547adfc569123a9902b48cd1613816e00b00f13d6edb40e0ca327",
+      "bytes": 12897
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-activator.php",
+      "sha256": "4cc08679a5350dcb742658fce60415ef399e24bc5a624ce0eeddf75da8cb8c6a",
+      "bytes": 9714
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-draft-producer.php",
+      "sha256": "9bf360ffca50abf8dd3d2f6e2598d75c09ee786c6bc059b40eb12bc508cf4c33",
+      "bytes": 33979
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-customer-tickets.php",
+      "sha256": "c087e24cd4d0fcbbc516503016fbd43746bfe7e72dd53090dfb5d2f58365b8d5",
+      "bytes": 40179
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-db.php",
+      "sha256": "dc2edf4e9a974a100980d1875ccbb7efe3d4e6405e9898bb011a4f6db7aa2a6f",
+      "bytes": 547
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-venue-qr.php",
+      "sha256": "885f1e94e616a05cd7673f5f058c8d83e9c71ed2d03b62821e28263f550ecb68",
+      "bytes": 11754
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-dry-run.php",
+      "sha256": "c49871c37108513e771e4c953b61943048bebcff2ab53e99525224191f98aded",
+      "bytes": 17578
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-production-plan.php",
+      "sha256": "db5b71d91450e7f4a8fff519b7ca51c0a3dceffe40b566e6ee60717fb3999aa5",
+      "bytes": 31901
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-status.php",
+      "sha256": "93db88c5344e470b3bae82217e01b6acc2ec04e5e20277d382296a50d552a3bd",
+      "bytes": 855
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php",
+      "sha256": "24d8d506d98c85ea4dce151e6ba5c868081e84345b372664706788e25bfd8b7f",
+      "bytes": 5754
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-production-publisher.php",
+      "sha256": "f9f29e715550de72a1035aae3bc3e9504ef912f9d9e082915136cc8c8f1fd6b3",
+      "bytes": 12130
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-live-sales.php",
+      "sha256": "54d376a1b76c9106557adf1061821f71dd551eba7f582cf63645b44b332c0eb4",
+      "bytes": 18739
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/templates/public-tickets.php",
+      "sha256": "f67434c3b5196730db47e527312f292c916301579b4cd380abc6b3349184b165",
+      "bytes": 1428
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-bilet-yonetimi/templates/public-cities.php",
+      "sha256": "8ca89a68083e2679c54ceb0475ac9e9daa0a3f3b773f69a61cc3d375545b72e8",
+      "bytes": 1404
+    }
+  ]
+}
