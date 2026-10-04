@@ -2,6 +2,12 @@
 
 ## Güncel devir — Aşama 5, 4 Ekim 2026 (UTC)
 
+- Audit/envanter artifact commit: `3e85f0305de07ce7730ee049674b7af8c7e41d49` (kendi dosyasının SHA'sı yerine bu çalışma commit'i kaydedilir).
+- Drive audit raporu: https://drive.google.com/file/d/17ycBJxEDaUAbv-kh8v1Z8plS79-5Ly5y/view?usp=drivesdk
+- Drive tam envanter: https://drive.google.com/file/d/11UTqMLh2pQRoXffKqMbYyoLeXlDZCBbf/view?usp=drivesdk
+- Drive source verification: https://drive.google.com/file/d/1zV_V2OVQC3sbl_U9ONaTBqKkrEf4Zp_3/view?usp=drivesdk
+- Kalıcı Drive state ID: 1cCipf_lqxDSfMQs-0MjVPogkrD5bIKNH (aynı dosya güncellenir).
+
 - Yönetici kapsamı: PR #113 merge + MMC menü/fonksiyon/ability denetimi. PayTR sandbox/tam checkout ertelendi; #112 açık/nonblocking. #107 merge edilmez. Family 1.1.3 ve AI bootstrap 0.7.0 deploy edilmez.
 - Güncel main SHA: `8a6659d6f247a439171c92c4460a32146407ae9f`. PR #113 reviewed head: `67b38ae173ce21c9962fe4067478831d71f56e1b`; merge başarılı, CI 3/3 yeşil.
 - Audit branch: `codex/current-system-audit-20261003`, PR #111. Yeni main audit geçmişine alınmış; wp-content production source farkı yok. Son tanı kaynağı commit: `c9244fd185c9513ab5b51a9512e268fd820dfde4`.
