@@ -1,0 +1,360 @@
+/**
+ * Madagaskar Sirki – Geçmiş Seans Denetimi V1 (SALT OKUNUR)
+ *
+ * Amaç: Issue #116 için iki soruya cevap vermek.
+ *  1. Hangi etkinlikler ve seanslar bittiği halde hâlâ satışta?
+ *  2. Seansı bittikten sonra açılmış sipariş var mı, ödenmiş mi?
+ *
+ * Ekran: Araçlar > Geçmiş Seans Denetimi
+ * Yetki: manage_woocommerce
+ *
+ * Bu snippet:
+ * - Yalnızca SELECT sorgusu çalıştırır ve WooCommerce siparişini okur.
+ * - Hiçbir şey yazmaz: sipariş, bilet, ürün, etkinlik, seçenek, günlük yok.
+ * - Müşteri adı, telefonu, e-postası veya adresi göstermez; yalnızca sipariş
+ *   numarası, durum, tutar ve saat gösterir.
+ * - Ziyaretçi tarafında hiçbir şey çalıştırmaz.
+ *
+ * Kullanım: etkinleştir, ekranı aç, sonucu kaydet, devre dışı bırak.
+ * "?gun=14" ile geriye dönük gün sayısı değiştirilebilir (1–60, varsayılan 7).
+ *
+ * Hook: admin_menu.
+ * Bağımlılık: wp_mdg_events, wp_mdg_sessions, wp_mdg_order_map tabloları
+ * (Madagaskar Bilet Yönetimi), WooCommerce.
+ * Sınır: yalnızca wp_mdg_order_map içinde kaydı olan siparişleri görür.
+ * Geri alma: bu snippet'i devre dışı bırakmak yeterlidir.
+ * Code Snippets kullanırken <?php etiketi eklemeyin.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+if ( ! function_exists( 'ms_gsd_tablo' ) ) {
+    function ms_gsd_tablo( $ad ) {
+        global $wpdb;
+
+        return $wpdb->prefix . 'mdg_' . $ad;
+    }
+}
+
+
+/**
+ * UTC MySQL tarihini zaman damgasına çevirir; okunamazsa 0.
+ */
+if ( ! function_exists( 'ms_gsd_zaman' ) ) {
+    function ms_gsd_zaman( $utc ) {
+        $utc = trim( (string) $utc );
+
+        if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/', $utc, $m ) ) {
+            return 0;
+        }
+
+        if ( ! checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ) {
+            return 0;
+        }
+
+        $saniye = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+        $ts     = gmmktime( (int) $m[4], (int) $m[5], $saniye, (int) $m[2], (int) $m[3], (int) $m[1] );
+
+        return $ts > 0 ? (int) $ts : 0;
+    }
+}
+
+
+/**
+ * Zaman damgasını site saatine göre yazar.
+ */
+if ( ! function_exists( 'ms_gsd_yerel' ) ) {
+    function ms_gsd_yerel( $ts ) {
+        $ts = (int) $ts;
+
+        if ( $ts <= 0 ) {
+            return '—';
+        }
+
+        return function_exists( 'wp_date' ) ? wp_date( 'd.m.Y H:i', $ts ) : gmdate( 'd.m.Y H:i', $ts + 3 * 3600 );
+    }
+}
+
+
+/**
+ * Satışta görünen ama bütün seansları bitmiş etkinlikler.
+ */
+if ( ! function_exists( 'ms_gsd_biten_etkinlikler' ) ) {
+    function ms_gsd_biten_etkinlikler( $simdi_utc ) {
+        global $wpdb;
+
+        $etkinlikler = ms_gsd_tablo( 'events' );
+        $seanslar    = ms_gsd_tablo( 'sessions' );
+
+        $satirlar = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT e.id, e.title, e.public_slug, e.province_name, e.district,
+                        MAX(s.end_at) AS son_bitis, COUNT(s.id) AS seans_sayisi
+                 FROM {$etkinlikler} e
+                 INNER JOIN {$seanslar} s ON s.event_id = e.id
+                 WHERE e.status = %s
+                 GROUP BY e.id
+                 HAVING MAX(s.end_at) < %s
+                 ORDER BY MAX(s.end_at) DESC
+                 LIMIT 100",
+                'onsale',
+                $simdi_utc
+            )
+        );
+
+        return is_array( $satirlar ) ? $satirlar : array();
+    }
+}
+
+
+/**
+ * Satıştaki etkinliklerin, son N günde bitmiş seansları.
+ */
+if ( ! function_exists( 'ms_gsd_biten_seanslar' ) ) {
+    function ms_gsd_biten_seanslar( $simdi_utc, $baslangic_utc ) {
+        global $wpdb;
+
+        $etkinlikler = ms_gsd_tablo( 'events' );
+        $seanslar    = ms_gsd_tablo( 'sessions' );
+
+        $satirlar = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT s.id, s.event_id, s.start_at, s.end_at, s.status, s.wc_product_id, e.title
+                 FROM {$seanslar} s
+                 INNER JOIN {$etkinlikler} e ON e.id = s.event_id
+                 WHERE e.status = %s
+                   AND s.end_at < %s
+                   AND s.end_at >= %s
+                 ORDER BY s.end_at DESC
+                 LIMIT 300",
+                'onsale',
+                $simdi_utc,
+                $baslangic_utc
+            )
+        );
+
+        return is_array( $satirlar ) ? $satirlar : array();
+    }
+}
+
+
+/**
+ * Son N günde bitmiş seanslara bağlı sipariş kalemleri.
+ */
+if ( ! function_exists( 'ms_gsd_siparis_kalemleri' ) ) {
+    function ms_gsd_siparis_kalemleri( $simdi_utc, $baslangic_utc ) {
+        global $wpdb;
+
+        $etkinlikler = ms_gsd_tablo( 'events' );
+        $seanslar    = ms_gsd_tablo( 'sessions' );
+        $harita      = ms_gsd_tablo( 'order_map' );
+
+        $satirlar = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT m.order_id, m.session_id, m.quantity, m.line_total, m.created_at AS kayit_at,
+                        s.start_at, s.end_at, e.title
+                 FROM {$harita} m
+                 INNER JOIN {$seanslar} s ON s.id = m.session_id
+                 INNER JOIN {$etkinlikler} e ON e.id = m.event_id
+                 WHERE s.end_at < %s
+                   AND s.end_at >= %s
+                 ORDER BY m.order_id DESC
+                 LIMIT 2000",
+                $simdi_utc,
+                $baslangic_utc
+            )
+        );
+
+        return is_array( $satirlar ) ? $satirlar : array();
+    }
+}
+
+
+/**
+ * Seansı bittikten sonra açılmış siparişleri bulur.
+ * Sipariş tarihi WooCommerce'ten okunur; eşleme tablosundaki kayıt tarihi
+ * sonradan yapılan senkronlarda değişebildiği için karar ona göre verilmez.
+ */
+if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
+    function ms_gsd_gec_siparisler( array $kalemler ) {
+        $sonuc    = array();
+        $siparis  = array();
+        $odenmis  = function_exists( 'wc_get_is_paid_statuses' ) ? (array) wc_get_is_paid_statuses() : array( 'processing', 'completed' );
+
+        foreach ( $kalemler as $kalem ) {
+            $order_id = absint( $kalem->order_id );
+
+            if ( ! $order_id || ! function_exists( 'wc_get_order' ) ) {
+                continue;
+            }
+
+            if ( ! array_key_exists( $order_id, $siparis ) ) {
+                $siparis[ $order_id ] = wc_get_order( $order_id );
+            }
+
+            $order = $siparis[ $order_id ];
+
+            if ( ! is_object( $order ) || ! method_exists( $order, 'get_date_created' ) ) {
+                continue;
+            }
+
+            $olusturma = $order->get_date_created();
+            $olusturma = $olusturma ? (int) $olusturma->getTimestamp() : 0;
+            $bitis     = ms_gsd_zaman( $kalem->end_at );
+
+            if ( ! $olusturma || ! $bitis || $olusturma <= $bitis ) {
+                continue;
+            }
+
+            $durum  = (string) $order->get_status();
+            $odeme  = method_exists( $order, 'get_date_paid' ) ? $order->get_date_paid() : null;
+
+            $sonuc[] = array(
+                'order_id'   => $order_id,
+                'etkinlik'   => (string) $kalem->title,
+                'seans'      => ms_gsd_zaman( $kalem->start_at ),
+                'bitis'      => $bitis,
+                'olusturma'  => $olusturma,
+                'gecikme_dk' => (int) floor( ( $olusturma - $bitis ) / 60 ),
+                'durum'      => $durum,
+                'odendi'     => in_array( $durum, $odenmis, true ) || (bool) $odeme,
+                'adet'       => (int) $kalem->quantity,
+                'tutar'      => (float) $kalem->line_total,
+            );
+        }
+
+        return $sonuc;
+    }
+}
+
+
+if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
+    function ms_gsd_sayfa() {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_die( 'Bu ekranı görme yetkiniz yok.', '', array( 'response' => 403 ) );
+        }
+
+        $gun = isset( $_GET['gun'] ) && is_scalar( $_GET['gun'] ) ? absint( $_GET['gun'] ) : 7;
+        $gun = max( 1, min( 60, $gun ) );
+
+        $simdi         = time();
+        $simdi_utc     = gmdate( 'Y-m-d H:i:s', $simdi );
+        $baslangic_utc = gmdate( 'Y-m-d H:i:s', $simdi - $gun * DAY_IN_SECONDS );
+
+        $etkinlikler = ms_gsd_biten_etkinlikler( $simdi_utc );
+        $seanslar    = ms_gsd_biten_seanslar( $simdi_utc, $baslangic_utc );
+        $gec         = ms_gsd_gec_siparisler( ms_gsd_siparis_kalemleri( $simdi_utc, $baslangic_utc ) );
+
+        $gec_odenmis = 0;
+        $gec_tutar   = 0.0;
+        $gec_no      = array();
+
+        foreach ( $gec as $satir ) {
+            if ( $satir['odendi'] ) {
+                $gec_no[ $satir['order_id'] ] = true;
+                $gec_tutar += $satir['tutar'];
+            }
+        }
+
+        $gec_odenmis = count( $gec_no );
+
+        echo '<div class="wrap"><h1>Geçmiş Seans Denetimi</h1>';
+        echo '<p>Salt okunur. Kapsam: son ' . esc_html( (string) $gun ) . ' gün. Rapor saati: ' . esc_html( ms_gsd_yerel( $simdi ) ) . '</p>';
+
+        echo '<h2>1. Bütün seansları bitmiş, hâlâ "satışta" etkinlikler: ' . esc_html( (string) count( $etkinlikler ) ) . '</h2>';
+
+        if ( $etkinlikler ) {
+            echo '<table class="widefat striped"><thead><tr><th>Etkinlik</th><th>Başlık</th><th>Yer</th><th>Seans</th><th>Son seans bitişi</th><th>Sayfa</th></tr></thead><tbody>';
+
+            foreach ( $etkinlikler as $e ) {
+                $adres = $e->public_slug ? home_url( '/etkinlik/' . rawurlencode( (string) $e->public_slug ) . '/' ) : '';
+
+                echo '<tr>';
+                echo '<td>#' . esc_html( (string) absint( $e->id ) ) . '</td>';
+                echo '<td>' . esc_html( (string) $e->title ) . '</td>';
+                echo '<td>' . esc_html( trim( $e->province_name . ' / ' . $e->district, ' /' ) ) . '</td>';
+                echo '<td>' . esc_html( (string) absint( $e->seans_sayisi ) ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( ms_gsd_zaman( $e->son_bitis ) ) ) . '</td>';
+                echo '<td>' . ( $adres ? '<a href="' . esc_url( $adres ) . '" target="_blank" rel="noopener">aç</a>' : '—' ) . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody></table>';
+        } else {
+            echo '<p>Yok.</p>';
+        }
+
+        echo '<h2>2. Satıştaki etkinliklerin bitmiş seansları: ' . esc_html( (string) count( $seanslar ) ) . '</h2>';
+
+        if ( $seanslar ) {
+            echo '<table class="widefat striped"><thead><tr><th>Seans</th><th>Etkinlik</th><th>Başlangıç</th><th>Bitiş</th><th>Seans durumu</th><th>Ürün</th><th>V4 kilidi</th><th>Şu an satın alınabilir mi?</th></tr></thead><tbody>';
+
+            foreach ( $seanslar as $s ) {
+                $urun_id = absint( $s->wc_product_id );
+                $urun    = $urun_id && function_exists( 'wc_get_product' ) ? wc_get_product( $urun_id ) : null;
+                $kilit   = $urun_id && 'yes' === get_post_meta( $urun_id, '_mdg_v371_sales_closed', true );
+                $alinir  = is_object( $urun ) && method_exists( $urun, 'is_purchasable' ) ? (bool) $urun->is_purchasable() : null;
+
+                echo '<tr>';
+                echo '<td>#' . esc_html( (string) absint( $s->id ) ) . '</td>';
+                echo '<td>#' . esc_html( (string) absint( $s->event_id ) ) . ' ' . esc_html( (string) $s->title ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( ms_gsd_zaman( $s->start_at ) ) ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( ms_gsd_zaman( $s->end_at ) ) ) . '</td>';
+                echo '<td>' . esc_html( (string) $s->status ) . '</td>';
+                echo '<td>' . ( $urun_id ? '#' . esc_html( (string) $urun_id ) : '—' ) . '</td>';
+                echo '<td>' . ( $kilit ? 'var' : 'yok' ) . '</td>';
+                echo '<td>' . ( null === $alinir ? '—' : ( $alinir ? '<strong>EVET</strong>' : 'hayır' ) ) . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody></table>';
+        } else {
+            echo '<p>Yok.</p>';
+        }
+
+        echo '<h2>3. Seansı bittikten sonra açılmış sipariş kalemleri: ' . esc_html( (string) count( $gec ) ) . '</h2>';
+        echo '<p>Ödenmiş sipariş: <strong>' . esc_html( (string) $gec_odenmis ) . '</strong> · Ödenmiş kalem tutarı: <strong>' . esc_html( number_format( $gec_tutar, 2, ',', '.' ) ) . ' TL</strong></p>';
+
+        if ( $gec ) {
+            echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Etkinlik</th><th>Seans</th><th>Seans bitişi</th><th>Sipariş saati</th><th>Gecikme</th><th>Durum</th><th>Ödendi mi?</th><th>Adet</th><th>Kalem tutarı</th></tr></thead><tbody>';
+
+            foreach ( $gec as $g ) {
+                echo '<tr>';
+                echo '<td>#' . esc_html( (string) $g['order_id'] ) . '</td>';
+                echo '<td>' . esc_html( $g['etkinlik'] ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( $g['seans'] ) ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( $g['bitis'] ) ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( $g['olusturma'] ) ) . '</td>';
+                echo '<td>' . esc_html( (string) $g['gecikme_dk'] ) . ' dk</td>';
+                echo '<td>' . esc_html( $g['durum'] ) . '</td>';
+                echo '<td>' . ( $g['odendi'] ? '<strong>EVET</strong>' : 'hayır' ) . '</td>';
+                echo '<td>' . esc_html( (string) $g['adet'] ) . '</td>';
+                echo '<td>' . esc_html( number_format( $g['tutar'], 2, ',', '.' ) ) . ' TL</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody></table>';
+        } else {
+            echo '<p>Yok.</p>';
+        }
+
+        echo '<p><em>Bu ekran hiçbir kaydı değiştirmez. İade, iptal veya satış kapatma buradan yapılmaz.</em></p></div>';
+    }
+}
+
+
+add_action(
+    'admin_menu',
+    function () {
+        add_management_page(
+            'Geçmiş Seans Denetimi',
+            'Geçmiş Seans Denetimi',
+            'manage_woocommerce',
+            'ms-gecmis-seans-denetimi',
+            'ms_gsd_sayfa'
+        );
+    }
+);
