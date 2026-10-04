@@ -11,6 +11,7 @@ function get_option($k,$default=false){return $GLOBALS['options'][$k]??$default;
 function get_transient($k){return $GLOBALS['cache'][$k]??false;}
 function set_transient($k,$v,$ttl){$GLOBALS['cache'][$k]=$v;$GLOBALS['cache_writes']++;return true;}
 function sanitize_text_field($v){return (string)$v;}
+function wp_strip_all_tags($v){return strip_tags($v);}
 function sanitize_title($v){return strtolower($v);}
 function remove_accents($v){return strtr($v,['ı'=>'i','İ'=>'I','ş'=>'s','Ş'=>'S','ğ'=>'g','Ğ'=>'G','ü'=>'u','Ü'=>'U','ö'=>'o','Ö'=>'O','ç'=>'c','Ç'=>'C']);}
 function wp_json_encode($v,$flags=0){return json_encode($v,$flags);}
