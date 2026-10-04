@@ -1,0 +1,232 @@
+
+add_action( 'admin_post_mmc_download_publish_content_template', 'mdg_future_excel_20261002_download', 1 );
+
+function mdg_future_excel_20261002_download() {
+    if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'mmc_manage_programs' ) ) {
+        wp_die( 'Yetkiniz yok.' );
+    }
+
+    $program_id = absint( $_GET['program_id'] ?? 0 );
+    check_admin_referer( 'mmc_download_publish_content_template_' . $program_id );
+
+    if ( ! class_exists( 'MMC_MDG_Bridge_Service' ) ) {
+        wp_die( 'MMC köprü servisi bulunamadı.' );
+    }
+
+    $preview = MMC_MDG_Bridge_Service::publish_preview( $program_id );
+    if ( ! $preview || empty( $preview['program'] ) ) {
+        wp_die( 'Program bulunamadı.' );
+    }
+
+    if ( ! class_exists( 'ZipArchive' ) ) {
+        wp_die( 'Excel şablonu için ZipArchive gerekli.' );
+    }
+
+    $program = $preview['program'];
+    $event   = $preview['event'];
+    $venue   = $preview['venue'];
+
+    $times = array();
+    foreach ( (array) $preview['sessions'] as $session ) {
+        $times[] = mysql2date( 'H:i', $session->session_time );
+    }
+
+    $prices = array(
+        'child'      => '',
+        'adult'      => '',
+        'family_2_2' => '',
+    );
+    $ticket_summary = array();
+
+    foreach ( (array) $preview['tickets'] as $ticket ) {
+        if ( ! (int) ( $ticket->is_active ?? 0 ) ) {
+            continue;
+        }
+
+        $code  = (string) $ticket->ticket_code;
+        $price = number_format_i18n( (float) $ticket->price, 2 );
+
+        if ( isset( $prices[ $code ] ) ) {
+            $prices[ $code ] = $price;
+        }
+
+        $ticket_summary[] = sanitize_text_field( (string) $ticket->ticket_name ) . ' ' . $price . ' TL';
+    }
+
+    $district = trim( (string) $program->district_name );
+    $place    = (string) $program->province_name;
+
+    if ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ) {
+        $place .= ' / ' . $district;
+    }
+
+    $date_short = $event && $event->event_date ? mysql2date( 'd.m.Y', $event->event_date ) : '';
+    $date_long  = $event && $event->event_date ? date_i18n( 'j F Y l', strtotime( $event->event_date . ' 12:00:00' ) ) : '';
+
+    $event_name = 'Madagaskar Sirki — ' . (string) $program->province_name;
+    if ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ) {
+        $event_name .= ' / ' . $district;
+    }
+
+    $vars = array(
+        '{{PROGRAM_KODU}}'   => (string) $program->program_code,
+        '{{IL}}'             => (string) $program->province_name,
+        '{{ILCE}}'           => $district,
+        '{{YER}}'            => $place,
+        '{{SALON}}'          => $venue ? (string) $venue->venue_name : '',
+        '{{ADRES}}'          => $venue ? (string) $venue->address : '',
+        '{{TARIH}}'          => $date_short,
+        '{{TARIH_UZUN}}'     => $date_long,
+        '{{SEANSLAR}}'       => implode( ', ', $times ),
+        '{{BILET_OZETI}}'    => implode( '; ', $ticket_summary ),
+        '{{COCUK_FIYAT}}'    => $prices['child'],
+        '{{YETISKIN_FIYAT}}' => $prices['adult'],
+        '{{AILE_FIYATI}}'    => $prices['family_2_2'],
+        '{{OTURMA}}'         => 'numbered' === (string) ( $event->seating_mode ?? '' ) ? 'Numaralı oturma' : 'Numarasız / serbest oturma',
+        '{{KAPI_DK}}'        => (string) absint( $event->door_open_minutes ?? 30 ),
+        '{{BILGI_HATTI}}'    => '0312 911 37 10',
+        '{{BILET_LINKI}}'    => 'https://madagaskarsirki.com/bilet-al/',
+        '{{ETKINLIK_ADI}}'   => $event_name,
+    );
+
+    $rules = 'Oturma: {{OTURMA}}. Salon kapıları gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır. Gösteri süresi yaklaşık 60 dakikadır. 0–2 yaş ücretsizdir; 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Aile Paketi 2 yetişkin + 2 çocuktan oluşur. Satın alınan bilet yalnızca üzerinde belirtilen etkinlik tarihi ve seans için geçerlidir. Organizatör tarafından iptal, erteleme veya tarih/seans değişikliği yapılmadığı sürece satın alınan biletlerde iptal, iade veya değişiklik yapılmaz; ilgili mevzuattan doğan zorunlu haklar saklıdır. Belirtilen gün ve saatte kullanılmayan biletler geçersiz sayılır ve kullanılmayan biletler için bilet bedeli iadesi veya seans değişikliği yapılmaz. Organizatör kaynaklı iptal, erteleme veya tarih/seans değişikliği halinde iade/değişiklik süreci biletin satın alındığı satış kanalının kurallarına ve organizatör duyurusuna göre yürütülür. Üçüncü taraf satış kanallarında varsa hizmet bedeli iadesi ilgili kanalın koşullarına tabidir. Biletler: {{BILET_OZETI}}. Salon: {{SALON}} — {{ADRES}}. Bilgi hattı: {{BILGI_HATTI}}.';
+
+    $sheets = array(
+        'KULLANIM' => array(
+            array( 'MADAGASKAR SİRKİ — MMC YAYIN İÇERİĞİ EXCEL ŞABLONU', '', '' ),
+            array( 'Program', (string) $program->program_code, 'MMC’den gelir; Excel değiştirmez.' ),
+            array( 'Yer', $vars['{{YER}}'], 'İl/ilçe MMC’den gelir.' ),
+            array( 'Tarih', $vars['{{TARIH}}'], 'Tarih MMC’den gelir.' ),
+            array( 'Salon', $venue ? (string) $venue->venue_name : '', 'Kesin salon MMC’den gelir.' ),
+            array( 'Seanslar', $vars['{{SEANSLAR}}'], 'Seans/kapasite MMC’den gelir.' ),
+            array( 'Fiyatlar', 'Çocuk ' . $vars['{{COCUK_FIYAT}}'] . ' TL · Yetişkin ' . $vars['{{YETISKIN_FIYAT}}'] . ' TL · Aile 2+2 ' . $vars['{{AILE_FIYATI}}'] . ' TL', 'Fiyatlar MMC’den gelir.' ),
+            array( 'KURAL', 'YAYIN_ICERIGI ve SSS sayfalarını düzenleyin.', 'Program/salon/tarih/seans/fiyat tekrar yazılmaz.' ),
+            array( 'KURAL', 'Değişkenleri {{...}} biçiminde bırakabilirsiniz.', 'İçe aktarımda MMC verisiyle doldurulur.' ),
+            array( 'KURAL', 'Boş içerik hücresi mevcut veriyi silmez.', 'Yalnız bağlı MDG taslağının içeriği güncellenir.' ),
+            array( 'KURAL', 'İptal/iade/değişiklik ve kullanılmayan bilet kuralları yeni etkinlik şablonuna standart olarak eklenir.', 'Etkinliğe özel farklı bir karar varsa yayın öncesi güncelleyin.' ),
+        ),
+        'YAYIN_ICERIGI' => array(
+            array( 'alan', 'deger', 'aciklama' ),
+            array( 'short_description', 'Madagaskar Sirki {{YER}}’de! {{TARIH_UZUN}} günü {{SALON}}’nda {{SEANSLAR}} seanslarıyla. Uluslararası sanatçılar • Hayvansız modern sirk • Ailece eğlence.', 'Kısa açıklama' ),
+            array( 'long_description', '{{ETKINLIK_ADI}}, {{TARIH_UZUN}} günü {{SALON}}’nda seyircisiyle buluşuyor. Uluslararası sirk sanatçılarını aynı sahnede buluşturan gösteride akrobasi, denge, jonglörlük, hula hoop, palyaço ve görsel sahne performansları yer alır. Hayvan gösterisi içermeyen modern sirk programı yaklaşık 60 dakikalık aile eğlencesidir. Tarih: {{TARIH_UZUN}}. Seanslar: {{SEANSLAR}}. Salon: {{SALON}}. Adres: {{ADRES}}. Biletler: {{BILET_OZETI}}. Online bilet: {{BILET_LINKI}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Uzun açıklama' ),
+            array( 'rules', $rules, 'Kurallar' ),
+            array( 'seo_title', 'Madagaskar Sirki {{YER}} Biletleri | {{TARIH_UZUN}}', 'SEO başlığı' ),
+            array( 'seo_description', 'Madagaskar Sirki {{YER}}: {{TARIH_UZUN}}, {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler: {{BILET_OZETI}}.', 'SEO açıklaması' ),
+            array( 'video_url', '', 'İsteğe bağlı video URL’si' ),
+        ),
+        'SSS' => array(
+            array( 'sira', 'soru', 'cevap', 'aktif' ),
+            array( '1', 'Gösteri ne zaman ve nerede?', '{{TARIH_UZUN}} tarihinde {{SALON}}, {{ADRES}}. Seanslar: {{SEANSLAR}}.', 'Evet' ),
+            array( '2', 'Bilet fiyatları nedir?', '{{BILET_OZETI}}. 0–2 yaş ücretsizdir.', 'Evet' ),
+            array( '3', 'Aile paketi nedir?', 'Aile Paketi 2 yetişkin + 2 çocuk için geçerlidir. Güncel fiyat: {{AILE_FIYATI}} TL.', 'Evet' ),
+            array( '4', 'Oturma düzeni nasıl?', '{{OTURMA}}. Kapılar gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır.', 'Evet' ),
+            array( '5', 'Çocuklar tek başına katılabilir mi?', 'Hayır. Çocuklar etkinliğe yetişkin eşliğinde katılır. Bilgi hattı: {{BILGI_HATTI}}.', 'Evet' ),
+            array( '6', 'Biletlerde iptal, iade veya değişiklik yapılabilir mi?', 'Organizatör tarafından iptal, erteleme veya tarih/seans değişikliği yapılmadığı sürece satın alınan biletlerde iptal, iade veya değişiklik yapılmaz. İlgili mevzuattan doğan zorunlu haklar saklıdır.', 'Evet' ),
+            array( '7', 'Biletimi gününde veya seans saatinde kullanmazsam ne olur?', 'Bilet yalnızca üzerinde belirtilen tarih ve seans için geçerlidir. Belirtilen gün ve saatte kullanılmayan biletler geçersiz sayılır; kullanılmayan biletler için bilet bedeli iadesi veya seans değişikliği yapılmaz.', 'Evet' ),
+            array( '8', 'Etkinlik iptal edilir, ertelenir veya program değişirse ne olur?', 'Organizatör kaynaklı iptal, erteleme veya tarih/seans değişikliği halinde iade ya da değişiklik süreci biletin satın alındığı satış kanalının kurallarına ve organizatör duyurusuna göre yürütülür. Üçüncü taraf satış kanallarında varsa hizmet bedeli iadesi ilgili kanalın koşullarına tabidir.', 'Evet' ),
+        ),
+        'DEGISKENLER' => array(
+            array( 'degisken', 'kaynak', 'aciklama' ),
+            array( '{{PROGRAM_KODU}}', 'MMC Program', 'Program kodu' ),
+            array( '{{IL}}', 'MMC Program', 'İl' ),
+            array( '{{ILCE}}', 'MMC Program', 'İlçe' ),
+            array( '{{YER}}', 'MMC Program', 'İl / ilçe gösterimi' ),
+            array( '{{TARIH}}', 'MMC Etkinlik', 'Etkinlik tarihi' ),
+            array( '{{TARIH_UZUN}}', 'MMC Etkinlik', 'Uzun Türkçe tarih' ),
+            array( '{{SALON}}', 'Kesin Salon', 'Salon adı' ),
+            array( '{{ADRES}}', 'Kesin Salon', 'Salon açık adresi' ),
+            array( '{{SEANSLAR}}', 'MMC Seans', 'Seans saatleri' ),
+            array( '{{BILET_OZETI}}', 'MMC Bilet', 'Aktif bilet türleri ve fiyat özeti' ),
+            array( '{{COCUK_FIYAT}}', 'MMC Bilet', 'Çocuk kendi site fiyatı' ),
+            array( '{{YETISKIN_FIYAT}}', 'MMC Bilet', 'Yetişkin kendi site fiyatı' ),
+            array( '{{AILE_FIYATI}}', 'MMC Bilet', 'Aile Paketi 2+2 fiyatı' ),
+            array( '{{OTURMA}}', 'MMC Etkinlik', 'Oturma düzeni' ),
+            array( '{{KAPI_DK}}', 'MMC Etkinlik', 'Kapı açılış dakikası' ),
+            array( '{{BILGI_HATTI}}', 'Sistem', 'Dijital bilgi hattı' ),
+            array( '{{BILET_LINKI}}', 'Sistem', 'Resmî merkezî bilet sayfası' ),
+            array( '{{ETKINLIK_ADI}}', 'MMC Program', 'Kamuya açık etkinlik adı' ),
+        ),
+    );
+
+    $tmp = wp_tempnam( 'mmc-yayin-icerigi.xlsx' );
+    if ( ! $tmp ) {
+        wp_die( 'Geçici dosya oluşturulamadı.' );
+    }
+
+    $result = mdg_future_excel_20261002_write_xlsx( $tmp, $sheets );
+    if ( is_wp_error( $result ) ) {
+        @unlink( $tmp );
+        wp_die( esc_html( $result->get_error_message() ) );
+    }
+
+    nocache_headers();
+    header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
+    header( 'Content-Disposition: attachment; filename="Madagaskar_Yayin_Icerigi_' . sanitize_file_name( (string) $program->program_code ) . '.xlsx"' );
+    header( 'Content-Length: ' . filesize( $tmp ) );
+    readfile( $tmp );
+    @unlink( $tmp );
+    exit;
+}
+
+function mdg_future_excel_20261002_write_xlsx( $path, $sheets ) {
+    $zip = new ZipArchive();
+
+    if ( true !== $zip->open( $path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
+        return new WP_Error( 'mdg_future_excel_create', 'Excel dosyası oluşturulamadı.' );
+    }
+
+    $head        = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    $overrides   = '';
+    $sheet_nodes = '';
+    $rels        = '';
+    $i           = 1;
+
+    foreach ( $sheets as $name => $rows ) {
+        $overrides   .= '<Override PartName="/xl/worksheets/sheet' . $i . '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+        $sheet_nodes .= '<sheet name="' . mdg_future_excel_20261002_xml( $name ) . '" sheetId="' . $i . '" r:id="rId' . $i . '"/>';
+        $rels        .= '<Relationship Id="rId' . $i . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' . $i . '.xml"/>';
+        $zip->addFromString( 'xl/worksheets/sheet' . $i . '.xml', mdg_future_excel_20261002_sheet_xml( $rows ) );
+        $i++;
+    }
+
+    $zip->addFromString( '[Content_Types].xml', $head . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' . $overrides . '</Types>' );
+    $zip->addFromString( '_rels/.rels', $head . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' );
+    $zip->addFromString( 'xl/workbook.xml', $head . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' . $sheet_nodes . '</sheets></workbook>' );
+    $zip->addFromString( 'xl/_rels/workbook.xml.rels', $head . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' . $rels . '<Relationship Id="rId' . $i . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' );
+    $zip->addFromString( 'xl/styles.xml', $head . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF3858E9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs></styleSheet>' );
+
+    $zip->close();
+    return true;
+}
+
+function mdg_future_excel_20261002_sheet_xml( $rows ) {
+    $body = '';
+
+    foreach ( array_values( $rows ) as $row_index => $row ) {
+        $cells = '';
+
+        foreach ( array_values( $row ) as $column_index => $value ) {
+            $ref   = mdg_future_excel_20261002_col_letters( $column_index + 1 ) . ( $row_index + 1 );
+            $style = 0 === $row_index ? ' s="1"' : '';
+            $cells .= '<c r="' . $ref . '" t="inlineStr"' . $style . '><is><t xml:space="preserve">' . mdg_future_excel_20261002_xml( (string) $value ) . '</t></is></c>';
+        }
+
+        $body .= '<row r="' . ( $row_index + 1 ) . '">' . $cells . '</row>';
+    }
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="24" customWidth="1"/><col min="2" max="2" width="70" customWidth="1"/><col min="3" max="4" width="42" customWidth="1"/></cols><sheetData>' . $body . '</sheetData></worksheet>';
+}
+
+function mdg_future_excel_20261002_col_letters( $n ) {
+    $s = '';
+    while ( $n > 0 ) {
+        $n--;
+        $s = chr( 65 + ( $n % 26 ) ) . $s;
+        $n = intdiv( $n, 26 );
+    }
+    return $s;
+}
+
+function mdg_future_excel_20261002_xml( $value ) {
+    return htmlspecialchars( (string) $value, ENT_XML1 | ENT_COMPAT, 'UTF-8' );
+}

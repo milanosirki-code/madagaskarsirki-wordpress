@@ -1,0 +1,423 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ
+ * ESKİ SAYFA YÖNLENDİRMELERİ V2
+ *
+ * Yeni gösteri detay sayfalarını korur.
+ * Eski / bozuk içerikleri güvenli biçimde yönlendirir.
+ * WooCommerce ürün ve siparişlerine dokunmaz.
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/**
+ * ============================================================
+ * 1. KORUNACAK YENİ GÖSTERİ SAYFALARI
+ * ============================================================
+ */
+
+function ms_korunan_gosteri_sluglari_v2() {
+
+    return array(
+        'akrobasi',
+        'ikili-paten',
+        'bisiklet-show',
+        'palyaco',
+        'hula-hoop',
+        'akrobasi-show',
+        'icarian-show',
+        'kostum-show',
+    );
+}
+
+
+/**
+ * ============================================================
+ * 2. GERÇEKTEN ESKİ İÇERİKLER
+ * ============================================================
+ *
+ * NOT:
+ * 235–241 arasındaki eski gösteri ID'leri artık burada YOK.
+ *
+ * Çünkü bu ID'lerden bazıları şu anda canlı gösteri
+ * detay sayfaları tarafından kullanılıyor.
+ * ============================================================
+ */
+
+function ms_eski_url_yonlendirmeleri_v2() {
+
+    return array(
+
+        /*
+         * ESKİ GALERİ SAYFALARI
+         */
+        308 => home_url( '/galeri/' ),
+        309 => home_url( '/galeri/' ),
+        310 => home_url( '/galeri/' ),
+
+
+        /*
+         * BOZUK / TEKRARLANAN BLOG YAZISI
+         */
+        180 => get_permalink( 174 )
+            ? get_permalink( 174 )
+            : home_url( '/madagaskar-blog/' ),
+
+
+        /*
+         * TEST BLOG YAZISI
+         */
+        192 => home_url( '/madagaskar-blog/' ),
+
+    );
+}
+
+
+/**
+ * ============================================================
+ * 3. YENİ GÖSTERİ SAYFASI MI?
+ * ============================================================
+ */
+
+function ms_yeni_gosteri_sayfasi_mi_v2() {
+
+    if ( ! is_page() ) {
+        return false;
+    }
+
+    global $post;
+
+    if ( ! $post instanceof WP_Post ) {
+        return false;
+    }
+
+    /*
+     * Sayfanın slug'ını kontrol et.
+     */
+    $slug = sanitize_title( $post->post_name );
+
+    if (
+        in_array(
+            $slug,
+            ms_korunan_gosteri_sluglari_v2(),
+            true
+        )
+    ) {
+        return true;
+    }
+
+
+    /*
+     * Ayrıca Gösteriler üst sayfasının alt sayfası mı
+     * kontrol ediyoruz.
+     */
+    if ( $post->post_parent ) {
+
+        $parent = get_post( $post->post_parent );
+
+        if (
+            $parent instanceof WP_Post &&
+            'gosteriler' === $parent->post_name &&
+            in_array(
+                $slug,
+                ms_korunan_gosteri_sluglari_v2(),
+                true
+            )
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ * ============================================================
+ * 4. 301 YÖNLENDİRME
+ * ============================================================
+ */
+
+add_action(
+    'template_redirect',
+    function () {
+
+        /*
+         * Yönetim, AJAX, feed vb. alanlara dokunma.
+         */
+        if (
+            is_admin() ||
+            wp_doing_ajax() ||
+            is_feed()
+        ) {
+            return;
+        }
+
+
+        /*
+         * WooCommerce alanlarına dokunma.
+         */
+        if (
+            function_exists( 'is_product' ) &&
+            (
+                is_product() ||
+                is_cart() ||
+                is_checkout() ||
+                is_account_page()
+            )
+        ) {
+            return;
+        }
+
+
+        /*
+         * EN ÖNEMLİ KORUMA:
+         * Yeni gösteri detay sayfalarından çık.
+         */
+        if ( ms_yeni_gosteri_sayfasi_mi_v2() ) {
+            return;
+        }
+
+
+        $content_id = get_queried_object_id();
+
+        if ( ! $content_id ) {
+            return;
+        }
+
+
+        $redirects = ms_eski_url_yonlendirmeleri_v2();
+
+        if ( empty( $redirects[ $content_id ] ) ) {
+            return;
+        }
+
+
+        $target = esc_url_raw(
+            $redirects[ $content_id ]
+        );
+
+        if ( ! $target ) {
+            return;
+        }
+
+
+        /*
+         * ====================================================
+         * AYNI URL'YE YÖNLENDİRMEYİ ENGELLE
+         * ====================================================
+         */
+
+        $scheme = is_ssl()
+            ? 'https://'
+            : 'http://';
+
+        $current_url =
+            $scheme .
+            $_SERVER['HTTP_HOST'] .
+            strtok( $_SERVER['REQUEST_URI'], '?' );
+
+
+        $normalize = static function ( $url ) {
+
+            return trailingslashit(
+                untrailingslashit(
+                    strtolower(
+                        strtok( $url, '?' )
+                    )
+                )
+            );
+        };
+
+
+        if (
+            $normalize( $current_url ) ===
+            $normalize( $target )
+        ) {
+            return;
+        }
+
+
+        wp_safe_redirect(
+            $target,
+            301,
+            'Madagaskar Sirki'
+        );
+
+        exit;
+    },
+    1
+);
+
+
+/**
+ * ============================================================
+ * 5. JETPACK SITEMAP
+ * ============================================================
+ *
+ * Artık yalnızca gerçekten eski içerikler sitemap'ten çıkarılır.
+ * Yeni Gösteri detay sayfaları sitemap'te KALIR.
+ * ============================================================
+ */
+
+add_filter(
+    'jetpack_sitemap_skip_post',
+    function ( $skip, $post ) {
+
+        if ( ! $post instanceof WP_Post ) {
+            return $skip;
+        }
+
+        $old_ids = array_keys(
+            ms_eski_url_yonlendirmeleri_v2()
+        );
+
+        if (
+            in_array(
+                (int) $post->ID,
+                $old_ids,
+                true
+            )
+        ) {
+            return true;
+        }
+
+        return $skip;
+    },
+    10,
+    2
+);
+
+
+add_filter(
+    'jetpack_sitemap_news_skip_post',
+    function ( $skip, $post ) {
+
+        if ( ! $post instanceof WP_Post ) {
+            return $skip;
+        }
+
+        $old_ids = array_keys(
+            ms_eski_url_yonlendirmeleri_v2()
+        );
+
+        if (
+            in_array(
+                (int) $post->ID,
+                $old_ids,
+                true
+            )
+        ) {
+            return true;
+        }
+
+        return $skip;
+    },
+    10,
+    2
+);
+
+
+add_filter(
+    'jetpack_sitemap_image_skip_post',
+    function ( $skip, $post ) {
+
+        if ( ! $post instanceof WP_Post ) {
+            return $skip;
+        }
+
+        $old_ids = array_keys(
+            ms_eski_url_yonlendirmeleri_v2()
+        );
+
+        if (
+            in_array(
+                (int) $post->ID,
+                $old_ids,
+                true
+            )
+        ) {
+            return true;
+        }
+
+        return $skip;
+    },
+    10,
+    2
+);
+
+
+add_filter(
+    'jetpack_sitemap_video_skip_post',
+    function ( $skip, $post ) {
+
+        if ( ! $post instanceof WP_Post ) {
+            return $skip;
+        }
+
+        $old_ids = array_keys(
+            ms_eski_url_yonlendirmeleri_v2()
+        );
+
+        if (
+            in_array(
+                (int) $post->ID,
+                $old_ids,
+                true
+            )
+        ) {
+            return true;
+        }
+
+        return $skip;
+    },
+    10,
+    2
+);
+
+
+/**
+ * ============================================================
+ * 6. SITEMAP / CACHE BİR KEZ YENİLE
+ * ============================================================
+ */
+
+add_action(
+    'init',
+    function () {
+
+        $version_key =
+            'ms_eski_url_sitemap_v2';
+
+        if ( get_option( $version_key ) ) {
+            return;
+        }
+
+
+        /*
+         * Jetpack sitemap geçici verisini temizle.
+         */
+        delete_transient(
+            'jetpack_sitemap_buffered_writer'
+        );
+
+
+        /*
+         * Rewrite kurallarını bir kez yenile.
+         */
+        flush_rewrite_rules( false );
+
+
+        update_option(
+            $version_key,
+            current_time( 'mysql' ),
+            false
+        );
+
+    },
+    99
+);

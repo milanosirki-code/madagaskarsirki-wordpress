@@ -1,0 +1,714 @@
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * MADAGASKAR SİRKİ
+ * Gösteriler Sayfası Kesin Stil V14
+ *
+ * CSS hem wp_head hem wp_footer üzerinden denenir.
+ * İlk çalışan hook CSS'yi yükler.
+ */
+
+function msx_gosteriler_v14_css() {
+
+    static $loaded = false;
+
+    if ( $loaded ) {
+        return;
+    }
+
+    $loaded = true;
+    ?>
+
+<style id="msx-gosteriler-v14">
+
+/* =========================================================
+   ANA SAYFA ALANI
+   ========================================================= */
+
+html body #msx-gosteriler,
+html body #msx-gosteriler * {
+    box-sizing: border-box !important;
+}
+
+html body #msx-gosteriler {
+    position: relative !important;
+
+    display: block !important;
+
+    width: 100vw !important;
+    max-width: 100vw !important;
+
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+
+    padding: 70px 0 90px !important;
+
+    background: #f6f2e8 !important;
+    color: #111118 !important;
+
+    overflow: hidden !important;
+}
+
+
+/* =========================================================
+   İÇ KAPSAYICI
+   ========================================================= */
+
+html body #msx-gosteriler .msx-wrap {
+    position: static !important;
+
+    display: block !important;
+
+    width: min(1180px, calc(100vw - 48px)) !important;
+    max-width: 1180px !important;
+    min-width: 0 !important;
+
+    margin: 0 auto !important;
+    padding: 0 !important;
+
+    transform: none !important;
+}
+
+
+/* =========================================================
+   BAŞLIK
+   ========================================================= */
+
+html body #msx-gosteriler .msx-heading {
+    position: static !important;
+
+    display: block !important;
+
+    width: 100% !important;
+    max-width: 650px !important;
+
+    margin: 0 0 38px !important;
+    padding: 0 !important;
+
+    transform: none !important;
+}
+
+html body #msx-gosteriler .msx-heading > span {
+    display: block !important;
+
+    margin: 0 0 10px !important;
+
+    color: #cf5744 !important;
+
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 1.5px !important;
+}
+
+html body #msx-gosteriler .msx-heading h2 {
+    display: block !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    color: #111118 !important;
+
+    font-size: 52px !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+    letter-spacing: -2px !important;
+}
+
+html body #msx-gosteriler .msx-heading p {
+    display: block !important;
+
+    max-width: 620px !important;
+
+    margin: 16px 0 0 !important;
+    padding: 0 !important;
+
+    color: #69676d !important;
+
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+
+/* =========================================================
+   GRID — MASAÜSTÜ 3 SÜTUN
+   ========================================================= */
+
+html body #msx-gosteriler .msx-grid {
+    position: static !important;
+
+    display: grid !important;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+
+    grid-auto-flow: row !important;
+    grid-auto-rows: auto !important;
+
+    gap: 24px !important;
+
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    align-items: stretch !important;
+    justify-items: stretch !important;
+
+    transform: none !important;
+}
+
+
+/* =========================================================
+   TÜM KARTLARI SIFIRLA
+   ========================================================= */
+
+html body #msx-gosteriler .msx-grid > article.msx-card {
+    position: static !important;
+
+    inset: auto !important;
+
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    float: none !important;
+    clear: none !important;
+
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: none !important;
+
+    grid-column: auto !important;
+    grid-row: auto !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    height: auto !important;
+    min-height: 570px !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: hidden !important;
+
+    background: #ffffff !important;
+    color: #111118 !important;
+
+    border: 1px solid #e2dcd0 !important;
+    border-radius: 24px !important;
+
+    box-shadow:
+        0 14px 34px rgba(30, 25, 20, .08) !important;
+
+    align-self: stretch !important;
+    justify-self: stretch !important;
+}
+
+
+/* =========================================================
+   GÖRSELLER — KESİN SABİT YÜKSEKLİK
+   ========================================================= */
+
+html body #msx-gosteriler .msx-grid > article.msx-card > img {
+    position: static !important;
+
+    display: block !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+
+    aspect-ratio: auto !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    transform: none !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+
+    object-fit: cover !important;
+    object-position: center center !important;
+}
+
+
+/* =========================================================
+   KART İÇERİĞİ
+   ========================================================= */
+
+html body #msx-gosteriler .msx-card-content {
+    position: static !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    flex: 1 1 auto !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    margin: 0 !important;
+    padding: 28px !important;
+
+    background: #ffffff !important;
+
+    transform: none !important;
+}
+
+
+/* =========================================================
+   NUMARA + İKON
+   ========================================================= */
+
+html body #msx-gosteriler .msx-meta {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px !important;
+
+    width: 100% !important;
+
+    margin: 0 0 22px !important;
+    padding: 0 !important;
+}
+
+html body #msx-gosteriler .msx-meta span {
+    color: #cf5744 !important;
+
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 1.5px !important;
+}
+
+html body #msx-gosteriler .msx-meta b {
+    display: grid !important;
+    place-items: center !important;
+
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #f6f2e8 !important;
+
+    border-radius: 13px !important;
+
+    font-size: 20px !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+}
+
+
+/* =========================================================
+   KART BAŞLIĞI
+   ========================================================= */
+
+html body #msx-gosteriler .msx-card h3 {
+    display: block !important;
+
+    width: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    color: #111118 !important;
+
+    font-size: 30px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -1px !important;
+}
+
+
+/* =========================================================
+   AÇIKLAMA
+   ========================================================= */
+
+html body #msx-gosteriler .msx-card p {
+    display: block !important;
+
+    width: 100% !important;
+
+    margin: 17px 0 28px !important;
+    padding: 0 !important;
+
+    color: #69676d !important;
+
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    line-height: 1.6 !important;
+}
+
+
+/* =========================================================
+   BUTONLAR
+   ========================================================= */
+
+html body #msx-gosteriler .msx-card a {
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: fit-content !important;
+    max-width: 100% !important;
+
+    min-height: 48px !important;
+
+    margin-top: auto !important;
+    padding: 0 20px !important;
+
+    background: #0d0d17 !important;
+    color: #ffffff !important;
+
+    border: 0 !important;
+    border-radius: 999px !important;
+
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+
+    text-align: center !important;
+    text-decoration: none !important;
+}
+
+
+/* =========================================================
+   01 AKROBASİ — KOYU KART
+   ========================================================= */
+
+html body #msx-gosteriler .msx-card-featured {
+    background: #0d0d17 !important;
+}
+
+html body #msx-gosteriler
+.msx-card-featured .msx-card-content {
+    background: #0d0d17 !important;
+}
+
+html body #msx-gosteriler
+.msx-card-featured h3 {
+    color: #ffffff !important;
+}
+
+html body #msx-gosteriler
+.msx-card-featured p {
+    color: #c7c5cc !important;
+}
+
+html body #msx-gosteriler
+.msx-card-featured .msx-meta b {
+    background: rgba(255,255,255,.08) !important;
+}
+
+html body #msx-gosteriler
+.msx-card-featured a,
+html body #msx-gosteriler
+.msx-card a.msx-red {
+    background: #cf5744 !important;
+
+    box-shadow:
+        0 10px 24px rgba(207,87,68,.22) !important;
+}
+
+
+/* =========================================================
+   07 İCRİAN SHOW — MASAÜSTÜNDE ORTA
+   ========================================================= */
+
+@media (min-width: 1001px) {
+
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:nth-child(7) {
+        grid-column: 2 !important;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1000px) and (min-width: 701px) {
+
+    html body #msx-gosteriler .msx-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:nth-child(7) {
+
+        grid-column: 1 / -1 !important;
+
+        width: calc(50% - 12px) !important;
+
+        justify-self: center !important;
+    }
+
+}
+
+
+/* =========================================================
+   MOBİL
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    html body #msx-gosteriler {
+        padding: 50px 0 64px !important;
+    }
+
+    html body #msx-gosteriler .msx-wrap {
+        width: calc(100vw - 32px) !important;
+    }
+
+    html body #msx-gosteriler .msx-heading {
+        margin-bottom: 28px !important;
+    }
+
+    html body #msx-gosteriler .msx-heading h2 {
+        font-size: 42px !important;
+    }
+
+    html body #msx-gosteriler .msx-grid {
+        grid-template-columns: 1fr !important;
+
+        gap: 18px !important;
+    }
+
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card,
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:nth-child(7) {
+
+        grid-column: auto !important;
+        grid-row: auto !important;
+
+        width: 100% !important;
+        max-width: 100% !important;
+
+        min-height: 0 !important;
+
+        margin: 0 !important;
+
+        justify-self: stretch !important;
+    }
+
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card > img {
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+
+        aspect-ratio: 4 / 3 !important;
+
+        object-fit: cover !important;
+    }
+
+    html body #msx-gosteriler .msx-card-content {
+        padding: 25px !important;
+    }
+
+    html body #msx-gosteriler .msx-card h3 {
+        font-size: 30px !important;
+    }
+
+    html body #msx-gosteriler .msx-card p {
+        font-size: 16px !important;
+    }
+
+    html body #msx-gosteriler .msx-card a {
+        width: 100% !important;
+
+        min-height: 54px !important;
+    }
+
+}
+/* =========================================================
+   V15 — WORDPRESS OTOMATİK <p> DÜZELTMESİ
+   ========================================================= */
+
+/*
+ * Grid'in arasına WordPress'in eklediği boş paragrafları kaldır.
+ * Bunlar kartların zikzak dizilmesine neden oluyordu.
+ */
+html body #msx-gosteriler .msx-grid > p {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/*
+ * WordPress görselleri <p><img></p> içine aldığı için
+ * resim kapsayıcısını sıfırla.
+ */
+html body #msx-gosteriler .msx-card > p:first-child {
+    display: block !important;
+
+    width: 100% !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: hidden !important;
+
+    line-height: 0 !important;
+
+    flex: 0 0 280px !important;
+}
+
+
+/*
+ * Gerçek görsel artık article > p > img şeklinde.
+ */
+html body #msx-gosteriler .msx-card > p:first-child > img {
+    display: block !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+
+    object-fit: cover !important;
+    object-position: center center !important;
+}
+
+
+/* MOBİL */
+@media (max-width: 700px) {
+
+    html body #msx-gosteriler .msx-card > p:first-child {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+
+        aspect-ratio: 4 / 3 !important;
+
+        flex-basis: auto !important;
+    }
+
+    html body #msx-gosteriler .msx-card > p:first-child > img {
+        width: 100% !important;
+
+        height: 100% !important;
+        min-height: 100% !important;
+        max-height: 100% !important;
+
+        aspect-ratio: 4 / 3 !important;
+
+        object-fit: cover !important;
+    }
+}
+/* 07 İCRİAN SHOW — SON KARTI ORTALA */
+@media (min-width: 1001px) {
+
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:last-of-type {
+        grid-column: 2 !important;
+        grid-row: auto !important;
+        justify-self: stretch !important;
+    }
+
+}
+/* =========================================================
+   V16 — 8 GÖSTERİ SON SATIR KESİN ORTALAMA
+   ========================================================= */
+
+@media (min-width: 1001px) {
+
+    html body #msx-gosteriler .msx-grid {
+        display: grid !important;
+        grid-template-columns:
+            repeat(6, minmax(0, 1fr)) !important;
+
+        column-gap: 24px !important;
+        row-gap: 24px !important;
+    }
+
+    /* İlk 6 kart: her biri 2 kolon = 3 kart yan yana */
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card {
+        grid-column: span 2 !important;
+        width: 100% !important;
+    }
+
+    /* 07 — ICARIAN SHOW */
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:nth-of-type(7) {
+        grid-column: 2 / span 2 !important;
+    }
+
+    /* 08 — KOSTÜM SHOW */
+    html body #msx-gosteriler
+    .msx-grid > article.msx-card:nth-of-type(8) {
+        grid-column: 4 / span 2 !important;
+    }
+
+}
+</style>
+
+    <?php
+}
+
+
+/*
+ * Öncelikle HEAD.
+ */
+add_action(
+    'wp_head',
+    'msx_gosteriler_v14_css',
+    99999
+);
+
+
+/*
+ * Tema wp_head çağırmıyorsa güvenlik için FOOTER.
+ */
+add_action(
+    'wp_footer',
+    'msx_gosteriler_v14_css',
+    99999
+);

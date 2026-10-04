@@ -1,0 +1,3115 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — HAKKIMIZDA SAYFASI V1
+ * ============================================================
+ *
+ * /hakkimizda/ sayfasını tamamen yeniler.
+ * Masaüstü + tablet + mobil uyumludur.
+ *
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   1. HAKKIMIZDA SAYFASINDA MIYIZ?
+   ============================================================ */
+
+function mdg_is_about_page_v1() {
+
+    return is_page( 'hakkimizda' );
+}
+
+
+/* ============================================================
+   2. BODY CLASS
+   ============================================================ */
+
+add_filter(
+    'body_class',
+    function ( $classes ) {
+
+        if ( mdg_is_about_page_v1() ) {
+            $classes[] = 'mdg-about-page';
+        }
+
+        return $classes;
+    }
+);
+
+
+/* ============================================================
+   3. SAYFA HTML
+   ============================================================ */
+
+function mdg_render_about_page_v1() {
+
+    $shows_url =
+        home_url( '/gosteriler/' );
+
+    $cities_url =
+        home_url( '/sehirler/' );
+
+    $contact_url =
+        home_url( '/iletisim/' );
+
+    $whatsapp_url =
+        'https://wa.me/905068907613?text=' .
+        rawurlencode(
+            'Merhaba, Madagaskar Sirki hakkında bilgi almak istiyorum.'
+        );
+
+
+    /*
+     * Gerçek Madagaskar Sirki görselleri
+     */
+
+    $hero_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_0000000096dc820a81af4ef56f90b184-1.png';
+
+    $story_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000e998820a9db3ae89302f6fbc.png';
+
+    $experience_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000ba18820aa5bd4cd54a5dc636.png';
+
+
+    ob_start();
+    ?>
+
+
+<main id="mdg-about" class="mdg-about">
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="mdga-hero">
+
+        <div class="mdga-wrap mdga-hero-grid">
+
+
+            <!-- HERO COPY -->
+
+            <div class="mdga-hero-copy">
+
+
+                <span class="mdga-kicker">
+
+                    MADAGASKAR SİRKİ · HAKKIMIZDA
+
+                </span>
+
+
+                <h1>
+
+                    Sahnede
+                    <br>
+                    insan yeteneği.
+
+                </h1>
+
+
+                <p class="mdga-lead">
+
+                    Madagaskar Sirki; dünyanın farklı ülkelerinden
+                    profesyonel sanatçıları, akrobasi, denge,
+                    eğlence ve görsel sahne performanslarını
+                    aynı programda buluşturan uluslararası
+                    bir gösteri deneyimidir.
+
+                </p>
+
+
+                <div class="mdga-pills">
+
+                    <span>Uluslararası Sanatçılar</span>
+
+                    <span>Aile Dostu</span>
+
+                    <span>Hayvansız Gösteri</span>
+
+                    <span>Türkiye Turnesi</span>
+
+                </div>
+
+
+                <div class="mdga-actions">
+
+
+                    <a
+                        class="mdga-btn mdga-btn-primary"
+                        href="<?php echo esc_url( $shows_url ); ?>"
+                    >
+
+                        Gösterileri Keşfet
+
+                    </a>
+
+
+                    <a
+                        class="mdga-btn mdga-btn-secondary"
+                        href="<?php echo esc_url( $cities_url ); ?>"
+                    >
+
+                        Şehirleri ve Biletleri Gör
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- HERO IMAGE -->
+
+            <div class="mdga-hero-media">
+
+
+                <img
+                    src="<?php echo esc_url( $hero_image ); ?>"
+                    alt="Madagaskar Sirki Akrobasi Sanatçıları"
+                    fetchpriority="high"
+                    decoding="async"
+                >
+
+
+                <div class="mdga-image-overlay">
+
+
+                    <span>
+                        MADAGASKAR SİRKİ
+                    </span>
+
+
+                    <strong>
+
+                        Şaşkınlık.
+                        <br>
+                        Kahkaha.
+                        <br>
+                        Heyecan.
+
+                    </strong>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HIZLI BİLGİ
+         ===================================================== -->
+
+    <section class="mdga-quick">
+
+        <div class="mdga-wrap">
+
+            <div class="mdga-quick-grid">
+
+
+                <div>
+
+                    <strong>
+                        1 Saat
+                    </strong>
+
+                    <span>
+                        Yaklaşık gösteri süresi
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Hayvansız
+                    </strong>
+
+                    <span>
+                        İnsan yeteneği merkezde
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Aile Dostu
+                    </strong>
+
+                    <span>
+                        Ortak sahne deneyimi
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Uluslararası
+                    </strong>
+
+                    <span>
+                        Profesyonel sanatçılar
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HİKAYEMİZ
+         ===================================================== -->
+
+    <section class="mdga-story">
+
+        <div class="mdga-wrap mdga-story-grid">
+
+
+            <div class="mdga-story-copy">
+
+
+                <span class="mdga-label">
+
+                    BİZİM HİKAYEMİZ
+
+                </span>
+
+
+                <h2>
+
+                    Sahnenin merkezinde
+                    insan var.
+
+                </h2>
+
+
+                <p>
+
+                    Madagaskar Sirki, farklı disiplinlerden
+                    sanatçıların yeteneklerini tek bir sahne
+                    programında buluşturan canlı gösteri
+                    anlayışıyla seyircisiyle buluşuyor.
+
+                </p>
+
+
+                <p>
+
+                    Akrobasi, denge, partner performansları,
+                    hula hoop, bisiklet gösterileri, palyaço
+                    ve farklı sahne disiplinleri program
+                    boyunca art arda izleyici karşısına çıkıyor.
+
+                </p>
+
+
+                <p>
+
+                    Amacımız yalnızca bir gösteri sunmak değil;
+                    çocukların ve yetişkinlerin birlikte
+                    şaşırdığı, güldüğü ve heyecanı paylaştığı
+                    unutulmaz bir aile deneyimi oluşturmak.
+
+                </p>
+
+
+            </div>
+
+
+
+            <div class="mdga-story-media">
+
+
+                <img
+                    src="<?php echo esc_url( $story_image ); ?>"
+                    alt="Madagaskar Sirki Uluslararası Akrobasi Ekibi"
+                    loading="lazy"
+                    decoding="async"
+                >
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MİSYON / VİZYON / DEĞERLER
+         ===================================================== -->
+
+    <section class="mdga-principles">
+
+        <div class="mdga-wrap">
+
+
+            <header class="mdga-section-head">
+
+
+                <span class="mdga-label">
+
+                    BİZİ BİZ YAPANLAR
+
+                </span>
+
+
+                <h2>
+
+                    Sahnedeki yaklaşımımız.
+
+                </h2>
+
+
+                <p>
+
+                    Güvenli, kaliteli ve ailece izlenebilecek
+                    profesyonel sahne deneyimini her şehirde
+                    aynı anlayışla sunmayı hedefliyoruz.
+
+                </p>
+
+
+            </header>
+
+
+
+            <div class="mdga-principle-grid">
+
+
+                <!-- MİSYON -->
+
+                <article class="mdga-principle mdga-principle-dark">
+
+
+                    <span class="mdga-icon">
+
+                        ✦
+
+                    </span>
+
+
+                    <small>
+
+                        01 · MİSYONUMUZ
+
+                    </small>
+
+
+                    <h3>
+
+                        İnsan yeteneğini
+                        sahneye taşımak.
+
+                    </h3>
+
+
+                    <p>
+
+                        Sanatın evrensel dilini kullanarak
+                        izleyicilere güvenli, kaliteli,
+                        eğlenceli ve unutulmaz canlı
+                        gösteri deneyimleri sunmak.
+
+                    </p>
+
+
+                </article>
+
+
+
+                <!-- VİZYON -->
+
+                <article class="mdga-principle">
+
+
+                    <span class="mdga-icon">
+
+                        🌍
+
+                    </span>
+
+
+                    <small>
+
+                        02 · VİZYONUMUZ
+
+                    </small>
+
+
+                    <h3>
+
+                        Farklı kültürleri
+                        aynı sahnede buluşturmak.
+
+                    </h3>
+
+
+                    <p>
+
+                        Uluslararası sanatçıların farklı
+                        sahne disiplinlerini Türkiye'nin
+                        farklı şehirlerindeki izleyicilerle
+                        buluşturan güçlü bir gösteri
+                        markası olmak.
+
+                    </p>
+
+
+                </article>
+
+
+
+                <!-- DEĞERLER -->
+
+                <article class="mdga-principle">
+
+
+                    <span class="mdga-icon">
+
+                        🤝
+
+                    </span>
+
+
+                    <small>
+
+                        03 · DEĞERLERİMİZ
+
+                    </small>
+
+
+                    <h3>
+
+                        Güven, kalite
+                        ve ekip ruhu.
+
+                    </h3>
+
+
+                    <p>
+
+                        Güvenlik, kalite, yenilikçilik,
+                        dürüstlük, ekip ruhu ve
+                        izleyici memnuniyeti
+                        çalışma anlayışımızın temelidir.
+
+                    </p>
+
+
+                </article>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ULUSLARARASI SANATÇILAR
+         ===================================================== -->
+
+    <section class="mdga-international">
+
+        <div class="mdga-wrap mdga-international-grid">
+
+
+            <div class="mdga-international-media">
+
+
+                <img
+                    src="<?php echo esc_url( $experience_image ); ?>"
+                    alt="Madagaskar Sirki Uluslararası Sahne Gösterisi"
+                    loading="lazy"
+                    decoding="async"
+                >
+
+
+            </div>
+
+
+
+            <div class="mdga-international-copy">
+
+
+                <span class="mdga-label">
+
+                    ULUSLARARASI SAHNE
+
+                </span>
+
+
+                <h2>
+
+                    Farklı ülkeler.
+                    <br>
+                    Tek sahne.
+
+                </h2>
+
+
+                <p>
+
+                    Madagaskar Sirki programında dünyanın
+                    farklı ülkelerinden gelen profesyonel
+                    sanatçılar kendi sahne disiplinlerini
+                    Türkiye'deki izleyicilerle buluşturuyor.
+
+                </p>
+
+
+                <p>
+
+                    Her performans; uzun çalışma saatleri,
+                    disiplin, koordinasyon, fiziksel
+                    hazırlık ve ekip güveninin sonucudur.
+
+                </p>
+
+
+                <div class="mdga-mini-grid">
+
+
+                    <div>
+
+                        <strong>
+                            Profesyonel
+                        </strong>
+
+                        <span>
+                            Sahne sanatçıları
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Canlı
+                        </strong>
+
+                        <span>
+                            Gösteri deneyimi
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Modern
+                        </strong>
+
+                        <span>
+                            Sirk anlayışı
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Ailece
+                        </strong>
+
+                        <span>
+                            İzlenebilir program
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         DÖRT TEMEL YAKLAŞIM
+         ===================================================== -->
+
+    <section class="mdga-values">
+
+        <div class="mdga-wrap">
+
+
+            <header class="mdga-section-head">
+
+
+                <span class="mdga-label">
+
+                    MADAGASKAR SİRKİ DENEYİMİ
+
+                </span>
+
+
+                <h2>
+
+                    Her gösteride dört temel ilke.
+
+                </h2>
+
+
+            </header>
+
+
+
+            <div class="mdga-value-grid">
+
+
+                <article>
+
+
+                    <span>
+                        🛡️
+                    </span>
+
+
+                    <h3>
+                        Güvenli Sahne
+                    </h3>
+
+
+                    <p>
+
+                        Gösteri disiplininin ve profesyonel
+                        hazırlığın merkezde olduğu
+                        kontrollü sahne yaklaşımı.
+
+                    </p>
+
+
+                </article>
+
+
+
+                <article>
+
+
+                    <span>
+                        👨‍👩‍👧‍👦
+                    </span>
+
+
+                    <h3>
+                        Aile Dostu
+                    </h3>
+
+
+                    <p>
+
+                        Çocukların ve yetişkinlerin
+                        birlikte keyifle izleyebileceği
+                        ortak bir eğlence deneyimi.
+
+                    </p>
+
+
+                </article>
+
+
+
+                <article>
+
+
+                    <span>
+                        ✨
+                    </span>
+
+
+                    <h3>
+                        Canlı Performans
+                    </h3>
+
+
+                    <p>
+
+                        İnsan becerisi, müzik, ışık ve
+                        sahne atmosferinin birleştiği
+                        gerçek zamanlı gösteriler.
+
+                    </p>
+
+
+                </article>
+
+
+
+                <article>
+
+
+                    <span>
+                        🌍
+                    </span>
+
+
+                    <h3>
+                        Uluslararası
+                    </h3>
+
+
+                    <p>
+
+                        Farklı ülkelerden profesyonel
+                        sanatçıların yeteneklerini aynı
+                        sahnede buluşturan program.
+
+                    </p>
+
+
+                </article>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HAYVANSIZ GÖSTERİ
+         ===================================================== -->
+
+    <section class="mdga-human">
+
+        <div class="mdga-wrap">
+
+
+            <div class="mdga-human-panel">
+
+
+                <div>
+
+
+                    <span class="mdga-label">
+
+                        MODERN SİRK DENEYİMİ
+
+                    </span>
+
+
+                    <h2>
+
+                        Gösterinin merkezinde
+                        insan yeteneği var.
+
+                    </h2>
+
+
+                    <p>
+
+                        Madagaskar Sirki programında hayvan
+                        kullanılmaz. Gösteriler; sanatçıların
+                        fiziksel yeteneği, koordinasyonu,
+                        çalışması ve sahne performansı
+                        üzerine kuruludur.
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="mdga-human-badge">
+
+
+                    <strong>
+
+                        HAYVANSIZ
+
+                    </strong>
+
+
+                    <span>
+
+                        SAHNE GÖSTERİSİ
+
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CTA
+         ===================================================== -->
+
+    <section class="mdga-cta">
+
+        <div class="mdga-wrap">
+
+
+            <div class="mdga-cta-panel">
+
+
+                <div class="mdga-cta-copy">
+
+
+                    <span>
+
+                        2026–2027 TÜRKİYE TURNESİ
+
+                    </span>
+
+
+                    <h2>
+
+                        Madagaskar Sirki'ni
+                        şehrinizde yaşayın.
+
+                    </h2>
+
+
+                    <p>
+
+                        Turne takvimini inceleyin,
+                        size uygun gösteriyi ve seansı seçin,
+                        biletinizi online alın.
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="mdga-cta-actions">
+
+
+                    <a
+                        class="mdga-btn mdga-btn-primary"
+                        href="<?php echo esc_url( $cities_url ); ?>"
+                    >
+
+                        Şehrini Seç ve Bilet Al
+
+                    </a>
+
+
+                    <a
+                        class="mdga-btn mdga-btn-light"
+                        href="<?php echo esc_url( $whatsapp_url ); ?>"
+                        target="_blank"
+                        rel="noopener"
+                    >
+
+                        WhatsApp ile Bilgi Al
+
+                    </a>
+
+
+                    <a
+                        class="mdga-contact-link"
+                        href="<?php echo esc_url( $contact_url ); ?>"
+                    >
+
+                        İletişim →
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+/* ============================================================
+   4. SAYFA İÇERİĞİNİ DEĞİŞTİR
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            is_admin() ||
+            ! mdg_is_about_page_v1() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+        return mdg_render_about_page_v1();
+
+    },
+    999
+);
+
+
+/* ============================================================
+   5. CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! mdg_is_about_page_v1() ) {
+            return;
+        }
+
+        ?>
+
+<style id="mdg-about-v1">
+
+
+/* ============================================================
+   WORDPRESS RESET
+   ============================================================ */
+
+body.mdg-about-page {
+
+    background:
+        #f6f2e8 !important;
+
+    overflow-x:
+        hidden !important;
+}
+
+
+body.mdg-about-page
+.entry-title,
+
+body.mdg-about-page
+.wp-block-post-title {
+
+    display:
+        none !important;
+}
+
+
+#mdg-about,
+#mdg-about * {
+
+    box-sizing:
+        border-box;
+}
+
+
+#mdg-about {
+
+    --bg:
+        #f6f2e8;
+
+    --soft:
+        #ede7da;
+
+    --white:
+        #ffffff;
+
+    --dark:
+        #0d0d17;
+
+    --text:
+        #111118;
+
+    --muted:
+        #69676d;
+
+    --red:
+        #cf5744;
+
+    --yellow:
+        #f4bd42;
+
+    --border:
+        #e5dfd3;
+
+
+    position:
+        relative;
+
+
+    left:
+        50%;
+
+
+    transform:
+        translateX(-50%);
+
+
+    width:
+        100vw;
+
+
+    max-width:
+        100vw;
+
+
+    margin:
+        0;
+
+
+    background:
+        var(--bg);
+
+
+    color:
+        var(--text);
+
+
+    overflow:
+        hidden;
+}
+
+
+#mdg-about
+.mdga-wrap {
+
+    width:
+        min(
+            1180px,
+            calc(100% - 48px)
+        );
+
+
+    margin:
+        0 auto;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#mdg-about
+.mdga-hero {
+
+    padding:
+        70px 0 28px;
+}
+
+
+#mdg-about
+.mdga-hero-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1.04fr .96fr;
+
+
+    gap:
+        18px;
+}
+
+
+#mdg-about
+.mdga-hero-copy,
+
+#mdg-about
+.mdga-hero-media {
+
+    min-height:
+        610px;
+
+
+    border-radius:
+        28px;
+
+
+    overflow:
+        hidden;
+}
+
+
+#mdg-about
+.mdga-hero-copy {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    padding:
+        54px;
+
+
+    background:
+        #fff;
+}
+
+
+#mdg-about
+.mdga-kicker {
+
+    display:
+        inline-flex;
+
+
+    align-self:
+        flex-start;
+
+
+    padding:
+        11px 17px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        11px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.1px;
+}
+
+
+#mdg-about h1 {
+
+    margin:
+        49px 0 26px;
+
+
+    font-size:
+        clamp(
+            58px,
+            6vw,
+            84px
+        );
+
+
+    font-weight:
+        500;
+
+
+    line-height:
+        .89;
+
+
+    letter-spacing:
+        -4px;
+}
+
+
+#mdg-about
+.mdga-lead {
+
+    margin:
+        0;
+
+
+    color:
+        #4d4b50;
+
+
+    font-size:
+        19px;
+
+
+    line-height:
+        1.62;
+}
+
+
+
+/* PILLS */
+
+#mdg-about
+.mdga-pills {
+
+    display:
+        flex;
+
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        9px;
+
+
+    margin:
+        32px 0;
+}
+
+
+#mdg-about
+.mdga-pills span {
+
+    padding:
+        10px 14px;
+
+
+    background:
+        var(--bg);
+
+
+    border:
+        1px solid #ddd6c9;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        12px;
+
+
+    font-weight:
+        800;
+}
+
+
+#mdg-about
+.mdga-actions {
+
+    display:
+        flex;
+
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        11px;
+
+
+    margin-top:
+        auto;
+}
+
+
+
+/* HERO MEDIA */
+
+#mdg-about
+.mdga-hero-media {
+
+    position:
+        relative;
+
+
+    background:
+        #111;
+}
+
+
+#mdg-about
+.mdga-hero-media img {
+
+    position:
+        absolute;
+
+
+    inset:
+        0;
+
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+
+    height:
+        100%;
+
+
+    object-fit:
+        cover;
+
+
+    object-position:
+        center;
+}
+
+
+#mdg-about
+.mdga-hero-media::after {
+
+    content:
+        "";
+
+
+    position:
+        absolute;
+
+
+    inset:
+        0;
+
+
+    background:
+
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.78),
+            transparent 56%
+        );
+}
+
+
+#mdg-about
+.mdga-image-overlay {
+
+    position:
+        absolute;
+
+
+    z-index:
+        2;
+
+
+    left:
+        36px;
+
+
+    right:
+        36px;
+
+
+    bottom:
+        38px;
+
+
+    color:
+        #fff;
+}
+
+
+#mdg-about
+.mdga-image-overlay span {
+
+    display:
+        inline-flex;
+
+
+    padding:
+        8px 12px;
+
+
+    margin-bottom:
+        13px;
+
+
+    background:
+        rgba(13,13,23,.80);
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+}
+
+
+#mdg-about
+.mdga-image-overlay strong {
+
+    display:
+        block;
+
+
+    font-size:
+        clamp(
+            38px,
+            4vw,
+            57px
+        );
+
+
+    font-weight:
+        500;
+
+
+    line-height:
+        .93;
+
+
+    letter-spacing:
+        -2px;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#mdg-about
+.mdga-btn {
+
+    display:
+        inline-flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        center;
+
+
+    min-height:
+        52px;
+
+
+    padding:
+        0 22px;
+
+
+    border-radius:
+        999px;
+
+
+    text-decoration:
+        none;
+
+
+    font-size:
+        14px;
+
+
+    font-weight:
+        850;
+}
+
+
+#mdg-about
+.mdga-btn-primary {
+
+    background:
+        var(--red);
+
+
+    color:
+        #fff;
+
+
+    box-shadow:
+        0 12px 28px
+        rgba(207,87,68,.22);
+}
+
+
+#mdg-about
+.mdga-btn-secondary {
+
+    background:
+        #fff;
+
+
+    color:
+        var(--dark);
+
+
+    border:
+        1px solid var(--border);
+}
+
+
+#mdg-about
+.mdga-btn-light {
+
+    background:
+        #fff;
+
+
+    color:
+        var(--dark);
+}
+
+
+
+/* ============================================================
+   QUICK
+   ============================================================ */
+
+#mdg-about
+.mdga-quick {
+
+    padding:
+        0 0 90px;
+}
+
+
+#mdg-about
+.mdga-quick-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
+
+    overflow:
+        hidden;
+
+
+    background:
+        var(--dark);
+
+
+    border-radius:
+        21px;
+}
+
+
+#mdg-about
+.mdga-quick-grid > div {
+
+    padding:
+        27px 20px;
+
+
+    text-align:
+        center;
+
+
+    color:
+        #fff;
+
+
+    border-right:
+        1px solid
+        rgba(255,255,255,.12);
+}
+
+
+#mdg-about
+.mdga-quick-grid > div:last-child {
+
+    border-right:
+        0;
+}
+
+
+#mdg-about
+.mdga-quick-grid strong,
+
+#mdg-about
+.mdga-quick-grid span {
+
+    display:
+        block;
+}
+
+
+#mdg-about
+.mdga-quick-grid strong {
+
+    margin-bottom:
+        6px;
+}
+
+
+#mdg-about
+.mdga-quick-grid span {
+
+    color:
+        #bbb9c0;
+
+
+    font-size:
+        12px;
+}
+
+
+
+/* ============================================================
+   STORY
+   ============================================================ */
+
+#mdg-about
+.mdga-story {
+
+    padding:
+        95px 0;
+
+
+    background:
+        var(--soft);
+}
+
+
+#mdg-about
+.mdga-story-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1fr 1fr;
+
+
+    gap:
+        50px;
+
+
+    align-items:
+        center;
+}
+
+
+#mdg-about
+.mdga-label {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        13px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        11px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.7px;
+}
+
+
+#mdg-about
+.mdga-story h2,
+
+#mdg-about
+.mdga-section-head h2,
+
+#mdg-about
+.mdga-international h2,
+
+#mdg-about
+.mdga-human h2,
+
+#mdg-about
+.mdga-cta h2 {
+
+    margin:
+        0;
+
+
+    font-size:
+        clamp(
+            44px,
+            5vw,
+            68px
+        );
+
+
+    font-weight:
+        500;
+
+
+    line-height:
+        .96;
+
+
+    letter-spacing:
+        -3px;
+}
+
+
+#mdg-about
+.mdga-story-copy p,
+
+#mdg-about
+.mdga-international-copy > p {
+
+    margin:
+        24px 0 0;
+
+
+    color:
+        #5d5a60;
+
+
+    font-size:
+        17px;
+
+
+    line-height:
+        1.72;
+}
+
+
+#mdg-about
+.mdga-story-media {
+
+    overflow:
+        hidden;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-about
+.mdga-story-media img {
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+
+    aspect-ratio:
+        4 / 5;
+
+
+    object-fit:
+        cover;
+}
+
+
+
+/* ============================================================
+   PRINCIPLES
+   ============================================================ */
+
+#mdg-about
+.mdga-principles {
+
+    padding:
+        100px 0;
+}
+
+
+#mdg-about
+.mdga-section-head {
+
+    max-width:
+        760px;
+
+
+    margin-bottom:
+        44px;
+}
+
+
+#mdg-about
+.mdga-section-head > p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        16px;
+
+
+    line-height:
+        1.65;
+}
+
+
+#mdg-about
+.mdga-principle-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0,1fr)
+        );
+
+
+    gap:
+        15px;
+}
+
+
+#mdg-about
+.mdga-principle {
+
+    min-height:
+        410px;
+
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    padding:
+        30px;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid var(--border);
+
+
+    border-radius:
+        24px;
+}
+
+
+#mdg-about
+.mdga-principle-dark {
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-color:
+        var(--dark);
+}
+
+
+#mdg-about
+.mdga-icon {
+
+    display:
+        grid;
+
+
+    place-items:
+        center;
+
+
+    width:
+        47px;
+
+
+    height:
+        47px;
+
+
+    margin-bottom:
+        46px;
+
+
+    background:
+        var(--bg);
+
+
+    border-radius:
+        14px;
+}
+
+
+#mdg-about
+.mdga-principle-dark
+.mdga-icon {
+
+    background:
+        rgba(255,255,255,.08);
+}
+
+
+#mdg-about
+.mdga-principle small {
+
+    color:
+        var(--red);
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.4px;
+}
+
+
+#mdg-about
+.mdga-principle h3 {
+
+    margin:
+        17px 0 18px;
+
+
+    font-size:
+        27px;
+
+
+    font-weight:
+        600;
+
+
+    line-height:
+        1.1;
+
+
+    letter-spacing:
+        -1px;
+}
+
+
+#mdg-about
+.mdga-principle p {
+
+    margin:
+        0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        14px;
+
+
+    line-height:
+        1.65;
+}
+
+
+#mdg-about
+.mdga-principle-dark p {
+
+    color:
+        #c5c3ca;
+}
+
+
+
+/* ============================================================
+   INTERNATIONAL
+   ============================================================ */
+
+#mdg-about
+.mdga-international {
+
+    padding:
+        95px 0;
+
+
+    background:
+        var(--soft);
+}
+
+
+#mdg-about
+.mdga-international-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        .95fr 1.05fr;
+
+
+    gap:
+        48px;
+
+
+    align-items:
+        center;
+}
+
+
+#mdg-about
+.mdga-international-media {
+
+    overflow:
+        hidden;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-about
+.mdga-international-media img {
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+
+    aspect-ratio:
+        4 / 5;
+
+
+    object-fit:
+        cover;
+}
+
+
+#mdg-about
+.mdga-mini-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1fr 1fr;
+
+
+    gap:
+        10px;
+
+
+    margin-top:
+        35px;
+}
+
+
+#mdg-about
+.mdga-mini-grid > div {
+
+    padding:
+        21px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        16px;
+}
+
+
+#mdg-about
+.mdga-mini-grid strong,
+
+#mdg-about
+.mdga-mini-grid span {
+
+    display:
+        block;
+}
+
+
+#mdg-about
+.mdga-mini-grid strong {
+
+    margin-bottom:
+        6px;
+}
+
+
+#mdg-about
+.mdga-mini-grid span {
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        12px;
+}
+
+
+
+/* ============================================================
+   VALUES
+   ============================================================ */
+
+#mdg-about
+.mdga-values {
+
+    padding:
+        100px 0;
+}
+
+
+#mdg-about
+.mdga-value-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+
+    gap:
+        14px;
+}
+
+
+#mdg-about
+.mdga-value-grid article {
+
+    min-height:
+        290px;
+
+
+    padding:
+        28px;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid var(--border);
+
+
+    border-radius:
+        21px;
+}
+
+
+#mdg-about
+.mdga-value-grid article > span {
+
+    display:
+        grid;
+
+
+    place-items:
+        center;
+
+
+    width:
+        46px;
+
+
+    height:
+        46px;
+
+
+    margin-bottom:
+        38px;
+
+
+    background:
+        var(--bg);
+
+
+    border-radius:
+        13px;
+
+
+    font-size:
+        20px;
+}
+
+
+#mdg-about
+.mdga-value-grid h3 {
+
+    margin:
+        0 0 13px;
+
+
+    font-size:
+        21px;
+}
+
+
+#mdg-about
+.mdga-value-grid p {
+
+    margin:
+        0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        14px;
+
+
+    line-height:
+        1.62;
+}
+
+
+
+/* ============================================================
+   HUMAN TALENT
+   ============================================================ */
+
+#mdg-about
+.mdga-human {
+
+    padding:
+        0 0 100px;
+}
+
+
+#mdg-about
+.mdga-human-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        50px;
+
+
+    padding:
+        55px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-about
+.mdga-human-panel > div:first-child {
+
+    max-width:
+        760px;
+}
+
+
+#mdg-about
+.mdga-human-panel p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        21px 0 0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        16px;
+
+
+    line-height:
+        1.67;
+}
+
+
+#mdg-about
+.mdga-human-badge {
+
+    display:
+        grid;
+
+
+    place-items:
+        center;
+
+
+    flex:
+        0 0 220px;
+
+
+    width:
+        220px;
+
+
+    height:
+        220px;
+
+
+    padding:
+        25px;
+
+
+    text-align:
+        center;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        999px;
+}
+
+
+#mdg-about
+.mdga-human-badge strong {
+
+    align-self:
+        end;
+
+
+    font-size:
+        25px;
+
+
+    letter-spacing:
+        1px;
+}
+
+
+#mdg-about
+.mdga-human-badge span {
+
+    align-self:
+        start;
+
+
+    color:
+        var(--yellow);
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.6px;
+}
+
+
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+#mdg-about
+.mdga-cta {
+
+    padding:
+        0 0 100px;
+}
+
+
+#mdg-about
+.mdga-cta-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        50px;
+
+
+    padding:
+        54px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-about
+.mdga-cta-copy {
+
+    max-width:
+        700px;
+}
+
+
+#mdg-about
+.mdga-cta-copy > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        13px;
+
+
+    color:
+        var(--yellow);
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.6px;
+}
+
+
+#mdg-about
+.mdga-cta h2 {
+
+    color:
+        #fff;
+}
+
+
+#mdg-about
+.mdga-cta p {
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        #c5c3ca;
+
+
+    font-size:
+        15px;
+
+
+    line-height:
+        1.6;
+}
+
+
+#mdg-about
+.mdga-cta-actions {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    gap:
+        11px;
+
+
+    min-width:
+        280px;
+}
+
+
+#mdg-about
+.mdga-contact-link {
+
+    display:
+        block;
+
+
+    padding:
+        7px;
+
+
+    color:
+        #fff;
+
+
+    text-align:
+        center;
+
+
+    text-decoration:
+        none;
+
+
+    font-size:
+        13px;
+
+
+    font-weight:
+        800;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+
+    #mdg-about
+    .mdga-hero-grid,
+
+    #mdg-about
+    .mdga-story-grid,
+
+    #mdg-about
+    .mdga-international-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #mdg-about
+    .mdga-principle-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #mdg-about
+    .mdga-value-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #mdg-about
+    .mdga-human-panel,
+
+    #mdg-about
+    .mdga-cta-panel {
+
+        flex-direction:
+            column;
+
+
+        align-items:
+            flex-start;
+    }
+
+
+    #mdg-about
+    .mdga-cta-actions {
+
+        width:
+            100%;
+    }
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+
+    body.mdg-about-page {
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+    #mdg-about {
+
+        width:
+            100vw !important;
+
+
+        max-width:
+            100vw !important;
+
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+    #mdg-about
+    .mdga-wrap {
+
+        width:
+            calc(100% - 32px);
+    }
+
+
+
+    /* HERO */
+
+    #mdg-about
+    .mdga-hero {
+
+        padding:
+            36px 0 25px;
+    }
+
+
+    #mdg-about
+    .mdga-hero-copy {
+
+        min-height:
+            0;
+
+
+        padding:
+            31px 26px;
+    }
+
+
+    #mdg-about
+    .mdga-kicker {
+
+        font-size:
+            9px;
+    }
+
+
+    #mdg-about h1 {
+
+        margin-top:
+            37px;
+
+
+        font-size:
+            54px;
+
+
+        line-height:
+            .91;
+
+
+        letter-spacing:
+            -3px;
+    }
+
+
+    #mdg-about
+    .mdga-lead {
+
+        font-size:
+            17px;
+    }
+
+
+    #mdg-about
+    .mdga-pills {
+
+        display:
+            grid;
+
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #mdg-about
+    .mdga-pills span {
+
+        display:
+            flex;
+
+
+        align-items:
+            center;
+
+
+        justify-content:
+            center;
+
+
+        min-height:
+            55px;
+
+
+        text-align:
+            center;
+    }
+
+
+    #mdg-about
+    .mdga-actions {
+
+        display:
+            grid;
+    }
+
+
+    #mdg-about
+    .mdga-btn {
+
+        width:
+            100%;
+    }
+
+
+    #mdg-about
+    .mdga-hero-media {
+
+        min-height:
+            510px;
+    }
+
+
+    #mdg-about
+    .mdga-image-overlay {
+
+        left:
+            25px;
+
+
+        right:
+            25px;
+
+
+        bottom:
+            27px;
+    }
+
+
+
+    /* QUICK */
+
+    #mdg-about
+    .mdga-quick {
+
+        padding-bottom:
+            60px;
+    }
+
+
+    #mdg-about
+    .mdga-quick-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #mdg-about
+    .mdga-quick-grid > div {
+
+        border-bottom:
+            1px solid
+            rgba(255,255,255,.1);
+    }
+
+
+
+    /* SECTIONS */
+
+    #mdg-about
+    .mdga-story,
+
+    #mdg-about
+    .mdga-principles,
+
+    #mdg-about
+    .mdga-international,
+
+    #mdg-about
+    .mdga-values {
+
+        padding:
+            70px 0;
+    }
+
+
+    #mdg-about
+    .mdga-story h2,
+
+    #mdg-about
+    .mdga-section-head h2,
+
+    #mdg-about
+    .mdga-international h2,
+
+    #mdg-about
+    .mdga-human h2,
+
+    #mdg-about
+    .mdga-cta h2 {
+
+        font-size:
+            43px;
+
+
+        line-height:
+            1;
+    }
+
+
+    #mdg-about
+    .mdga-story-media img,
+
+    #mdg-about
+    .mdga-international-media img {
+
+        aspect-ratio:
+            4 / 3;
+    }
+
+
+
+    /* CARDS */
+
+    #mdg-about
+    .mdga-principle-grid,
+
+    #mdg-about
+    .mdga-value-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #mdg-about
+    .mdga-principle {
+
+        min-height:
+            0;
+    }
+
+
+    #mdg-about
+    .mdga-mini-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+
+    /* HUMAN */
+
+    #mdg-about
+    .mdga-human {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #mdg-about
+    .mdga-human-panel {
+
+        padding:
+            30px 25px;
+    }
+
+
+    #mdg-about
+    .mdga-human-badge {
+
+        align-self:
+            center;
+
+
+        flex:
+            none;
+
+
+        width:
+            190px;
+
+
+        height:
+            190px;
+    }
+
+
+
+    /* CTA */
+
+    #mdg-about
+    .mdga-cta {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #mdg-about
+    .mdga-cta-panel {
+
+        padding:
+            30px 25px;
+    }
+
+
+    #mdg-about
+    .mdga-cta-actions {
+
+        min-width:
+            0;
+    }
+
+}
+
+</style>
+
+        <?php
+
+    },
+    9999
+);

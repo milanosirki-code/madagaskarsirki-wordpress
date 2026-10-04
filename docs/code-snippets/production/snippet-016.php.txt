@@ -1,0 +1,144 @@
+
+/**
+ * Madagaskar Sirki şehir sayfalarını /sehirler/sehir/ yapısına taşır.
+ * Eski şehir URL'lerini yeni adreslere 301 yönlendirir.
+ * WooCommerce ürünlerine ve siparişlere dokunmaz.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Şehir sayfaları:
+ * Sayfa ID => kısa adres
+ */
+function ms_sehir_sayfalari() {
+    return array(
+        37  => 'ankara',
+        41  => 'bursa',
+        45  => 'izmir',
+        261 => 'istanbul',
+        264 => 'antalya',
+        266 => 'adana',
+        268 => 'gaziantep',
+        270 => 'konya',
+        272 => 'mersin',
+        274 => 'kayseri',
+        276 => 'eskisehir',
+    );
+}
+
+/**
+ * Şehirler ana sayfasının ID'si.
+ */
+function ms_sehirler_ana_sayfa_id() {
+    return 1311;
+}
+
+/**
+ * Şehir sayfalarını bir defa Şehirler sayfasının altına taşır.
+ */
+add_action( 'init', function () {
+    $version_key = 'ms_sehir_url_standardizasyonu_v1';
+
+    if ( get_option( $version_key ) ) {
+        return;
+    }
+
+    $parent_id = ms_sehirler_ana_sayfa_id();
+
+    if ( get_post_status( $parent_id ) !== 'publish' ) {
+        return;
+    }
+
+    foreach ( ms_sehir_sayfalari() as $page_id => $slug ) {
+        $page = get_post( $page_id );
+
+        if ( ! $page || $page->post_type !== 'page' ) {
+            continue;
+        }
+
+        if (
+            (int) $page->post_parent !== $parent_id ||
+            $page->post_name !== $slug
+        ) {
+            wp_update_post(
+                array(
+                    'ID'          => $page_id,
+                    'post_parent' => $parent_id,
+                    'post_name'   => $slug,
+                )
+            );
+        }
+    }
+
+    /**
+     * Şehirler sayfasındaki eski Ankara iç bağlantılarını günceller.
+     */
+    $sehirler_page = get_post( $parent_id );
+
+    if ( $sehirler_page ) {
+        $old_ankara = home_url( '/ankara/' );
+        $new_ankara = home_url( '/sehirler/ankara/' );
+
+        $new_content = str_replace(
+            $old_ankara,
+            $new_ankara,
+            $sehirler_page->post_content
+        );
+
+        if ( $new_content !== $sehirler_page->post_content ) {
+            wp_update_post(
+                array(
+                    'ID'           => $parent_id,
+                    'post_content' => $new_content,
+                )
+            );
+        }
+    }
+
+    flush_rewrite_rules( false );
+
+    if ( function_exists( 'wp_cache_flush' ) ) {
+        wp_cache_flush();
+    }
+
+    update_option(
+        $version_key,
+        current_time( 'mysql' ),
+        false
+    );
+}, 20 );
+
+/**
+ * Eski şehir adreslerini yeni adreslere 301 yönlendirir.
+ */
+add_action( 'template_redirect', function () {
+    if ( is_admin() || wp_doing_ajax() ) {
+        return;
+    }
+
+    $request_path = isset( $_SERVER['REQUEST_URI'] )
+        ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH )
+        : '';
+
+    if ( ! $request_path ) {
+        return;
+    }
+
+    $request_path = trailingslashit( $request_path );
+
+    foreach ( ms_sehir_sayfalari() as $page_id => $slug ) {
+        $old_path = '/' . $slug . '/';
+
+        if ( $request_path === $old_path ) {
+            wp_safe_redirect(
+                home_url( '/sehirler/' . $slug . '/' ),
+                301,
+                'Madagaskar Sirki'
+            );
+            exit;
+        }
+    }
+}, 1 );

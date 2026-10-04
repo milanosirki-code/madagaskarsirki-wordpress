@@ -1,0 +1,260 @@
+/**
+ * Madagaskar Sirki – Güvenli Performans V4
+ *
+ * Sadece ana sayfada çalışır.
+ * Sepet, ödeme, ürün, bilet ve hesap sayfalarına dokunmaz.
+ *
+ * 1. Kommo sohbetini etkileşime veya 6,5 saniyeye kadar geciktirir.
+ * 2. Ana sayfadaki gereksiz WooCommerce stillerini kaldırır.
+ * 3. Ana sayfada kullanılmayan etkinlik/tarih dosyalarını kaldırır.
+ * 4. Hero bölümündeki LCP geciktiren animasyonları kapatır.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+/**
+ * Yalnızca gerçek ana sayfada optimizasyon uygula.
+ */
+function ms_perf_v4_is_homepage() {
+
+	if ( is_admin() || wp_doing_ajax() ) {
+		return false;
+	}
+
+	/* Yönetici giriş yapmışken düzenleyiciyi etkilemesin. */
+	if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+		return false;
+	}
+
+	return is_front_page();
+}
+
+
+/**
+ * Ana sayfada gereksiz CSS ve JavaScript dosyalarını kaldır.
+ */
+function ms_perf_v4_remove_unused_assets() {
+
+	if ( ! ms_perf_v4_is_homepage() ) {
+		return;
+	}
+
+	global $wp_styles, $wp_scripts;
+
+	/*
+	 * WooCommerce mağaza görünüm stilleri.
+	 * wc-blocks kaldırılmıyor; menüdeki sepet bloğu korunuyor.
+	 */
+	$style_patterns = array(
+		'woocommerce-layout.css',
+		'woocommerce-smallscreen.css',
+		'/woocommerce.css',
+		'related-posts/related-posts.css',
+	);
+
+	if ( isset( $wp_styles->registered ) ) {
+		foreach ( $wp_styles->registered as $handle => $style ) {
+
+			$src = isset( $style->src ) ? (string) $style->src : '';
+
+			foreach ( $style_patterns as $pattern ) {
+				if ( $src && strpos( $src, $pattern ) !== false ) {
+					wp_dequeue_style( $handle );
+					break;
+				}
+			}
+		}
+	}
+
+	/*
+	 * Ana sayfada kullanılmayan tarih, form doğrulama ve
+	 * etkinlik takip dosyaları.
+	 *
+	 * jQuery kaldırılmaz; menü ve diğer bağlantılar korunur.
+	 */
+	$script_patterns = array(
+		'/jquery-ui/datepicker',
+		'/jquery.validate',
+		'/qtag-events',
+	);
+
+	if ( isset( $wp_scripts->registered ) ) {
+		foreach ( $wp_scripts->registered as $handle => $script ) {
+
+			$src = isset( $script->src ) ? (string) $script->src : '';
+
+			foreach ( $script_patterns as $pattern ) {
+				if ( $src && strpos( $src, $pattern ) !== false ) {
+					wp_dequeue_script( $handle );
+					break;
+				}
+			}
+		}
+	}
+}
+add_action( 'wp_enqueue_scripts', 'ms_perf_v4_remove_unused_assets', 9999 );
+
+
+/**
+ * Kommo WordPress bağlantı dosyasını ilk açılışta çalıştırma.
+ *
+ * Dosya tamamen kaldırılmaz. Kullanıcı ekrana dokunduğunda,
+ * fareyi oynattığında, kaydırdığında veya en geç 6,5 saniye
+ * sonra normal şekilde yüklenir.
+ */
+function ms_perf_v4_delay_kommo_tag( $tag, $handle, $src ) {
+
+	if ( ! ms_perf_v4_is_homepage() ) {
+		return $tag;
+	}
+
+	$is_kommo = (
+		strpos( $src, 'website-chat-button-kommo-integration' ) !== false ||
+		strpos( $src, 'gso.kommo.com' ) !== false
+	);
+
+	if ( ! $is_kommo ) {
+		return $tag;
+	}
+
+	if ( strpos( $tag, 'data-ms-kommo-src' ) !== false ) {
+		return $tag;
+	}
+
+	/*
+	 * Mevcut script yerine çalışmayan bir bekleme etiketi bırak.
+	 * Asıl dosya aşağıdaki yükleyici tarafından çağrılır.
+	 */
+	return sprintf(
+		'<script type="text/plain" data-ms-kommo-src="%s" data-ms-kommo-handle="%s"></script>',
+		esc_url( $src ),
+		esc_attr( $handle )
+	);
+}
+add_filter( 'script_loader_tag', 'ms_perf_v4_delay_kommo_tag', 9999, 3 );
+
+
+/**
+ * Geciktirilen Kommo sohbetini güvenli biçimde çalıştır.
+ */
+function ms_perf_v4_kommo_loader() {
+
+	if ( ! ms_perf_v4_is_homepage() ) {
+		return;
+	}
+	?>
+	<script id="ms-perf-v4-kommo-loader">
+	(function () {
+		'use strict';
+
+		var loaded = false;
+		var timer  = null;
+
+		function loadKommo() {
+			if (loaded) {
+				return;
+			}
+
+			loaded = true;
+
+			if (timer) {
+				window.clearTimeout(timer);
+			}
+
+			var waitingScripts = document.querySelectorAll(
+				'script[type="text/plain"][data-ms-kommo-src]'
+			);
+
+			waitingScripts.forEach(function (waitingScript) {
+				var source = waitingScript.getAttribute('data-ms-kommo-src');
+
+				if (!source) {
+					return;
+				}
+
+				var realScript = document.createElement('script');
+				realScript.src = source;
+				realScript.async = true;
+
+				var handle = waitingScript.getAttribute('data-ms-kommo-handle');
+
+				if (handle) {
+					realScript.setAttribute('data-ms-kommo-handle', handle);
+				}
+
+				waitingScript.parentNode.insertBefore(
+					realScript,
+					waitingScript.nextSibling
+				);
+			});
+
+			removeListeners();
+		}
+
+		function removeListeners() {
+			[
+				'pointerdown',
+				'touchstart',
+				'mousemove',
+				'keydown',
+				'scroll'
+			].forEach(function (eventName) {
+				window.removeEventListener(eventName, loadKommo);
+			});
+		}
+
+		[
+			'pointerdown',
+			'touchstart',
+			'mousemove',
+			'keydown',
+			'scroll'
+		].forEach(function (eventName) {
+			window.addEventListener(
+				eventName,
+				loadKommo,
+				{ passive: true, once: true }
+			);
+		});
+
+		/* Etkileşim olmazsa sohbet en geç 6,5 saniyede açılır. */
+		timer = window.setTimeout(loadKommo, 6500);
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'ms_perf_v4_kommo_loader', 9999 );
+
+
+/**
+ * Mobil LCP öğesindeki görünürlük ve animasyon gecikmesini kaldır.
+ */
+function ms_perf_v4_critical_home_css() {
+
+	if ( ! ms_perf_v4_is_homepage() ) {
+		return;
+	}
+	?>
+	<style id="ms-perf-v4-critical-css">
+		.ms-hero,
+		.ms-hero-content,
+		.ms-hero-title,
+		.ms-hero-text,
+		.ms-hero-kicker {
+			animation: none !important;
+			transition: none !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			transform: none !important;
+		}
+
+		.ms-hero-text {
+			content-visibility: visible !important;
+		}
+	</style>
+	<?php
+}
+add_action( 'wp_head', 'ms_perf_v4_critical_home_css', 1 );

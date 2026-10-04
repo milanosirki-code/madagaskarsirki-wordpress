@@ -1,0 +1,135 @@
+if ( ! function_exists( 'mdg_finance_ascii' ) ) {
+    function mdg_finance_ascii( $value ) {
+        return sanitize_text_field( remove_accents( (string) $value ) );
+    }
+}
+
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'madagaskar-finans/v1', '/record', [
+        'methods'  => 'POST',
+        'permission_callback' => function () {
+            return current_user_can( 'manage_options' );
+        },
+        'callback' => function ( WP_REST_Request $request ) {
+            global $wpdb;
+
+            $type     = sanitize_key( $request->get_param( 'type' ) );
+            $event_id = absint( $request->get_param( 'event_id' ) );
+            $scope    = sanitize_key( $request->get_param( 'scope' ) ?: ( $event_id ? 'program' : 'general' ) );
+            $amount   = round( (float) $request->get_param( 'amount' ), 2 );
+            $date     = sanitize_text_field( $request->get_param( 'date' ) );
+
+            if ( ! in_array( $type, [ 'income', 'expense' ], true ) ) {
+                return new WP_Error( 'bad_type', 'type income veya expense olmali', [ 'status' => 400 ] );
+            }
+            if ( $amount <= 0 ) {
+                return new WP_Error( 'bad_amount', 'amount 0 dan buyuk olmali', [ 'status' => 400 ] );
+            }
+            if ( ! preg_match( '/^\\d{4}-\\d{2}-\\d{2}$/', $date ) ) {
+                return new WP_Error( 'bad_date', 'date YYYY-MM-DD olmali', [ 'status' => 400 ] );
+            }
+            if ( $event_id ) {
+                $exists = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}mdg_events WHERE id=%d LIMIT 1",
+                    $event_id
+                ) );
+                if ( ! $exists ) {
+                    return new WP_Error( 'bad_event', 'event_id bulunamadi', [ 'status' => 400 ] );
+                }
+            }
+
+            if ( 'income' === $type ) {
+                $table = $wpdb->prefix . 'mdg_v5_incomes';
+                $province       = mdg_finance_ascii( $request->get_param( 'province' ) );
+                $category       = mdg_finance_ascii( $request->get_param( 'category' ) );
+                $channel        = mdg_finance_ascii( $request->get_param( 'channel' ) );
+                $description    = mdg_finance_ascii( $request->get_param( 'description' ) );
+                $payment_method = mdg_finance_ascii( $request->get_param( 'payment_method' ) );
+                $source_ref     = mdg_finance_ascii( $request->get_param( 'source_ref' ) );
+                $notes          = mdg_finance_ascii( $request->get_param( 'notes' ) );
+                $tickets        = absint( $request->get_param( 'ticket_count' ) );
+
+                $duplicate = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT id FROM {$table}
+                     WHERE event_id=%d AND category=%s AND gross_amount=%f
+                       AND income_date=%s AND source_ref=%s
+                     LIMIT 1",
+                    $event_id, $category, $amount, $date, $source_ref
+                ) );
+                if ( $duplicate ) {
+                    return [ 'ok' => true, 'duplicate' => true, 'id' => (int) $duplicate ];
+                }
+
+                $ok = $wpdb->insert( $table, [
+                    'event_id'          => $event_id,
+                    'scope'             => $scope,
+                    'province'          => $province,
+                    'category'          => $category,
+                    'channel'           => $channel,
+                    'description'       => $description,
+                    'gross_amount'      => $amount,
+                    'commission_amount' => 0,
+                    'net_amount'        => $amount,
+                    'ticket_count'      => $tickets,
+                    'income_date'       => $date,
+                    'collection_status' => 'collected',
+                    'payment_method'    => $payment_method,
+                    'source_ref'        => $source_ref,
+                    'attachment_id'     => 0,
+                    'notes'             => $notes,
+                    'created_by'        => get_current_user_id(),
+                    'created_at'        => current_time( 'mysql' ),
+                    'updated_at'        => current_time( 'mysql' ),
+                ] );
+
+                if ( false === $ok ) {
+                    return new WP_Error( 'db_insert_failed', $wpdb->last_error ?: 'income insert failed', [ 'status' => 500 ] );
+                }
+                return [ 'ok' => true, 'duplicate' => false, 'id' => (int) $wpdb->insert_id ];
+            }
+
+            $table       = $wpdb->prefix . 'mdg_v5_expenses';
+            $category    = sanitize_text_field( $request->get_param( 'category' ) );
+            $description = sanitize_text_field( $request->get_param( 'description' ) );
+            $vendor      = sanitize_text_field( $request->get_param( 'vendor' ) );
+            $province    = sanitize_text_field( $request->get_param( 'province' ) );
+            $related     = sanitize_text_field( $request->get_param( 'related_name' ) );
+            $notes       = sanitize_textarea_field( $request->get_param( 'notes' ) );
+
+            $duplicate = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM {$table}
+                 WHERE event_id=%d AND category=%s AND description=%s
+                   AND amount=%f AND expense_date=%s
+                 LIMIT 1",
+                $event_id, $category, $description, $amount, $date
+            ) );
+            if ( $duplicate ) {
+                return [ 'ok' => true, 'duplicate' => true, 'id' => (int) $duplicate ];
+            }
+
+            $ok = $wpdb->insert( $table, [
+                'event_id'       => $event_id,
+                'category'       => $category,
+                'description'    => $description,
+                'vendor'         => $vendor,
+                'amount'         => $amount,
+                'expense_date'   => $date,
+                'payment_method' => sanitize_text_field( $request->get_param( 'payment_method' ) ),
+                'document_no'    => '',
+                'attachment_id'  => 0,
+                'notes'          => $notes,
+                'created_by'     => get_current_user_id(),
+                'created_at'     => current_time( 'mysql' ),
+                'updated_at'     => current_time( 'mysql' ),
+                'scope'          => $scope,
+                'province'       => $province,
+                'related_name'   => $related,
+            ] );
+
+            if ( false === $ok ) {
+                return new WP_Error( 'db_insert_failed', $wpdb->last_error ?: 'expense insert failed', [ 'status' => 500 ] );
+            }
+            return [ 'ok' => true, 'duplicate' => false, 'id' => (int) $wpdb->insert_id ];
+        },
+    ] );
+} );

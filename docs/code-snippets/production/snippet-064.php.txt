@@ -1,0 +1,73 @@
+/** Madagaskar: 20 Eylul 2026 etkinlik kayitlari ve kalici Mamak yonlendirmesi. */
+add_action('template_redirect', function () {
+    $path = wp_parse_url(wp_unslash($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    if (untrailingslashit((string) $path) !== '/etkinlik/madagaskar-sirki-mamak-11-ekim-2026') { return; }
+    if (!class_exists('MDG_Events')) { return; }
+    $target = MDG_Events::get_by_public_slug('madagaskar-sirki-mamak-10-ekim-2026');
+    if (!$target || (int) $target->id !== 9 || $target->status !== 'onsale') { return; }
+    wp_safe_redirect(home_url('/etkinlik/madagaskar-sirki-mamak-10-ekim-2026/'), 301, 'Madagaskar');
+    exit;
+}, -110);
+
+add_action('admin_menu', function () {
+    add_management_page('Etkinlik SEO Duzeltmesi', 'Etkinlik SEO Duzeltmesi', 'manage_options', 'mdg-seo-repair', function () {
+        if (!current_user_can('manage_options') || !class_exists('MDG_Events') || !class_exists('MDG_DB')) { return; }
+        global $wpdb;
+        $expected = array(6 => 'madagaskar-sirki-eskisehir-03-ekim-2026-2', 8 => 'madagaskar-sirki-altinpark-10-ekim-2026', 9 => 'madagaskar-sirki-mamak-11-ekim-2026');
+        $key = 'mdg_seo_repair_20260920_backup';
+        $done = get_option('mdg_seo_repair_20260920_done', false);
+        $message = '';
+        if (!$done && isset($_POST['mdg_seo_apply'])) {
+            check_admin_referer('mdg_seo_repair_20260920');
+            $before = array();
+            $valid = true;
+            foreach ($expected as $id => $slug) {
+                $row = MDG_Events::get($id);
+                if (!$row || $row->public_slug !== $slug || $row->status !== 'onsale') { $valid = false; break; }
+                $before[$id] = array('status' => $row->status, 'public_slug' => $row->public_slug, 'updated_at' => $row->updated_at);
+            }
+            if (MDG_Events::get_by_public_slug('madagaskar-sirki-mamak-10-ekim-2026')) { $valid = false; }
+            if (!$valid) {
+                $message = 'Kayitlar beklenen durumla eslesmiyor. Islem yapilmadi.';
+            } elseif (!add_option($key, $before, '', false)) {
+                $message = 'Mevcut yedek bulundu. Tekrar yazilmadi; once sonucu inceleyin.';
+            } else {
+                $wpdb->query('START TRANSACTION');
+                $ok = true;
+                foreach ($expected as $id => $slug) {
+                    $changes = $id === 9 ? array('public_slug' => 'madagaskar-sirki-mamak-10-ekim-2026') : array('status' => 'closed');
+                    $changes['updated_at'] = MDG_DB::now();
+                    $changed = $wpdb->update(MDG_DB::table('events'), $changes, array('id' => $id, 'public_slug' => $slug, 'status' => 'onsale'));
+                    if ($changed !== 1) { $ok = false; break; }
+                }
+                if ($ok) {
+                    $wpdb->query('COMMIT');
+                    update_option('mdg_seo_repair_20260920_done', current_time('mysql'), false);
+                    $done = true;
+                    $message = 'Tamamlandi: Eskişehir 3 Ekim ve Altınpark satisa kapatildi; Mamak baglantisi 10 Ekim oldu. Siparis, bilet, seans ve fiyatlar degistirilmedi.';
+                } else {
+                    $wpdb->query('ROLLBACK');
+                    $message = 'Islem tamamlanamadi; veritabani degisiklikleri geri alindi.';
+                }
+            }
+        }
+        echo '<div class="wrap"><h1>Etkinlik SEO Duzeltmesi</h1>';
+        if ($message) { echo '<div class="notice notice-info"><p>' . esc_html($message) . '</p></div>'; }
+        echo '<p>Yalnizca #6 ve #8 etkinlik durumlari ile #9 Mamak public_slug alani duzeltilir. Onceki degerler yedeklenir.</p><table class="widefat"><thead><tr><th>ID</th><th>Etkinlik</th><th>Durum</th><th>Baglanti</th></tr></thead><tbody>';
+        foreach ($expected as $id => $slug) {
+            $row = MDG_Events::get($id);
+            if (!$row) { continue; }
+            echo '<tr><td>' . (int) $id . '</td><td>' . esc_html($row->title) . '</td><td>' . esc_html($row->status) . '</td><td>' . esc_html($row->public_slug) . '</td></tr>';
+        }
+        echo '</tbody></table>';
+        $backup = get_option($key, array());
+        if ($backup) { echo '<h2>Degisiklik oncesi yedek</h2><pre>' . esc_html(wp_json_encode($backup, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>'; }
+        if (!$done) {
+            echo '<form method="post">';
+            wp_nonce_field('mdg_seo_repair_20260920');
+            submit_button('Etkinlik kayitlarini duzelt', 'primary', 'mdg_seo_apply');
+            echo '</form>';
+        } else { echo '<p><strong>Duzeltme tamamlandi. Mamak eski URL icin 301 yonlendirmesi etkin.</strong></p>'; }
+        echo '</div>';
+    });
+});

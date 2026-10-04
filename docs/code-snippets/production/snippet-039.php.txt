@@ -1,0 +1,3220 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — GÖSTERİ DETAY SAYFALARI V2
+ *
+ * 8 gösteri
+ * Tek dinamik şablon
+ * Masaüstü + tablet + mobil
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   1. GÖSTERİ VERİLERİ
+   ============================================================ */
+
+function mdg_show_catalog_v2() {
+
+    return array(
+
+
+        /* =====================================================
+           01 — AKROBASİ
+           ===================================================== */
+
+        'akrobasi' => array(
+
+            'title'       => 'Akrobasi Gösterisi',
+            'short_title' => 'Akrobasi',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_0000000096dc820a81af4ef56f90b184-1.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000e998820a9db3ae89302f6fbc.png',
+
+            'lead' =>
+                'Güç, denge, çeviklik ve yüksek enerjili hareketlerin bir araya geldiği nefes kesen bir sahne performansı.',
+
+            'hero_words' =>
+                'Güç. Denge.<br>Heyecan.',
+
+            'story_title' =>
+                'Sahnede sınırları zorlayan hareketler',
+
+            'story' => array(
+
+                'Madagaskar Sirki Akrobasi Gösterisi; güç, denge, koordinasyon ve çevikliğin aynı sahnede buluştuğu yüksek tempolu bir performanstır.',
+
+                'Uluslararası sanatçılar bireysel hareketleri, insan piramitlerini, denge figürlerini ve takım çalışmasına dayanan akrobasi koreografilerini art arda sahneye taşır.',
+
+                'Gösterinin merkezinde insan yeteneği vardır. Programda hayvan kullanılmaz; sahne enerjisi, müzik ve sanatçıların performansı ön plandadır.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '⚖️',
+                    'Güç ve denge',
+                    'Kontrollü hareketler, insan dengeleri ve fiziksel ustalığın öne çıktığı akrobasi performansları.'
+                ),
+
+                array(
+                    '🤝',
+                    'Takım performansı',
+                    'Sanatçıların kusursuz zamanlama, güven ve uyumla gerçekleştirdiği grup koreografileri.'
+                ),
+
+                array(
+                    '⚡',
+                    'Yüksek enerji',
+                    'Gösteri boyunca tempoyu canlı tutan dinamik ve heyecanı yükselten sahne hareketleri.'
+                ),
+
+                array(
+                    '✨',
+                    'Canlı sahne deneyimi',
+                    'Müzik, ışık ve akrobatik hareketlerin birleştiği güçlü bir görsel sahne atmosferi.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Şehrindeki akrobasi gösterisini kaçırma.',
+
+        ),
+
+
+
+        /* =====================================================
+           02 — İKİLİ PATEN
+           ===================================================== */
+
+        'ikili-paten' => array(
+
+            'title'       => 'İkili Paten Gösterisi',
+            'short_title' => 'İkili Paten',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000004254820aa784ef56c973fadb-1.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000004254820aa784ef56c973fadb-1.png',
+
+            'lead' =>
+                'Hız, denge ve kusursuz uyumun birleştiği, sahnede heyecanı yükselten dinamik ikili paten performansı.',
+
+            'hero_words' =>
+                'Hız. Uyum.<br>Denge.',
+
+            'story_title' =>
+                'İki sanatçı, tek ritim',
+
+            'story' => array(
+
+                'İkili Paten Gösterisi; hız, denge ve partner uyumunun aynı performansta birleştiği dinamik bir sahne gösterisidir.',
+
+                'Sanatçılar kontrollü dönüşleri, denge hareketlerini ve birlikte gerçekleştirdikleri koreografileri yüksek tempoyla sahneye taşır.',
+
+                'Gösteri, insan yeteneğine ve profesyonel sahne performansına dayanır; çocukların ve yetişkinlerin birlikte izleyebileceği aile dostu programın bir parçasıdır.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '⛸️',
+                    'Hız ve uyum',
+                    'İki sanatçının aynı ritim ve zamanlamayla gerçekleştirdiği dinamik hareketler.'
+                ),
+
+                array(
+                    '⚖️',
+                    'Denge',
+                    'Kontrol, fiziksel ustalık ve dikkat gerektiren sahne figürleri.'
+                ),
+
+                array(
+                    '🤝',
+                    'Partner koordinasyonu',
+                    'Güven ve kusursuz zamanlamanın merkezde olduğu ikili koreografiler.'
+                ),
+
+                array(
+                    '✨',
+                    'Görsel performans',
+                    'Müzik ve sahne atmosferiyle bütünleşen tempolu bir gösteri deneyimi.'
+                ),
+
+            ),
+
+            'cta' =>
+                'İkili paten gösterisinin heyecanını canlı yaşa.',
+
+        ),
+
+
+
+        /* =====================================================
+           03 — BİSİKLET SHOW
+           ===================================================== */
+
+        'bisiklet-show' => array(
+
+            'title'       => 'Bisiklet Show',
+            'short_title' => 'Bisiklet Show',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000b818820aabf15b690da79f34-1.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000b818820aabf15b690da79f34-1.png',
+
+            'lead' =>
+                'Denge, kontrol ve cesaret gerektiren hareketlerle sınırların zorlandığı etkileyici bisiklet performansı.',
+
+            'hero_words' =>
+                'Denge. Kontrol.<br>Cesaret.',
+
+            'story_title' =>
+                'Bisiklet üzerinde ustalık',
+
+            'story' => array(
+
+                'Bisiklet Show, sanatçıların denge ve kontrol becerilerini sahne performansıyla birleştirdiği yüksek tempolu bir gösteridir.',
+
+                'Bisiklet üzerinde gerçekleştirilen zorlayıcı hareketler, hassas denge ve kontrollü geçişlerle seyirci karşısına çıkar.',
+
+                'Performansın merkezinde insan yeteneği, çalışma disiplini ve sahne ustalığı bulunur.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '🚲',
+                    'Bisiklet ustalığı',
+                    'Bisiklet üzerinde gerçekleştirilen kontrollü ve dikkat gerektiren hareketler.'
+                ),
+
+                array(
+                    '⚖️',
+                    'Hassas denge',
+                    'Sanatçının vücut ve bisiklet kontrolünü aynı anda kullandığı performanslar.'
+                ),
+
+                array(
+                    '🔥',
+                    'Cesaret',
+                    'Sınırları zorlayan hareketlerin sahne disipliniyle buluştuğu anlar.'
+                ),
+
+                array(
+                    '⚡',
+                    'Yüksek tempo',
+                    'Gösterinin enerjisini yükselten dinamik bisiklet koreografileri.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Bisiklet Show’un heyecanını şehrinde izle.',
+
+        ),
+
+
+
+        /* =====================================================
+           04 — PALYAÇO
+           ===================================================== */
+
+        'palyaco' => array(
+
+            'title'       => 'Palyaço Gösterisi',
+            'short_title' => 'Palyaço',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000007b5c820ab8f7c645893acfd3.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000007b5c820ab8f7c645893acfd3.png',
+
+            'lead' =>
+                'Kahkaha, sürpriz ve seyirci etkileşiminin buluştuğu renkli ve aile dostu sahne gösterisi.',
+
+            'hero_words' =>
+                'Kahkaha. Sürpriz.<br>Eğlence.',
+
+            'story_title' =>
+                'Kahkaha sahneye taşınıyor',
+
+            'story' => array(
+
+                'Madagaskar Sirki Palyaço Gösterisi, çocukların ve yetişkinlerin birlikte keyif alabileceği eğlenceli sahne anlarını programın içine taşır.',
+
+                'Mizah, sürprizler, mimikler ve seyirciyle kurulan canlı etkileşim gösterinin temelini oluşturur.',
+
+                'Palyaço performansı ailece yaşanan sirk deneyimine renk, tempo ve kahkaha katar.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '🤡',
+                    'Kahkaha',
+                    'Mizah ve eğlenceli sahne anlarıyla programın neşeli bölümlerinden biri.'
+                ),
+
+                array(
+                    '🙌',
+                    'Seyirci etkileşimi',
+                    'İzleyicilerin de gösterinin enerjisine dahil olduğu canlı anlar.'
+                ),
+
+                array(
+                    '🎈',
+                    'Sürprizler',
+                    'Beklenmedik hareketler ve eğlenceli sahne oyunları.'
+                ),
+
+                array(
+                    '👨‍👩‍👧‍👦',
+                    'Aile dostu',
+                    'Çocukların ve yetişkinlerin birlikte izleyebileceği renkli performans.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Ailece kahkaha dolu sahne anlarını kaçırma.',
+
+        ),
+
+
+
+        /* =====================================================
+           05 — HULA HOOP
+           ===================================================== */
+
+        'hula-hoop' => array(
+
+            'title'       => 'Hula Hoop Gösterisi',
+            'short_title' => 'Hula Hoop',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000ba18820aa5bd4cd54a5dc636.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000ba18820aa5bd4cd54a5dc636.png',
+
+            'lead' =>
+                'Esneklik, ritim ve kusursuz koordinasyonun görsel hareketlerle birleştiği renkli sahne performansı.',
+
+            'hero_words' =>
+                'Ritim. Esneklik.<br>Koordinasyon.',
+
+            'story_title' =>
+                'Halkalar ritimle buluşuyor',
+
+            'story' => array(
+
+                'Hula Hoop Gösterisi; ritim, koordinasyon ve esnekliğin merkezde olduğu görsel bir sahne performansıdır.',
+
+                'Sanatçı farklı büyüklükteki halkaları aynı anda kontrol ederken hızını, dengesini ve hareket koordinasyonunu sahneye taşır.',
+
+                'Müzik ve görsel hareketlerle bütünleşen performans programın renkli ve dikkat çekici bölümlerinden biridir.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '⭕',
+                    'Halka ustalığı',
+                    'Birden fazla halkanın kontrollü biçimde kullanıldığı dikkat çekici hareketler.'
+                ),
+
+                array(
+                    '🎵',
+                    'Ritim',
+                    'Sahne müziğiyle uyumlu, akıcı ve tempolu performans.'
+                ),
+
+                array(
+                    '🌀',
+                    'Koordinasyon',
+                    'Hız ve vücut kontrolünün aynı anda kullanıldığı hareketler.'
+                ),
+
+                array(
+                    '✨',
+                    'Görsel etki',
+                    'Renkli ve dinamik hareketlerle güçlü bir sahne görüntüsü.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Hula Hoop gösterisinin ritmini canlı yaşa.',
+
+        ),
+
+
+
+        /* =====================================================
+           06 — AKROBASİ SHOW
+           ===================================================== */
+
+        'akrobasi-show' => array(
+
+            'title'       => 'Akrobasi Show',
+            'short_title' => 'Akrobasi Show',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000e998820a9db3ae89302f6fbc.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_0000000096dc820a81af4ef56f90b184-1.png',
+
+            'lead' =>
+                'Uluslararası sanatçıların güç, çeviklik, denge ve takım uyumunu bir araya getirdiği yüksek tempolu sahne performansı.',
+
+            'hero_words' =>
+                'Takım. Güç.<br>Enerji.',
+
+            'story_title' =>
+                'Takım ruhu sahnede',
+
+            'story' => array(
+
+                'Akrobasi Show, uluslararası sanatçıların bireysel yeteneklerini güçlü bir takım performansına dönüştürdüğü yüksek tempolu bir gösteridir.',
+
+                'İnsan piramitleri, denge hareketleri ve birlikte gerçekleştirilen koreografiler sanatçıların güven, zamanlama ve koordinasyonunu ortaya koyar.',
+
+                'Programın merkezinde profesyonel insan performansı bulunur ve gösteride hayvan kullanılmaz.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '🤸',
+                    'Akrobasi',
+                    'Güç ve çeviklik gerektiren dinamik sahne hareketleri.'
+                ),
+
+                array(
+                    '🧩',
+                    'Takım uyumu',
+                    'Birbirine bağlı hareketlerde zamanlama ve güvenin öne çıktığı koreografiler.'
+                ),
+
+                array(
+                    '🔺',
+                    'İnsan piramitleri',
+                    'Sanatçıların güç ve dengeyle oluşturduğu etkileyici sahne figürleri.'
+                ),
+
+                array(
+                    '🌍',
+                    'Uluslararası ekip',
+                    'Farklı ülkelerden profesyonel sanatçıların aynı sahnede buluşması.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Uluslararası akrobasi ekibinin performansını kaçırma.',
+
+        ),
+
+
+
+        /* =====================================================
+           07 — ICARIAN SHOW
+           ===================================================== */
+
+        'icarian-show' => array(
+
+            'title'       => 'Icarian Show',
+            'short_title' => 'Icarian Show',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000008510820abf5359380235e996.png',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000008510820abf5359380235e996.png',
+
+            'lead' =>
+                'Güç, çeviklik, güven ve kusursuz zamanlamanın birleştiği nefes kesen partner akrobasi performansı.',
+
+            'hero_words' =>
+                'Zamanlama. Güven.<br>Uçuş.',
+
+            'story_title' =>
+                'Kusursuz zamanlama, güçlü güven',
+
+            'story' => array(
+
+                'Icarian Show, partnerlerin birbirlerinin hareketlerine tam güven ve kusursuz zamanlamayla eşlik ettiği özel bir akrobasi disiplinidir.',
+
+                'Havaya yükselişler, kontrollü yakalamalar ve seri geçişler sanatçıların güç, denge ve koordinasyonunu aynı anda ortaya koyar.',
+
+                'Seyircinin birkaç saniye boyunca yer çekimini unuttuğu hissini yaratan performans, programın en dikkat çekici akrobasi bölümlerinden biridir.',
+
+            ),
+
+            'features' => array(
+
+                array(
+                    '⏱️',
+                    'Zamanlama',
+                    'Hareketlerin saniyesi saniyesine uyum içinde gerçekleştirilmesi.'
+                ),
+
+                array(
+                    '🤝',
+                    'Partner güveni',
+                    'Sanatçıların birbirlerine tam güvenle gerçekleştirdiği akrobasi hareketleri.'
+                ),
+
+                array(
+                    '🪽',
+                    'Havaya yükseliş',
+                    'Kontrollü fırlatma ve yakalamalarla oluşan güçlü görsel etki.'
+                ),
+
+                array(
+                    '⚖️',
+                    'Denge ve kontrol',
+                    'Güç, koordinasyon ve fiziksel kontrolün birlikte kullanılması.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Icarian Show’un nefes kesen anlarını canlı izle.',
+
+        ),
+
+
+
+        /* =====================================================
+           08 — KOSTÜM SHOW
+           ===================================================== */
+
+        'kostum-show' => array(
+
+            'title'       => 'Kostüm Show',
+            'short_title' => 'Kostüm Show',
+
+            'hero_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/madagaskar_sirki_instagram_post.jpg',
+
+            'story_image' =>
+                'https://madagaskarsirki.com/wp-content/uploads/2026/08/madagaskar_sirki_instagram_post.jpg',
+
+            'lead' =>
+                'Kostümlü dostlarımızın çocuklarla buluştuğu, kahkaha ve renkli etkileşimlerle zenginleşen aile dostu sahne gösterisi.',
+
+            'hero_words' =>
+                'Renk. Neşe.<br>Çocuklar.',
+
+            'story_title' =>
+                'Kostümlü dostlarımız sahnede',
+
+            'story' => array(
+
+                'Kostüm Show, renkli kostümlü karakterlerin sahneye çıkarak çocuklarla buluştuğu eğlenceli bir gösteri bölümüdür.',
+
+                'Müzik, hareket ve neşeli sahne etkileşimleri çocukların gösteri atmosferine daha yakından katılmasını sağlar.',
+
+                'Aile dostu programın renkli bölümlerinden biri olan Kostüm Show, çocuklar ve yetişkinler için keyifli anlar oluşturur.',
+
+            ),
+
+            /*
+             * Kostüm Show'a özel üst bilgi etiketleri.
+             */
+            'pills' => array(
+                '1 Saatlik Program',
+                'Aile Dostu',
+                'Hayvansız',
+                'Çocuklarla Etkileşim',
+            ),
+
+            'features' => array(
+
+                array(
+                    '🎭',
+                    'Kostümlü karakterler',
+                    'Renkli ve özgün kostümlerin sahne atmosferiyle buluşması.'
+                ),
+
+                array(
+                    '👋',
+                    'Çocuklarla etkileşim',
+                    'Çocukların ilgisini canlı tutan neşeli ve hareketli sahne anları.'
+                ),
+
+                array(
+                    '🎵',
+                    'Müzik ve hareket',
+                    'Kostümlü karakterlerin müzik eşliğindeki eğlenceli performansı.'
+                ),
+
+                array(
+                    '👨‍👩‍👧‍👦',
+                    'Aile dostu',
+                    'Ailece keyifle izlenebilecek renkli bir sahne deneyimi.'
+                ),
+
+            ),
+
+            'cta' =>
+                'Kostümlü dostlarımızla renkli sahne anlarını kaçırma.',
+
+        ),
+
+    );
+}
+
+
+
+/* ============================================================
+   2. EKSİK GÖSTERİ SAYFALARINI OLUŞTUR
+   ============================================================ */
+
+add_action(
+    'admin_init',
+    function () {
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $parent = get_page_by_path(
+            'gosteriler',
+            OBJECT,
+            'page'
+        );
+
+        if ( ! $parent instanceof WP_Post ) {
+            return;
+        }
+
+        $shows = mdg_show_catalog_v2();
+
+        foreach ( $shows as $slug => $show ) {
+
+            $existing = get_page_by_path(
+                'gosteriler/' . $slug,
+                OBJECT,
+                'page'
+            );
+
+            if ( $existing instanceof WP_Post ) {
+                continue;
+            }
+
+            wp_insert_post(
+                array(
+
+                    'post_type'    => 'page',
+                    'post_status'  => 'publish',
+
+                    'post_title'   =>
+                        $show['title'],
+
+                    'post_name'    =>
+                        $slug,
+
+                    'post_parent'  =>
+                        $parent->ID,
+
+                    'post_content' =>
+                        '',
+
+                )
+            );
+        }
+
+    },
+    20
+);
+
+
+
+/* ============================================================
+   3. AKTİF GÖSTERİ SAYFASINI BUL
+   ============================================================ */
+
+function mdg_current_show_v2() {
+
+    if ( ! is_page() ) {
+        return false;
+    }
+
+    global $post;
+
+    if ( ! $post instanceof WP_Post ) {
+        return false;
+    }
+
+    $shows = mdg_show_catalog_v2();
+
+    $slug = sanitize_title(
+        $post->post_name
+    );
+
+    if ( ! isset( $shows[ $slug ] ) ) {
+        return false;
+    }
+
+
+    /*
+     * Gösteriler üst sayfasının altında olduğundan emin ol.
+     */
+    if ( $post->post_parent ) {
+
+        $parent = get_post(
+            $post->post_parent
+        );
+
+        if (
+            ! $parent instanceof WP_Post ||
+            'gosteriler' !== $parent->post_name
+        ) {
+            return false;
+        }
+    }
+
+    return $shows[ $slug ];
+}
+
+
+
+/* ============================================================
+   4. BODY CLASS
+   ============================================================ */
+
+add_filter(
+    'body_class',
+    function ( $classes ) {
+
+        if ( mdg_current_show_v2() ) {
+
+            $classes[] =
+                'mdg-show-detail-page';
+        }
+
+        return $classes;
+    }
+);
+
+
+
+/* ============================================================
+   5. DETAY SAYFASI HTML
+   ============================================================ */
+
+function mdg_render_show_detail_v2( $show ) {
+
+    $cities_url =
+        home_url( '/sehirler/' );
+
+    $shows_url =
+        home_url( '/gosteriler/' );
+
+
+    $whatsapp_url =
+        'https://wa.me/905068907613?text=' .
+        rawurlencode(
+            'Merhaba, Madagaskar Sirki ' .
+            $show['short_title'] .
+            ' hakkında bilgi almak istiyorum.'
+        );
+
+
+    /*
+     * Varsayılan bilgi etiketleri.
+     *
+     * Gösterinin kendi "pills" alanı varsa
+     * onun değerleri kullanılır.
+     */
+
+    $pills = ! empty( $show['pills'] )
+
+        ? $show['pills']
+
+        : array(
+
+            '1 Saatlik Program',
+            'Aile Dostu',
+            'Hayvansız',
+            'Uluslararası Sanatçılar',
+
+        );
+
+
+    ob_start();
+    ?>
+
+
+
+<main
+    id="mdg-show-detail"
+    class="mdg-show-detail"
+>
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="mdgs-hero">
+
+        <div class="mdgs-wrap mdgs-hero-grid">
+
+
+            <!-- HERO METİN -->
+
+            <div class="mdgs-hero-copy">
+
+
+                <span class="mdgs-kicker">
+
+                    MADAGASKAR SİRKİ · SAHNE GÖSTERİLERİ
+
+                </span>
+
+
+                <h1>
+
+                    <?php
+                    echo esc_html(
+                        $show['title']
+                    );
+                    ?>
+
+                </h1>
+
+
+                <p class="mdgs-lead">
+
+                    <?php
+                    echo esc_html(
+                        $show['lead']
+                    );
+                    ?>
+
+                </p>
+
+
+
+                <!-- BİLGİ ETİKETLERİ -->
+
+                <div class="mdgs-pills">
+
+                    <?php foreach ( $pills as $pill ) : ?>
+
+                        <span>
+
+                            <?php
+                            echo esc_html(
+                                $pill
+                            );
+                            ?>
+
+                        </span>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+
+
+                <!-- BUTONLAR -->
+
+                <div class="mdgs-actions">
+
+
+                    <a
+                        class="
+                            mdgs-btn
+                            mdgs-btn-primary
+                        "
+                        href="<?php
+                            echo esc_url(
+                                $cities_url
+                            );
+                        ?>"
+                    >
+
+                        Şehrini Seç ve Bilet Al
+
+                    </a>
+
+
+                    <a
+                        class="
+                            mdgs-btn
+                            mdgs-btn-secondary
+                        "
+                        href="<?php
+                            echo esc_url(
+                                $shows_url
+                            );
+                        ?>"
+                    >
+
+                        Tüm Gösterileri Gör
+
+                    </a>
+
+
+                </div>
+
+            </div>
+
+
+
+            <!-- HERO GÖRSEL -->
+
+            <div class="mdgs-hero-media">
+
+
+                <img
+                    src="<?php
+                        echo esc_url(
+                            $show['hero_image']
+                        );
+                    ?>"
+                    alt="<?php
+                        echo esc_attr(
+                            'Madagaskar Sirki ' .
+                            $show['title']
+                        );
+                    ?>"
+                    fetchpriority="high"
+                    decoding="async"
+                >
+
+
+                <div class="mdgs-image-caption">
+
+
+                    <span>
+
+                        MADAGASKAR SİRKİ
+
+                    </span>
+
+
+                    <strong>
+
+                        <?php
+                        echo wp_kses_post(
+                            $show['hero_words']
+                        );
+                        ?>
+
+                    </strong>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HIZLI BİLGİ
+         ===================================================== -->
+
+    <section class="mdgs-quick">
+
+        <div class="mdgs-wrap">
+
+            <div class="mdgs-quick-grid">
+
+
+                <div>
+
+                    <strong>
+                        1 Saat
+                    </strong>
+
+                    <span>
+                        Yaklaşık toplam program süresi
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Hayvansız
+                    </strong>
+
+                    <span>
+                        İnsan yeteneği ve sahne sanatı
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Ailece
+                    </strong>
+
+                    <span>
+                        Çocuklar ve yetişkinler için
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Canlı
+                    </strong>
+
+                    <span>
+                        Sahne performansı
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         GÖSTERİYİ KEŞFEDİN
+         ===================================================== -->
+
+    <section class="mdgs-story">
+
+        <div class="mdgs-wrap mdgs-story-grid">
+
+
+            <div class="mdgs-story-copy">
+
+
+                <span class="mdgs-section-label">
+
+                    GÖSTERİYİ KEŞFEDİN
+
+                </span>
+
+
+                <h2>
+
+                    <?php
+                    echo esc_html(
+                        $show['story_title']
+                    );
+                    ?>
+
+                </h2>
+
+
+                <?php
+                foreach (
+                    $show['story']
+                    as $paragraph
+                ) :
+                ?>
+
+                    <p>
+
+                        <?php
+                        echo esc_html(
+                            $paragraph
+                        );
+                        ?>
+
+                    </p>
+
+                <?php endforeach; ?>
+
+
+            </div>
+
+
+
+            <div class="mdgs-story-media">
+
+
+                <img
+                    src="<?php
+                        echo esc_url(
+                            $show['story_image']
+                        );
+                    ?>"
+                    alt="<?php
+                        echo esc_attr(
+                            'Madagaskar Sirki ' .
+                            $show['short_title']
+                        );
+                    ?>"
+                    loading="lazy"
+                    decoding="async"
+                >
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         DÖRT TEMEL UNSUR
+         ===================================================== -->
+
+    <section class="mdgs-features">
+
+        <div class="mdgs-wrap">
+
+
+            <div class="mdgs-section-head">
+
+
+                <span class="mdgs-section-label">
+
+                    SAHNEDE NELER VAR?
+
+                </span>
+
+
+                <h2>
+
+                    <?php
+                    echo esc_html(
+                        $show['short_title']
+                    );
+                    ?>
+                    deneyiminin dört temel unsuru
+
+                </h2>
+
+
+            </div>
+
+
+
+            <div class="mdgs-feature-grid">
+
+
+                <?php
+                foreach (
+                    $show['features']
+                    as $feature
+                ) :
+                ?>
+
+
+                    <article class="mdgs-feature">
+
+
+                        <span class="mdgs-feature-icon">
+
+                            <?php
+                            echo esc_html(
+                                $feature[0]
+                            );
+                            ?>
+
+                        </span>
+
+
+                        <h3>
+
+                            <?php
+                            echo esc_html(
+                                $feature[1]
+                            );
+                            ?>
+
+                        </h3>
+
+
+                        <p>
+
+                            <?php
+                            echo esc_html(
+                                $feature[2]
+                            );
+                            ?>
+
+                        </p>
+
+
+                    </article>
+
+
+                <?php endforeach; ?>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         AİLECE DENEYİM
+         ===================================================== -->
+
+    <section class="mdgs-family">
+
+        <div class="mdgs-wrap">
+
+
+            <div class="mdgs-family-panel">
+
+
+                <div class="mdgs-family-copy">
+
+
+                    <span class="mdgs-section-label">
+
+                        AİLECE İZLEYİN
+
+                    </span>
+
+
+                    <h2>
+
+                        Çocuklar ve yetişkinler
+                        aynı heyecanda buluşuyor
+
+                    </h2>
+
+
+                    <p>
+
+                        Madagaskar Sirki yalnızca
+                        izlenen bir gösteri değil;
+                        ailece birlikte yaşanan
+                        canlı bir sahne deneyimidir.
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="mdgs-family-list">
+
+
+                    <div>
+
+                        <strong>
+                            1 Saat
+                        </strong>
+
+                        <span>
+                            Toplam program
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Aile Dostu
+                        </strong>
+
+                        <span>
+                            Ortak deneyim
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Uluslararası
+                        </strong>
+
+                        <span>
+                            Profesyonel sanatçılar
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Hayvansız
+                        </strong>
+
+                        <span>
+                            İnsan yeteneği merkezde
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         BİLET CTA
+         ===================================================== -->
+
+    <section class="mdgs-cta">
+
+        <div class="mdgs-wrap">
+
+
+            <div class="mdgs-cta-panel">
+
+
+                <div class="mdgs-cta-copy">
+
+
+                    <span>
+
+                        MADAGASKAR SİRKİ TÜRKİYE
+
+                    </span>
+
+
+                    <h2>
+
+                        <?php
+                        echo esc_html(
+                            $show['cta']
+                        );
+                        ?>
+
+                    </h2>
+
+
+                    <p>
+
+                        Turne takvimini incele,
+                        sana uygun gösteriyi
+                        ve seansı seç,
+                        biletini online al.
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="mdgs-cta-actions">
+
+
+                    <a
+                        class="
+                            mdgs-btn
+                            mdgs-btn-primary
+                        "
+                        href="<?php
+                            echo esc_url(
+                                $cities_url
+                            );
+                        ?>"
+                    >
+
+                        Şehirleri ve Biletleri Gör
+
+                    </a>
+
+
+                    <a
+                        class="
+                            mdgs-btn
+                            mdgs-btn-light
+                        "
+                        href="<?php
+                            echo esc_url(
+                                $whatsapp_url
+                            );
+                        ?>"
+                        target="_blank"
+                        rel="noopener"
+                    >
+
+                        WhatsApp Bilet Desteği
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+
+/* ============================================================
+   6. WORDPRESS SAYFA İÇERİĞİNİ DEĞİŞTİR
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            is_admin() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+
+        $show =
+            mdg_current_show_v2();
+
+
+        if ( ! $show ) {
+            return $content;
+        }
+
+
+        return
+            mdg_render_show_detail_v2(
+                $show
+            );
+
+    },
+    99
+);
+
+
+
+/* ============================================================
+   7. ORTAK CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if (
+            ! mdg_current_show_v2()
+        ) {
+            return;
+        }
+
+        ?>
+
+<style id="mdg-show-detail-v2">
+
+
+/* ============================================================
+   BODY / WORDPRESS RESET
+   ============================================================ */
+
+body.mdg-show-detail-page {
+    background:
+        #f6f2e8 !important;
+
+    overflow-x:
+        hidden !important;
+}
+
+
+body.mdg-show-detail-page
+.entry-title,
+
+body.mdg-show-detail-page
+.wp-block-post-title {
+
+    display:
+        none !important;
+}
+
+
+body.mdg-show-detail-page
+.entry-content {
+
+    overflow:
+        visible !important;
+}
+
+
+
+/* ============================================================
+   ANA SAYFA
+   ============================================================ */
+
+#mdg-show-detail,
+#mdg-show-detail * {
+
+    box-sizing:
+        border-box;
+}
+
+
+#mdg-show-detail {
+
+    --mdgs-bg:
+        #f6f2e8;
+
+    --mdgs-soft:
+        #ede7da;
+
+    --mdgs-card:
+        #ffffff;
+
+    --mdgs-dark:
+        #0d0d17;
+
+    --mdgs-text:
+        #111118;
+
+    --mdgs-muted:
+        #69676d;
+
+    --mdgs-red:
+        #cf5744;
+
+    --mdgs-border:
+        #e5dfd3;
+
+
+    /*
+     * WORDPRESS İÇERİK KOLONUNDAN
+     * ÇIKIP TAM EKRANA YAYILIR.
+     */
+
+    position:
+        relative;
+
+    left:
+        50%;
+
+    transform:
+        translateX(-50%);
+
+
+    width:
+        100vw;
+
+    max-width:
+        100vw;
+
+
+    margin:
+        0;
+
+
+    background:
+        var(--mdgs-bg);
+
+    color:
+        var(--mdgs-text);
+
+
+    overflow:
+        hidden;
+}
+
+
+
+#mdg-show-detail
+.mdgs-wrap {
+
+    width:
+        min(
+            1180px,
+            calc(100% - 48px)
+        );
+
+    margin:
+        0 auto;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-hero {
+
+    padding:
+        70px 0 76px;
+}
+
+
+#mdg-show-detail
+.mdgs-hero-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1.05fr .95fr;
+
+    gap:
+        18px;
+
+    align-items:
+        stretch;
+}
+
+
+
+#mdg-show-detail
+.mdgs-hero-copy,
+
+#mdg-show-detail
+.mdgs-hero-media {
+
+    min-height:
+        610px;
+
+    border-radius:
+        28px;
+
+    overflow:
+        hidden;
+}
+
+
+
+#mdg-show-detail
+.mdgs-hero-copy {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+
+    padding:
+        54px;
+
+
+    background:
+        #fff;
+}
+
+
+
+#mdg-show-detail
+.mdgs-kicker {
+
+    display:
+        inline-flex;
+
+    align-self:
+        flex-start;
+
+
+    padding:
+        11px 17px;
+
+
+    background:
+        var(--mdgs-dark);
+
+    color:
+        #fff;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1px;
+}
+
+
+
+#mdg-show-detail h1 {
+
+    margin:
+        48px 0 25px;
+
+
+    font-size:
+        clamp(
+            56px,
+            6vw,
+            84px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .90;
+
+    letter-spacing:
+        -4px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-lead {
+
+    margin:
+        0;
+
+
+    color:
+        #45434a;
+
+
+    font-size:
+        20px;
+
+    line-height:
+        1.55;
+}
+
+
+
+/* ============================================================
+   PILLS
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-pills {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        10px;
+
+
+    margin:
+        34px 0;
+}
+
+
+
+#mdg-show-detail
+.mdgs-pills span {
+
+    padding:
+        10px 15px;
+
+
+    background:
+        var(--mdgs-bg);
+
+
+    border:
+        1px solid #ddd6c9;
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        13px;
+
+    font-weight:
+        750;
+}
+
+
+
+/* ============================================================
+   HERO ACTIONS
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-actions {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        12px;
+
+
+    margin-top:
+        auto;
+}
+
+
+
+/* ============================================================
+   HERO IMAGE
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-hero-media {
+
+    position:
+        relative;
+
+
+    background:
+        #111;
+}
+
+
+
+#mdg-show-detail
+.mdgs-hero-media img {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+
+    object-fit:
+        cover;
+
+    object-position:
+        center;
+}
+
+
+
+#mdg-show-detail
+.mdgs-hero-media::after {
+
+    content:
+        "";
+
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+
+    background:
+
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.78),
+            transparent 55%
+        );
+}
+
+
+
+#mdg-show-detail
+.mdgs-image-caption {
+
+    position:
+        absolute;
+
+    z-index:
+        2;
+
+
+    left:
+        36px;
+
+    right:
+        36px;
+
+    bottom:
+        35px;
+
+
+    color:
+        #fff;
+}
+
+
+
+#mdg-show-detail
+.mdgs-image-caption span {
+
+    display:
+        inline-block;
+
+
+    margin-bottom:
+        13px;
+
+
+    padding:
+        8px 12px;
+
+
+    background:
+        rgba(
+            13,
+            13,
+            23,
+            .78
+        );
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+}
+
+
+
+#mdg-show-detail
+.mdgs-image-caption strong {
+
+    display:
+        block;
+
+
+    font-size:
+        clamp(
+            35px,
+            4vw,
+            56px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .95;
+
+    letter-spacing:
+        -2px;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-btn {
+
+    display:
+        inline-flex;
+
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+
+    min-height:
+        53px;
+
+
+    padding:
+        0 22px;
+
+
+    border-radius:
+        999px;
+
+
+    text-decoration:
+        none;
+
+
+    font-size:
+        14px;
+
+    font-weight:
+        850;
+}
+
+
+
+#mdg-show-detail
+.mdgs-btn-primary {
+
+    background:
+        var(--mdgs-red);
+
+    color:
+        #fff;
+
+
+    box-shadow:
+
+        0 12px 28px
+        rgba(
+            207,
+            87,
+            68,
+            .22
+        );
+}
+
+
+
+#mdg-show-detail
+.mdgs-btn-secondary {
+
+    background:
+        #fff;
+
+    color:
+        var(--mdgs-dark);
+
+
+    border:
+        1px solid
+        var(--mdgs-border);
+}
+
+
+
+#mdg-show-detail
+.mdgs-btn-light {
+
+    background:
+        #fff;
+
+    color:
+        var(--mdgs-dark);
+}
+
+
+
+/* ============================================================
+   QUICK INFO
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-quick {
+
+    padding:
+        0 0 88px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
+
+    overflow:
+        hidden;
+
+
+    background:
+        var(--mdgs-dark);
+
+
+    border-radius:
+        22px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid > div {
+
+    padding:
+        27px 20px;
+
+
+    color:
+        #fff;
+
+
+    text-align:
+        center;
+
+
+    border-right:
+
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .12
+        );
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid > div:last-child {
+
+    border-right:
+        0;
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid strong,
+
+#mdg-show-detail
+.mdgs-quick-grid span {
+
+    display:
+        block;
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid strong {
+
+    margin-bottom:
+        6px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-quick-grid span {
+
+    color:
+        #bdbbc2;
+
+
+    font-size:
+        12px;
+}
+
+
+
+/* ============================================================
+   STORY
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-story {
+
+    padding:
+        90px 0;
+
+
+    background:
+        var(--mdgs-soft);
+}
+
+
+
+#mdg-show-detail
+.mdgs-story-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1fr 1fr;
+
+
+    gap:
+        46px;
+
+
+    align-items:
+        center;
+}
+
+
+
+#mdg-show-detail
+.mdgs-section-label {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        14px;
+
+
+    color:
+        var(--mdgs-red);
+
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.7px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-story h2,
+
+#mdg-show-detail
+.mdgs-section-head h2,
+
+#mdg-show-detail
+.mdgs-family h2,
+
+#mdg-show-detail
+.mdgs-cta h2 {
+
+    margin:
+        0;
+
+
+    font-size:
+        clamp(
+            42px,
+            5vw,
+            66px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .98;
+
+    letter-spacing:
+        -2.5px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-story-copy p {
+
+    margin:
+        25px 0 0;
+
+
+    color:
+        #5d5a60;
+
+
+    font-size:
+        17px;
+
+    line-height:
+        1.70;
+}
+
+
+
+#mdg-show-detail
+.mdgs-story-media {
+
+    overflow:
+        hidden;
+
+
+    border-radius:
+        28px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-story-media img {
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+
+    aspect-ratio:
+        4 / 5;
+
+
+    object-fit:
+        cover;
+
+    object-position:
+        center;
+
+
+    background:
+        #111;
+}
+
+
+
+/* ============================================================
+   FEATURES
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-features {
+
+    padding:
+        100px 0;
+}
+
+
+
+#mdg-show-detail
+.mdgs-section-head {
+
+    max-width:
+        800px;
+
+
+    margin-bottom:
+        45px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-feature-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+
+        repeat(
+            4,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+
+    gap:
+        15px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-feature {
+
+    min-height:
+        300px;
+
+
+    padding:
+        29px;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid
+        var(--mdgs-border);
+
+
+    border-radius:
+        23px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-feature-icon {
+
+    display:
+        grid;
+
+
+    place-items:
+        center;
+
+
+    width:
+        48px;
+
+    height:
+        48px;
+
+
+    margin-bottom:
+        37px;
+
+
+    background:
+        var(--mdgs-bg);
+
+
+    border-radius:
+        14px;
+
+
+    font-size:
+        22px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-feature h3 {
+
+    margin:
+        0 0 14px;
+
+
+    font-size:
+        22px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-feature p {
+
+    margin:
+        0;
+
+
+    color:
+        var(--mdgs-muted);
+
+
+    font-size:
+        14px;
+
+    line-height:
+        1.60;
+}
+
+
+
+/* ============================================================
+   FAMILY
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-family {
+
+    padding:
+        10px 0 100px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-panel {
+
+    padding:
+        50px;
+
+
+    background:
+        var(--mdgs-soft);
+
+
+    border-radius:
+        28px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-copy {
+
+    max-width:
+        800px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-copy p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        var(--mdgs-muted);
+
+
+    font-size:
+        17px;
+
+    line-height:
+        1.65;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-list {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+
+        repeat(
+            4,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+
+    gap:
+        13px;
+
+
+    margin-top:
+        42px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-list > div {
+
+    padding:
+        25px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        18px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-list strong,
+
+#mdg-show-detail
+.mdgs-family-list span {
+
+    display:
+        block;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-list strong {
+
+    margin-bottom:
+        7px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-family-list span {
+
+    color:
+        var(--mdgs-muted);
+
+
+    font-size:
+        13px;
+}
+
+
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+#mdg-show-detail
+.mdgs-cta {
+
+    padding:
+        0 0 100px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        50px;
+
+
+    padding:
+        55px;
+
+
+    background:
+        var(--mdgs-dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta-copy {
+
+    max-width:
+        690px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta-copy > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        14px;
+
+
+    color:
+        var(--mdgs-red);
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.6px;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta h2 {
+
+    color:
+        #fff;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta p {
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        #c4c2c8;
+
+
+    font-size:
+        16px;
+
+    line-height:
+        1.60;
+}
+
+
+
+#mdg-show-detail
+.mdgs-cta-actions {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    gap:
+        12px;
+
+
+    min-width:
+        270px;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media
+(max-width: 900px) {
+
+
+    #mdg-show-detail
+    .mdgs-hero-grid,
+
+    #mdg-show-detail
+    .mdgs-story-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #mdg-show-detail
+    .mdgs-feature-grid,
+
+    #mdg-show-detail
+    .mdgs-family-list {
+
+        grid-template-columns:
+
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+
+    #mdg-show-detail
+    .mdgs-cta-panel {
+
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+    }
+
+
+    #mdg-show-detail
+    .mdgs-cta-actions {
+
+        width:
+            100%;
+    }
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media
+(max-width: 600px) {
+
+
+    /*
+     * MOBİLDE KIRMIZI YAN ŞERİTLERİ
+     * TAMAMEN KAPAT.
+     */
+
+    body.mdg-show-detail-page {
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+    #mdg-show-detail {
+
+        position:
+            relative !important;
+
+        left:
+            50% !important;
+
+
+        transform:
+            translateX(-50%) !important;
+
+
+        width:
+            100vw !important;
+
+        max-width:
+            100vw !important;
+
+
+        margin:
+            0 !important;
+
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-wrap {
+
+        width:
+            calc(
+                100% - 32px
+            );
+    }
+
+
+
+    /* HERO */
+
+    #mdg-show-detail
+    .mdgs-hero {
+
+        padding:
+            36px 0 55px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-hero-copy {
+
+        min-height:
+            0;
+
+
+        padding:
+            31px 26px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-kicker {
+
+        font-size:
+            10px;
+
+        line-height:
+            1.5;
+    }
+
+
+
+    #mdg-show-detail h1 {
+
+        margin-top:
+            37px;
+
+
+        font-size:
+            52px;
+
+
+        line-height:
+            .93;
+
+
+        letter-spacing:
+            -3px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-lead {
+
+        font-size:
+            17px;
+    }
+
+
+
+    /* PILLS */
+
+    #mdg-show-detail
+    .mdgs-pills {
+
+        display:
+            grid;
+
+
+        grid-template-columns:
+            1fr 1fr;
+
+
+        width:
+            100%;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-pills span {
+
+        display:
+            flex;
+
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+
+        min-height:
+            58px;
+
+
+        padding:
+            10px 12px;
+
+
+        text-align:
+            center;
+    }
+
+
+
+    /* ACTIONS */
+
+    #mdg-show-detail
+    .mdgs-actions {
+
+        display:
+            grid;
+
+
+        width:
+            100%;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-btn {
+
+        width:
+            100%;
+    }
+
+
+
+    /* HERO IMAGE */
+
+    #mdg-show-detail
+    .mdgs-hero-media {
+
+        min-height:
+            510px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-image-caption {
+
+        left:
+            25px;
+
+        right:
+            25px;
+
+        bottom:
+            27px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-image-caption strong {
+
+        font-size:
+            42px;
+    }
+
+
+
+    /* QUICK */
+
+    #mdg-show-detail
+    .mdgs-quick {
+
+        padding-bottom:
+            60px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-quick-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-quick-grid > div {
+
+        border-bottom:
+
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                .10
+            );
+    }
+
+
+
+    /* STORY */
+
+    #mdg-show-detail
+    .mdgs-story,
+
+    #mdg-show-detail
+    .mdgs-features {
+
+        padding:
+            70px 0;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-story h2,
+
+    #mdg-show-detail
+    .mdgs-section-head h2,
+
+    #mdg-show-detail
+    .mdgs-family h2,
+
+    #mdg-show-detail
+    .mdgs-cta h2 {
+
+        font-size:
+            42px;
+
+
+        line-height:
+            1;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-story-media img {
+
+        aspect-ratio:
+            4 / 3;
+    }
+
+
+
+    /* FEATURES */
+
+    #mdg-show-detail
+    .mdgs-feature-grid,
+
+    #mdg-show-detail
+    .mdgs-family-list {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-feature {
+
+        min-height:
+            0;
+    }
+
+
+
+    /* FAMILY */
+
+    #mdg-show-detail
+    .mdgs-family {
+
+        padding-bottom:
+            70px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-family-panel,
+
+    #mdg-show-detail
+    .mdgs-cta-panel {
+
+        padding:
+            30px 25px;
+    }
+
+
+
+    /* CTA */
+
+    #mdg-show-detail
+    .mdgs-cta {
+
+        padding-bottom:
+            70px;
+    }
+
+
+
+    #mdg-show-detail
+    .mdgs-cta-actions {
+
+        min-width:
+            0;
+
+        width:
+            100%;
+    }
+
+}
+
+</style>
+
+        <?php
+
+    },
+    9999
+);

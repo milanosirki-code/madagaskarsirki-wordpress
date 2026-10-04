@@ -1,0 +1,182 @@
+/**
+ * Madagaskar Sirki - Hukuki ve güven sayfaları
+ * Sürüm: 1.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+function ms_hukuki_sirket_bilgileri() {
+    return array(
+        'unvan'   => 'Dünya Organizasyon Medya Turizm Eğitim Danışmanlık Reklam Seyahat Acenteliği Limited Şirketi',
+        'adres'   => 'Kızılay Mah. Menekşe 1 Cad. Şeref Apt. Blok No: 3 İç Kapı No: 11 Çankaya / Ankara',
+        'mersis'  => '0322100876700001',
+        'sicil'   => '479730',
+        'oda'     => '2040972',
+        'vergi'   => 'Mithatpaşa Vergi Dairesi - 3221008767',
+        'telefon' => '+90 312 911 37 10',
+        'eposta'  => 'bilgi@madagaskarsirki.com',
+    );
+}
+
+function ms_hukuki_kimlik_tablosu() {
+    $s = ms_hukuki_sirket_bilgileri();
+
+    return '<div class="ms-legal-company"><h2>Şirket ve iletişim bilgileri</h2><ul>' .
+        '<li><strong>Unvan:</strong> ' . esc_html( $s['unvan'] ) . '</li>' .
+        '<li><strong>Adres:</strong> ' . esc_html( $s['adres'] ) . '</li>' .
+        '<li><strong>MERSİS No:</strong> ' . esc_html( $s['mersis'] ) . '</li>' .
+        '<li><strong>Ticaret Sicil No:</strong> ' . esc_html( $s['sicil'] ) . '</li>' .
+        '<li><strong>ATO Üye Sicil No:</strong> ' . esc_html( $s['oda'] ) . '</li>' .
+        '<li><strong>Vergi:</strong> ' . esc_html( $s['vergi'] ) . '</li>' .
+        '<li><strong>Telefon:</strong> ' . esc_html( $s['telefon'] ) . '</li>' .
+        '<li><strong>E-posta:</strong> <a href="mailto:' . esc_attr( $s['eposta'] ) . '">' . esc_html( $s['eposta'] ) . '</a></li>' .
+        '</ul></div>';
+}
+
+function ms_hukuki_sayfa_icerikleri() {
+    $company = ms_hukuki_kimlik_tablosu();
+
+    return array(
+        'kvkk-aydinlatma-metni' => array(
+            'title'   => 'KVKK Aydınlatma Metni',
+            'content' => '<div class="ms-legal-page"><p class="ms-legal-date">Son güncelleme: 18 Ağustos 2026</p>' .
+                '<p>Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında, madagaskarsirki.com ziyaretçileri, müşterileri ve iletişim kanallarımızı kullanan kişiler için hazırlanmıştır.</p>' .
+                $company .
+                '<h2>Veri sorumlusu</h2><p>Yukarıda bilgileri bulunan Dünya Organizasyon, kişisel verilerin işlenmesi bakımından veri sorumlusudur.</p>' .
+                '<h2>İşlenen kişisel veriler</h2><p>İşleme göre; ad-soyad, telefon, e-posta, fatura ve iletişim bilgileri, sipariş ve bilet bilgileri, ödeme işlemine ilişkin sınırlı kayıtlar, IP ve işlem güvenliği kayıtları, talep-şikâyet yazışmaları ve pazarlama izni tercihleri işlenebilir. Kart bilgilerinin tamamı şirketimiz tarafından saklanmaz; ödeme işlemleri yetkili ödeme kuruluşunun güvenli altyapısında yürütülür.</p>' .
+                '<h2>İşleme amaçları ve hukuki sebepler</h2><ul><li>Bilet satış sözleşmesinin kurulması ve ifası, siparişin oluşturulması, biletin teslimi ve müşteri desteği: KVKK m.5/2-c.</li><li>Fatura, muhasebe, tüketici ve yetkili kurum yükümlülüklerinin yerine getirilmesi: KVKK m.5/2-ç.</li><li>Uyuşmazlıkların takibi ve hakların korunması: KVKK m.5/2-e.</li><li>Bilgi güvenliği, sahteciliğin önlenmesi ve hizmet kalitesinin geliştirilmesi: temel haklara zarar vermemek kaydıyla KVKK m.5/2-f.</li><li>Reklam, kampanya ve ticari elektronik ileti faaliyetleri: gerekli olduğu durumda ayrı olarak alınan açık rıza/onay.</li></ul>' .
+                '<h2>Toplama yöntemi</h2><p>Veriler; internet sitesi, WooCommerce sipariş ve ödeme ekranları, bilet sistemi, iletişim formu, telefon, WhatsApp, sosyal medya, CRM ve destek görüşmeleri üzerinden otomatik veya kısmen otomatik yöntemlerle toplanabilir.</p>' .
+                '<h2>Aktarım yapılabilecek alıcı grupları</h2><p>Veriler yalnızca amaçla sınırlı olmak üzere ödeme kuruluşları ve bankalar, barındırma ve bilgi teknolojisi sağlayıcıları, biletleme ve giriş kontrol hizmetleri, CRM ve iletişim hizmetleri, muhasebe/fatura hizmetleri, hukuk ve mali müşavirlik hizmetleri ile kanunen yetkili kamu kurumlarına aktarılabilir.</p>' .
+                '<h2>Saklama</h2><p>Veriler, ilgili işlemin gerektirdiği süre ve uygulanabilir vergi, ticaret, tüketici ve diğer mevzuattaki yasal saklama süreleri boyunca muhafaza edilir; süre sonunda silinir, yok edilir veya anonim hale getirilir.</p>' .
+                '<h2>Haklarınız ve başvuru</h2><p>KVKK’nın 11. maddesi kapsamındaki taleplerinizi kimliğinizi doğrulamaya elverişli bilgilerle birlikte şirket adresine yazılı olarak veya <a href="mailto:bilgi@madagaskarsirki.com">bilgi@madagaskarsirki.com</a> adresine iletebilirsiniz. Başvurular mevzuattaki süre içinde sonuçlandırılır.</p></div>',
+        ),
+        'gizlilik-ve-cerez-politikasi' => array(
+            'title'   => 'Gizlilik ve Çerez Politikası',
+            'content' => '<div class="ms-legal-page"><p class="ms-legal-date">Son güncelleme: 18 Ağustos 2026</p>' .
+                '<p>Bu politika, madagaskarsirki.com internet sitesinde bilgilerin ve çerezlerin nasıl kullanıldığını açıklar. KVKK kapsamındaki ayrıntılı bilgilendirme için KVKK Aydınlatma Metni’ni inceleyebilirsiniz.</p>' .
+                $company .
+                '<h2>Çerez nedir?</h2><p>Çerezler, internet sitesinin çalışması ve tercihlerin hatırlanması için cihazınıza kaydedilebilen küçük metin dosyalarıdır.</p>' .
+                '<h2>Kullanılabilecek çerez türleri</h2><ul><li><strong>Zorunlu çerezler:</strong> Sepet, ödeme, güvenlik, oturum ve bilet işlemlerinin çalışmasını sağlar.</li><li><strong>Tercih çerezleri:</strong> Dil veya görüntüleme gibi seçimleri hatırlayabilir.</li><li><strong>Analitik çerezler:</strong> Ziyaret ve performans ölçümü yapılmasını sağlar.</li><li><strong>Reklam çerezleri:</strong> Açık rıza/onay gereken durumlarda reklamların ölçülmesi ve kişiselleştirilmesi için kullanılabilir.</li></ul>' .
+                '<h2>Üçüncü taraf hizmetler</h2><p>Site; WordPress/Jetpack, WooCommerce, ödeme, biletleme, güvenlik, analiz, Meta ve iletişim hizmetleriyle teknik olarak etkileşime girebilir. Zorunlu olmayan çerezler, uygulanabilir olduğu ölçüde kullanıcının tercihine göre çalıştırılmalıdır.</p>' .
+                '<h2>Çerezleri yönetme</h2><p>Tarayıcı ayarlarınızdan çerezleri silebilir veya engelleyebilirsiniz. Zorunlu çerezlerin kapatılması sepet, ödeme ve bilet görüntüleme işlevlerinin çalışmamasına yol açabilir.</p>' .
+                '<h2>Güvenlik ve bağlantılar</h2><p>Kişisel verileri korumak için makul teknik ve idari tedbirler uygulanır. Başka sitelere verilen bağlantıların gizlilik uygulamalarından ilgili site işletmecisi sorumludur.</p>' .
+                '<h2>İletişim</h2><p>Gizlilik ve çerezlerle ilgili sorularınızı <a href="mailto:bilgi@madagaskarsirki.com">bilgi@madagaskarsirki.com</a> adresine iletebilirsiniz.</p></div>',
+        ),
+        'on-bilgilendirme-formu' => array(
+            'title'   => 'Mesafeli Satış Ön Bilgilendirme Formu',
+            'content' => '<div class="ms-legal-page"><p class="ms-legal-date">Son güncelleme: 18 Ağustos 2026</p>' .
+                '<p>Bu form, internet üzerinden satın alınan Madagaskar Sirki etkinlik biletleri için sipariş verilmeden önce tüketicinin bilgilendirilmesi amacıyla hazırlanmıştır. Siparişe özgü etkinlik, tarih, seans, adet ve toplam bedel ödeme ekranında ayrıca gösterilir.</p>' .
+                $company .
+                '<h2>Hizmetin temel özellikleri</h2><p>Satın alınan ürün, seçilen şehir, tarih ve seans için elektronik etkinlik biletidir. Etkinliğe ilişkin güncel bilgiler ürün ve ödeme sayfasında yer alır.</p>' .
+                '<h2>Fiyat ve ödeme</h2><p>Vergiler dahil toplam bilet bedeli, varsa indirim ve diğer ücretler sipariş onayından hemen önce gösterilir. Ödeme, ödeme ekranında sunulan yöntemlerle güvenli ödeme kuruluşu üzerinden gerçekleştirilir. Siparişin onaylanması ödeme yükümlülüğü doğurur.</p>' .
+                '<h2>Elektronik teslimat</h2><p>Bilet ve sipariş bilgileri, başarılı ödeme sonrasında ekranda ve/veya siparişte bildirilen e-posta, telefon ya da Biletlerim bağlantısı üzerinden elektronik olarak sunulur. Teslimat için fiziki kargo yapılmaz.</p>' .
+                '<h2>Cayma hakkı hakkında</h2><p>Belirli bir tarihte veya dönemde yapılması gereken eğlence ve boş zaman değerlendirme hizmetlerine ilişkin sözleşmeler, Mesafeli Sözleşmeler Yönetmeliği’nin cayma hakkı istisnaları kapsamında olabilir. Bu nedenle tarih ve seansı belirlenmiş etkinlik biletlerinde, taraflarca ayrıca bir hak tanınmadıkça, genel 14 günlük cayma hakkı bulunmaz. Etkinliğin iptali, hizmetin sunulamaması, ayıplı hizmet ve emredici tüketici mevzuatından doğan haklar saklıdır.</p>' .
+                '<h2>Şikâyet ve uyuşmazlık</h2><p>Talepler yukarıdaki iletişim kanallarına iletilebilir. Tüketici, yürürlükteki parasal sınırlar çerçevesinde ikametgâhının veya işlemin yapıldığı yerdeki Tüketici Hakem Heyetine ya da Tüketici Mahkemesine başvurabilir.</p></div>',
+        ),
+        'mesafeli-satis-sozlesmesi' => array(
+            'title'   => 'Mesafeli Satış Sözleşmesi',
+            'content' => '<div class="ms-legal-page"><p class="ms-legal-date">Son güncelleme: 18 Ağustos 2026</p>' .
+                '<p>Bu sözleşme, madagaskarsirki.com üzerinden elektronik etkinlik bileti satın alan müşteri ile aşağıda bilgileri bulunan sağlayıcı arasında elektronik ortamda kurulur. Sipariş ekranında yer alan alıcı, etkinlik, bilet, fiyat ve ödeme bilgileri sözleşmenin ayrılmaz parçasıdır.</p>' .
+                $company .
+                '<h2>1. Konu</h2><p>Sözleşmenin konusu, tüketicinin seçtiği şehir, tarih ve seansa ilişkin elektronik bilet hizmetinin satışı ve tarafların hak ve yükümlülükleridir.</p>' .
+                '<h2>2. Sözleşmenin kurulması</h2><p>Tüketici, ön bilgileri ve sipariş özetini görerek ödeme yükümlülüğü doğuran siparişi onayladığında sözleşme kurulur. Ödemenin başarıyla tamamlanmaması halinde bilet oluşturulmaz.</p>' .
+                '<h2>3. Teslim ve kullanım</h2><p>Bilet elektronik olarak sağlanır. Tüketici iletişim bilgilerini doğru girmek, biletini ve sipariş bağlantısını korumak, girişte geçerli bileti ibraz etmekle sorumludur. Aynı biletin çoğaltılması halinde ilk doğrulanan kayıt esas alınabilir.</p>' .
+                '<h2>4. Etkinlik düzeni</h2><p>Etkinliğin güvenli yürütülmesi için salon/alan kurallarına uyulmalıdır. Programın özünü değiştirmeyen makul sahne, sanatçı veya akış değişiklikleri yapılabilir. Tarih, saat veya yer değişikliği olması halinde kayıtlı iletişim kanallarından bilgilendirme yapılır.</p>' .
+                '<h2>5. Cayma, iptal ve iade</h2><p>Belirli tarih veya dönemde sunulan eğlence hizmeti niteliğindeki biletlerde mevzuattaki cayma hakkı istisnası uygulanabilir. Etkinliğin sağlayıcı tarafından iptal edilmesi veya hizmetin sunulmasının imkânsızlaşması halinde tüketici bilgilendirilir ve mevzuata uygun bedel iadesi, kullanılan ödeme aracına uygun şekilde gerçekleştirilir. Erteleme veya esaslı değişiklik halinde tüketicinin emredici mevzuattan doğan hakları saklıdır.</p>' .
+                '<h2>6. Mücbir sebep</h2><p>Doğal afet, salgın, savaş, terör, kamu otoritesi kararı, yasaklama, ağır hava koşulları ve tarafların kontrolü dışındaki benzeri olaylarda etkinlik ertelenebilir, yeri değiştirilebilir veya iptal edilebilir. Tüketiciye uygulanacak seçenekler olayın niteliğine ve yürürlükteki mevzuata göre bildirilir.</p>' .
+                '<h2>7. Kişisel veriler</h2><p>Kişisel veriler KVKK Aydınlatma Metni doğrultusunda işlenir. Pazarlama iletişimi için gereken izinler satış sözleşmesinden ayrı değerlendirilir.</p>' .
+                '<h2>8. Uyuşmazlık</h2><p>Tüketicinin Tüketici Hakem Heyeti ve Tüketici Mahkemesine başvurma hakları saklıdır. Elektronik sipariş, ödeme ve bilgilendirme kayıtları mevzuata uygun şekilde saklanır.</p></div>',
+        ),
+        'iptal-iade-ve-bilet-teslimati' => array(
+            'title'   => 'İptal, İade ve Bilet Teslimatı',
+            'content' => '<div class="ms-legal-page"><p class="ms-legal-date">Son güncelleme: 18 Ağustos 2026</p>' .
+                '<h2>Bilet nasıl teslim edilir?</h2><p>Başarılı ödeme sonrasında sipariş ve bilet bilgileri elektronik olarak oluşturulur. Bilet; ödeme sonrası ekran, kayıtlı e-posta/telefon ve/veya kişiye özel Biletlerim bağlantısı üzerinden görüntülenebilir. Fiziki kargo yapılmaz.</p>' .
+                '<h2>Bilet ulaşmadıysa</h2><p>Önce e-posta istenmeyen/spam klasörünü ve siparişte kullanılan iletişim bilgilerini kontrol edin. Sipariş numaranız, ad-soyad ve telefonunuzla <a href="mailto:bilgi@madagaskarsirki.com">bilgi@madagaskarsirki.com</a> adresine veya +90 312 911 37 10 numarasına başvurabilirsiniz.</p>' .
+                '<h2>Müşteri talebiyle iptal ve iade</h2><p>Etkinlik biletleri belirli bir tarih ve seans için sunulan boş zaman/eğlence hizmetidir. Mevzuattaki istisna nedeniyle, aksi açıkça belirtilmedikçe, bilet satın alındıktan sonra genel 14 günlük cayma hakkı uygulanmaz. Yanlış şehir, tarih, seans veya adet seçilmemesi için ödeme öncesi sipariş özeti kontrol edilmelidir.</p>' .
+                '<h2>Etkinlik iptal edilirse</h2><p>Etkinliğin sağlayıcı tarafından iptal edilmesi veya hizmetin sunulamaması halinde müşteriler kayıtlı iletişim bilgileri üzerinden bilgilendirilir. İade, mevzuata uygun olarak ve satın almada kullanılan ödeme yöntemine uygun biçimde gerçekleştirilir.</p>' .
+                '<h2>Erteleme veya yer değişikliği</h2><p>Etkinliğin ertelenmesi ya da yerinin esaslı şekilde değişmesi halinde yeni bilgiler duyurulur. Biletin geçerliliği ve varsa sunulacak iade/değişiklik seçeneği ayrıca bildirilir. Emredici tüketici hakları saklıdır.</p>' .
+                '<h2>Hatalı veya mükerrer tahsilat</h2><p>Mükerrer ödeme, teknik hata ya da onaylanmayan siparişle ilgili talepler ödeme kayıtları incelenerek sonuçlandırılır. İnceleme için sipariş numarası ve ödeme tarihinin iletilmesi gerekir.</p>' .
+                $company . '</div>',
+        ),
+    );
+}
+
+/**
+ * Sayfaları bir kez oluşturur; mevcut sayfaları çoğaltmaz.
+ */
+add_action( 'init', function () {
+    $version_key = 'ms_hukuki_sayfalar_v1';
+
+    if ( get_option( $version_key ) ) {
+        return;
+    }
+
+    foreach ( ms_hukuki_sayfa_icerikleri() as $slug => $page_data ) {
+        $existing = get_page_by_path( $slug, OBJECT, 'page' );
+
+        if ( $existing ) {
+            continue;
+        }
+
+        wp_insert_post(
+            array(
+                'post_type'    => 'page',
+                'post_status'  => 'publish',
+                'post_title'   => $page_data['title'],
+                'post_name'    => $slug,
+                'post_content' => wp_kses_post( $page_data['content'] ),
+                'post_excerpt' => wp_trim_words( wp_strip_all_tags( $page_data['content'] ), 28 ),
+            )
+        );
+    }
+
+    flush_rewrite_rules( false );
+
+    if ( function_exists( 'wp_cache_flush' ) ) {
+        wp_cache_flush();
+    }
+
+    update_option( $version_key, current_time( 'mysql' ), false );
+}, 25 );
+
+/**
+ * Hukuki sayfa görünümü.
+ */
+add_action( 'wp_head', function () {
+    echo '<style>
+    .ms-legal-page{max-width:920px;margin:0 auto;padding:45px 22px;color:#222;line-height:1.75;background:#fff}
+    .ms-legal-page h2{margin-top:34px;color:#8b1111;font-size:1.55rem}
+    .ms-legal-page p,.ms-legal-page li{font-size:1rem}
+    .ms-legal-page a{color:#a71313;text-decoration:underline}
+    .ms-legal-date{color:#666;font-size:.92rem!important}
+    .ms-legal-company{margin:28px 0;padding:22px;border-left:5px solid #c39718;background:#f7f4e9}
+    .ms-legal-company h2{margin-top:0}
+    .ms-legal-footer-links{padding:20px;text-align:center;background:#080808;color:#fff}
+    .ms-legal-footer-links a{display:inline-block;margin:6px 10px;color:#ffbd00;text-decoration:none;font-size:14px}
+    </style>';
+} );
+
+/**
+ * Her sayfanın altında erişilebilir hukuk bağlantıları gösterir.
+ */
+add_action( 'wp_footer', function () {
+    $links = array(
+        'KVKK Aydınlatma'       => home_url( '/kvkk-aydinlatma-metni/' ),
+        'Gizlilik ve Çerez'     => home_url( '/gizlilik-ve-cerez-politikasi/' ),
+        'Ön Bilgilendirme'      => home_url( '/on-bilgilendirme-formu/' ),
+        'Mesafeli Satış'        => home_url( '/mesafeli-satis-sozlesmesi/' ),
+        'İptal, İade ve Teslim' => home_url( '/iptal-iade-ve-bilet-teslimati/' ),
+    );
+
+    echo '<nav class="ms-legal-footer-links" aria-label="Hukuki bağlantılar">';
+
+    foreach ( $links as $label => $url ) {
+        echo '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+    }
+
+    echo '</nav>';
+}, 50 );
+
+

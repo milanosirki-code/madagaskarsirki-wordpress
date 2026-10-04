@@ -1,0 +1,682 @@
+
+/**
+ * Madagaskar Çekiliş — Tek Kişilik Yeniden Seçim V1
+ *
+ * Amaç:
+ * - Mevcut Madagaskar Çekiliş Sistemi v3.3.0 tablolarını kullanır.
+ * - Bir asil/yedek "disqualified" olduğunda yalnız o pozisyon için 1 yeni kişi seçer.
+ * - Geçersiz kişi ve daha önce seçilmiş comment_id'leri tekrar seçmez.
+ * - Kampanyadaki one_user_one_win / one_user_one_entry kurallarına uyar.
+ * - Eski sonucu ayrı audit tablosunda saklar.
+ * - Mevcut Meta yorum çekme ve ilk çekiliş koduna dokunmaz.
+ */
+
+if ( ! defined( 'MCKR_VERSION' ) ) {
+	define( 'MCKR_VERSION', '1.0.0' );
+}
+
+function mckr_table( $suffix ) {
+	global $wpdb;
+	return $wpdb->prefix . 'mck_' . $suffix;
+}
+
+function mckr_base_tables_ready() {
+	global $wpdb;
+
+	foreach ( [ 'campaigns', 'comments', 'draws' ] as $suffix ) {
+		$table = mckr_table( $suffix );
+		$found = $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+		);
+
+		if ( $found !== $table ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function mckr_audit_table() {
+	global $wpdb;
+	return $wpdb->prefix . 'mck_redraw_audit';
+}
+
+function mckr_ensure_audit_table() {
+	global $wpdb;
+
+	$table = mckr_audit_table();
+	$found = $wpdb->get_var(
+		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+	);
+
+	if ( $found === $table ) {
+		return true;
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+	$charset_collate = $wpdb->get_charset_collate();
+
+	$sql = "CREATE TABLE {$table} (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		campaign_id bigint(20) unsigned NOT NULL,
+		draw_id bigint(20) unsigned NOT NULL,
+		result_type varchar(20) NOT NULL,
+		position_no int(10) unsigned NOT NULL,
+		old_comment_id varchar(100) NOT NULL,
+		old_username varchar(190) NOT NULL,
+		old_comment_text longtext NOT NULL,
+		old_verification_status varchar(20) NOT NULL,
+		old_verification_note text NULL,
+		new_comment_id varchar(100) NOT NULL,
+		new_username varchar(190) NOT NULL,
+		new_comment_text longtext NOT NULL,
+		redraw_seed varchar(128) NOT NULL,
+		new_score_hash varchar(128) NOT NULL,
+		actor_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+		created_at datetime NOT NULL,
+		PRIMARY KEY (id),
+		KEY campaign_id (campaign_id),
+		KEY draw_id (draw_id),
+		KEY created_at (created_at)
+	) {$charset_collate};";
+
+	dbDelta( $sql );
+
+	$found = $wpdb->get_var(
+		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+	);
+
+	return $found === $table;
+}
+
+function mckr_unresolved_draws( $limit = 20 ) {
+	global $wpdb;
+
+	if ( ! mckr_base_tables_ready() ) {
+		return [];
+	}
+
+	$limit = max( 1, min( 100, absint( $limit ) ) );
+	$draws = mckr_table( 'draws' );
+	$campaigns = mckr_table( 'campaigns' );
+
+	$sql = $wpdb->prepare(
+		"SELECT
+			d.id,
+			d.campaign_id,
+			d.result_type,
+			d.position_no,
+			d.comment_id,
+			d.username,
+			d.comment_text,
+			d.verification_status,
+			d.verification_note,
+			d.drawn_at,
+			c.title AS campaign_title
+		FROM {$draws} d
+		INNER JOIN {$campaigns} c ON c.id = d.campaign_id
+		WHERE d.verification_status = %s
+		  AND d.result_type IN ('winner','reserve')
+		ORDER BY d.id ASC
+		LIMIT %d",
+		'disqualified',
+		$limit
+	);
+
+	return (array) $wpdb->get_results( $sql, ARRAY_A );
+}
+
+function mckr_recent_audit( $limit = 10 ) {
+	global $wpdb;
+
+	if ( ! mckr_ensure_audit_table() ) {
+		return [];
+	}
+
+	$limit = max( 1, min( 50, absint( $limit ) ) );
+	$table = mckr_audit_table();
+	$campaigns = mckr_table( 'campaigns' );
+
+	$sql = $wpdb->prepare(
+		"SELECT
+			a.id,
+			a.campaign_id,
+			c.title AS campaign_title,
+			a.draw_id,
+			a.result_type,
+			a.position_no,
+			a.old_username,
+			a.new_username,
+			a.created_at
+		FROM {$table} a
+		LEFT JOIN {$campaigns} c ON c.id = a.campaign_id
+		ORDER BY a.id DESC
+		LIMIT %d",
+		$limit
+	);
+
+	return (array) $wpdb->get_results( $sql, ARRAY_A );
+}
+
+function mckr_normalize_username( $username ) {
+	return strtolower( trim( (string) $username ) );
+}
+
+function mckr_redraw_one( $draw_id, $actor_user_id = 0 ) {
+	global $wpdb;
+
+	$draw_id = absint( $draw_id );
+	$actor_user_id = absint( $actor_user_id );
+
+	if ( ! $draw_id ) {
+		return new WP_Error( 'mckr_invalid_draw', 'Geçerli çekiliş satırı bulunamadı.' );
+	}
+
+	if ( ! mckr_base_tables_ready() ) {
+		return new WP_Error( 'mckr_tables_missing', 'Madagaskar çekiliş tabloları bulunamadı.' );
+	}
+
+	if ( ! mckr_ensure_audit_table() ) {
+		return new WP_Error( 'mckr_audit_table', 'Yeniden seçim denetim tablosu oluşturulamadı.' );
+	}
+
+	$draws = mckr_table( 'draws' );
+	$campaigns = mckr_table( 'campaigns' );
+	$comments = mckr_table( 'comments' );
+	$audit = mckr_audit_table();
+
+	$wpdb->query( 'START TRANSACTION' );
+
+	try {
+		$draw = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$draws} WHERE id = %d FOR UPDATE",
+				$draw_id
+			)
+		);
+
+		if ( ! $draw ) {
+			throw new RuntimeException( 'Çekiliş sonucu bulunamadı.' );
+		}
+
+		if ( 'disqualified' !== (string) $draw->verification_status ) {
+			throw new RuntimeException( 'Bu sonuç yeniden seçim beklemiyor.' );
+		}
+
+		if ( ! in_array( (string) $draw->result_type, [ 'winner', 'reserve' ], true ) ) {
+			throw new RuntimeException( 'Yalnız asil veya yedek sonuç yeniden seçilebilir.' );
+		}
+
+		$campaign = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$campaigns} WHERE id = %d FOR UPDATE",
+				absint( $draw->campaign_id )
+			)
+		);
+
+		if ( ! $campaign ) {
+			throw new RuntimeException( 'Kampanya bulunamadı.' );
+		}
+
+		$existing_draws = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, comment_id, username, verification_status
+				 FROM {$draws}
+				 WHERE campaign_id = %d",
+				absint( $draw->campaign_id )
+			)
+		);
+
+		$used_comment_ids = [];
+		$banned_users = [];
+
+		foreach ( $existing_draws as $existing ) {
+			$cid = trim( (string) $existing->comment_id );
+			if ( '' !== $cid ) {
+				$used_comment_ids[ $cid ] = true;
+			}
+
+			$user_key = mckr_normalize_username( $existing->username );
+			if ( '' === $user_key ) {
+				continue;
+			}
+
+			if (
+				'disqualified' === (string) $existing->verification_status ||
+				! empty( $campaign->one_user_one_win )
+			) {
+				$banned_users[ $user_key ] = true;
+			}
+		}
+
+		$candidates = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, comment_id, username, comment_text, normalized_text
+				 FROM {$comments}
+				 WHERE campaign_id = %d
+				   AND is_valid = 1
+				 ORDER BY id ASC",
+				absint( $draw->campaign_id )
+			)
+		);
+
+		$redraw_seed = hash(
+			'sha256',
+			(string) $campaign->audit_seed . '|' .
+			(string) $campaign->eligible_hash . '|redraw|' .
+			(string) $draw->id . '|' .
+			(string) $draw->comment_id . '|' .
+			(string) $draw->username . '|' .
+			(string) $draw->result_type . '|' .
+			(string) $draw->position_no
+		);
+
+		$pool = [];
+
+		foreach ( $candidates as $candidate ) {
+			$comment_id = trim( (string) $candidate->comment_id );
+			$user_key = mckr_normalize_username( $candidate->username );
+
+			if ( '' === $comment_id || '' === $user_key ) {
+				continue;
+			}
+
+			if ( isset( $used_comment_ids[ $comment_id ] ) ) {
+				continue;
+			}
+
+			if ( isset( $banned_users[ $user_key ] ) ) {
+				continue;
+			}
+
+			$score = hash(
+				'sha256',
+				$redraw_seed . '|' .
+				$comment_id . '|' .
+				$user_key . '|' .
+				(string) $candidate->normalized_text
+			);
+
+			$item = [
+				'comment_id'   => $comment_id,
+				'username'     => (string) $candidate->username,
+				'comment_text' => (string) $candidate->comment_text,
+				'user_key'     => $user_key,
+				'score'        => $score,
+			];
+
+			if ( ! empty( $campaign->one_user_one_entry ) ) {
+				if (
+					! isset( $pool[ $user_key ] ) ||
+					strcmp( $score, $pool[ $user_key ]['score'] ) < 0
+				) {
+					$pool[ $user_key ] = $item;
+				}
+			} else {
+				$pool[] = $item;
+			}
+		}
+
+		if ( empty( $pool ) ) {
+			throw new RuntimeException( 'Yeniden seçim için uygun katılımcı kalmadı.' );
+		}
+
+		if ( ! empty( $campaign->one_user_one_entry ) ) {
+			$pool = array_values( $pool );
+		}
+
+		usort(
+			$pool,
+			static function ( $a, $b ) {
+				$cmp = strcmp( $a['score'], $b['score'] );
+				if ( 0 !== $cmp ) {
+					return $cmp;
+				}
+				return strcmp( $a['comment_id'], $b['comment_id'] );
+			}
+		);
+
+		$selected = $pool[0];
+		$now = current_time( 'mysql' );
+
+		$inserted = $wpdb->insert(
+			$audit,
+			[
+				'campaign_id'            => absint( $draw->campaign_id ),
+				'draw_id'                => absint( $draw->id ),
+				'result_type'            => (string) $draw->result_type,
+				'position_no'            => absint( $draw->position_no ),
+				'old_comment_id'         => (string) $draw->comment_id,
+				'old_username'           => (string) $draw->username,
+				'old_comment_text'       => (string) $draw->comment_text,
+				'old_verification_status'=> (string) $draw->verification_status,
+				'old_verification_note'  => (string) $draw->verification_note,
+				'new_comment_id'         => $selected['comment_id'],
+				'new_username'           => $selected['username'],
+				'new_comment_text'       => $selected['comment_text'],
+				'redraw_seed'            => $redraw_seed,
+				'new_score_hash'         => $selected['score'],
+				'actor_user_id'          => $actor_user_id,
+				'created_at'             => $now,
+			],
+			[
+				'%d','%d','%s','%d','%s','%s','%s','%s','%s',
+				'%s','%s','%s','%s','%s','%d','%s'
+			]
+		);
+
+		if ( false === $inserted ) {
+			throw new RuntimeException( 'Denetim kaydı yazılamadı.' );
+		}
+
+		$audit_id = absint( $wpdb->insert_id );
+
+		$updated = $wpdb->update(
+			$draws,
+			[
+				'comment_id'          => $selected['comment_id'],
+				'username'            => $selected['username'],
+				'comment_text'        => $selected['comment_text'],
+				'verification_status' => 'pending',
+				'verification_note'   => sprintf(
+					'Yeniden seçim #%d: önceki kişi doğrulanmadığı için bu pozisyon için tek yeni kişi seçildi.',
+					$audit_id
+				),
+				'score_hash'          => $selected['score'],
+				'drawn_at'            => $now,
+			],
+			[ 'id' => $draw_id ],
+			[ '%s','%s','%s','%s','%s','%s','%s' ],
+			[ '%d' ]
+		);
+
+		if ( false === $updated || 1 !== (int) $updated ) {
+			throw new RuntimeException( 'Kazanan satırı güncellenemedi.' );
+		}
+
+		$wpdb->update(
+			$campaigns,
+			[ 'updated_at' => $now ],
+			[ 'id' => absint( $draw->campaign_id ) ],
+			[ '%s' ],
+			[ '%d' ]
+		);
+
+		$wpdb->query( 'COMMIT' );
+
+		return [
+			'ok'              => true,
+			'audit_id'        => $audit_id,
+			'campaign_id'     => absint( $draw->campaign_id ),
+			'campaign_title'  => (string) $campaign->title,
+			'draw_id'         => $draw_id,
+			'result_type'     => (string) $draw->result_type,
+			'position_no'     => absint( $draw->position_no ),
+			'old_username'    => (string) $draw->username,
+			'new_username'    => $selected['username'],
+			'new_comment_id'  => $selected['comment_id'],
+			'new_score_hash'  => $selected['score'],
+			'pool_size'       => count( $pool ),
+		];
+
+	} catch ( Throwable $e ) {
+		$wpdb->query( 'ROLLBACK' );
+
+		return new WP_Error(
+			'mckr_redraw_failed',
+			$e->getMessage(),
+			[ 'draw_id' => $draw_id ]
+		);
+	}
+}
+
+function mckr_is_draw_screen( $screen = null ) {
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	$screen_id = '';
+
+	if ( $screen && is_object( $screen ) && isset( $screen->id ) ) {
+		$screen_id = sanitize_key( (string) $screen->id );
+	}
+
+	$haystack = $page . ' ' . $screen_id;
+
+	return (
+		false !== strpos( $haystack, 'cekilis' ) ||
+		false !== strpos( $haystack, 'mck' ) ||
+		false !== strpos( $haystack, 'madagaskar-cek' )
+	);
+}
+
+function mckr_set_notice( $type, $message ) {
+	$user_id = get_current_user_id();
+
+	if ( ! $user_id ) {
+		return;
+	}
+
+	set_transient(
+		'mckr_notice_' . $user_id,
+		[
+			'type'    => sanitize_key( $type ),
+			'message' => sanitize_text_field( $message ),
+		],
+		120
+	);
+}
+
+add_action(
+	'current_screen',
+	function ( $screen ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( 'GET' !== strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) ) {
+			return;
+		}
+
+		if ( ! mckr_is_draw_screen( $screen ) ) {
+			return;
+		}
+
+		$pending = mckr_unresolved_draws( 5 );
+
+		if ( empty( $pending ) ) {
+			return;
+		}
+
+		$done = [];
+		$errors = [];
+
+		foreach ( $pending as $row ) {
+			$result = mckr_redraw_one(
+				absint( $row['id'] ),
+				get_current_user_id()
+			);
+
+			if ( is_wp_error( $result ) ) {
+				$errors[] = $result->get_error_message();
+			} else {
+				$done[] = $result;
+			}
+		}
+
+		if ( ! empty( $done ) ) {
+			$names = array_map(
+				static function ( $item ) {
+					return '@' . $item['new_username'];
+				},
+				$done
+			);
+
+			mckr_set_notice(
+				'success',
+				'Doğrulanmayan sonuç(lar) için tek kişilik yeniden seçim tamamlandı: ' .
+				implode( ', ', $names )
+			);
+		} elseif ( ! empty( $errors ) ) {
+			mckr_set_notice(
+				'error',
+				'Yeniden seçim tamamlanamadı: ' . implode( ' | ', $errors )
+			);
+		}
+	},
+	99
+);
+
+add_action(
+	'admin_notices',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		$notice = get_transient( 'mckr_notice_' . $user_id );
+
+		if ( $notice ) {
+			delete_transient( 'mckr_notice_' . $user_id );
+			$type = in_array( $notice['type'], [ 'success', 'error', 'warning', 'info' ], true )
+				? $notice['type']
+				: 'info';
+
+			printf(
+				'<div class="notice notice-%1$s is-dismissible"><p><strong>Madagaskar Çekiliş:</strong> %2$s</p></div>',
+				esc_attr( $type ),
+				esc_html( $notice['message'] )
+			);
+		}
+
+		if ( ! mckr_is_draw_screen( get_current_screen() ) ) {
+			return;
+		}
+
+		$pending = mckr_unresolved_draws( 20 );
+
+		echo '<div class="notice notice-info">';
+		echo '<p><strong>Tek Kişilik Yeniden Seçim V1 aktif.</strong> ';
+		echo 'Bir asil/yedek “Doğrulanmadı” olduğunda, sayfa yeniden açıldığında yalnız o pozisyon için yeni kişi seçilir.</p>';
+
+		if ( ! empty( $pending ) ) {
+			echo '<p><strong>Bekleyen doğrulanmamış sonuçlar:</strong></p><ul>';
+
+			foreach ( $pending as $row ) {
+				$url = wp_nonce_url(
+					admin_url(
+						'admin-post.php?action=mckr_redraw&draw_id=' . absint( $row['id'] )
+					),
+					'mckr_redraw_' . absint( $row['id'] )
+				);
+
+				printf(
+					'<li>%1$s — %2$s #%3$d — @%4$s &nbsp; <a class="button button-secondary" href="%5$s">Tek Kişi Yeniden Seç</a></li>',
+					esc_html( $row['campaign_title'] ),
+					esc_html( 'winner' === $row['result_type'] ? 'Asil' : 'Yedek' ),
+					absint( $row['position_no'] ),
+					esc_html( $row['username'] ),
+					esc_url( $url )
+				);
+			}
+
+			echo '</ul>';
+		}
+
+		echo '</div>';
+	}
+);
+
+add_action(
+	'admin_post_mckr_redraw',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Bu işlem için yetkiniz yok.', 403 );
+		}
+
+		$draw_id = isset( $_GET['draw_id'] ) ? absint( $_GET['draw_id'] ) : 0;
+		check_admin_referer( 'mckr_redraw_' . $draw_id );
+
+		$result = mckr_redraw_one( $draw_id, get_current_user_id() );
+
+		if ( is_wp_error( $result ) ) {
+			mckr_set_notice( 'error', $result->get_error_message() );
+		} else {
+			mckr_set_notice(
+				'success',
+				sprintf(
+					'%s — %s #%d için @%s yerine @%s seçildi.',
+					$result['campaign_title'],
+					'winner' === $result['result_type'] ? 'Asil' : 'Yedek',
+					$result['position_no'],
+					$result['old_username'],
+					$result['new_username']
+				)
+			);
+		}
+
+		$redirect = wp_get_referer();
+		if ( ! $redirect ) {
+			$redirect = admin_url();
+		}
+
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+);
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'mck-redraw/v1',
+			'/status',
+			[
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function () {
+					return rest_ensure_response(
+						[
+							'version'    => MCKR_VERSION,
+							'ready'      => mckr_base_tables_ready(),
+							'unresolved' => mckr_unresolved_draws( 50 ),
+							'recent'     => mckr_recent_audit( 10 ),
+						]
+					);
+				},
+			]
+		);
+
+		register_rest_route(
+			'mck-redraw/v1',
+			'/replace',
+			[
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => [
+					'draw_id' => [
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					],
+				],
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$result = mckr_redraw_one(
+						absint( $request->get_param( 'draw_id' ) ),
+						get_current_user_id()
+					);
+
+					if ( is_wp_error( $result ) ) {
+						return $result;
+					}
+
+					return rest_ensure_response( $result );
+				},
+			]
+		);
+	}
+);
