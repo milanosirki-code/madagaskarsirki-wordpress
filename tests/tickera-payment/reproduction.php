@@ -10,7 +10,7 @@ namespace {
     function add_action(...$args){} function tickera_do_action(...$args){}
     function do_action(...$args){} function is_plugin_active($name){return false;}
     function __( $s,$domain=''){return $s;} function sanitize_text_field($s){return is_scalar($s)?(string)$s:'';}
-    function tickera_sanitize_array($a,...$args){return $a;} function get_option(...$args){return [];}
+    function tickera_sanitize_array($a,...$args){return $a;} function get_option(...$args){return [];} function get_current_user_id(){return 0;}
     function get_post_type($id){return isset($GLOBALS['orders'][$id])?'shop_order_placehold':'tc_tickets_instances';}
     function get_post_meta($id,$key,$single=true){return $GLOBALS['meta'][$id][$key]??'';}
     function add_post_meta($id,$key,$value){$GLOBALS['meta'][$id][$key]=$value;}
