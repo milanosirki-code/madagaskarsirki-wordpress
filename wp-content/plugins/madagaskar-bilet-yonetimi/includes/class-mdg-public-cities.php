@@ -97,7 +97,7 @@ final class MDG_Public_Cities {
              FROM {$events} e
              INNER JOIN {$sessions} s ON s.event_id = e.id
              WHERE e.status = %s
-               AND s.end_at >= %s
+               AND s.start_at > %s
              GROUP BY e.id
              ORDER BY MIN(s.start_at) ASC, e.id ASC",
             MDG_Status::ONSALE,

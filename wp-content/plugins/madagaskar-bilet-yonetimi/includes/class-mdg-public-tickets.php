@@ -81,7 +81,7 @@ final class MDG_Public_Tickets {
              FROM {$events} e
              INNER JOIN {$sessions} s ON s.event_id = e.id
              WHERE e.status = %s
-               AND s.end_at >= %s
+               AND s.start_at > %s
              GROUP BY e.id
              ORDER BY MIN(s.start_at) ASC, e.province_name ASC, e.id ASC",
             MDG_Status::ONSALE,
@@ -91,9 +91,8 @@ final class MDG_Public_Tickets {
 
     private static function event_session_labels( $event_id ) {
         $labels  = array();
-        $now_utc = current_time( 'mysql', true );
         foreach ( (array) MDG_Sessions::by_event( $event_id ) as $session ) {
-            if ( ! empty( $session->end_at ) && (string) $session->end_at < $now_utc ) {
+            if ( MDG_Sessions::sales_closed_by_time( $session ) ) {
                 continue;
             }
             list( $date, $time ) = MDG_Sessions::local_parts( $session->start_at );

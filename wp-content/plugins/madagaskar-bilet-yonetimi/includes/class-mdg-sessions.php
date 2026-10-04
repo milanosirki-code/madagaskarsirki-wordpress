@@ -43,11 +43,12 @@ final class MDG_Sessions {
     /**
      * Seansın satışı saat nedeniyle kapandı mı?
      *
-     * Herkese açık listelerin zaten uyguladığı iki kuralı tek yerde toplar:
-     *  - seans bittiyse (end_at < şimdi) kapalıdır (MDG_Public_Tickets ile aynı),
-     *  - seansın yerel başlangıç günü bugünden önceyse kapalıdır
-     *    (hatalı/eski end_at değerlerine karşı; Issue #87 ile aynı koruma).
-     * Okunamayan tarih satışı kapatmaz; mevcut davranış korunur.
+     * Kural (işletme sahibi kararı, 4 Ekim 2026): satış seans BAŞLADIĞINDA kapanır.
+     *  - başlangıç saati geldiyse veya geçtiyse (start_at <= şimdi) kapalıdır,
+     *  - başlangıç okunabiliyor ve gelecekteyse, end_at ne olursa olsun açıktır,
+     *  - başlangıç okunamıyorsa bitişe bakılır: seans bittiyse (end_at < şimdi) kapalıdır.
+     * İkisi de okunamıyorsa satış kapanmaz; mevcut davranış korunur.
+     * Herkese açık listeler de aynı kuralı kullanır (start_at > şimdi).
      *
      * @param object|array $session start_at / end_at alanları UTC MySQL biçiminde.
      * @param int|null     $now_ts  Test için; boşsa time().
@@ -58,17 +59,11 @@ final class MDG_Sessions {
         $start_ts = self::utc_timestamp( isset( $session->start_at ) ? $session->start_at : '' );
         $end_ts   = self::utc_timestamp( isset( $session->end_at ) ? $session->end_at : '' );
 
-        $closed = $end_ts > 0 && $end_ts < $now_ts;
-
-        if ( ! $closed && $start_ts > 0 ) {
-            try {
-                $tz        = wp_timezone();
-                $start_day = ( new DateTimeImmutable( '@' . $start_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
-                $today     = ( new DateTimeImmutable( '@' . $now_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
-                $closed    = $start_day < $today;
-            } catch ( Throwable $e ) {
-                $closed = false;
-            }
+        if ( $start_ts > 0 ) {
+            $closed = $start_ts <= $now_ts;
+        } else {
+            // Başlangıç okunamıyorsa bitiş saatine bakılır; o da okunamıyorsa satış açık kalır.
+            $closed = $end_ts > 0 && $end_ts < $now_ts;
         }
 
         return (bool) apply_filters( 'mdg_session_sales_closed_by_time', $closed, $session, $now_ts );

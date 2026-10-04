@@ -166,12 +166,15 @@ $s = function ( $start, $end ) { return (object) array( 'start_at' => $start, 'e
 check( '12:00 session, ended 13:00 local, is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 09:00:00', '2026-10-04 10:00:00' ), $now ), true );
 check( '14:00 session, ended 15:00 local, is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 11:00:00', '2026-10-04 12:00:00' ), $now ), true );
 check( '16:00 session later today stays open', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 13:00:00', '2026-10-04 14:00:00' ), $now ), false );
-check( 'session in progress stays open until it ends', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), false );
-check( 'session ending exactly now is still open (end_at >= now)', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 11:25:00', '2026-10-04 12:25:00' ), $now ), false );
+check( 'session in progress (started 15:00 local) is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), true );
+check( 'session starting exactly now is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:25:00', '2026-10-04 13:25:00' ), $now ), true );
+check( 'session starting in one minute is still open', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:26:00', '2026-10-04 13:26:00' ), $now ), false );
 check( 'yesterday (Sincan 3 Ekim) is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-03 13:00:00', '2026-10-03 14:00:00' ), $now ), true );
 check( 'next week stays open', MDG_Sessions::sales_closed_by_time( $s( '2026-10-10 09:00:00', '2026-10-10 10:00:00' ), $now ), false );
 check( 'stale far-future end_at with a past start day is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-09-26 09:00:00', '2027-01-01 00:00:00' ), $now ), true );
-check( 'local day, not UTC day, decides: 00:30 local today with stale end_at stays open', MDG_Sessions::sales_closed_by_time( $s( '2026-10-03 21:30:00', '2027-01-01 00:00:00' ), $now ), false );
+check( 'unreadable start with a future end stays open', MDG_Sessions::sales_closed_by_time( $s( 'bad', '2026-10-04 14:00:00' ), $now ), false );
+check( 'unreadable start with a past end is closed', MDG_Sessions::sales_closed_by_time( $s( 'bad', '2026-10-04 12:00:00' ), $now ), true );
+check( 'future start with a wrongly past end_at stays open (a bad end time must not stop an upcoming show)', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 13:00:00', '2026-10-04 10:00:00' ), $now ), false );
 check( 'missing end_at with a future start stays open', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 13:00:00', '' ), $now ), false );
 check( 'missing end_at with a past start day is closed', MDG_Sessions::sales_closed_by_time( $s( '2026-10-03 13:00:00', null ), $now ), true );
 check( 'empty times never close sales', MDG_Sessions::sales_closed_by_time( $s( '', '' ), $now ), false );
@@ -185,10 +188,10 @@ check( 'object without time fields never closes sales', MDG_Sessions::sales_clos
 check( 'array input is accepted', MDG_Sessions::sales_closed_by_time( array( 'start_at' => '2026-10-04 09:00:00', 'end_at' => '2026-10-04 10:00:00' ), $now ), true );
 
 add_filter( 'mdg_session_sales_closed_by_time', function ( $closed, $session, $now_ts ) {
-    // Example override: close at start time instead of end time.
-    return $closed || ( strtotime( $session->start_at . ' UTC' ) <= $now_ts );
+    // Example override: keep selling until the session ends.
+    return strtotime( $session->end_at . ' UTC' ) < $now_ts;
 } );
-check( 'filter can tighten the rule (close at start)', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), true );
+check( 'filter can change the rule (sell until the session ends)', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), false );
 $filters = array();
 
 /* ================= 2. Server guard: add to cart ================= */
@@ -196,7 +199,8 @@ $t = time();
 $past   = session_row( 1, $t - 3 * 3600, $t - 2 * 3600 );
 $future = session_row( 2, $t + 2 * 3600, $t + 3 * 3600 );
 MDG_Events::$event = (object) array( 'id' => 9, 'status' => 'onsale' );
-$wpdb->sessions = array( $past, $future );
+$running = session_row( 4, $t - 10 * 60, $t + 50 * 60 );
+$wpdb->sessions = array( $past, $running, $future );
 
 $add = function ( $session_id ) {
     $_POST = array( 'event_id' => '9', 'session_id' => (string) $session_id, 'nonce' => 'x', 'lines' => json_encode( array( array( 'code' => 'CHILD', 'qty' => 1 ) ) ) );
@@ -206,6 +210,9 @@ $add = function ( $session_id ) {
 $r = $add( 1 );
 check( 'add to cart for an ended session is refused with 409', $r[1], 409 );
 check( 'refusal names the reason', false !== strpos( $r[0], 'bilet satışı sona erdi' ), true );
+$r = $add( 4 );
+check( 'add to cart for a session that has started is refused with 409', $r[1], 409 );
+check( 'started-session refusal names the reason', false !== strpos( $r[0], 'bilet satışı sona erdi' ), true );
 $r = $add( 2 );
 // No product is registered in this fixture, so an open session must reach the product check.
 check( 'open session passes the time guard and reaches the product check', $r[0], 'Seans ürünü satışa uygun değil.' );
@@ -214,6 +221,7 @@ check( 'open session passes the time guard and reaches the product check', $r[0]
 $wpdb->types = array(
     (object) array( 'id' => 31, 'session_id' => 1, 'wc_variation_id' => 801, 'capacity_units' => 1, 'is_active' => 1 ),
     (object) array( 'id' => 32, 'session_id' => 2, 'wc_variation_id' => 802, 'capacity_units' => 1, 'is_active' => 1 ),
+    (object) array( 'id' => 34, 'session_id' => 4, 'wc_variation_id' => 804, 'capacity_units' => 1, 'is_active' => 1 ),
 );
 $reserve = new ReflectionMethod( 'MDG_Live_Sales', 'reserve_or_throw' );
 if ( PHP_VERSION_ID < 80100 ) { $reserve->setAccessible( true ); }
@@ -225,6 +233,11 @@ try { $reserve->invoke( null, $order_for( 801 ) ); } catch ( Exception $e ) { $m
 check( 'order for an ended session is stopped before payment', false !== strpos( $message, 'bilet satışı sona erdi' ), true );
 check( 'no capacity is held for an ended session', MDG_Capacity::$holds, array() );
 check( 'nothing is written for an ended session', $wpdb->writes, 0 );
+
+$message = '';
+try { $reserve->invoke( null, $order_for( 804 ) ); } catch ( Exception $e ) { $message = $e->getMessage(); }
+check( 'order for a session that has started is stopped before payment', false !== strpos( $message, 'bilet satışı sona erdi' ), true );
+check( 'no capacity is held for a started session', MDG_Capacity::$holds, array() );
 
 // The open-session path continues into the existing order-map bookkeeping, which this
 // fixture does not model; only the guard outcome is asserted here.
@@ -260,9 +273,10 @@ $has_session = function ( $html, $id ) { return false !== strpos( $html, 'data-s
 $sales_config = function ( $html ) { preg_match( '/window\.MDG_EVENT_SALES=(\{.*?\});/', $html, $m ); return json_decode( $m[1], true ); };
 
 // 4a. One ended and two open sessions on the same event.
-$mixed = array( session_row( 1, $t - 3 * 3600, $t - 2 * 3600 ), session_row( 2, $t + 2 * 3600, $t + 3 * 3600 ), session_row( 3, $t + 4 * 3600, $t + 5 * 3600 ) );
+$mixed = array( session_row( 1, $t - 3 * 3600, $t - 2 * 3600 ), session_row( 4, $t - 10 * 60, $t + 50 * 60 ), session_row( 2, $t + 2 * 3600, $t + 3 * 3600 ), session_row( 3, $t + 4 * 3600, $t + 5 * 3600 ) );
 $html = $page( $mixed );
 check( 'ended session is not offered', $has_session( $html, 1 ), false );
+check( 'session in progress is not offered', $has_session( $html, 4 ), false );
 check( 'first open session is offered', $has_session( $html, 2 ), true );
 check( 'second open session is offered', $has_session( $html, 3 ), true );
 check( 'exactly one session is pre-selected', substr_count( $html, 'mdg-session-option is-selected' ), 1 );
@@ -273,6 +287,11 @@ check( 'cart is enabled for the open sessions', $sales_config( $html )['enabled'
 check( 'sticky summary shows the first open session time', false !== strpos( $html, '· ' . $time_label( $t + 2 * 3600 ) ), true );
 check( 'no ended notice while a session is open', false === strpos( $html, 'bilet satışı sona erdi' ), true );
 check( 'structured data still offers tickets', false !== strpos( $html, 'AggregateOffer' ), true );
+
+// 4a2. The last session of the day is in progress: nothing is left to sell.
+$html = $page( array( session_row( 1, $t - 3 * 3600, $t - 2 * 3600 ), session_row( 4, $t - 10 * 60, $t + 50 * 60 ) ) );
+check( 'event whose last session is in progress shows the notice', false !== strpos( $html, 'Bu gösterinin bilet satışı sona erdi.' ), true );
+check( 'event whose last session is in progress disables the cart', $sales_config( $html )['enabled'], false );
 
 // 4b. Every session has ended (the Sincan 3 Ekim case).
 $ended = array( session_row( 1, $t - 27 * 3600, $t - 26 * 3600 ), session_row( 2, $t - 25 * 3600, $t - 24 * 3600 ) );
@@ -306,4 +325,17 @@ $html = $page( array() );
 check( 'event without sessions keeps the original message', false !== strpos( $html, 'Henüz seans tanımlanmadı.' ), true );
 
 check( 'rendering the event page writes nothing', $wpdb->writes, 0 );
+
+/* ================= 5. Public lists use the same rule ================= */
+require $repo . 'class-mdg-public-tickets.php';
+$labels = new ReflectionMethod( 'MDG_Public_Tickets', 'event_session_labels' );
+if ( PHP_VERSION_ID < 80100 ) { $labels->setAccessible( true ); }
+$wpdb->sessions = array( session_row( 1, $t - 3 * 3600, $t - 2 * 3600 ), session_row( 4, $t - 10 * 60, $t + 50 * 60 ), session_row( 2, $t + 2 * 3600, $t + 3 * 3600 ) );
+$listed = $labels->invoke( null, 9 );
+check( 'ticket list labels only the session that has not started', array_column( $listed, 'time' ), array( $time_label( $t + 2 * 3600 ) ) );
+foreach ( array( 'class-mdg-public-tickets.php', 'class-mdg-public-cities.php' ) as $list_file ) {
+    $source = file_get_contents( $repo . $list_file );
+    check( $list_file . ' lists events by sessions that have not started', substr_count( $source, 'AND s.start_at > %s' ), 1 );
+    check( $list_file . ' no longer lists by session end', substr_count( $source, 's.end_at >= %s' ), 0 );
+}
 echo "\n$passed checks passed\n";
