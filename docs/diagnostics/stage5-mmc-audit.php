@@ -33,6 +33,7 @@ function mdg_stage4_source_read($input) {
 function mdg_stage5_admin_pages() {
     require_once ABSPATH.'wp-admin/includes/plugin.php';
     require_once ABSPATH.'wp-admin/includes/template.php';
+    require_once ABSPATH.'wp-admin/includes/class-wp-screen.php';
     require_once ABSPATH.'wp-admin/includes/screen.php';
     if (function_exists('set_current_screen')) { set_current_screen('dashboard'); }
     global $menu,$submenu,$admin_page_hooks,$_registered_pages,$_parent_pages,$wp_filter;
