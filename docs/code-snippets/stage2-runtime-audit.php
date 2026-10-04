@@ -39,7 +39,7 @@ function mdg_stage2_read( $input ) {
     if ( $mode === 'runtime' ) {
         global $wp_filter;
         $out = array( 'utc'=>gmdate('c'), 'hooks'=>array(), 'routes'=>array() );
-        foreach ( array('woocommerce_checkout_create_order','woocommerce_checkout_order_created','woocommerce_checkout_order_processed','woocommerce_store_api_checkout_order_processed','woocommerce_payment_complete','woocommerce_order_status_changed','woocommerce_order_status_processing','woocommerce_order_status_completed','code_snippets/deactivate_snippet','tc_order_is_paid','tickera_order_is_paid','tc_results_before_ticket_checkin','tickera_results_before_ticket_checkin','tc_allow_tickets_download','tc_validate_downloadable_ticket_order_status','woocommerce_new_order_item','woocommerce_store_api_checkout_update_order_from_request','shutdown') as $hook ) {
+        foreach ( array('woocommerce_checkout_create_order','woocommerce_checkout_order_created','woocommerce_checkout_order_processed','woocommerce_store_api_checkout_order_processed','woocommerce_payment_complete','woocommerce_order_status_changed','woocommerce_order_status_processing','woocommerce_order_status_completed','code_snippets/deactivate_snippet','order_is_paid','tc_order_is_paid','tickera_order_is_paid','results_before_ticket_checkin','tc_results_before_ticket_checkin','tickera_results_before_ticket_checkin','tc_allow_tickets_download','tc_validate_downloadable_ticket_order_status','woocommerce_new_order_item','woocommerce_store_api_checkout_update_order_from_request','shutdown') as $hook ) {
             $out['hooks'][$hook] = array();
             if ( isset($wp_filter[$hook]) ) {
                 foreach ( $wp_filter[$hook]->callbacks as $priority=>$callbacks ) {
@@ -100,6 +100,27 @@ function mdg_stage2_read( $input ) {
         }
         return array('debug_log_enabled'=>defined('WP_DEBUG_LOG')?WP_DEBUG_LOG:null,'logs'=>$out);
     }
+
+    if ( $mode === 'cohort-payment-gate' ) {
+        $ids=array(2152,2157,2160,2170,2240,2330,2353,2367,2510,2577,2751,2868,3075,3104,3117,3331,3378,3388,3393,3423,3464,3467,3472,3494,3566,3569,3705,3820,3836,3845,3897,3907,3924,3934,3988,4051,4070,4077,4084,4229,4279,4304,4321);
+        $rows=array(); global $wpdb;
+        foreach($ids as $oid) {
+            $order=wc_get_order($oid);
+            if(!$order){$rows[]=array('order_id'=>$oid,'classification'=>'UNKNOWN');continue;}
+            $tickets=$wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_parent=%d AND post_type='tc_tickets_instances' AND post_status='publish' ORDER BY ID",$oid));
+            foreach($tickets as $tid) {
+                $code=(string)get_post_meta($tid,'ticket_code',true);
+                $resolved=$code?tickera_ticket_code_to_id($code):false;
+                $paid=(bool)tickera_apply_filters('tickera_order_is_paid',get_post_status($oid)==='order_paid',$oid);
+                $history=get_post_meta($tid,'tc_checkins',true);
+                $passes=0;foreach((array)$history as $record){if(is_array($record)&&($record['status']??'')==='Pass')$passes++;}
+                $classification=$passes?'CHECKED_IN':($paid?'UNKNOWN':(($code&&((int)$resolved===(int)$tid))?'QR_GENERATED':'UNKNOWN'));
+                $rows[]=array('order_id'=>$oid,'instance_id'=>(int)$tid,'order_status'=>$order->get_status(),'is_paid_wc'=>$order->is_paid(),'has_paid_date'=>(bool)$order->get_date_paid(),'has_transaction'=>(bool)$order->get_transaction_id(),'has_ticket_code'=>$code!=='','code_resolves_to_instance'=>((int)$resolved===(int)$tid),'verifier_payment_gate'=>$paid,'verifier_rejection'=>$paid?null:11,'history_entries'=>is_array($history)?count($history):0,'pass_history_count'=>$passes,'event_id'=>(int)get_post_meta($tid,'event_id',true),'ticket_type_id'=>(int)get_post_meta($tid,'ticket_type_id',true),'item_id'=>(int)get_post_meta($tid,'item_id',true),'post_status'=>get_post_status($tid),'created_utc'=>get_post_field('post_date_gmt',$tid),'classification'=>$classification);
+            }
+        }
+        return array('utc'=>gmdate('c'),'orders'=>count($ids),'instances'=>count($rows),'validation'=>'Executed native code resolver and exact live paid filter only. Did not call ticket_checkin or any attendance writer.','rows'=>$rows);
+    }
+
     if ( $mode === 'source' ) {
         $map=array(
             'sales'=>WP_PLUGIN_DIR.'/madagaskar-management-center/includes/class-mmc-sales-service.php',
@@ -190,7 +211,7 @@ add_action('wp_abilities_api_init',function(){
     wp_register_ability('madagaskar/stage2-runtime-audit',array(
         'label'=>'Temporary Stage2 read-only diagnostics','description'=>'Admin-only hook, source hash and sanitized fatal metadata diagnostics.',
         'category'=>'madagaskar-saglik',
-        'input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('runtime','hashes','logs','source')),'target'=>array('type'=>'string'),'start_line'=>array('type'=>'integer'),'line_count'=>array('type'=>'integer'))),
+        'input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('runtime','hashes','logs','source','cohort-payment-gate')),'target'=>array('type'=>'string'),'start_line'=>array('type'=>'integer'),'line_count'=>array('type'=>'integer'))),
         'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_stage2_read','permission_callback'=>'mdg_stage2_allowed',
         'meta'=>array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'show_in_rest'=>true)
     ));
