@@ -159,3 +159,18 @@ PR107 merge edilmedi. Yalnız eski karşılaştırmayı tekrar ederek yeni main'
 - Deployment status: **NOT DEPLOYED**. Legacy43 order/104instance hiçbir değişiklik/silme/check-in yapılmadı. Rollback: diagnostic119/117 pasif tut; audit/test/docs revert edilebilir, üretim data rollback gerekmez.
 - Sonraki önerilen iş: tam izole WP/Tickera/PayTR test ortamı oluşturup gerçek sandbox callback + payment-first deferral tasarımını attendee alanları ve checkout retry idempotency ile sınamak. Tam checkout/payment/ticket zinciri hâlâ doğrulanmadı; PR111 draft kalır.
 - Detay kanıtı: [TICKERA_PAYMENT_AUDIT_20261004.md](TICKERA_PAYMENT_AUDIT_20261004.md). Bu kayıt commit SHA'sı GitHub dosya history'sinde; test ve evidence SHA'ları yukarıda, self-referential commit SHA yazılmadı.
+
+
+## Kalıcı çalışma kayıt kuralı — yönetici talimatı 2026-10-04
+
+Her önemli çalışma sonunda yapılan iş, teknik notlar, kanıtlar, test sonuçları, açık riskler ve sonraki adım **hem GitHub hem Google Drive** üzerinde kaydedilir. Bu, sonraki Codex çalışmalarında da uygulanacak proje standardıdır.
+
+- GitHub: ilgili codex/... branch ve PR/issue; docs/CODEX_PROJECT_STATE.md güncellenir. Gerekli ayrıntılı rapor repo docs/ altında tutulur.
+- Drive hedefi: milano sirki → **00 - Site Kod ve Codex Yönetimi**; doğrulanmış klasör ID **1Ps1MUROQO9zyDbisrAoxvwan4u15HLGj**.
+- Drive klasörü: https://drive.google.com/drive/folders/1Ps1MUROQO9zyDbisrAoxvwan4u15HLGj
+- Her çalışma için tarihli rapor ve gerektiğinde devir dosyası snapshot'ı eklenir; GitHub branch/commit/PR/issue ve test bağlantıları yazılır. Mevcut dosya güncellenecekse önce kimliği doğrulanır; aynı çalışmanın kopyaları gereksiz çoğaltılmaz.
+- İki taraftaki yazımlar ayrı read-back ile doğrulanır; erişim hatası varsa eksik taraf açıkça raporlanır ve kayıt işi tamamlandı denmez.
+- Secret/token/password, müşteri kimliği, ham bilet/QR kodu veya hassas ödeme verisi kayda eklenmez.
+- Drive tarihi belge niteliğindedir; canlı doğrulanmış program/veri ve güncel GitHub kaynak önceliği değişmez.
+- Aşama3 raporu Drive'a eklendi: https://drive.google.com/file/d/1rpLuPmZ6HuIo-bzjw_pabiiEnlLPDt1I/view?usp=drivesdk
+- Kaynak rapor: docs/TICKERA_PAYMENT_AUDIT_20261004.md; audit/state kaynak commit d124690c6550057aeb26c0d54520474700a04731, draft PR111, issue112. Bu kural ve güncel state snapshot'ı aynı çalışma kapsamında GitHub/Drive'a kaydedilir.
