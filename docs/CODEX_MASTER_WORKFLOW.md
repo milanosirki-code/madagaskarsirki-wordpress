@@ -34,7 +34,7 @@ Operasyon belgeleri, sözleşmeler, Excel şablonları, raporlar, yedekler ve ku
 - `codex/*`: Codex geliştirmeleri.
 - `fix/*`: hata düzeltmeleri.
 - `feature/*`: yeni özellikler.
-- `ai-abilities-staging-2026-09-28`: mevcut AI abilities staging çalışması; PR #46 ile takip edilir.
+- `ai-abilities-staging-2026-09-28`: tarihsel referans; PR #46, 1 Ekim 2026'da merge edildi. Yeni işin tabanı güncel `main` olmalıdır.
 
 Her görev kendi branch'inde olmalıdır. Birbirinden bağımsız sorunlar tek dev PR içinde birleştirilmemelidir.
 
@@ -145,11 +145,10 @@ Bir modül hata verirse:
 - mapping/ledger/upsert farkını incele,
 - rollback sonrası aynı smoke testleri tekrar çalıştır.
 
-## Mevcut kritik çalışma
+## Güncel devir kaydı
 
-PR #46, AI abilities paketinin staging alanıdır. Bu PR:
-- production'a otomatik merge edilmemeli,
-- modül bazlı smoke test ile doğrulanmalı,
-- sales ledger, bridge ve Kommo write işlemlerinde açık kontrollere tabi tutulmalıdır.
+PR #46 merge edilmiştir; eski aktivasyon talimatları güncel görev listesi değildir. Yeni oturum önce güncel main, canlı sürümler, açık issue/PR ve son test kanıtlarını okur. `docs/CODEX_PROJECT_STATE.md` her önemli çalışma sonunda tarih, sorun/kök neden, dosya, canlı karşılık/snippet ID, branch/commit/PR, test, canlı doğrulama, risk ve sıradaki işi kaydeder. Secret veya müşteri erişim kodu içermez.
+
+Sales ledger ve bridge yazımlarından önce canlı mapping coverage doğrulanır. Kommo için read-only diagnostics → source consistency → preview → gerekliyse write sırası korunur. Gerçek refund ve geri dönüşü zor işlemler açık yönetici onayına tabidir.
 
 Bu workflow yeni görevlerde varsayılan çalışma standardıdır.
