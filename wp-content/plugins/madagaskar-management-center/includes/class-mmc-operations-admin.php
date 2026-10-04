@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 class MMC_Operations_Admin {
     public function __construct() {
         add_action( 'admin_menu', array($this,'menu') );
+        add_action( 'admin_post_mmc_ops_ensure_plan', array($this,'ensure_plan') );
         add_action( 'admin_post_mmc_ops_save_plan', array($this,'save_plan') );
         add_action( 'admin_post_mmc_ops_add_resource', array($this,'add_resource') );
         add_action( 'admin_post_mmc_ops_assign_resource', array($this,'assign_resource') );
@@ -24,8 +25,7 @@ class MMC_Operations_Admin {
         $this->guard();
         $programs=MMC_Program_Service::all_programs(); $pid=absint($_GET['program_id']??0); if(!$pid&&$programs){$pid=(int)$programs[0]->id;}
         $program=$pid?MMC_Program_Service::get_program($pid):null;
-        $plan=$program?MMC_Operations_Service::ensure_plan($pid):null;
-        if(is_wp_error($plan)){$plan=null;}
+        $plan=$program?MMC_Operations_Service::get_plan($pid):null;
         $summary=$program?MMC_Operations_Service::summary($pid):array();
         $resources=MMC_Operations_Service::resources();
         $assigned=$program?MMC_Operations_Service::program_resources($pid):array();
@@ -39,7 +39,19 @@ class MMC_Operations_Admin {
             <p class="mmc-lead">Programın hareket öncesinden salon teslimine kadar araç, ekip, sanatçı, ekipman, konaklama, yemek, teknik kurulum, gişe/check-in ve gösteri sonrası kapanışını tek dosyada yönetir.</p>
             <?php $this->notice(); ?>
             <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-operations"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name);?></option><?php endforeach;?></select></label></form></div>
-            <?php if(!$program||!$plan):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
+            <?php if(!$program):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
+            <?php if(!$plan):?>
+                <div class="notice notice-info"><p>Bu program için operasyon planı henüz oluşturulmamış. Bu ekran mevcut veriyi yalnızca okur; plan ve varsayılan kontrol listesi ancak aşağıdaki açık işlemle oluşturulur.</p></div>
+                <div class="mmc-panel">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>">
+                        <input type="hidden" name="action" value="mmc_ops_ensure_plan">
+                        <input type="hidden" name="program_id" value="<?php echo esc_attr($pid);?>">
+                        <?php wp_nonce_field('mmc_ops_ensure_'.$pid);?>
+                        <?php submit_button('Plan Oluştur / Hazırla','primary');?>
+                    </form>
+                </div>
+            </div>
+            <?php return;endif;?>
 
             <div class="mmc-cards mmc-cards-5">
                 <div class="mmc-card"><span>Operasyon Tipi</span><strong style="font-size:20px"><?php echo esc_html(MMC_Operations_Service::operation_modes()[$plan->operation_mode]??$plan->operation_mode);?></strong><small><?php echo esc_html(MMC_Operations_Service::plan_statuses()[$plan->status]??$plan->status);?></small></div>
@@ -92,6 +104,7 @@ class MMC_Operations_Admin {
         <?php
     }
 
+    public function ensure_plan(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_ensure_'.$pid);$r=MMC_Operations_Service::ensure_plan($pid);$this->redirect($pid,$r,'Operasyon planı oluşturuldu / hazırlandı.'); }
     public function save_plan(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_plan_'.$pid);$r=MMC_Operations_Service::save_plan($pid,wp_unslash($_POST));$this->redirect($pid,$r,'Operasyon planı kaydedildi.'); }
     public function add_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_resource_'.$pid);$r=MMC_Operations_Service::add_resource(wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak ana kaydı eklendi.'); }
     public function assign_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_assign_'.$pid);$r=MMC_Operations_Service::assign_resource($pid,absint($_POST['resource_id']??0),wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak programa atandı.'); }
