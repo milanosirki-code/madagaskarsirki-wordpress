@@ -1,6 +1,6 @@
 # Issue #115 — Read-only program integrity
 
-Status: production patch deployed and independently verified; final19 smoke calls and temporary helper restoration are pending connector quota recovery. Issue remains OPEN.
+Status: Issue115 remains OPEN. Production patch is deployed and independently verified;40/59 guarded smoke calls succeeded. WPVibe blocks further calls until about2026-10-04 15:20UTC. Temporary diagnostic snippet119 is still ACTIVE; its exact original passive backup is retained locally. Remaining19 calls, restoration/readback and final global code_error verification are pending.
 
 ## PR #118 / main reconciliation
 PR118 reviewed (scope, secrets, diagnostics isolation, gross/nominal/net/capacity/family, green CI, no conflict), marked ready and merged first. New main: `4d5c7052acaff5cf4c4b5507298c4571f0f6be8b`.
@@ -49,7 +49,7 @@ Explicit write/synchronization paths retain `ensure_profile`.
 No new maintenance endpoint or architecture is needed. Technical Kommo transient caches remain. Source generation, sales, capacity, family, school/field, AI plugin version and other MMC modules are unchanged.
 
 ## Tests and deployment
-CI head `55dc3b56eb40fe1415a449eafa3d41b986cbcff2`: all five applicable workflows PASS.
+CI heads `55dc3b56eb40fe1415a449eafa3d41b986cbcff2` (production contract) and `d2db7238723958dc22ac13d335d119095c7b16a8` (batched diagnostic helper): all five applicable workflows PASS.
 PHP syntax validates production source, test and temporary helper on PHP8.4.
 Actual-service contract:19 assertions; repeated reads, existing metadata unchanged, missing profile without creation, invalid program, manual cancellation, missing-lead create decision, stay/advance/preserve-ahead, foreign-pipeline protection, transient caching. Original-code negative control detects the forbidden persistent UPDATE.
 No local PHP runtime was available; execution and syntax evidence come from GitHub Actions.
@@ -68,7 +68,7 @@ System health smoke:16OK/0warning/0critical. The program's separate region/field
 See [ISSUE_115_READONLY_SCAN.json](ISSUE_115_READONLY_SCAN.json).
 SAFE48; SIDE_EFFECT_TECHNICAL8; SIDE_EFFECT_DOMAIN3; NEEDS_REVIEW0 within the assessed callback/service scope.
 Technical means reachable transient/cache warming, including warm-cache calls that perform no SQL writes.
-Three operations abilities (`operations-plan-get`, `operations-summary`, `operations-checklist-list`) call `summary/ensure_plan`: conditional plan/checklist/task inserts or lodging checklist updates. They remain separate follow-up work; no operations code is changed here.
+Three operations abilities (`operations-plan-get`, `operations-summary`, `operations-checklist-list`) call `summary/ensure_plan`: conditional plan/checklist/task inserts or lodging checklist updates. They remain separate follow-up [Issue121](https://github.com/milanosirki-code/madagaskarsirki-wordpress/issues/121); no operations code is changed here.
 The first40 guarded live smoke calls are all successful, without write attempts/warnings; remaining19 are pending quota recovery.
 SQL guard prevents any domain mutation; HTTP guard permits only GET/HEAD. Native runtime caches and framework bootstrap/cron/third-party hooks are not a universal purity proof. All13 Kommo profiles are independently hash-checked.
 
@@ -78,3 +78,11 @@ Existing passive snippet119 was temporarily used for diagnostics and must be res
 Separate prior-audit admin GET side effects (Kommo render profile refresh, finance snapshots, active-program user preference) and public source option caching remain outside these59 ability callbacks. This patch does not assert every admin GET is pure.
 Kommo dynamic-source refresh warning stays separate. PR120 awaits review/merge; only its one production file is deployed.
 Next requested stage: Program9 school/field linkage and target validation. No school/field repair, payment sandbox, #112, family1.1.3 or AI0.7.0 deployment in this task.
+
+## Quota recovery checkpoint
+
+The batched helper update was blocked, so live119 still has the initial single-call helper. Do not infer the batch was activated.
+Pending: safely run the remaining19 callbacks, final profile/source snapshots, exact original119 restoration (including passive state and metadata), global code_error readback, independent post-cleanup integrity/health/sales reads. If quota availability is limited, restore119 first. No issue closure claim.
+The usage-reset tool can be called only after an explicit user request; the user was offered an available banked reset or continuation after15:20UTC. No reset/upgrade was purchased or used.
+Detailed sanitized evidence: [ISSUE_115_DEPLOYMENT_EVIDENCE.json](ISSUE_115_DEPLOYMENT_EVIDENCE.json).
+Drive archive: https://drive.google.com/file/d/1hqNCNLVrVQuXyBWC7Z3bEiXDkVDtN5Aw/view?usp=drivesdk
