@@ -39,14 +39,14 @@ Bir seans şu iki durumda saat nedeniyle kapalıdır; ikisi de listelerin bugün
 1. Seans bitti: `end_at < şimdi`.
 2. Seansın yerel başlangıç günü bugünden önce (hatalı veya eski `end_at` değerlerine karşı).
 
-Okunamayan, boş veya sıfır tarih satışı kapatmaz; bu durumda bugünkü davranış aynen sürer.
+Okunamayan, boş veya sıfır tarih satışı kapatmaz; bu durumda bugünkü davranış aynen sürer. Tarih ayrıştırması bilerek istisna üretmeyen biçimde yazıldı (düzenli ifade + `checkdate` + `gmmktime`): ilk CI çalıştırmasında, Xdebug yüklü PHP 8.3.6 ortamında bozuk bir tarih değeri yakalanamayan bir hataya dönüştü; ödeme akışında bozuk veri hiçbir koşulda hata fırlatmamalı.
 
 | Dosya | Değişiklik |
 |---|---|
 | `includes/class-mdg-sessions.php` | Yeni `sales_closed_by_time()` ve özel `utc_timestamp()`. Mevcut fonksiyonlara dokunulmadı. |
 | `includes/class-mdg-public-event.php` | Canlı sayfada bitmiş seans seçicide gösterilmez; ilk açık seans seçili gelir. Bütün seanslar bittiyse seçici, bilet satırları ve sepet düğmesi yerine "Bu gösterinin bilet satışı sona erdi" bildirimi ve `/bilet-al/` bağlantısı çıkar; sepet yapılandırması kapalı gelir, sepet nonce'u üretilmez, yapılandırılmış veriden "stokta" teklifi çıkar. Taslak önizlemede (yönetici) saat kontrolü yapılmaz. |
 | `includes/class-mdg-live-sales.php` | `add_to_cart()` ve `reserve_or_throw()` bitmiş seansı Türkçe bir mesajla reddeder. İkincisi doğrudan ürün sayfasından (`/urun/...`) sepete eklenen biletleri de ödeme öncesinde yakalar. |
-| `tests/ticket-sales-cutoff/regression.php` | 54 izole kontrol. |
+| `tests/ticket-sales-cutoff/regression.php` | 58 izole kontrol. |
 | `.github/workflows/ticket-datetime-stage.yml` | Yeni testin CI'da çalıştırılması. |
 
 Değişmeyenler: veritabanı şeması, etkinlik ve seans durumları, WooCommerce ürünleri, Tickera, PayTR, V4 satış kapatma, kapasite hesabı, JS ve CSS dosyaları, eklenti sürüm numarası. Hiçbir veri yazılmaz; kural her istekte hesaplanır.
@@ -79,8 +79,9 @@ Karar işletme sahibindedir. Karar değişirse listelerin de aynı kurala çekil
 Yapılan:
 
 - `php -l`: eklentinin bütün PHP dosyaları, PHP 8.4.
-- `php tests/ticket-sales-cutoff/regression.php`: 54 kontrol geçti. Aynı test yamasız kodda başarısız oluyor.
+- `php tests/ticket-sales-cutoff/regression.php`: 58 kontrol geçti. Aynı test yamasız kodda başarısız oluyor.
 - `php tests/ticket-datetime/regression.php`: mevcut testler geçmeye devam ediyor.
+- GitHub CI (PHP 8.3.6): `lint-and-regression`, `php-syntax` ve `archive-contract` başarılı.
 
 Testler gerçek `MDG_Sessions`, `MDG_Live_Sales` ve `MDG_Public_Event` kaynaklarını sahte WordPress/WooCommerce fonksiyonlarıyla çalıştırır. Kapsam: karar kuralı (sabit saatle, 4 Ekim 15:25 dahil), sepete ekleme reddi, ödeme öncesi red, sayfa çıktısı (karışık, tamamı bitmiş, tamamı açık, taslak önizleme, seanssız etkinlik).
 
