@@ -1,5 +1,5 @@
 # Codex Project State — Madagaskar Sirki
-Updated: 2026-10-04, Stage8. Historical Stage6/7 entries below retain their checkpoint status; the final Stage8 section supersedes pending statements. Previous full historical state remains in [audit branch / PR111](https://github.com/milanosirki-code/madagaskarsirki-wordpress/blob/codex/current-system-audit-20261003/docs/CODEX_PROJECT_STATE.md). That audit PR was not modified by this production fix. This state file did not exist on main8a6659d; the current task creates the Stage6 canonical update without importing unrelated audit sources.
+Updated: 2026-10-04, Stage8. Historical Stage6/7 entries retain checkpoint status; final Stage8 section supersedes pending statements. Previous full historical state remains in [audit branch / PR111](https://github.com/milanosirki-code/madagaskarsirki-wordpress/blob/codex/current-system-audit-20261003/docs/CODEX_PROJECT_STATE.md). That audit PR was not modified by this production fix. This state file did not exist on main8a6659d; the current task creates the Stage6 canonical update without importing unrelated audit sources.
 
 ## Issue #114 — gross revenue semantics
 - Root cause: wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php, MMC_Sales_Service::summary(), unfiltered SUM(gross_amount) from mmc_sales_ledger WHERE event_id=%d. Ledger gross_amount stores nominal mapped line total including unpaid attempts.
@@ -106,3 +106,6 @@ Proposed minimal diff: wp_mad_okul_programlar.id7.mmc_program_id NULL → 9. Pre
 Do not invoke ensure_mmc_bridge blindly: it also rewrites derived fields and updates linked school rows. Review a controlled one-row bridge operation separately.
 Follow-up: https://github.com/milanosirki-code/madagaskarsirki-wordpress/issues/124 (OPEN).
 School/field production changes: NONE. Issue121 not fixed. No payment sandbox, AI0.7.0/family1.1.3 deployment or unrelated refactor.
+
+
+Final concurrent-main check: main advanced independently to6935f7e1009b9118583911b44ed26cfbe4e71862 through unrelated PR123; class-mmc-kommo-service.php still has blob10cd9085aef52462aa68312c08c995297dedff87 and matches verified live source. PR125 is documentation-only (branch codex/program9-school-field-audit-20261004, initial head ee1047ec4a34637198ddd5d8cd564f43440e1bd5). Its read-only integrity CI passed. Verified Drive archive: https://drive.google.com/file/d/1nKhMpHqxmTuVlx3j8opnvA59ntR3xsF1/view?usp=drivesdk
