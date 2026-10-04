@@ -1,0 +1,72 @@
+{
+  "issue": 121,
+  "date": "2026-10-04",
+  "scope": "Read-only operations domain-side-effect removal",
+  "affected_abilities": [
+    "madagaskar/operations-plan-get",
+    "madagaskar/operations-summary",
+    "madagaskar/operations-checklist-list"
+  ],
+  "old_call_chain": "ability -> callback -> MMC_Operations_Service::summary() -> ensure_plan() -> conditional domain writes",
+  "new_call_chain": "ability -> callback -> get_plan()/checklist()/summary() -> SELECT-only aggregation",
+  "production_files": [
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php",
+      "before_git_blob": "4f50032aee7e92cfdaca0861eb47f1ba975f1481",
+      "before_sha256": "e622ac15f37cb949f9bb38acd3c91f78d9bc8633a1a351a0a112e99f2cd3f72d",
+      "after_git_blob": "bc7fc782657c255a3eaff71536203b8611047e1c",
+      "after_sha256": "b40a95f88d830b7e5fc8a4ece39c03ec51379e2bef532202a5f4369fbaaaf1e3"
+    },
+    {
+      "path": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php",
+      "before_git_blob": "2c8614e38d4bb0dad58af7924b28290993ad3447",
+      "before_sha256": "89c3f9a48c56f8892b490afdd1112d780bd2597eb02abf7c340abe8ae11a69ac",
+      "after_git_blob": "43a2f40d80e3f60feddfa228ef3e22dae9ef5f67",
+      "after_sha256": "2b5a8b09645f91760c71488aa1eb46a7fdeb37ddeea853446b61698a9fdde152"
+    }
+  ],
+  "ci": {
+    "tested_head": "74f54bcbe81689981ad0c03a62bf8bc4a87f9eb4",
+    "readonly_integrity_run": 37229955233,
+    "plugins_ci_run": 37229955264,
+    "changed_php_run": 37229955266,
+    "production_archive_run": 37229955267,
+    "live_reconciliation_run": 37229955247,
+    "readonly_contract": "PASS 29 assertions; missing/existing reads write-free; explicit initialize preserved and idempotent."
+  },
+  "live": {
+    "deployed": true,
+    "existing_plan_read": {
+      "domain_fingerprint_unchanged": true,
+      "plan_updated_at_unchanged": true,
+      "plan_writes": 0,
+      "checklist_writes": 0,
+      "task_writes": 0,
+      "log_writes": 0
+    },
+    "missing_plan_guarded_smoke": {
+      "plan_null": true,
+      "plan_exists": false,
+      "checklist_count": 0,
+      "summary_zero": true,
+      "domain_write_attempts": 0,
+      "ui_rendered": true,
+      "explicit_initialize_button": true,
+      "php_warnings": 0
+    },
+    "explicit_write_production_test": false,
+    "explicit_write_reason": "Intentionally not executed against a real production program; covered by the actual-service synthetic CI fixture.",
+    "health_ok": 16,
+    "health_critical": 0,
+    "health_warning": 0,
+    "active_snippet_code_errors": 0,
+    "temporary_test_helpers": "deactivated and trashed",
+    "program_9_modified": false
+  },
+  "readonly_final": {
+    "SAFE": 51,
+    "TECHNICAL": 8,
+    "DOMAIN": 0,
+    "REVIEW": 0
+  }
+}
