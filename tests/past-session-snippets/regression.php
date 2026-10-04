@@ -2,7 +2,7 @@
 /**
  * Isolated regressions for the staged Issue #116 snippets (rule: sales close at session start):
  *   docs/code-snippets/staged-2026-10-04/ms-seans-satis-kilidi-v2.php.txt
- *   docs/code-snippets/staged-2026-10-04/ms-seans-denetimi-v2.php.txt
+ *   docs/code-snippets/staged-2026-10-04/ms-seans-denetimi-v3.php.txt
  *   docs/code-snippets/staged-2026-10-04/snippet-030-seans-baslayinca-v1.php.txt
  *
  * No WordPress, database, gateway or network access. Warnings and notices fail the run.
@@ -48,7 +48,19 @@ function wp_die( $message = '', $title = '', $args = array() ) { throw new DieCa
 function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
 function esc_url( $s ) { return (string) $s; }
 function home_url( $path = '' ) { return 'https://example.test' . $path; }
-function get_post_meta( $id, $key, $single = false ) { global $meta; return $meta[ $id ][ $key ] ?? ''; }
+function get_post_meta( $id, $key, $single = false ) {
+    global $meta;
+    if ( in_array( $key, array( 'ticket_code', 'owner_name', 'first_name', 'last_name', 'owner_email' ), true ) ) { throw new RuntimeException( 'the audit must not read ticket codes or owners' ); }
+    return $meta[ $id ][ $key ] ?? '';
+}
+function post_type_exists( $type ) { return 'tc_tickets_instances' === $type; }
+$tickets = array(); $ticket_queries = array();
+function get_posts( $args ) {
+    global $tickets, $ticket_queries;
+    $ticket_queries[] = $args;
+    if ( 'tc_tickets_instances' !== ( $args['post_type'] ?? '' ) || 'ids' !== ( $args['fields'] ?? '' ) ) { throw new RuntimeException( 'unexpected get_posts call' ); }
+    return $tickets[ (int) $args['post_parent'] ] ?? array();
+}
 function wc_get_product( $id ) { global $products; return $products[ $id ] ?? false; }
 function wc_get_order( $id ) { global $orders; return $orders[ $id ] ?? false; }
 function wc_get_is_paid_statuses() { return array( 'processing', 'completed' ); }
@@ -188,7 +200,7 @@ check( 'lock snippet wrote nothing', $wpdb->writes, 0 );
 
 /* ================= B. Read-only audit ================= */
 $hooks = array();
-load_snippet( 'ms-seans-denetimi-v2.php.txt' );
+load_snippet( 'ms-seans-denetimi-v3.php.txt' );
 check( 'audit registers only an admin_menu action', array_map( function ( $h ) { return $h[0]; }, $hooks ), array( 'admin_menu' ) );
 $hooks[0][1]();
 check( 'audit page requires manage_woocommerce', array( $menus[0][1], $menus[0][2] ), array( 'manage_woocommerce', 'ms-seans-denetimi' ) );
@@ -218,17 +230,46 @@ $orders[9002] = new FakeOrder( $ended_start, 'failed' );                        
 $orders[9003] = new FakeOrder( $ended_start - 3 * 3600, 'processing', $ended_start - 3 * 3600 ); // bought in time
 // 9004: order no longer exists.
 
+// Tickets: order 9001 has 3 tickets, 1 scanned at the door; order 9002 is unpaid.
+$tickets[9001] = array( 70001, 70002, 70003 );
+$meta[70001]['tc_checkins'] = array( array( 'date_checked' => 1, 'status' => 'Pass' ) );
+$meta[70002]['tc_checkins'] = array( array( 'date_checked' => 1, 'status' => 'Fail' ) ); // refused scan is not a use
+$tickets[9002] = array( 70004 );
+// Order 9006: paid late, both tickets scanned -> attended, nothing to transfer.
+$wpdb->order_map[] = $row( 9006, 2, '500.00' );
+$orders[9006] = new FakeOrder( $ended_start + 5 * 60, 'completed', $ended_start + 6 * 60 );
+$tickets[9006] = array( 70005, 70006 );
+$meta[70005]['tc_checkins'] = array( array( 'status' => 'pass' ) );
+$meta[70006]['tc_checkins'] = array( array( 'x' => 1 ) ); // record without a status still counts as a scan
+// Order 9007: paid late, ticket already invalidated (e.g. refunded) -> nothing to transfer.
+$wpdb->order_map[] = $row( 9007, 1, '250.00' );
+$orders[9007] = new FakeOrder( $ended_start + 5 * 60, 'processing', $ended_start + 6 * 60 );
+$tickets[9007] = array( 70007 );
+$meta[70007]['_mdg_invalidated'] = 'yes';
+// Order 9008: paid late, no ticket instance found.
+$wpdb->order_map[] = $row( 9008, 1, '250.00' );
+$orders[9008] = new FakeOrder( $ended_start + 5 * 60, 'processing', $ended_start + 6 * 60 );
+
 $wpdb->queries = array();
 $_GET = array();
 ob_start(); ms_gsd_sayfa(); $html = ob_get_clean();
+
+check( 'order with unused tickets is a transfer candidate with the unused count', 1 === preg_match( '/#9001<\/td>.*?<td>3<\/td><td>1<\/td><td>0<\/td><td><strong>AKTARIM ADAYI \(2 bilet\)<\/strong>/s', $html ), true );
+check( 'order whose tickets were all scanned needs no action', 1 === preg_match( '/#9006<\/td>.*?<td>2<\/td><td>2<\/td><td>0<\/td><td>Kullanılmış; işlem yok/s', $html ), true );
+check( 'order whose ticket is invalidated needs no action', 1 === preg_match( '/#9007<\/td>.*?<td>1<\/td><td>0<\/td><td>1<\/td><td>Geçersiz kılınmış; işlem yok/s', $html ), true );
+check( 'paid order without ticket instances is flagged for manual review', 1 === preg_match( '/#9008<\/td>.*?<td>0<\/td><td>0<\/td><td>0<\/td><td>Bilet bulunamadı; elle incele/s', $html ), true );
+check( 'unpaid late order is never a candidate', 1 === preg_match( '/#9002<\/td>.*?failed<\/td><td>hayır<\/td>.*?<td>—<\/td>/s', $html ), true );
+check( 'audit counts exactly one transfer candidate order', false !== strpos( $html, 'Aktarım adayı sipariş: <strong>1</strong>' ), true );
+check( 'tickets are looked up by order parent, read-only, ids only', array_values( array_unique( array_map( function ( $q ) { return $q['post_type'] . '|' . $q['fields']; }, $ticket_queries ) ) ), array( 'tc_tickets_instances|ids' ) );
+check( 'each late order is looked up once', count( $ticket_queries ), 5 );
 
 check( 'audit lists the ended event that is still on sale', false !== strpos( $html, 'hâlâ "satışta" etkinlikler: 1' ) && false !== strpos( $html, '#8' ), true );
 check( 'audit links the event page', false !== strpos( $html, 'https://example.test/etkinlik/madagaskar-sirki-sincan/' ), true );
 check( 'audit lists both started sessions', false !== strpos( $html, 'başlamış seansları: 2' ), true );
 check( 'audit shows the product that is still purchasable', 1 === preg_match( '/#610<\/td><td>yok<\/td><td><strong>EVET<\/strong>/', $html ), true );
 check( 'audit shows the product already locked by V4', 1 === preg_match( '/#620<\/td><td>var<\/td><td>hayır/', $html ), true );
-check( 'audit counts late order lines (two paid lines, one unpaid)', false !== strpos( $html, 'sipariş kalemleri: 3' ), true );
-check( 'audit counts one paid late order and its amount', false !== strpos( $html, 'Ödenmiş sipariş: <strong>1</strong>' ) && false !== strpos( $html, '750,00 TL' ), true );
+check( 'audit counts late order lines', false !== strpos( $html, 'sipariş kalemleri: 6' ), true );
+check( 'audit counts paid late orders and their amount', false !== strpos( $html, 'Ödenmiş sipariş: <strong>4</strong>' ) && false !== strpos( $html, '1.750,00 TL' ), true );
 check( 'audit reports the delay after the start in minutes', false !== strpos( $html, '20 dk' ) && false !== strpos( $html, '>0 dk' ), true );
 check( 'audit marks the unpaid late order as unpaid', 1 === preg_match( '/#9002<\/td>.*?failed<\/td><td>hayır/s', $html ), true );
 check( 'order placed before the session is not listed', false === strpos( $html, '#9003' ), true );

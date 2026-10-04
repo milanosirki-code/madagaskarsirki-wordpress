@@ -2,7 +2,11 @@
 
 Bu klasördeki üç dosya Issue #116 için Claude tarafından yazıldı. **Hiçbiri canlıda yok.** Code Snippets gövdesi biçimindedir: başlarında `<?php` etiketi yoktur, `.php.txt` uzantısı sayesinde hiçbir şey kendiliğinden yüklenmez.
 
-**Kural (işletme sahibi kararı, 4 Ekim 2026, 18:46 TSİ): satış seans başladığında kapanır.** Üç dosya da bu kurala göredir. Önceki `-v1` dosyaları ("seans bitince") kaldırıldı; kullanılmamalı.
+**Kural (işletme sahibi kararı, 4 Ekim 2026, 18:46 TSİ): satış seans başladığında kapanır.** Üç dosya da bu kurala göredir.
+
+**İkinci karar (4 Ekim 2026, 19:49 TSİ): seans başladıktan sonra satılmış ve kullanılmamış biletler başka seansa aktarılır.** Aktarımı yapan bir araç bu klasörde yoktur; denetim ekranı yalnızca adayları gösterir. Süreç: `docs/TODO_2026-10-04.md` madde A8.
+
+Önceki `ms-gecmis-seans-*-v1` ve `ms-seans-denetimi-v2` dosyaları kaldırıldı; kullanılmamalı.
 
 `docs/code-snippets/production/` yalnızca canlıdaki snippet'lerin kaydıdır; buradaki dosyalar canlıya alınırsa oraya ve envantere ayrıca işlenmelidir.
 
@@ -11,7 +15,7 @@ Kalıcı çözüm: PR #117, `docs/SESSION_SALES_CUTOFF_2026-10-04.md` (o PR'ın 
 
 | Dosya | Tür | Yazar mı? | Ödeme akışına dokunur mu? |
 |---|---|---|---|
-| `ms-seans-denetimi-v2.php.txt` | Salt okunur yönetici ekranı | Hayır | Hayır |
+| `ms-seans-denetimi-v3.php.txt` | Salt okunur yönetici ekranı | Hayır | Hayır |
 | `ms-seans-satis-kilidi-v2.php.txt` | Geçici köprü | Hayır | **Evet** (satın alınabilirlik filtresi) |
 | `snippet-030-seans-baslayinca-v1.php.txt` | Canlı Snippet #30'un güncel hali | Hayır | Hayır (yalnızca listeler) |
 
@@ -24,14 +28,15 @@ Kalıcı çözüm: PR #117, `docs/SESSION_SALES_CUTOFF_2026-10-04.md` (o PR'ın 
 
 Listelerde karşılığı: bir seans yalnızca `start_at > şimdi` ise listelenir.
 
-## 1. `ms-seans-denetimi-v2` — salt okunur denetim
+## 1. `ms-seans-denetimi-v3` — salt okunur denetim
 
-- **Amaç:** (1) Bütün seansları başladığı halde hâlâ "satışta" olan etkinlikleri, (2) satıştaki etkinliklerin başlamış seanslarını ve ürünlerinin o an satın alınabilir olup olmadığını, (3) seansı başladıktan sonra açılmış siparişleri ve ödenip ödenmediklerini göstermek.
+- **Amaç:** (1) Bütün seansları başladığı halde hâlâ "satışta" olan etkinlikleri, (2) satıştaki etkinliklerin başlamış seanslarını ve ürünlerinin o an satın alınabilir olup olmadığını, (3) seansı başladıktan sonra açılmış siparişleri, ödenip ödenmediklerini ve biletlerinin girişte okutulup okutulmadığını göstermek.
+- **Aktarım adayı:** Ödenmiş ve okutulmamış, geçersiz kılınmamış bileti olan sipariş "AKTARIM ADAYI (N bilet)" olarak işaretlenir. Bütün biletleri okutulmuş sipariş "Kullanılmış; işlem yok" görünür: müşteri gösteriye girmiştir. Bileti bulunamayan ödenmiş sipariş "elle incele" olarak işaretlenir.
 - **Ekran:** Araçlar > Seans Denetimi. Yetki `manage_woocommerce`. `?gun=14` ile geriye dönük gün sayısı (1–60, varsayılan 7).
 - **Hook:** `admin_menu`. Ziyaretçi tarafında hiçbir şey çalışmaz.
-- **Bağımlılık:** `wp_mdg_events`, `wp_mdg_sessions`, `wp_mdg_order_map`; WooCommerce (`wc_get_order`, `wc_get_product`); V4 kilit metası `_mdg_v371_sales_closed` (yalnızca okunur).
-- **Güvenlik:** Üç `SELECT` sorgusu. Yazma yok. Müşteri adı, telefonu, e-postası, adresi okunmaz ve gösterilmez; yalnızca sipariş numarası, durum, adet, kalem tutarı ve saat.
-- **Sınır:** Yalnızca `wp_mdg_order_map` içinde kaydı olan siparişleri görür. Geç sipariş kararı WooCommerce sipariş oluşturma saatine göre verilir. Seans başlamadan önce oluşturulup sonra ödenen sipariş geç sayılmaz. Sayfa başına en çok 2.000 kalem okunur.
+- **Bağımlılık:** `wp_mdg_events`, `wp_mdg_sessions`, `wp_mdg_order_map`; WooCommerce (`wc_get_order`, `wc_get_product`); Tickera bilet kayıtları (`tc_tickets_instances`, `post_parent` = sipariş; `tc_checkins` metası); V4 metaları `_mdg_v371_sales_closed` ve `_mdg_invalidated`. Hepsi yalnızca okunur.
+- **Güvenlik:** Üç `SELECT` sorgusu ve sipariş başına bir bilet listesi okuması. Yazma yok. Müşteri adı, telefonu, e-postası, adresi, bilet kodu ve bilet sahibi okunmaz ve gösterilmez; yalnızca sipariş numarası, durum, adet, kalem tutarı, saat ve bilet sayıları.
+- **Sınır:** Yalnızca `wp_mdg_order_map` içinde kaydı olan siparişleri görür. Geç sipariş kararı WooCommerce sipariş oluşturma saatine göre verilir. Seans başlamadan önce oluşturulup sonra ödenen sipariş geç sayılmaz. Bilet sayıları sipariş geneline aittir; bir siparişte birden çok seans varsa okutulma durumu seans bazında ayrıştırılmaz. Reddedilmiş okutma (`Fail`) kullanım sayılmaz. Sayfa başına en çok 2.000 kalem okunur.
 - **Kullanım:** Etkinleştir → ekranı aç → sonucu (müşteri verisi olmadan) Issue #116'ya yaz → devre dışı bırak.
 - **Geri alma:** Snippet'i devre dışı bırakmak.
 
@@ -83,4 +88,4 @@ Snippet #30 güncellenmeden satış kilidi veya PR #117 canlıya alınırsa zara
 
 ## Testler
 
-`php tests/past-session-snippets/regression.php` (61 kontrol) ve `MS_TEST_DELEGATE=1 php tests/past-session-snippets/regression.php` (PR #117 kuralına devretme, 3 kontrol). Testler snippet gövdelerini sahte WordPress/WooCommerce fonksiyonlarıyla çalıştırır; Snippet #30 için canlı kayıtla farkın yalnızca iki koşul ve başlık notu olduğunu da denetler. Gerçek WordPress üzerinde çalıştırılmadı.
+`php tests/past-session-snippets/regression.php` (69 kontrol) ve `MS_TEST_DELEGATE=1 php tests/past-session-snippets/regression.php` (PR #117 kuralına devretme, 3 kontrol). Testler snippet gövdelerini sahte WordPress/WooCommerce fonksiyonlarıyla çalıştırır; Snippet #30 için canlı kayıtla farkın yalnızca iki koşul ve başlık notu olduğunu da denetler. Gerçek WordPress üzerinde çalıştırılmadı.
