@@ -1,8 +1,9 @@
 <?php
 /**
- * Isolated regressions for the two staged Issue #116 snippets:
- *   docs/code-snippets/staged-2026-10-04/ms-gecmis-seans-satis-kilidi-v1.php.txt
- *   docs/code-snippets/staged-2026-10-04/ms-gecmis-seans-denetimi-v1.php.txt
+ * Isolated regressions for the staged Issue #116 snippets (rule: sales close at session start):
+ *   docs/code-snippets/staged-2026-10-04/ms-seans-satis-kilidi-v2.php.txt
+ *   docs/code-snippets/staged-2026-10-04/ms-seans-denetimi-v2.php.txt
+ *   docs/code-snippets/staged-2026-10-04/snippet-030-seans-baslayinca-v1.php.txt
  *
  * No WordPress, database, gateway or network access. Warnings and notices fail the run.
  * Run a second time with MS_TEST_DELEGATE=1 to check that the lock snippet defers to
@@ -34,6 +35,7 @@ if ( $delegate ) {
 $hooks = array(); $menus = array(); $is_admin = false; $doing_ajax = false; $can = true; $meta = array(); $products = array(); $orders = array();
 function add_filter( $hook, $cb, $priority = 10, $args = 1 ) { global $hooks; $hooks[] = array( $hook, $cb, $priority, $args ); }
 function add_action( $hook, $cb, $priority = 10, $args = 1 ) { global $hooks; $hooks[] = array( $hook, $cb, $priority, $args ); }
+function add_shortcode( $tag, $cb ) { global $shortcodes; $shortcodes[ $tag ] = $cb; }
 function add_management_page( $title, $menu, $cap, $slug, $cb ) { global $menus; $menus[] = array( $title, $cap, $slug, $cb ); }
 function absint( $n ) { return abs( (int) $n ); }
 function wp_timezone() { return new DateTimeZone( 'Europe/Istanbul' ); }
@@ -73,11 +75,16 @@ class FakeDB {
     public $sessions = array(); public $events = array(); public $order_map = array();
     public $queries = array(); public $writes = 0; public $explode = false;
     public function prepare( $sql, ...$args ) { return preg_replace_callback( '/%[ds]/', function ( $m ) use ( &$args ) { $v = array_shift( $args ); return '%d' === $m[0] ? (string) (int) $v : "'" . $v . "'"; }, $sql ); }
+    public function get_var( $sql ) { return preg_match( "/SHOW TABLES LIKE '([^']+)'/", $sql, $m ) ? $m[1] : null; }
     public function get_results( $sql ) {
         if ( $this->explode ) { throw new RuntimeException( 'database unavailable' ); }
         $this->queries[] = $sql;
         if ( preg_match( '/FROM wp_mdg_sessions WHERE wc_product_id = (\d+)/', $sql, $m ) ) {
             return array_values( array_filter( $this->sessions, function ( $s ) use ( $m ) { return (int) $s->wc_product_id === (int) $m[1]; } ) );
+        }
+        // Snippet #30 session query: only the start-time form is understood here.
+        if ( preg_match( '/SELECT id, start_at, end_at\s+FROM wp_mdg_sessions\s+WHERE event_id = (\d+)\s+AND start_at > \'([^\']+)\'/', $sql, $m ) ) {
+            return array_values( array_filter( $this->sessions, function ( $s ) use ( $m ) { return (int) $s->event_id === (int) $m[1] && (string) $s->start_at > $m[2]; } ) );
         }
         if ( false !== strpos( $sql, 'FROM wp_mdg_order_map m' ) ) { return $this->order_map; }
         if ( false !== strpos( $sql, 'GROUP BY e.id' ) ) { return $this->events; }
@@ -108,7 +115,7 @@ function utc( $ts ) { return gmdate( 'Y-m-d H:i:s', $ts ); }
 function sess( $id, $product, $start, $end, $extra = array() ) { return (object) array_merge( array( 'id' => $id, 'event_id' => 9, 'wc_product_id' => $product, 'start_at' => utc( $start ), 'end_at' => utc( $end ), 'status' => 'onsale', 'title' => 'Test Etkinliği' ), $extra ); }
 
 /* ================= A. Sales lock bridge ================= */
-load_snippet( 'ms-gecmis-seans-satis-kilidi-v1.php.txt' );
+load_snippet( 'ms-seans-satis-kilidi-v2.php.txt' );
 $t = time();
 
 if ( $delegate ) {
@@ -128,14 +135,18 @@ check( 'lock hooks variation purchasability at priority 98', array( $registered[
 // Fixed clock: 4 Ekim 2026 15:25 Europe/Istanbul.
 $now = gmmktime( 12, 25, 0, 10, 4, 2026 );
 $s = function ( $start, $end ) { return (object) array( 'start_at' => $start, 'end_at' => $end ); };
-check( 'rule: 14:00 session that ended at 15:00 is closed', ms_gsk_seans_bitti_mi( $s( '2026-10-04 11:00:00', '2026-10-04 12:00:00' ), $now ), true );
-check( 'rule: 16:00 session later today is open', ms_gsk_seans_bitti_mi( $s( '2026-10-04 13:00:00', '2026-10-04 14:00:00' ), $now ), false );
-check( 'rule: session in progress is open', ms_gsk_seans_bitti_mi( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), false );
-check( 'rule: yesterday is closed', ms_gsk_seans_bitti_mi( $s( '2026-10-03 13:00:00', '2026-10-03 14:00:00' ), $now ), true );
-check( 'rule: stale end_at with a past start day is closed', ms_gsk_seans_bitti_mi( $s( '2026-09-26 09:00:00', '2027-01-01 00:00:00' ), $now ), true );
-check( 'rule: local day decides, not UTC day', ms_gsk_seans_bitti_mi( $s( '2026-10-03 21:30:00', '2027-01-01 00:00:00' ), $now ), false );
-check( 'rule: unreadable times never close', ms_gsk_seans_bitti_mi( $s( 'bad', '0000-00-00 00:00:00' ), $now ), false );
-check( 'rule: impossible calendar date never closes', ms_gsk_seans_bitti_mi( $s( '2026-13-40 09:00:00', '2026-13-40 10:00:00' ), $now ), false );
+check( 'rule: 14:00 session that ended at 15:00 is closed', ms_gsk_seans_kapali_mi( $s( '2026-10-04 11:00:00', '2026-10-04 12:00:00' ), $now ), true );
+check( 'rule: 16:00 session later today is open', ms_gsk_seans_kapali_mi( $s( '2026-10-04 13:00:00', '2026-10-04 14:00:00' ), $now ), false );
+check( 'rule: session in progress is closed', ms_gsk_seans_kapali_mi( $s( '2026-10-04 12:00:00', '2026-10-04 13:00:00' ), $now ), true );
+check( 'rule: session starting exactly now is closed', ms_gsk_seans_kapali_mi( $s( '2026-10-04 12:25:00', '2026-10-04 13:25:00' ), $now ), true );
+check( 'rule: session starting in one minute is open', ms_gsk_seans_kapali_mi( $s( '2026-10-04 12:26:00', '2026-10-04 13:26:00' ), $now ), false );
+check( 'rule: yesterday is closed', ms_gsk_seans_kapali_mi( $s( '2026-10-03 13:00:00', '2026-10-03 14:00:00' ), $now ), true );
+check( 'rule: stale end_at with a past start is closed', ms_gsk_seans_kapali_mi( $s( '2026-09-26 09:00:00', '2027-01-01 00:00:00' ), $now ), true );
+check( 'rule: future start with a wrongly past end_at stays open', ms_gsk_seans_kapali_mi( $s( '2026-10-04 13:00:00', '2026-10-04 10:00:00' ), $now ), false );
+check( 'rule: unreadable start with a past end is closed', ms_gsk_seans_kapali_mi( $s( 'bad', '2026-10-04 12:00:00' ), $now ), true );
+check( 'rule: unreadable start with a future end stays open', ms_gsk_seans_kapali_mi( $s( 'bad', '2026-10-04 14:00:00' ), $now ), false );
+check( 'rule: unreadable times never close', ms_gsk_seans_kapali_mi( $s( 'bad', '0000-00-00 00:00:00' ), $now ), false );
+check( 'rule: impossible calendar date never closes', ms_gsk_seans_kapali_mi( $s( '2026-13-40 09:00:00', '2026-13-40 10:00:00' ), $now ), false );
 
 $wpdb->sessions = array(
     sess( 1, 100, $t - 3 * 3600, $t - 2 * 3600 ),   // ended
@@ -143,9 +154,11 @@ $wpdb->sessions = array(
     sess( 3, 300, $t - 3 * 3600, $t - 2 * 3600 ),   // ended ...
     sess( 4, 300, $t + 2 * 3600, $t + 3 * 3600 ),   // ... but the same product also has an open session
     (object) array( 'id' => 5, 'wc_product_id' => 400, 'start_at' => 'bad', 'end_at' => '' ),
+    sess( 6, 500, $t - 10 * 60, $t + 50 * 60 ),     // in progress
 );
 check( 'ended-session product is not purchasable', ms_gsk_filtre( true, new FakeProduct( 100 ) ), false );
 check( 'variation of an ended-session product is not purchasable', ms_gsk_filtre( true, new FakeProduct( 101, 100 ) ), false );
+check( 'product of a session in progress is not purchasable', ms_gsk_filtre( true, new FakeProduct( 500 ) ), false );
 check( 'future-session product stays purchasable', ms_gsk_filtre( true, new FakeProduct( 200 ) ), true );
 check( 'variation of a future-session product stays purchasable', ms_gsk_filtre( true, new FakeProduct( 201, 200 ) ), true );
 check( 'product with one open session stays purchasable', ms_gsk_filtre( true, new FakeProduct( 300 ) ), true );
@@ -175,10 +188,10 @@ check( 'lock snippet wrote nothing', $wpdb->writes, 0 );
 
 /* ================= B. Read-only audit ================= */
 $hooks = array();
-load_snippet( 'ms-gecmis-seans-denetimi-v1.php.txt' );
+load_snippet( 'ms-seans-denetimi-v2.php.txt' );
 check( 'audit registers only an admin_menu action', array_map( function ( $h ) { return $h[0]; }, $hooks ), array( 'admin_menu' ) );
 $hooks[0][1]();
-check( 'audit page requires manage_woocommerce', array( $menus[0][1], $menus[0][2] ), array( 'manage_woocommerce', 'ms-gecmis-seans-denetimi' ) );
+check( 'audit page requires manage_woocommerce', array( $menus[0][1], $menus[0][2] ), array( 'manage_woocommerce', 'ms-seans-denetimi' ) );
 
 $can = false;
 $code = 0;
@@ -187,7 +200,7 @@ check( 'audit page refuses users without the capability', $code, 403 );
 $can = true;
 
 $ended_start = $t - 26 * 3600; $ended_end = $t - 25 * 3600;
-$wpdb->events = array( (object) array( 'id' => 8, 'title' => 'Madagaskar Sirki – Sincan', 'public_slug' => 'madagaskar-sirki-sincan', 'province_name' => 'Ankara', 'district' => 'Sincan', 'son_bitis' => utc( $ended_end ), 'seans_sayisi' => 3 ) );
+$wpdb->events = array( (object) array( 'id' => 8, 'title' => 'Madagaskar Sirki – Sincan', 'public_slug' => 'madagaskar-sirki-sincan', 'province_name' => 'Ankara', 'district' => 'Sincan', 'son_baslangic' => utc( $ended_start ), 'seans_sayisi' => 3 ) );
 $wpdb->sessions = array(
     sess( 21, 610, $ended_start, $ended_end, array( 'listed' => true, 'event_id' => 8 ) ),
     sess( 22, 620, $ended_start, $ended_end, array( 'listed' => true, 'event_id' => 8 ) ),
@@ -198,9 +211,10 @@ $closed_product = new FakeProduct( 620 ); $closed_product->purchasable = false; 
 $row = function ( $order_id, $qty, $total ) use ( $ended_start, $ended_end ) {
     return (object) array( 'order_id' => $order_id, 'session_id' => 21, 'quantity' => $qty, 'line_total' => $total, 'kayit_at' => utc( time() ), 'start_at' => utc( $ended_start ), 'end_at' => utc( $ended_end ), 'title' => 'Madagaskar Sirki – Sincan' );
 };
-$wpdb->order_map = array( $row( 9001, 2, '500.00' ), $row( 9001, 1, '250.00' ), $row( 9002, 1, '250.00' ), $row( 9003, 4, '1100.00' ), $row( 9004, 1, '250.00' ) );
-$orders[9001] = new FakeOrder( $ended_end + 90 * 60, 'processing', $ended_end + 95 * 60 );   // paid, 90 min after the session ended
-$orders[9002] = new FakeOrder( $ended_end + 10 * 60, 'failed' );                                // unpaid late attempt
+$wpdb->order_map = array( $row( 9001, 2, '500.00' ), $row( 9001, 1, '250.00' ), $row( 9002, 1, '250.00' ), $row( 9003, 4, '1100.00' ), $row( 9004, 1, '250.00' ), $row( 9005, 1, '250.00' ) );
+$orders[9005] = new FakeOrder( $ended_start - 60, 'processing', $ended_start + 120 );          // ordered a minute before start, paid after: allowed
+$orders[9001] = new FakeOrder( $ended_start + 20 * 60, 'processing', $ended_start + 25 * 60 ); // paid, 20 min after the session started
+$orders[9002] = new FakeOrder( $ended_start, 'failed' );                                        // unpaid attempt at the exact start
 $orders[9003] = new FakeOrder( $ended_start - 3 * 3600, 'processing', $ended_start - 3 * 3600 ); // bought in time
 // 9004: order no longer exists.
 
@@ -210,14 +224,16 @@ ob_start(); ms_gsd_sayfa(); $html = ob_get_clean();
 
 check( 'audit lists the ended event that is still on sale', false !== strpos( $html, 'hâlâ "satışta" etkinlikler: 1' ) && false !== strpos( $html, '#8' ), true );
 check( 'audit links the event page', false !== strpos( $html, 'https://example.test/etkinlik/madagaskar-sirki-sincan/' ), true );
-check( 'audit lists both ended sessions', false !== strpos( $html, 'bitmiş seansları: 2' ), true );
+check( 'audit lists both started sessions', false !== strpos( $html, 'başlamış seansları: 2' ), true );
 check( 'audit shows the product that is still purchasable', 1 === preg_match( '/#610<\/td><td>yok<\/td><td><strong>EVET<\/strong>/', $html ), true );
 check( 'audit shows the product already locked by V4', 1 === preg_match( '/#620<\/td><td>var<\/td><td>hayır/', $html ), true );
 check( 'audit counts late order lines (two paid lines, one unpaid)', false !== strpos( $html, 'sipariş kalemleri: 3' ), true );
 check( 'audit counts one paid late order and its amount', false !== strpos( $html, 'Ödenmiş sipariş: <strong>1</strong>' ) && false !== strpos( $html, '750,00 TL' ), true );
-check( 'audit reports the delay in minutes', false !== strpos( $html, '90 dk' ) && false !== strpos( $html, '10 dk' ), true );
+check( 'audit reports the delay after the start in minutes', false !== strpos( $html, '20 dk' ) && false !== strpos( $html, '>0 dk' ), true );
 check( 'audit marks the unpaid late order as unpaid', 1 === preg_match( '/#9002<\/td>.*?failed<\/td><td>hayır/s', $html ), true );
 check( 'order placed before the session is not listed', false === strpos( $html, '#9003' ), true );
+check( 'order placed just before the start and paid after is not listed', false === strpos( $html, '#9005' ), true );
+check( 'audit states the rule it applies', false !== strpos( $html, 'satış seans başladığında kapanır' ), true );
 check( 'missing order is skipped without error', false === strpos( $html, '#9004' ), true );
 check( 'default look-back is 7 days', false !== strpos( $html, 'son 7 gün' ), true );
 check( 'every audit query is a SELECT', array_values( array_unique( array_map( function ( $q ) { return strtoupper( substr( ltrim( $q ), 0, 6 ) ); }, $wpdb->queries ) ) ), array( 'SELECT' ) );
@@ -235,5 +251,32 @@ $wpdb->events = array(); $wpdb->sessions = array(); $wpdb->order_map = array();
 $_GET = array();
 ob_start(); ms_gsd_sayfa(); $html = ob_get_clean();
 check( 'empty result renders three empty sections', substr_count( $html, '<p>Yok.</p>' ), 3 );
+
+/* ================= C. Snippet #30 with the start rule ================= */
+$prod   = file( dirname( __DIR__, 2 ) . '/docs/code-snippets/production/snippet-030.php.txt' );
+$staged = file( dirname( __DIR__, 2 ) . '/docs/code-snippets/staged-2026-10-04/snippet-030-seans-baslayinca-v1.php.txt' );
+$removed = array_values( array_map( 'trim', array_diff( $prod, $staged ) ) );
+$added   = array_values( array_map( 'trim', array_diff( $staged, $prod ) ) );
+check( 'snippet #30 change removes exactly the two end-time conditions', $removed, array( 'AND end_at >= %s', 'AND s.end_at >= %s' ) );
+check( 'snippet #30 change adds the two start-time conditions and a header note', array_values( array_filter( $added, function ( $l ) { return 0 === strpos( $l, 'AND' ); } ) ), array( 'AND start_at > %s', 'AND s.start_at > %s' ) );
+check( 'snippet #30 change adds nothing but conditions and comment lines', count( array_filter( $added, function ( $l ) { return 0 !== strpos( $l, 'AND' ) && 0 !== strpos( $l, '*' ); } ) ), 0 );
+check( 'snippet #30 line count grows only by the header note', count( $staged ) - count( $prod ), 4 );
+
+if ( ! class_exists( 'MDG_DB' ) ) { final class MDG_DB { public static function table( $name ) { return 'wp_mdg_' . $name; } } }
+function current_time( $type, $gmt = false ) { return gmdate( 'Y-m-d H:i:s' ); }
+$hooks = array(); $shortcodes = array();
+load_snippet( 'snippet-030-seans-baslayinca-v1.php.txt' );
+$t = time();
+$wpdb->sessions = array(
+    sess( 31, 0, $t - 3 * 3600, $t - 2 * 3600, array( 'event_id' => 12 ) ),   // ended
+    sess( 32, 0, $t - 10 * 60, $t + 50 * 60, array( 'event_id' => 12 ) ),     // in progress
+    sess( 33, 0, $t + 26 * 3600, $t + 27 * 3600, array( 'event_id' => 12 ) ), // tomorrow
+    sess( 34, 0, $t + 26 * 3600, $t + 27 * 3600, array( 'event_id' => 13 ) ), // other event
+);
+$wpdb->queries = array();
+$listed = ms_city_v2_event_sessions( 12 );
+check( 'snippet #30 lists only the session that has not started', array_column( $listed, 'id' ), array( 33 ) );
+check( 'snippet #30 session query filters on start_at', 1 === preg_match( '/AND start_at > \'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\'/', end( $wpdb->queries ) ), true );
+check( 'snippet #30 wrote nothing', $wpdb->writes, 0 );
 
 echo "\n$passed checks passed\n";
