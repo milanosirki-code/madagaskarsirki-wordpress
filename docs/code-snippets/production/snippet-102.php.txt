@@ -1,0 +1,374 @@
+/**
+ * Madagaskar Sirki – Bilet Sorgulama V1
+ *
+ * Biletlerim sayfasına "sipariş numarası + telefon" ile bilet sorgulama
+ * formu ekler. İki bilgi birlikte ödenmiş bir siparişle eşleşirse müşterinin
+ * kişisel Biletlerim bağlantısını gösterir.
+ *
+ * - Hiçbir veriyi değiştirmez; yalnızca okur.
+ * - Bağlantıyı mevcut ms_biletlerim_url() fonksiyonuyla üretir.
+ * - Eşleşme olmadığında hangi bilginin yanlış olduğunu söylemez.
+ * - Aynı adresten 15 dakikada en fazla 5 hatalı denemeye izin verir.
+ *
+ * Geri alma: bu snippet'i devre dışı bırakmak yeterlidir.
+ * Code Snippets kullanırken <?php etiketi eklemeyin.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+if ( ! defined( 'MS_BILET_SORGU_SAYFA' ) ) {
+    define( 'MS_BILET_SORGU_SAYFA', 'biletlerim' );
+}
+
+if ( ! defined( 'MS_BILET_SORGU_MAX_DENEME' ) ) {
+    define( 'MS_BILET_SORGU_MAX_DENEME', 5 );
+}
+
+if ( ! defined( 'MS_BILET_SORGU_SURE' ) ) {
+    define( 'MS_BILET_SORGU_SURE', 15 * 60 );
+}
+
+if ( ! defined( 'MS_BILET_SORGU_SIPARIS_MAX_DENEME' ) ) {
+    define( 'MS_BILET_SORGU_SIPARIS_MAX_DENEME', 20 );
+}
+
+
+/**
+ * Telefonu karşılaştırılabilir hale getirir: yalnızca rakamlar, son 10 hane.
+ * 0506 034 38 74, +90 506 034 38 74 ve 5060343874 aynı sonucu verir.
+ */
+if ( ! function_exists( 'ms_bilet_sorgu_telefon' ) ) {
+    function ms_bilet_sorgu_telefon( $ham ) {
+        $rakam = preg_replace( '/\D+/', '', (string) $ham );
+
+        if ( strlen( $rakam ) < 10 ) {
+            return '';
+        }
+
+        return substr( $rakam, -10 );
+    }
+}
+
+
+/**
+ * Deneme sayacı anahtarları.
+ */
+if ( ! function_exists( 'ms_bilet_sorgu_ip_anahtar' ) ) {
+    function ms_bilet_sorgu_ip_anahtar() {
+        $ip = isset( $_SERVER['REMOTE_ADDR'] )
+            ? (string) $_SERVER['REMOTE_ADDR']
+            : 'bilinmiyor';
+
+        return 'ms_bs_ip_' . md5( $ip );
+    }
+}
+
+if ( ! function_exists( 'ms_bilet_sorgu_engelli_mi' ) ) {
+    function ms_bilet_sorgu_engelli_mi( $siparis_id ) {
+        if ( (int) get_transient( ms_bilet_sorgu_ip_anahtar() ) >= MS_BILET_SORGU_MAX_DENEME ) {
+            return true;
+        }
+
+        if (
+            $siparis_id &&
+            (int) get_transient( 'ms_bs_sp_' . $siparis_id ) >= MS_BILET_SORGU_SIPARIS_MAX_DENEME
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+if ( ! function_exists( 'ms_bilet_sorgu_hata_say' ) ) {
+    function ms_bilet_sorgu_hata_say( $siparis_id ) {
+        $ip_anahtar = ms_bilet_sorgu_ip_anahtar();
+
+        set_transient(
+            $ip_anahtar,
+            (int) get_transient( $ip_anahtar ) + 1,
+            MS_BILET_SORGU_SURE
+        );
+
+        if ( $siparis_id ) {
+            $sp_anahtar = 'ms_bs_sp_' . $siparis_id;
+
+            set_transient(
+                $sp_anahtar,
+                (int) get_transient( $sp_anahtar ) + 1,
+                60 * 60
+            );
+        }
+    }
+}
+
+
+/**
+ * Gönderilen formu değerlendirir.
+ *
+ * Dönen 'durum' değerleri:
+ *   bos          – form gönderilmedi
+ *   bulundu      – eşleşti, 'url' alanında bilet bağlantısı var
+ *   bulunamadi   – eşleşme yok (neden belirtilmez)
+ *   baglanti_yok – eşleşti ama bağlantı üretilemedi
+ *   cok_deneme   – deneme sınırı aşıldı
+ */
+if ( ! function_exists( 'ms_bilet_sorgu_isle' ) ) {
+    function ms_bilet_sorgu_isle() {
+        static $sonuc = null;
+
+        if ( null !== $sonuc ) {
+            return $sonuc;
+        }
+
+        $sonuc = array( 'durum' => 'bos' );
+
+        $metod = isset( $_SERVER['REQUEST_METHOD'] )
+            ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] )
+            : '';
+
+        if ( 'POST' !== $metod || empty( $_POST['ms_bilet_sorgu'] ) ) {
+            return $sonuc;
+        }
+
+        /* Botlar için gizli alan: dolu geldiyse sessizce reddet. */
+        if ( ! empty( $_POST['ms_bs_web'] ) ) {
+            $sonuc = array( 'durum' => 'bulunamadi' );
+            return $sonuc;
+        }
+
+        /* Yalnızca düz metin kabul et; dizi olarak gönderilen alanları yok say. */
+        $siparis_girdi = ( isset( $_POST['ms_bs_siparis'] ) && is_string( $_POST['ms_bs_siparis'] ) )
+            ? wp_unslash( $_POST['ms_bs_siparis'] )
+            : '';
+
+        $telefon_girdi = ( isset( $_POST['ms_bs_telefon'] ) && is_string( $_POST['ms_bs_telefon'] ) )
+            ? wp_unslash( $_POST['ms_bs_telefon'] )
+            : '';
+
+        $siparis_ham = preg_replace( '/\D+/', '', $siparis_girdi );
+
+        $siparis_id = ( '' !== $siparis_ham && strlen( $siparis_ham ) <= 9 )
+            ? absint( $siparis_ham )
+            : 0;
+
+        $telefon = ms_bilet_sorgu_telefon( $telefon_girdi );
+
+        if ( ms_bilet_sorgu_engelli_mi( $siparis_id ) ) {
+            $sonuc = array( 'durum' => 'cok_deneme' );
+            return $sonuc;
+        }
+
+        $eslesti = false;
+        $order   = null;
+
+        if ( $siparis_id && '' !== $telefon && function_exists( 'wc_get_order' ) ) {
+            $order = wc_get_order( $siparis_id );
+
+            if (
+                $order &&
+                is_object( $order ) &&
+                method_exists( $order, 'get_type' ) &&
+                'shop_order' === $order->get_type() &&
+                $order->has_status( array( 'processing', 'completed' ) )
+            ) {
+                $kayitli = ms_bilet_sorgu_telefon( $order->get_billing_phone() );
+
+                if ( '' !== $kayitli && hash_equals( $kayitli, $telefon ) ) {
+                    $eslesti = true;
+                }
+            }
+        }
+
+        if ( ! $eslesti ) {
+            ms_bilet_sorgu_hata_say( $siparis_id );
+            $sonuc = array( 'durum' => 'bulunamadi' );
+            return $sonuc;
+        }
+
+        $url = function_exists( 'ms_biletlerim_url' )
+            ? (string) ms_biletlerim_url( $order->get_id() )
+            : '';
+
+        if ( '' === $url ) {
+            $sonuc = array( 'durum' => 'baglanti_yok' );
+            return $sonuc;
+        }
+
+        $sonuc = array(
+            'durum' => 'bulundu',
+            'url'   => $url,
+        );
+
+        return $sonuc;
+    }
+}
+
+
+/**
+ * Sorgu gönderildiğinde yanıtın önbelleğe alınmasını engelle.
+ */
+add_action( 'template_redirect', function () {
+    if ( empty( $_POST['ms_bilet_sorgu'] ) ) {
+        return;
+    }
+
+    if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+        define( 'DONOTCACHEPAGE', true );
+    }
+
+    nocache_headers();
+    ms_bilet_sorgu_isle();
+}, 1 );
+
+
+/**
+ * Formun ve sonucun HTML çıktısı.
+ */
+if ( ! function_exists( 'ms_bilet_sorgu_html' ) ) {
+    function ms_bilet_sorgu_html() {
+        $sonuc    = ms_bilet_sorgu_isle();
+        $durum    = $sonuc['durum'];
+        $whatsapp = 'https://wa.me/903129113710';
+        $hedef    = get_permalink();
+
+        if ( empty( $hedef ) ) {
+            $hedef = home_url( '/' . MS_BILET_SORGU_SAYFA . '/' );
+        }
+
+        $kutu  = 'max-width:720px;margin:24px auto 32px;padding:28px;border:1px solid #d4af37;border-radius:16px;background:#0d0b26;color:#fff;box-sizing:border-box';
+        $alan  = 'display:block;width:100%;min-height:48px;padding:12px 14px;border:1px solid #6b6690;border-radius:8px;background:#fff;color:#17132c;font-size:16px;box-sizing:border-box';
+        $etiket = 'display:block;margin:0 0 6px;color:#fff;font-weight:700;font-size:15px';
+        $buton = 'display:inline-block;min-height:48px;padding:12px 22px;border:0;border-radius:8px;background:#d4af37;color:#17132c;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none';
+
+        ob_start();
+        ?>
+        <section id="ms-bilet-sorgu" aria-label="Bilet sorgulama" style="<?php echo esc_attr( $kutu ); ?>">
+
+            <h2 style="margin:0 0 10px;color:#fff;font-size:24px;line-height:1.3">Biletimi Bul</h2>
+
+            <?php if ( 'bulundu' === $durum ) : ?>
+
+                <p role="status" style="margin:0 0 18px;line-height:1.7;color:#fff">
+                    Siparişiniz bulundu. Biletlerinizi aşağıdaki bağlantıdan açabilirsiniz.
+                </p>
+
+                <p style="margin:0 0 14px">
+                    <a style="<?php echo esc_attr( $buton ); ?>"
+                       href="<?php echo esc_url( $sonuc['url'] ); ?>">
+                        Biletlerimi Aç
+                    </a>
+                </p>
+
+                <p style="margin:0;font-size:14px;line-height:1.7;color:#d9d6ee">
+                    Bu bağlantı size özeldir; QR kodunuzu ve bağlantınızı başkalarıyla paylaşmayın.
+                </p>
+
+            <?php else : ?>
+
+                <p style="margin:0 0 18px;line-height:1.7;color:#fff">
+                    Sipariş numaranızı ve siparişte kullandığınız telefon numarasını yazın;
+                    biletinizin bağlantısını hemen gösterelim.
+                </p>
+
+                <?php if ( 'bulunamadi' === $durum ) : ?>
+                    <p role="alert" style="margin:0 0 18px;padding:12px 14px;border-radius:8px;background:#3a1d24;color:#ffd9d9;line-height:1.6">
+                        Bu bilgilerle eşleşen ödenmiş bir sipariş bulunamadı. Sipariş numaranızı ve
+                        siparişte kullandığınız telefon numarasını kontrol edip tekrar deneyin.
+                    </p>
+                <?php elseif ( 'cok_deneme' === $durum ) : ?>
+                    <p role="alert" style="margin:0 0 18px;padding:12px 14px;border-radius:8px;background:#3a1d24;color:#ffd9d9;line-height:1.6">
+                        Çok fazla deneme yapıldı. Lütfen 15 dakika sonra tekrar deneyin veya
+                        WhatsApp bilet destek hattımıza yazın.
+                    </p>
+                <?php elseif ( 'baglanti_yok' === $durum ) : ?>
+                    <p role="alert" style="margin:0 0 18px;padding:12px 14px;border-radius:8px;background:#3a1d24;color:#ffd9d9;line-height:1.6">
+                        Siparişiniz bulundu ancak bilet bağlantısı şu anda oluşturulamadı.
+                        Lütfen WhatsApp bilet destek hattımıza yazın.
+                    </p>
+                <?php endif; ?>
+
+                <form method="post" action="<?php echo esc_url( $hedef ); ?>#ms-bilet-sorgu" novalidate>
+
+                    <input type="hidden" name="ms_bilet_sorgu" value="1">
+
+                    <p style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+                        <label for="ms-bs-web">Bu alanı boş bırakın</label>
+                        <input type="text" id="ms-bs-web" name="ms_bs_web" value="" tabindex="-1" autocomplete="off">
+                    </p>
+
+                    <p style="margin:0 0 16px">
+                        <label for="ms-bs-siparis" style="<?php echo esc_attr( $etiket ); ?>">Sipariş numarası</label>
+                        <input type="text" id="ms-bs-siparis" name="ms_bs_siparis"
+                               inputmode="numeric" autocomplete="off" maxlength="12"
+                               placeholder="Örn. 3735" required
+                               style="<?php echo esc_attr( $alan ); ?>">
+                    </p>
+
+                    <p style="margin:0 0 20px">
+                        <label for="ms-bs-telefon" style="<?php echo esc_attr( $etiket ); ?>">Telefon numarası</label>
+                        <input type="tel" id="ms-bs-telefon" name="ms_bs_telefon"
+                               inputmode="tel" autocomplete="tel" maxlength="20"
+                               placeholder="05xx xxx xx xx" required
+                               style="<?php echo esc_attr( $alan ); ?>">
+                    </p>
+
+                    <p style="margin:0">
+                        <button type="submit" style="<?php echo esc_attr( $buton ); ?>">Biletimi Göster</button>
+                    </p>
+
+                </form>
+
+                <p style="margin:18px 0 0;font-size:14px;line-height:1.7;color:#d9d6ee">
+                    Sipariş numaranız ödeme sonrası gelen e-postada ve mesajda yazar.
+                    Bulamıyorsanız
+                    <a href="<?php echo esc_url( $whatsapp ); ?>" target="_blank" rel="noopener" style="color:#d4af37;font-weight:700">WhatsApp bilet desteğine</a>
+                    yazabilirsiniz.
+                </p>
+
+            <?php endif; ?>
+
+        </section>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+}
+
+
+/**
+ * İsteğe bağlı kısa kod: [ms_bilet_sorgu]
+ */
+add_action( 'init', function () {
+    if ( ! shortcode_exists( 'ms_bilet_sorgu' ) ) {
+        add_shortcode( 'ms_bilet_sorgu', 'ms_bilet_sorgu_html' );
+    }
+}, 20 );
+
+
+/**
+ * Biletlerim sayfasının içeriğinin sonuna formu ekle.
+ * Sayfada [ms_bilet_sorgu] kısa kodu zaten varsa ikinci kez eklemez.
+ */
+add_filter( 'the_content', function ( $content ) {
+
+    if ( is_admin() || is_feed() || doing_action( 'wp_head' ) ) {
+        return $content;
+    }
+
+    if ( ! is_page( MS_BILET_SORGU_SAYFA ) ) {
+        return $content;
+    }
+
+    if (
+        false !== strpos( (string) $content, 'id="ms-bilet-sorgu"' ) ||
+        false !== strpos( (string) $content, '[ms_bilet_sorgu' )
+    ) {
+        return $content;
+    }
+
+    return $content . ms_bilet_sorgu_html();
+
+}, 30 );

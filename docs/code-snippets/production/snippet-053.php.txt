@@ -1,0 +1,496 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — GLOBAL SOSYAL PAYLAŞIM V1
+ * Yazılar ve genel sayfalarda paylaşım alanı
+ * Özel / ödeme / bilet sayfalarında çalışmaz.
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   GÜVENLİ SAYFA KONTROLÜ
+   ============================================================ */
+
+function mdg_social_share_allowed() {
+
+    if ( is_admin() ) {
+        return false;
+    }
+
+    /* WooCommerce özel sayfaları */
+    if ( function_exists( 'is_cart' ) && is_cart() ) {
+        return false;
+    }
+
+    if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+        return false;
+    }
+
+    if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+        return false;
+    }
+
+    /* Özel / hassas Madagaskar sayfaları */
+    if (
+        is_page(
+            array(
+                'biletlerim',
+                'bilet-al'
+            )
+        )
+    ) {
+        return false;
+    }
+
+    /* URL'de sipariş/token varsa gösterme */
+    if (
+        isset( $_GET['order_id'] ) ||
+        isset( $_GET['token'] ) ||
+        isset( $_GET['key'] )
+    ) {
+        return false;
+    }
+
+    return is_singular();
+}
+
+
+/* ============================================================
+   PAYLAŞIM HTML
+   ============================================================ */
+
+function mdg_social_share_html() {
+
+    $url =
+        get_permalink();
+
+    $title =
+        get_the_title();
+
+    $wa =
+        'https://wa.me/?text=' .
+        rawurlencode(
+            $title . ' ' . $url
+        );
+
+    $facebook =
+        'https://www.facebook.com/sharer/sharer.php?u=' .
+        rawurlencode( $url );
+
+    $x =
+        'https://twitter.com/intent/tweet?text=' .
+        rawurlencode( $title ) .
+        '&url=' .
+        rawurlencode( $url );
+
+    $instagram =
+        'https://www.instagram.com/madagaskarsirkiturkiye/';
+
+    ob_start();
+    ?>
+
+    <section class="mdg-social-share">
+
+        <div class="mdg-social-share-inner">
+
+            <div class="mdg-social-title">
+
+                <span>
+                    MADAGASKAR SİRKİ
+                </span>
+
+                <strong>
+                    Bu sayfayı paylaş
+                </strong>
+
+            </div>
+
+
+            <div class="mdg-social-buttons">
+
+
+                <a
+                    href="<?php echo esc_url( $wa ); ?>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mdg-social-btn mdg-social-wa"
+                >
+                    WhatsApp
+                </a>
+
+
+                <a
+                    href="<?php echo esc_url( $facebook ); ?>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mdg-social-btn"
+                >
+                    Facebook
+                </a>
+
+
+                <a
+                    href="<?php echo esc_url( $x ); ?>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mdg-social-btn"
+                >
+                    X
+                </a>
+
+
+                <button
+                    type="button"
+                    class="mdg-social-btn mdg-copy-link"
+                    data-url="<?php echo esc_url( $url ); ?>"
+                >
+                    Linki Kopyala
+                </button>
+
+
+                <a
+                    href="<?php echo esc_url( $instagram ); ?>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mdg-social-btn mdg-social-instagram"
+                >
+                    Instagram
+                </a>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+/* ============================================================
+   İÇERİKTEN SONRA EKLE
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            ! mdg_social_share_allowed() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+        return
+            $content .
+            mdg_social_share_html();
+
+    },
+    9000
+);
+
+
+/* ============================================================
+   CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! mdg_social_share_allowed() ) {
+            return;
+        }
+
+        ?>
+
+<style id="mdg-global-social-share-css">
+
+.mdg-social-share {
+
+    max-width: 820px;
+
+    margin:
+        50px auto 15px;
+
+    padding-top:
+        30px;
+
+    border-top:
+        1px solid #e3ddd1;
+}
+
+
+.mdg-social-share-inner {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        25px;
+}
+
+
+.mdg-social-title span {
+
+    display:
+        block;
+
+    margin-bottom:
+        6px;
+
+    color:
+        #cf5744;
+
+    font-size:
+        9px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.3px;
+}
+
+
+.mdg-social-title strong {
+
+    display:
+        block;
+
+    color:
+        #111118;
+
+    font-size:
+        22px;
+
+    line-height:
+        1.15;
+}
+
+
+.mdg-social-buttons {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    justify-content:
+        flex-end;
+
+    gap:
+        8px;
+}
+
+
+.mdg-social-btn {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    min-height:
+        42px;
+
+    padding:
+        0 16px;
+
+    background:
+        #ffffff;
+
+    color:
+        #111118 !important;
+
+    border:
+        1px solid #ddd7cc;
+
+    border-radius:
+        999px;
+
+    text-decoration:
+        none !important;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    cursor:
+        pointer;
+}
+
+
+.mdg-social-wa {
+
+    background:
+        #69cf91;
+
+    border-color:
+        #69cf91;
+}
+
+
+.mdg-social-instagram {
+
+    background:
+        #0d0d17;
+
+    border-color:
+        #0d0d17;
+
+    color:
+        #ffffff !important;
+}
+
+
+.mdg-social-btn:hover {
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .mdg-social-share-inner {
+
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+    }
+
+
+    .mdg-social-buttons {
+
+        width:
+            100%;
+
+        justify-content:
+            flex-start;
+    }
+
+
+    .mdg-social-btn {
+
+        flex:
+            1 1 auto;
+    }
+
+}
+/* ============================================================
+   JETPACK ESKİ PAYLAŞIM + BEĞENİ ALANLARINI GİZLE
+   ============================================================ */
+
+.sharedaddy,
+.sd-sharing-enabled,
+.sd-like,
+.jetpack-likes-widget-wrapper,
+div.sharedaddy {
+
+    display: none !important;
+}
+</style>
+
+        <?php
+    },
+    9999
+);
+
+
+/* ============================================================
+   LINK KOPYALA
+   ============================================================ */
+
+add_action(
+    'wp_footer',
+    function () {
+
+        if ( ! mdg_social_share_allowed() ) {
+            return;
+        }
+
+        ?>
+
+<script>
+
+document.addEventListener(
+    'click',
+    function ( event ) {
+
+        const button =
+            event.target.closest(
+                '.mdg-copy-link'
+            );
+
+        if ( ! button ) {
+            return;
+        }
+
+        const url =
+            button.dataset.url;
+
+        if (
+            navigator.clipboard &&
+            url
+        ) {
+
+            navigator.clipboard
+                .writeText( url )
+                .then(
+                    function () {
+
+                        const oldText =
+                            button.textContent;
+
+                        button.textContent =
+                            'Kopyalandı ✓';
+
+                        setTimeout(
+                            function () {
+
+                                button.textContent =
+                                    oldText;
+
+                            },
+                            1800
+                        );
+                    }
+                );
+        }
+
+    }
+);
+
+</script>
+
+        <?php
+    },
+    9999
+);

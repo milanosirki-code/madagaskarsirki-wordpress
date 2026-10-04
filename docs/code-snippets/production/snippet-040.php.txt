@@ -1,0 +1,2242 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — GALERİ SAYFASI V1
+ *
+ * Mevcut Galeri sayfasındaki fotoğrafları otomatik toplar.
+ * Modern responsive galeri oluşturur.
+ * Fotoğrafa tıklanınca lightbox açılır.
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   1. GALERİ SAYFASINDA MIYIZ?
+   ============================================================ */
+
+function mdg_is_gallery_page_v1() {
+
+    return is_page( 'galeri' );
+}
+
+
+/* ============================================================
+   2. BODY CLASS
+   ============================================================ */
+
+add_filter(
+    'body_class',
+    function ( $classes ) {
+
+        if ( mdg_is_gallery_page_v1() ) {
+            $classes[] = 'mdg-gallery-page';
+        }
+
+        return $classes;
+    }
+);
+
+
+/* ============================================================
+   3. MEVCUT İÇERİKTEN FOTOĞRAFLARI ÇIKAR
+   ============================================================ */
+
+function mdg_extract_gallery_images_v1( $content ) {
+
+    $images = array();
+
+    /*
+     * Mevcut sayfa içerisindeki img etiketlerini bul.
+     */
+    preg_match_all(
+        '/<img[^>]+>/i',
+        $content,
+        $img_tags
+    );
+
+    if ( empty( $img_tags[0] ) ) {
+        return $images;
+    }
+
+
+    foreach ( $img_tags[0] as $tag ) {
+
+        $src = '';
+        $alt = 'Madagaskar Sirki Gösteri Fotoğrafı';
+
+
+        /*
+         * SRC
+         */
+        if (
+            preg_match(
+                '/src=["\']([^"\']+)["\']/i',
+                $tag,
+                $src_match
+            )
+        ) {
+            $src = html_entity_decode(
+                $src_match[1]
+            );
+        }
+
+
+        /*
+         * ALT
+         */
+        if (
+            preg_match(
+                '/alt=["\']([^"\']*)["\']/i',
+                $tag,
+                $alt_match
+            )
+        ) {
+
+            if ( ! empty( trim( $alt_match[1] ) ) ) {
+
+                $alt = wp_strip_all_tags(
+                    html_entity_decode(
+                        $alt_match[1]
+                    )
+                );
+            }
+        }
+
+
+        if ( empty( $src ) ) {
+            continue;
+        }
+
+
+        /*
+         * Aynı görseli ikinci kez ekleme.
+         */
+        $already_exists = false;
+
+        foreach ( $images as $existing ) {
+
+            if ( $existing['src'] === $src ) {
+                $already_exists = true;
+                break;
+            }
+        }
+
+        if ( $already_exists ) {
+            continue;
+        }
+
+
+        $images[] = array(
+            'src' => esc_url_raw( $src ),
+            'alt' => $alt,
+        );
+    }
+
+
+    return $images;
+}
+
+
+/* ============================================================
+   4. GALERİ HTML
+   ============================================================ */
+
+function mdg_render_gallery_v1( $images ) {
+
+    $shows_url =
+        home_url( '/gosteriler/' );
+
+    $cities_url =
+        home_url( '/sehirler/' );
+
+
+    $whatsapp_url =
+        'https://wa.me/905068907613?text=' .
+        rawurlencode(
+            'Merhaba, Madagaskar Sirki gösterileri hakkında bilgi almak istiyorum.'
+        );
+
+
+    ob_start();
+    ?>
+
+
+<main id="mdg-gallery" class="mdg-gallery">
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="mdgg-hero">
+
+        <div class="mdgg-wrap">
+
+            <div class="mdgg-hero-panel">
+
+
+                <div class="mdgg-hero-copy">
+
+
+                    <span class="mdgg-kicker">
+                        MADAGASKAR SİRKİ · GALERİ
+                    </span>
+
+
+                    <h1>
+                        Sahnenin
+                        <span>içinden kareler.</span>
+                    </h1>
+
+
+                    <p>
+                        Akrobasi, denge, kahkaha ve sahne
+                        heyecanından gerçek anları keşfedin.
+                        Madagaskar Sirki'nin gösteri dünyasına
+                        fotoğraflarla yakından bakın.
+                    </p>
+
+
+                    <div class="mdgg-actions">
+
+
+                        <a
+                            class="mdgg-btn mdgg-btn-primary"
+                            href="<?php echo esc_url( $shows_url ); ?>"
+                        >
+                            Gösterileri Keşfet
+                        </a>
+
+
+                        <a
+                            class="mdgg-btn mdgg-btn-secondary"
+                            href="<?php echo esc_url( $cities_url ); ?>"
+                        >
+                            Şehirleri ve Biletleri Gör
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="mdgg-hero-stat">
+
+
+                    <span>
+                        SAHNEDEN
+                    </span>
+
+                    <strong>
+                        Gerçek
+                        <br>
+                        anlar.
+                    </strong>
+
+
+                    <p>
+                        Uluslararası sanatçılar,
+                        canlı performanslar ve
+                        seyirciyle buluşan unutulmaz
+                        gösteriler.
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         FOTOĞRAFLAR
+         ===================================================== -->
+
+    <section class="mdgg-gallery-section">
+
+        <div class="mdgg-wrap">
+
+
+            <header class="mdgg-section-heading">
+
+
+                <span>
+                    FOTOĞRAFLAR
+                </span>
+
+
+                <h2>
+                    Gösteriden kareler
+                </h2>
+
+
+                <p>
+                    Fotoğrafı büyütmek için üzerine dokunun.
+                </p>
+
+
+            </header>
+
+
+
+            <?php if ( ! empty( $images ) ) : ?>
+
+
+                <div class="mdgg-grid">
+
+
+                    <?php
+                    foreach (
+                        $images as $index => $image
+                    ) :
+                    ?>
+
+
+                        <button
+                            class="
+                                mdgg-photo
+                                <?php
+                                echo (
+                                    0 === $index ||
+                                    6 === $index
+                                )
+                                    ? 'mdgg-photo-large'
+                                    : '';
+                                ?>
+                            "
+                            type="button"
+                            data-mdgg-image="<?php
+                                echo esc_url(
+                                    $image['src']
+                                );
+                            ?>"
+                            aria-label="<?php
+                                echo esc_attr(
+                                    $image['alt']
+                                );
+                            ?>"
+                        >
+
+
+                            <img
+                                src="<?php
+                                    echo esc_url(
+                                        $image['src']
+                                    );
+                                ?>"
+                                alt="<?php
+                                    echo esc_attr(
+                                        $image['alt']
+                                    );
+                                ?>"
+                                loading="<?php
+                                    echo 0 === $index
+                                        ? 'eager'
+                                        : 'lazy';
+                                ?>"
+                                decoding="async"
+                            >
+
+
+                            <span class="mdgg-photo-overlay">
+
+                                <small>
+                                    MADAGASKAR SİRKİ
+                                </small>
+
+                                <strong>
+                                    Görseli Aç
+                                </strong>
+
+                            </span>
+
+
+                        </button>
+
+
+                    <?php endforeach; ?>
+
+
+                </div>
+
+
+            <?php else : ?>
+
+
+                <div class="mdgg-empty">
+
+                    <strong>
+                        Galeri hazırlanıyor.
+                    </strong>
+
+                    <p>
+                        Yeni gösteri fotoğrafları yakında
+                        burada yayınlanacak.
+                    </p>
+
+                </div>
+
+
+            <?php endif; ?>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         DENEYİM
+         ===================================================== -->
+
+    <section class="mdgg-experience">
+
+        <div class="mdgg-wrap">
+
+
+            <div class="mdgg-experience-panel">
+
+
+                <div>
+
+
+                    <span>
+                        MADAGASKAR SİRKİ
+                    </span>
+
+
+                    <h2>
+                        Fotoğraflardan
+                        daha fazlası.
+                    </h2>
+
+
+                    <p>
+                        Sahnedeki heyecanı canlı yaşamak için
+                        turne takviminden şehrinizi ve size uygun
+                        seansı seçin.
+                    </p>
+
+
+                </div>
+
+
+                <div class="mdgg-experience-items">
+
+
+                    <article>
+
+                        <strong>
+                            1 Saat
+                        </strong>
+
+                        <span>
+                            Gösteri süresi
+                        </span>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>
+                            Aile Dostu
+                        </strong>
+
+                        <span>
+                            Ortak deneyim
+                        </span>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>
+                            Hayvansız
+                        </strong>
+
+                        <span>
+                            Sahne gösterisi
+                        </span>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>
+                            Uluslararası
+                        </strong>
+
+                        <span>
+                            Sanatçılar
+                        </span>
+
+                    </article>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CTA
+         ===================================================== -->
+
+    <section class="mdgg-cta">
+
+        <div class="mdgg-wrap">
+
+
+            <div class="mdgg-cta-panel">
+
+
+                <div>
+
+
+                    <span>
+                        2026–2027 TÜRKİYE TURNESİ
+                    </span>
+
+
+                    <h2>
+                        Sıradaki karede
+                        siz de olun.
+                    </h2>
+
+
+                    <p>
+                        Şehrinizdeki Madagaskar Sirki
+                        gösterisini bulun ve biletinizi
+                        online alın.
+                    </p>
+
+
+                </div>
+
+
+                <div class="mdgg-cta-actions">
+
+
+                    <a
+                        class="mdgg-btn mdgg-btn-primary"
+                        href="<?php echo esc_url( $cities_url ); ?>"
+                    >
+                        Şehrini Seç ve Bilet Al
+                    </a>
+
+
+                    <a
+                        class="mdgg-btn mdgg-btn-light"
+                        href="<?php echo esc_url( $whatsapp_url ); ?>"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        WhatsApp ile Bilgi Al
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         LIGHTBOX
+         ===================================================== -->
+
+    <div
+        class="mdgg-lightbox"
+        id="mdgg-lightbox"
+        aria-hidden="true"
+    >
+
+
+        <button
+            class="mdgg-lightbox-close"
+            type="button"
+            aria-label="Galeriyi kapat"
+        >
+            ×
+        </button>
+
+
+        <img
+            src=""
+            alt="Madagaskar Sirki Galeri"
+        >
+
+
+    </div>
+
+
+</main>
+
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+/* ============================================================
+   5. MEVCUT GALERİ İÇERİĞİNİ DEĞİŞTİR
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            is_admin() ||
+            ! mdg_is_gallery_page_v1() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+
+        /*
+         * Önce eski sayfadaki fotoğrafları yakala.
+         */
+        $images =
+            mdg_extract_gallery_images_v1(
+                $content
+            );
+
+
+        /*
+         * Sonra eski tasarımı tamamen değiştir.
+         */
+        return
+            mdg_render_gallery_v1(
+                $images
+            );
+
+    },
+    999
+);
+
+
+/* ============================================================
+   6. CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! mdg_is_gallery_page_v1() ) {
+            return;
+        }
+
+        ?>
+
+<style id="mdg-gallery-v1">
+
+
+/* ============================================================
+   WORDPRESS RESET
+   ============================================================ */
+
+body.mdg-gallery-page {
+    background: #f6f2e8 !important;
+    overflow-x: hidden !important;
+}
+
+
+body.mdg-gallery-page .entry-title,
+body.mdg-gallery-page .wp-block-post-title {
+    display: none !important;
+}
+
+
+#mdg-gallery,
+#mdg-gallery * {
+    box-sizing: border-box;
+}
+
+
+#mdg-gallery {
+
+    --bg: #f6f2e8;
+    --soft: #ede7da;
+    --white: #ffffff;
+    --dark: #0d0d17;
+    --text: #111118;
+    --muted: #69676d;
+    --red: #cf5744;
+    --border: #e4ded2;
+
+
+    position: relative;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+
+    width: 100vw;
+
+    max-width: 100vw;
+
+
+    margin: 0;
+
+
+    background:
+        var(--bg);
+
+
+    color:
+        var(--text);
+
+
+    overflow: hidden;
+}
+
+
+#mdg-gallery .mdgg-wrap {
+
+    width:
+        min(
+            1180px,
+            calc(100% - 48px)
+        );
+
+    margin:
+        0 auto;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#mdg-gallery .mdgg-hero {
+
+    padding:
+        70px 0 90px;
+}
+
+
+#mdg-gallery .mdgg-hero-panel {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1.25fr .75fr;
+
+    min-height:
+        520px;
+
+    overflow:
+        hidden;
+
+    background:
+        #fff;
+
+    border-radius:
+        30px;
+}
+
+
+#mdg-gallery .mdgg-hero-copy {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        center;
+
+
+    padding:
+        58px;
+}
+
+
+#mdg-gallery .mdgg-kicker {
+
+    display:
+        inline-flex;
+
+    align-self:
+        flex-start;
+
+
+    padding:
+        10px 16px;
+
+
+    background:
+        var(--dark);
+
+    color:
+        #fff;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.1px;
+}
+
+
+#mdg-gallery .mdgg-hero h1 {
+
+    margin:
+        42px 0 25px;
+
+
+    font-size:
+        clamp(
+            58px,
+            7vw,
+            96px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .88;
+
+    letter-spacing:
+        -5px;
+}
+
+
+#mdg-gallery .mdgg-hero h1 span {
+    display: block;
+}
+
+
+#mdg-gallery .mdgg-hero-copy > p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        0;
+
+
+    color:
+        #4e4c52;
+
+
+    font-size:
+        19px;
+
+    line-height:
+        1.65;
+}
+
+
+#mdg-gallery .mdgg-actions {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        12px;
+
+
+    margin-top:
+        40px;
+}
+
+
+
+/* HERO RIGHT */
+
+#mdg-gallery .mdgg-hero-stat {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        flex-end;
+
+
+    padding:
+        48px;
+
+
+    background:
+        var(--dark);
+
+    color:
+        #fff;
+}
+
+
+#mdg-gallery .mdgg-hero-stat > span {
+
+    margin-bottom:
+        23px;
+
+
+    color:
+        #f4bd42;
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        2px;
+}
+
+
+#mdg-gallery .mdgg-hero-stat strong {
+
+    font-size:
+        clamp(
+            48px,
+            5vw,
+            72px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .92;
+
+    letter-spacing:
+        -3px;
+}
+
+
+#mdg-gallery .mdgg-hero-stat p {
+
+    margin:
+        30px 0 0;
+
+
+    color:
+        #c2c0c7;
+
+
+    font-size:
+        15px;
+
+    line-height:
+        1.65;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#mdg-gallery .mdgg-btn {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+
+    min-height:
+        52px;
+
+
+    padding:
+        0 22px;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        14px;
+
+    font-weight:
+        850;
+
+
+    text-decoration:
+        none;
+}
+
+
+#mdg-gallery .mdgg-btn-primary {
+
+    background:
+        var(--red);
+
+    color:
+        #fff;
+
+
+    box-shadow:
+        0 12px 28px
+        rgba(207,87,68,.22);
+}
+
+
+#mdg-gallery .mdgg-btn-secondary {
+
+    background:
+        #fff;
+
+    color:
+        var(--dark);
+
+
+    border:
+        1px solid var(--border);
+}
+
+
+#mdg-gallery .mdgg-btn-light {
+
+    background:
+        #fff;
+
+    color:
+        var(--dark);
+}
+
+
+
+/* ============================================================
+   GALLERY SECTION
+   ============================================================ */
+
+#mdg-gallery .mdgg-gallery-section {
+
+    padding:
+        95px 0;
+
+
+    background:
+        #ede7da;
+}
+
+
+#mdg-gallery .mdgg-section-heading {
+
+    max-width:
+        690px;
+
+
+    margin-bottom:
+        45px;
+}
+
+
+#mdg-gallery .mdgg-section-heading > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        11px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.7px;
+}
+
+
+#mdg-gallery .mdgg-section-heading h2 {
+
+    margin:
+        0;
+
+
+    font-size:
+        clamp(
+            45px,
+            5vw,
+            68px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .96;
+
+    letter-spacing:
+        -3px;
+}
+
+
+#mdg-gallery .mdgg-section-heading p {
+
+    margin:
+        17px 0 0;
+
+
+    color:
+        var(--muted);
+}
+
+
+
+/* ============================================================
+   PHOTO GRID
+   ============================================================ */
+
+#mdg-gallery .mdgg-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0,1fr)
+        );
+
+
+    grid-auto-flow:
+        dense;
+
+
+    gap:
+        14px;
+}
+
+
+#mdg-gallery .mdgg-photo {
+
+    position:
+        relative;
+
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+
+    aspect-ratio:
+        4 / 3;
+
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+
+    overflow:
+        hidden;
+
+
+    background:
+        #111;
+
+
+    border:
+        0;
+
+    border-radius:
+        20px;
+
+
+    cursor:
+        pointer;
+}
+
+
+#mdg-gallery .mdgg-photo-large {
+
+    grid-column:
+        span 2;
+
+    grid-row:
+        span 2;
+
+
+    aspect-ratio:
+        auto;
+
+    min-height:
+        600px;
+}
+
+
+#mdg-gallery .mdgg-photo img {
+
+    display:
+        block;
+
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+
+    object-fit:
+        cover;
+
+
+    transition:
+        transform .35s ease;
+}
+
+
+#mdg-gallery .mdgg-photo:hover img {
+
+    transform:
+        scale(1.025);
+}
+
+
+#mdg-gallery .mdgg-photo-overlay {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        flex-end;
+
+
+    padding:
+        25px;
+
+
+    background:
+
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.72),
+            transparent 48%
+        );
+
+
+    color:
+        #fff;
+
+
+    opacity:
+        0;
+
+
+    transition:
+        opacity .25s ease;
+}
+
+
+#mdg-gallery .mdgg-photo:hover
+.mdgg-photo-overlay {
+
+    opacity:
+        1;
+}
+
+
+#mdg-gallery .mdgg-photo-overlay small {
+
+    margin-bottom:
+        5px;
+
+
+    font-size:
+        9px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.4px;
+}
+
+
+#mdg-gallery .mdgg-photo-overlay strong {
+
+    font-size:
+        19px;
+}
+
+
+
+/* ============================================================
+   EXPERIENCE
+   ============================================================ */
+
+#mdg-gallery .mdgg-experience {
+
+    padding:
+        100px 0;
+}
+
+
+#mdg-gallery .mdgg-experience-panel {
+
+    padding:
+        52px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-gallery .mdgg-experience-panel > div:first-child {
+
+    max-width:
+        750px;
+}
+
+
+#mdg-gallery .mdgg-experience-panel > div:first-child > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        12px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        11px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.5px;
+}
+
+
+#mdg-gallery .mdgg-experience h2 {
+
+    margin:
+        0;
+
+
+    font-size:
+        clamp(
+            44px,
+            5vw,
+            67px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .96;
+
+    letter-spacing:
+        -3px;
+}
+
+
+#mdg-gallery .mdgg-experience-panel > div:first-child p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        16px;
+
+    line-height:
+        1.65;
+}
+
+
+#mdg-gallery .mdgg-experience-items {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+
+    gap:
+        12px;
+
+
+    margin-top:
+        40px;
+}
+
+
+#mdg-gallery .mdgg-experience-items article {
+
+    padding:
+        24px;
+
+
+    background:
+        var(--bg);
+
+
+    border-radius:
+        17px;
+}
+
+
+#mdg-gallery .mdgg-experience-items strong,
+#mdg-gallery .mdgg-experience-items span {
+
+    display:
+        block;
+}
+
+
+#mdg-gallery .mdgg-experience-items strong {
+
+    margin-bottom:
+        7px;
+}
+
+
+#mdg-gallery .mdgg-experience-items span {
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        12px;
+}
+
+
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+#mdg-gallery .mdgg-cta {
+
+    padding:
+        0 0 100px;
+}
+
+
+#mdg-gallery .mdgg-cta-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        50px;
+
+
+    padding:
+        52px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+#mdg-gallery .mdgg-cta-panel > div:first-child {
+
+    max-width:
+        660px;
+}
+
+
+#mdg-gallery .mdgg-cta-panel > div:first-child > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        12px;
+
+
+    color:
+        #f4bd42;
+
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.5px;
+}
+
+
+#mdg-gallery .mdgg-cta h2 {
+
+    margin:
+        0;
+
+
+    color:
+        #fff;
+
+
+    font-size:
+        clamp(
+            44px,
+            5vw,
+            66px
+        );
+
+
+    font-weight:
+        500;
+
+    line-height:
+        .96;
+
+    letter-spacing:
+        -3px;
+}
+
+
+#mdg-gallery .mdgg-cta p {
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        #c4c2c8;
+
+
+    font-size:
+        15px;
+
+    line-height:
+        1.6;
+}
+
+
+#mdg-gallery .mdgg-cta-actions {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+
+    min-width:
+        270px;
+
+
+    gap:
+        11px;
+}
+
+
+
+/* ============================================================
+   LIGHTBOX
+   ============================================================ */
+
+#mdg-gallery .mdgg-lightbox {
+
+    position:
+        fixed;
+
+
+    z-index:
+        999999;
+
+
+    inset:
+        0;
+
+
+    display:
+        none;
+
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+
+    padding:
+        30px;
+
+
+    background:
+        rgba(0,0,0,.94);
+}
+
+
+#mdg-gallery .mdgg-lightbox.is-open {
+
+    display:
+        flex;
+}
+
+
+#mdg-gallery .mdgg-lightbox img {
+
+    display:
+        block;
+
+
+    max-width:
+        min(
+            1200px,
+            94vw
+        );
+
+
+    max-height:
+        88vh;
+
+
+    width:
+        auto;
+
+    height:
+        auto;
+
+
+    object-fit:
+        contain;
+
+
+    border-radius:
+        14px;
+}
+
+
+#mdg-gallery .mdgg-lightbox-close {
+
+    position:
+        fixed;
+
+
+    top:
+        22px;
+
+    right:
+        26px;
+
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+
+    width:
+        48px;
+
+    height:
+        48px;
+
+
+    padding:
+        0;
+
+
+    background:
+        #fff;
+
+
+    color:
+        #111;
+
+
+    border:
+        0;
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        34px;
+
+    line-height:
+        1;
+
+
+    cursor:
+        pointer;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+
+    #mdg-gallery .mdgg-hero-panel {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #mdg-gallery .mdgg-hero-stat {
+
+        min-height:
+            340px;
+    }
+
+
+    #mdg-gallery .mdgg-grid {
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+
+    #mdg-gallery .mdgg-experience-items {
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+
+    #mdg-gallery .mdgg-cta-panel {
+
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+    }
+
+
+    #mdg-gallery .mdgg-cta-actions {
+
+        width:
+            100%;
+    }
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+
+    body.mdg-gallery-page {
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+    #mdg-gallery {
+
+        width:
+            100vw !important;
+
+        max-width:
+            100vw !important;
+
+
+        background:
+            #f6f2e8 !important;
+    }
+
+
+    #mdg-gallery .mdgg-wrap {
+
+        width:
+            calc(100% - 32px);
+    }
+
+
+
+    /* HERO */
+
+    #mdg-gallery .mdgg-hero {
+
+        padding:
+            36px 0 60px;
+    }
+
+
+    #mdg-gallery .mdgg-hero-copy {
+
+        padding:
+            31px 26px;
+    }
+
+
+    #mdg-gallery .mdgg-hero h1 {
+
+        margin-top:
+            36px;
+
+
+        font-size:
+            54px;
+
+        line-height:
+            .92;
+
+        letter-spacing:
+            -3px;
+    }
+
+
+    #mdg-gallery .mdgg-hero-copy > p {
+
+        font-size:
+            17px;
+    }
+
+
+    #mdg-gallery .mdgg-actions {
+
+        display:
+            grid;
+
+        width:
+            100%;
+    }
+
+
+    #mdg-gallery .mdgg-btn {
+
+        width:
+            100%;
+    }
+
+
+    #mdg-gallery .mdgg-hero-stat {
+
+        min-height:
+            380px;
+
+
+        padding:
+            30px 25px;
+    }
+
+
+
+    /* GALLERY */
+
+    #mdg-gallery .mdgg-gallery-section {
+
+        padding:
+            70px 0;
+    }
+
+
+    #mdg-gallery .mdgg-section-heading h2,
+    #mdg-gallery .mdgg-experience h2,
+    #mdg-gallery .mdgg-cta h2 {
+
+        font-size:
+            43px;
+
+        line-height:
+            1;
+    }
+
+
+    #mdg-gallery .mdgg-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+
+
+        gap:
+            8px;
+    }
+
+
+    #mdg-gallery .mdgg-photo {
+
+        aspect-ratio:
+            1 / 1.15;
+
+
+        border-radius:
+            13px;
+    }
+
+
+    #mdg-gallery .mdgg-photo-large {
+
+        grid-column:
+            span 2;
+
+
+        min-height:
+            330px;
+
+
+        aspect-ratio:
+            4 / 3;
+    }
+
+
+    #mdg-gallery .mdgg-photo-overlay {
+
+        display:
+            none;
+    }
+
+
+
+    /* EXPERIENCE */
+
+    #mdg-gallery .mdgg-experience {
+
+        padding:
+            70px 0;
+    }
+
+
+    #mdg-gallery .mdgg-experience-panel {
+
+        padding:
+            30px 25px;
+    }
+
+
+    #mdg-gallery .mdgg-experience-items {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+
+    /* CTA */
+
+    #mdg-gallery .mdgg-cta {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #mdg-gallery .mdgg-cta-panel {
+
+        padding:
+            30px 25px;
+    }
+
+
+    #mdg-gallery .mdgg-cta-actions {
+
+        min-width:
+            0;
+    }
+
+}
+
+</style>
+
+        <?php
+    },
+    9999
+);
+
+
+/* ============================================================
+   7. LIGHTBOX JS
+   ============================================================ */
+
+add_action(
+    'wp_footer',
+    function () {
+
+        if ( ! mdg_is_gallery_page_v1() ) {
+            return;
+        }
+
+        ?>
+
+<script id="mdg-gallery-lightbox-v1">
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const gallery =
+            document.getElementById(
+                'mdg-gallery'
+            );
+
+        if ( ! gallery ) {
+            return;
+        }
+
+
+        const lightbox =
+            document.getElementById(
+                'mdgg-lightbox'
+            );
+
+
+        if ( ! lightbox ) {
+            return;
+        }
+
+
+        const lightboxImage =
+            lightbox.querySelector('img');
+
+
+        const closeButton =
+            lightbox.querySelector(
+                '.mdgg-lightbox-close'
+            );
+
+
+        const photos =
+            gallery.querySelectorAll(
+                '[data-mdgg-image]'
+            );
+
+
+        function openLightbox( src, alt ) {
+
+            lightboxImage.src =
+                src;
+
+            lightboxImage.alt =
+                alt || 'Madagaskar Sirki Galeri';
+
+
+            lightbox.classList.add(
+                'is-open'
+            );
+
+
+            lightbox.setAttribute(
+                'aria-hidden',
+                'false'
+            );
+
+
+            document.documentElement.style.overflow =
+                'hidden';
+        }
+
+
+        function closeLightbox() {
+
+            lightbox.classList.remove(
+                'is-open'
+            );
+
+
+            lightbox.setAttribute(
+                'aria-hidden',
+                'true'
+            );
+
+
+            lightboxImage.src =
+                '';
+
+
+            document.documentElement.style.overflow =
+                '';
+        }
+
+
+        photos.forEach(
+            function ( photo ) {
+
+                photo.addEventListener(
+                    'click',
+                    function () {
+
+                        openLightbox(
+                            photo.dataset.mdggImage,
+                            photo.getAttribute(
+                                'aria-label'
+                            )
+                        );
+                    }
+                );
+            }
+        );
+
+
+        closeButton.addEventListener(
+            'click',
+            closeLightbox
+        );
+
+
+        lightbox.addEventListener(
+            'click',
+            function ( event ) {
+
+                if (
+                    event.target === lightbox
+                ) {
+                    closeLightbox();
+                }
+            }
+        );
+
+
+        document.addEventListener(
+            'keydown',
+            function ( event ) {
+
+                if (
+                    event.key === 'Escape' &&
+                    lightbox.classList.contains(
+                        'is-open'
+                    )
+                ) {
+                    closeLightbox();
+                }
+            }
+        );
+
+    }
+);
+
+</script>
+
+        <?php
+    },
+    9999
+);

@@ -1,0 +1,3779 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — SSS SAYFASI V3
+ * ============================================================
+ *
+ * Desteklenen sayfalar:
+ * /sss/
+ * /sik-sorulan-sorular/
+ * /sik-sorulan-sorular-2/
+ *
+ * Sabit bilgiler:
+ * - Gösteri süresi: yaklaşık 55–60 dakika
+ * - 0–2 yaş: ücretsiz
+ * - 3–12 yaş: çocuk bileti
+ * - 13+ yaş: yetişkin bileti
+ *
+ * WhatsApp:
+ * +90 312 911 37 10
+ * https://wa.me/903129113710
+ *
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   1. SSS SAYFASI KONTROLÜ
+   ============================================================ */
+
+function ms_sss_v3_is_page() {
+
+    return is_page(
+        array(
+            'sss',
+            'sik-sorulan-sorular',
+            'sik-sorulan-sorular-2'
+        )
+    );
+}
+
+
+/* ============================================================
+   2. SSS VERİLERİ
+   ============================================================ */
+
+function ms_sss_v3_data() {
+
+    return array(
+
+        /* ----------------------------------------------------
+           GÖSTERİ
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Madagaskar Sirki nedir?',
+            'answer'   => 'Madagaskar Sirki, dünyanın farklı ülkelerinden gelen profesyonel sanatçıların yer aldığı, hayvan kullanılmayan modern ve aile dostu bir sahne gösterisidir.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Gösterilerde hayvan kullanılıyor mu?',
+            'answer'   => 'Hayır. Madagaskar Sirki tamamen hayvansız modern sirk anlayışıyla gösteriler düzenlemektedir. Gösterinin merkezinde insan yeteneği ve canlı sahne performansı bulunur.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Madagaskar Sirki gösterileri ne kadar sürüyor?',
+            'answer'   => 'Madagaskar Sirki gösterileri yaklaşık 55–60 dakika sürmektedir.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Gösteri çocuklar için uygun mu?',
+            'answer'   => 'Evet. Gösteriler aile dostu olacak şekilde hazırlanır ve çocuklar ile yetişkinlerin birlikte keyifle izleyebileceği bir program sunar.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Yetişkinler de gösteriden keyif alabilir mi?',
+            'answer'   => 'Evet. Madagaskar Sirki yalnızca çocuklara yönelik değildir. Akrobasi, denge, hız, komedi ve görsel sahne performansları her yaştan izleyiciye hitap eder.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Gösteriler canlı mı?',
+            'answer'   => 'Evet. Gösteriler profesyonel sanatçılar tarafından sahnede canlı olarak gerçekleştirilir.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Programda hangi gösteriler bulunuyor?',
+            'answer'   => 'Programda akrobasi, ikili paten, bisiklet gösterileri, Hula Hoop, palyaço, Icarian Show, kostümlü gösteriler ve farklı sahne disiplinleri yer alabilir. Program dönemsel olarak değişebilir.'
+        ),
+
+        array(
+            'category' => 'gosteri',
+            'label'    => 'Gösteri',
+            'question' => 'Sanatçılar hangi ülkelerden geliyor?',
+            'answer'   => 'Madagaskar Sirki farklı ülkelerden gelen profesyonel sanatçılarla çalışmaktadır. Sanatçı kadrosu sezona ve programa göre değişebilir.'
+        ),
+
+
+        /* ----------------------------------------------------
+           ÇOCUK / YAŞ
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'yas',
+            'label'    => 'Çocuk & Yaş',
+            'question' => '0–2 yaş çocuklar ücretli mi?',
+            'answer'   => 'Hayır. 0–2 yaş çocuklar için bilet ücreti alınmaz.'
+        ),
+
+        array(
+            'category' => 'yas',
+            'label'    => 'Çocuk & Yaş',
+            'question' => 'Çocuk bileti hangi yaşlar için geçerli?',
+            'answer'   => '3–12 yaş arasındaki ziyaretçiler için çocuk bileti uygulanır.'
+        ),
+
+        array(
+            'category' => 'yas',
+            'label'    => 'Çocuk & Yaş',
+            'question' => '13 yaşındaki ziyaretçi hangi bileti almalı?',
+            'answer'   => '13 yaş ve üzerindeki ziyaretçiler için yetişkin bileti alınmalıdır.'
+        ),
+
+        array(
+            'category' => 'yas',
+            'label'    => 'Çocuk & Yaş',
+            'question' => 'Çocuğum palyaçodan veya gösteriden korkabilir mi?',
+            'answer'   => 'Her çocuğun hassasiyeti farklıdır. Gösteriler aile dostu olarak hazırlanır; ancak çocuğunuzun kişisel hassasiyetini en iyi siz değerlendirebilirsiniz.'
+        ),
+
+
+        /* ----------------------------------------------------
+           BİLET
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Bileti nereden satın alabilirim?',
+            'answer'   => 'Biletlerinizi Madagaskar Sirki web sitesindeki Şehirler bölümünden ilgili etkinliği ve seansı seçerek resmi satış ekranından satın alabilirsiniz.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Bilet fiyatları ne kadar?',
+            'answer'   => 'Bilet fiyatları şehir, tarih, seans, bilet türü ve kampanyalara göre değişebilir. Güncel fiyat ilgili etkinliğin bilet seçim ekranında gösterilir.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'İndirim veya kampanya var mı?',
+            'answer'   => 'Kampanyalar dönemsel olarak değişebilir. Geçerli indirim veya kampanya varsa ilgili etkinliğin güncel bilet ekranında gösterilir.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Aile paketi var mı?',
+            'answer'   => 'Aile paketi veya özel bilet seçenekleri etkinliğe göre değişebilir. Aktif bir seçenek varsa bilet seçim ekranında görüntülenir.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Bilet kalıp kalmadığını nasıl öğrenebilirim?',
+            'answer'   => 'Kontenjan anlık olarak değişebilir. Güncel bilet uygunluğunu ilgili şehir ve seansın bilet ekranından kontrol edebilirsiniz.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'WhatsApp üzerinden bilet satın alabilir miyim?',
+            'answer'   => 'WhatsApp üzerinden bilgi ve doğru bilet bağlantısı sağlanabilir. Satın alma işlemi resmi online satış ekranından tamamlanır.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Gişeden bilet satın alabilir miyim?',
+            'answer'   => 'Gişe satışı etkinliğe ve salona göre değişebilir. Gişe satışıyla ilgili yalnızca ilgili etkinlik için yayınlanan güncel bilgi geçerlidir.'
+        ),
+
+        array(
+            'category' => 'bilet',
+            'label'    => 'Bilet',
+            'question' => 'Koltuklar numaralı mı?',
+            'answer'   => 'Oturma düzeni etkinliğin yapıldığı salona göre değişebilir. Güncel oturma düzeni bilgisi ilgili etkinlik sayfasında belirtilir.'
+        ),
+
+
+        /* ----------------------------------------------------
+           ŞEHİR / SALON / SEANS
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Madagaskar Sirki hangi şehirlerde gösteri yapıyor?',
+            'answer'   => 'Turne takvimi dönemsel olarak güncellenir. Güncel şehir ve tarihleri Şehirler sayfasından görebilirsiniz.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Gösteri saatlerini nereden öğrenebilirim?',
+            'answer'   => 'Gösteri saatleri şehir ve tarihe göre değişir. Güncel seans saatleri ilgili etkinlik sayfasında yayınlanır.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Salon adresini nereden öğrenebilirim?',
+            'answer'   => 'Salon adı ve güncel adres bilgileri ilgili şehir veya etkinlik sayfasında gösterilir.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Salona ne kadar erken gelmeliyim?',
+            'answer'   => 'Genel olarak gösteri başlamadan yaklaşık 20–30 dakika önce salonda olmanızı öneriyoruz. Etkinliğe özel farklı bir giriş bilgisi varsa o bilgi geçerlidir.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Gösteriye geç kalırsam içeri girebilir miyim?',
+            'answer'   => 'Geç giriş uygulaması salon ve etkinlik kurallarına göre değişebilir. Bu nedenle gösteri başlamadan önce salonda olmanızı öneriyoruz.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Otopark var mı?',
+            'answer'   => 'Otopark imkânı etkinliğin gerçekleştirildiği salona göre değişir. Güncel salon bilgilerini kontrol etmenizi öneriyoruz.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Engelli ziyaretçiler için erişim uygun mu?',
+            'answer'   => 'Erişilebilirlik salonun fiziki özelliklerine göre değişebilir. İlgili etkinlik veya salon bilgisini kontrol edebilir ya da destek hattımıza yazabilirsiniz.'
+        ),
+
+        array(
+            'category' => 'seans',
+            'label'    => 'Şehir & Seans',
+            'question' => 'Fotoğraf veya video çekebilir miyim?',
+            'answer'   => 'Fotoğraf ve video kuralları salon ve etkinliğe göre değişebilir. Gösteri öncesinde yapılan duyurular ve salon görevlilerinin yönlendirmeleri geçerlidir.'
+        ),
+
+
+        /* ----------------------------------------------------
+           BİLET DESTEĞİ
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'Biletim e-postama gelmedi. Ne yapmalıyım?',
+            'answer'   => 'Siparişiniz oluştuğu halde bilete ulaşamıyorsanız WhatsApp bilet destek hattımızdan bize ulaşabilirsiniz. Mümkünse sipariş numaranızı mesajınıza ekleyin.'
+        ),
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'Ödeme yaptım ama bilet görünmüyor.',
+            'answer'   => 'Ödemeyi tekrar yapmayın. Sipariş durumunun kontrol edilmesi için WhatsApp bilet destek hattımıza yazın. Kart numarası veya CVV gibi özel banka bilgilerinizi paylaşmayın.'
+        ),
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'QR kodum açılmıyor veya okunmuyor.',
+            'answer'   => 'QR kod veya dijital biletinizle ilgili sorun varsa bilet kaydının kontrol edilmesi gerekir. WhatsApp destek hattımızdan bize ulaşabilirsiniz.'
+        ),
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'Yanlış şehir, tarih veya seans için bilet aldım.',
+            'answer'   => 'Değişim veya iade imkânı ilgili etkinliğin ve satın alma işleminin koşullarına göre değerlendirilir. Siparişinizin incelenmesi için destek ekibimize ulaşın.'
+        ),
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'Gösteriye gelemeyeceğim. İade alabilir miyim?',
+            'answer'   => 'İade ve değişim koşulları ilgili etkinliğin ve satın alma işleminin şartlarına göre değerlendirilir. Kesin işlem sözü verilmeden önce sipariş kaydının kontrol edilmesi gerekir.'
+        ),
+
+        array(
+            'category' => 'destek',
+            'label'    => 'Bilet Desteği',
+            'question' => 'Gösteri iptal veya ertelenirse ne olur?',
+            'answer'   => 'İptal veya erteleme durumunda resmi ve güncel etkinlik bilgileri esas alınır. Doğrulanmış değişiklik olması halinde ilgili süreç ziyaretçilere duyurulur.'
+        ),
+
+
+        /* ----------------------------------------------------
+           KURUMSAL
+           ---------------------------------------------------- */
+
+        array(
+            'category' => 'kurumsal',
+            'label'    => 'Kurumsal',
+            'question' => 'Okullar için özel gösteri düzenliyor musunuz?',
+            'answer'   => 'Evet. Okullara yönelik özel gösteri ve organizasyon talepleri değerlendirilebilmektedir.'
+        ),
+
+        array(
+            'category' => 'kurumsal',
+            'label'    => 'Kurumsal',
+            'question' => 'Belediye, AVM veya festival etkinliği yapıyor musunuz?',
+            'answer'   => 'Evet. Belediyeler, alışveriş merkezleri, festivaller ve farklı kurumlar için özel gösteri organizasyonları planlanabilir.'
+        ),
+
+        array(
+            'category' => 'kurumsal',
+            'label'    => 'Kurumsal',
+            'question' => 'Toplu veya okul grubu bileti alabilir miyiz?',
+            'answer'   => 'Grup ve okul talepleri özel olarak değerlendirilebilir. Güncel şartlar ve varsa özel uygulamalar talep üzerine belirlenir.'
+        ),
+
+        array(
+            'category' => 'kurumsal',
+            'label'    => 'Kurumsal',
+            'question' => 'Kurumsal gösteri fiyatı nasıl belirleniyor?',
+            'answer'   => 'Kurumsal fiyat; şehir, tarih, etkinlik kapsamı, mekân, teknik ihtiyaçlar, seyahat ve program yapısı gibi unsurlar dikkate alınarak teklif aşamasında belirlenir.'
+        ),
+
+        array(
+            'category' => 'kurumsal',
+            'label'    => 'Kurumsal',
+            'question' => 'Kurumsal teklif almak için hangi bilgileri paylaşmalıyım?',
+            'answer'   => 'Kurum adı, etkinlik şehri, etkinlik tarihi, etkinlik türü ve yaklaşık katılımcı sayısını paylaşmanız başlangıç için yeterlidir.'
+        ),
+
+    );
+}
+
+
+/* ============================================================
+   3. BODY CLASS
+   ============================================================ */
+
+add_filter(
+    'body_class',
+    function ( $classes ) {
+
+        if ( ms_sss_v3_is_page() ) {
+            $classes[] = 'ms-sss-v3-page';
+        }
+
+        return $classes;
+    }
+);
+
+
+/* ============================================================
+   4. SAYFA HTML
+   ============================================================ */
+
+function ms_sss_v3_render() {
+
+    $faqs = ms_sss_v3_data();
+
+    $cities_url =
+        home_url( '/sehirler/' );
+
+    $shows_url =
+        home_url( '/gosteriler/' );
+
+    $corporate_url =
+        home_url( '/kurumsal/' );
+
+    $contact_url =
+        home_url( '/iletisim/' );
+
+    $whatsapp_url =
+        'https://wa.me/903129113710?text=' .
+        rawurlencode(
+            'Merhaba, Madagaskar Sirki hakkında bilgi almak istiyorum.'
+        );
+
+    ob_start();
+    ?>
+
+<main id="ms-sss-v3">
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="mss-hero">
+
+        <div class="mss-wrap">
+
+            <div class="mss-hero-grid">
+
+
+                <div class="mss-hero-copy">
+
+
+                    <span class="mss-kicker">
+                        MADAGASKAR SİRKİ · SIK SORULAN SORULAR
+                    </span>
+
+
+                    <h1>
+                        Aklınızdaki
+                        <br>
+                        soruların cevapları.
+                    </h1>
+
+
+                    <p class="mss-lead">
+                        Gösteri, çocuk biletleri, şehirler,
+                        seanslar ve bilet işlemleri hakkında
+                        en çok merak edilen bilgileri burada
+                        bulabilirsiniz.
+                    </p>
+
+
+                    <div class="mss-actions">
+
+
+                        <a
+                            href="<?php echo esc_url( $cities_url ); ?>"
+                            class="mss-btn mss-btn-red"
+                        >
+                            Şehirleri ve Biletleri Gör
+                        </a>
+
+
+                        <a
+                            href="<?php echo esc_url( $shows_url ); ?>"
+                            class="mss-btn mss-btn-white"
+                        >
+                            Gösterileri Keşfet
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="mss-hero-info">
+
+
+                    <span class="mss-info-label">
+                        HIZLI BİLGİ
+                    </span>
+
+
+                    <strong class="mss-duration">
+                        55–60
+                    </strong>
+
+
+                    <b class="mss-duration-label">
+                        dakika
+                    </b>
+
+
+                    <p>
+                        Yaklaşık gösteri süresi
+                    </p>
+
+
+                    <div class="mss-age-grid">
+
+
+                        <div>
+                            <strong>0–2</strong>
+                            <span>Ücretsiz</span>
+                        </div>
+
+
+                        <div>
+                            <strong>3–12</strong>
+                            <span>Çocuk</span>
+                        </div>
+
+
+                        <div>
+                            <strong>13+</strong>
+                            <span>Yetişkin</span>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         BİLGİ BANDI
+         ===================================================== -->
+
+    <section class="mss-trust">
+
+        <div class="mss-wrap">
+
+            <div class="mss-trust-grid">
+
+
+                <div>
+                    <strong>55–60 Dakika</strong>
+                    <span>Yaklaşık gösteri süresi</span>
+                </div>
+
+
+                <div>
+                    <strong>Hayvansız</strong>
+                    <span>Modern sirk deneyimi</span>
+                </div>
+
+
+                <div>
+                    <strong>Aile Dostu</strong>
+                    <span>Çocuklar ve yetişkinler</span>
+                </div>
+
+
+                <div>
+                    <strong>Canlı Gösteri</strong>
+                    <span>Profesyonel sanatçılar</span>
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         FAQ
+         ===================================================== -->
+
+    <section class="mss-faq-section">
+
+        <div class="mss-wrap">
+
+
+            <header class="mss-heading">
+
+
+                <span>
+                    MERAK ETTİKLERİNİZ
+                </span>
+
+
+                <h2>
+                    Sık sorulan sorular
+                </h2>
+
+
+                <p>
+                    Sorunuzu arayın veya ilgili kategoriyi seçin.
+                </p>
+
+
+            </header>
+
+
+            <!-- SEARCH -->
+
+            <div class="mss-search">
+
+                <span>⌕</span>
+
+                <input
+                    id="mss-search-input"
+                    type="search"
+                    placeholder="Örneğin: çocuk bileti, seans, iade..."
+                    autocomplete="off"
+                    aria-label="Sık sorulan sorularda ara"
+                >
+
+            </div>
+
+
+            <!-- FILTERS -->
+
+            <div class="mss-filters">
+
+
+                <button
+                    type="button"
+                    class="active"
+                    data-filter="all"
+                >
+                    Tümü
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="gosteri"
+                >
+                    Gösteri
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="yas"
+                >
+                    Çocuk & Yaş
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="bilet"
+                >
+                    Bilet
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="seans"
+                >
+                    Şehir & Seans
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="destek"
+                >
+                    Bilet Desteği
+                </button>
+
+
+                <button
+                    type="button"
+                    data-filter="kurumsal"
+                >
+                    Kurumsal
+                </button>
+
+
+            </div>
+
+
+            <div class="mss-faq-layout">
+
+
+                <!-- SIDEBAR -->
+
+                <aside class="mss-sidebar">
+
+
+                    <div class="mss-whatsapp-card">
+
+
+                        <small>
+                            WHATSAPP DESTEK
+                        </small>
+
+
+                        <h3>
+                            Cevabınızı
+                            bulamadınız mı?
+                        </h3>
+
+
+                        <p>
+                            Bilet veya etkinlikle ilgili
+                            destek almak için bize yazın.
+                        </p>
+
+
+                        <strong>
+                            +90 312 911 37 10
+                        </strong>
+
+
+                        <a
+                            href="<?php echo esc_url( $whatsapp_url ); ?>"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            WhatsApp'tan Yaz
+                        </a>
+
+
+                    </div>
+
+
+                    <div class="mss-warning-card">
+
+
+                        <small>
+                            GÜNCEL BİLGİ
+                        </small>
+
+
+                        <h3>
+                            Şehir, fiyat ve seanslar değişebilir.
+                        </h3>
+
+
+                        <p>
+                            Güncel etkinlik bilgileri için
+                            ilgili şehir ve bilet sayfasındaki
+                            bilgileri esas alın.
+                        </p>
+
+
+                        <a href="<?php echo esc_url( $cities_url ); ?>">
+                            Turne Takvimini Gör →
+                        </a>
+
+
+                    </div>
+
+
+                </aside>
+
+
+                <!-- QUESTIONS -->
+
+                <div class="mss-list">
+
+
+                    <?php foreach ( $faqs as $index => $faq ) : ?>
+
+                        <?php
+
+                        $search =
+                            $faq['question'] . ' ' .
+                            $faq['answer'] . ' ' .
+                            $faq['label'];
+
+                        ?>
+
+
+                        <article
+                            class="mss-item"
+                            data-category="<?php echo esc_attr( $faq['category'] ); ?>"
+                            data-search="<?php echo esc_attr( mb_strtolower( $search, 'UTF-8' ) ); ?>"
+                        >
+
+
+                            <button
+                                type="button"
+                                class="mss-question"
+                                aria-expanded="false"
+                                aria-controls="mss-answer-<?php echo esc_attr( $index ); ?>"
+                            >
+
+
+                                <span>
+
+
+                                    <small>
+                                        <?php echo esc_html( $faq['label'] ); ?>
+                                    </small>
+
+
+                                    <strong>
+                                        <?php echo esc_html( $faq['question'] ); ?>
+                                    </strong>
+
+
+                                </span>
+
+
+                                <b class="mss-plus">
+                                    +
+                                </b>
+
+
+                            </button>
+
+
+                            <div
+                                class="mss-answer"
+                                id="mss-answer-<?php echo esc_attr( $index ); ?>"
+                            >
+
+                                <div>
+
+                                    <p>
+                                        <?php echo esc_html( $faq['answer'] ); ?>
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                        </article>
+
+
+                    <?php endforeach; ?>
+
+
+                    <div
+                        id="mss-no-results"
+                        class="mss-no-results"
+                        hidden
+                    >
+
+                        <strong>
+                            Sonuç bulunamadı.
+                        </strong>
+
+                        <p>
+                            Farklı bir kelime deneyin veya
+                            WhatsApp destek hattımıza yazın.
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         DİNAMİK BİLGİ
+         ===================================================== -->
+
+    <section class="mss-dynamic">
+
+        <div class="mss-wrap">
+
+            <div class="mss-dynamic-panel">
+
+
+                <div class="mss-dynamic-copy">
+
+
+                    <span>
+                        BİLET BİLGİLERİ
+                    </span>
+
+
+                    <h2>
+                        Güncel etkinlik kaydı
+                        her zaman önceliklidir.
+                    </h2>
+
+
+                    <p>
+                        Fiyat, şehir, salon, seans, kampanya,
+                        kontenjan, oturma düzeni ve mekân
+                        uygulamaları etkinliğe göre değişebilir.
+                    </p>
+
+
+                </div>
+
+
+                <div class="mss-dynamic-grid">
+
+
+                    <div>
+                        <strong>Fiyat</strong>
+                        <span>Etkinliğe göre</span>
+                    </div>
+
+
+                    <div>
+                        <strong>Seans</strong>
+                        <span>Tarih ve şehre göre</span>
+                    </div>
+
+
+                    <div>
+                        <strong>Kontenjan</strong>
+                        <span>Anlık değişebilir</span>
+                    </div>
+
+
+                    <div>
+                        <strong>Salon</strong>
+                        <span>Şehre göre</span>
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         4 ADIM
+         ===================================================== -->
+
+    <section class="mss-steps">
+
+        <div class="mss-wrap">
+
+
+            <header class="mss-heading">
+
+
+                <span>
+                    BİLET İŞLEMLERİ
+                </span>
+
+
+                <h2>
+                    Dört adımda gösteriye.
+                </h2>
+
+
+            </header>
+
+
+            <div class="mss-step-grid">
+
+
+                <article>
+
+                    <b>01</b>
+
+                    <h3>Şehrini seç</h3>
+
+                    <p>
+                        Turne takviminden ilgilendiğiniz
+                        şehri ve gösteriyi bulun.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <b>02</b>
+
+                    <h3>Seansını seç</h3>
+
+                    <p>
+                        Size uygun tarih ve
+                        gösteri saatini belirleyin.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <b>03</b>
+
+                    <h3>Biletleri belirle</h3>
+
+                    <p>
+                        Çocuk ve yetişkin bilet
+                        adetlerini seçin.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <b>04</b>
+
+                    <h3>Ödemeyi tamamla</h3>
+
+                    <p>
+                        Resmî online ödeme ekranından
+                        işleminizi güvenle tamamlayın.
+                    </p>
+
+                </article>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         KURUMSAL
+         ===================================================== -->
+
+    <section class="mss-corporate">
+
+        <div class="mss-wrap">
+
+            <div class="mss-corporate-panel">
+
+
+                <div>
+
+                    <span>
+                        KURUMSAL ORGANİZASYONLAR
+                    </span>
+
+
+                    <h2>
+                        Okul, belediye,
+                        AVM veya festival?
+                    </h2>
+
+
+                    <p>
+                        Etkinliğinize özel Madagaskar Sirki
+                        gösteri seçeneklerini birlikte
+                        değerlendirebiliriz.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="<?php echo esc_url( $corporate_url ); ?>"
+                    class="mss-btn mss-btn-red"
+                >
+                    Kurumsal Etkinlikleri İncele
+                </a>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CTA
+         ===================================================== -->
+
+    <section class="mss-final">
+
+        <div class="mss-wrap">
+
+            <div class="mss-final-panel">
+
+
+                <div>
+
+
+                    <span>
+                        MADAGASKAR SİRKİ TÜRKİYE
+                    </span>
+
+
+                    <h2>
+                        Hâlâ sorunuz mu var?
+                    </h2>
+
+
+                    <p>
+                        Bilet, seans veya etkinlik hakkında
+                        destek almak için bize ulaşabilirsiniz.
+                    </p>
+
+
+                </div>
+
+
+                <div class="mss-final-buttons">
+
+
+                    <a
+                        href="<?php echo esc_url( $whatsapp_url ); ?>"
+                        target="_blank"
+                        rel="noopener"
+                        class="mss-btn mss-btn-green"
+                    >
+                        WhatsApp Bilet Desteği
+                    </a>
+
+
+                    <a
+                        href="<?php echo esc_url( $contact_url ); ?>"
+                        class="mss-btn mss-btn-white"
+                    >
+                        İletişim Bilgileri
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+/* ============================================================
+   5. ESKİ SAYFA İÇERİĞİNİ YENİSİYLE DEĞİŞTİR
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            is_admin() ||
+            ! ms_sss_v3_is_page() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+        return ms_sss_v3_render();
+
+    },
+    9999
+);
+
+
+/* ============================================================
+   6. FAQ SCHEMA
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! ms_sss_v3_is_page() ) {
+            return;
+        }
+
+        $faqs =
+            ms_sss_v3_data();
+
+        $questions =
+            array();
+
+
+        foreach ( $faqs as $faq ) {
+
+            $questions[] =
+                array(
+
+                    '@type' =>
+                        'Question',
+
+                    'name' =>
+                        wp_strip_all_tags(
+                            $faq['question']
+                        ),
+
+                    'acceptedAnswer' =>
+                        array(
+
+                            '@type' =>
+                                'Answer',
+
+                            'text' =>
+                                wp_strip_all_tags(
+                                    $faq['answer']
+                                ),
+                        ),
+                );
+        }
+
+
+        $schema =
+            array(
+
+                '@context' =>
+                    'https://schema.org',
+
+                '@type' =>
+                    'FAQPage',
+
+                'mainEntity' =>
+                    $questions,
+            );
+
+        ?>
+
+<script type="application/ld+json">
+<?php
+echo wp_json_encode(
+    $schema,
+    JSON_UNESCAPED_UNICODE |
+    JSON_UNESCAPED_SLASHES
+);
+?>
+</script>
+
+        <?php
+    },
+    20
+);
+
+
+/* ============================================================
+   7. CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! ms_sss_v3_is_page() ) {
+            return;
+        }
+
+        ?>
+
+<style id="ms-sss-v3-css">
+
+
+/* ============================================================
+   WORDPRESS RESET
+   ============================================================ */
+
+body.ms-sss-v3-page {
+
+    background:
+        #f6f2e8 !important;
+
+    overflow-x:
+        hidden !important;
+}
+
+
+body.ms-sss-v3-page .entry-title,
+body.ms-sss-v3-page .wp-block-post-title {
+
+    display:
+        none !important;
+}
+
+
+#ms-sss-v3,
+#ms-sss-v3 * {
+
+    box-sizing:
+        border-box !important;
+}
+
+
+#ms-sss-v3 {
+
+    --bg:
+        #f6f2e8;
+
+    --soft:
+        #ede7da;
+
+    --white:
+        #ffffff;
+
+    --dark:
+        #0d0d17;
+
+    --text:
+        #111118;
+
+    --muted:
+        #68666c;
+
+    --red:
+        #cf5744;
+
+    --yellow:
+        #f4bd42;
+
+    --green:
+        #69cf91;
+
+    --border:
+        #e3ddd1;
+
+
+    position:
+        relative;
+
+    left:
+        50%;
+
+    transform:
+        translateX(-50%);
+
+
+    width:
+        100vw !important;
+
+    max-width:
+        100vw !important;
+
+
+    margin:
+        0 !important;
+
+
+    background:
+        var(--bg);
+
+
+    color:
+        var(--text);
+
+
+    overflow:
+        hidden;
+}
+
+
+#ms-sss-v3 .mss-wrap {
+
+    width:
+        min(
+            1180px,
+            calc(100% - 48px)
+        ) !important;
+
+
+    margin:
+        0 auto !important;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#ms-sss-v3 .mss-hero {
+
+    padding:
+        70px 0 28px;
+}
+
+
+#ms-sss-v3 .mss-hero-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1.18fr .82fr;
+
+
+    min-height:
+        520px;
+
+
+    overflow:
+        hidden;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        28px;
+}
+
+
+#ms-sss-v3 .mss-hero-copy {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    justify-content:
+        center;
+
+
+    padding:
+        55px;
+}
+
+
+#ms-sss-v3 .mss-kicker {
+
+    display:
+        inline-flex;
+
+
+    align-self:
+        flex-start;
+
+
+    padding:
+        11px 17px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.2px;
+}
+
+
+#ms-sss-v3 h1 {
+
+    margin:
+        43px 0 25px !important;
+
+
+    font-size:
+        clamp(
+            55px,
+            6vw,
+            84px
+        ) !important;
+
+
+    font-weight:
+        500 !important;
+
+
+    line-height:
+        .91 !important;
+
+
+    letter-spacing:
+        -4px !important;
+}
+
+
+#ms-sss-v3 .mss-lead {
+
+    max-width:
+        620px;
+
+
+    margin:
+        0 !important;
+
+
+    color:
+        #535157;
+
+
+    font-size:
+        18px;
+
+
+    line-height:
+        1.65;
+}
+
+
+#ms-sss-v3 .mss-actions {
+
+    display:
+        flex;
+
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        11px;
+
+
+    margin-top:
+        38px;
+}
+
+
+
+/* HERO INFO */
+
+#ms-sss-v3 .mss-hero-info {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    justify-content:
+        center;
+
+
+    padding:
+        48px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+}
+
+
+#ms-sss-v3 .mss-info-label {
+
+    margin-bottom:
+        30px;
+
+
+    color:
+        var(--yellow);
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        2px;
+}
+
+
+#ms-sss-v3 .mss-duration {
+
+    display:
+        block;
+
+
+    font-size:
+        clamp(
+            70px,
+            7vw,
+            100px
+        );
+
+
+    font-weight:
+        500;
+
+
+    line-height:
+        .8;
+
+
+    letter-spacing:
+        -5px;
+}
+
+
+#ms-sss-v3 .mss-duration-label {
+
+    display:
+        block;
+
+
+    margin-top:
+        14px;
+
+
+    font-size:
+        25px;
+}
+
+
+#ms-sss-v3 .mss-hero-info > p {
+
+    margin:
+        7px 0 30px;
+
+
+    color:
+        #bbb9c0;
+}
+
+
+#ms-sss-v3 .mss-age-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+
+    gap:
+        7px;
+}
+
+
+#ms-sss-v3 .mss-age-grid > div {
+
+    padding:
+        17px 8px;
+
+
+    background:
+        rgba(255,255,255,.07);
+
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+
+    border-radius:
+        13px;
+
+
+    text-align:
+        center;
+}
+
+
+#ms-sss-v3 .mss-age-grid strong,
+#ms-sss-v3 .mss-age-grid span {
+
+    display:
+        block;
+}
+
+
+#ms-sss-v3 .mss-age-grid span {
+
+    margin-top:
+        5px;
+
+
+    color:
+        #bbb9c0;
+
+
+    font-size:
+        10px;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#ms-sss-v3 .mss-btn {
+
+    display:
+        inline-flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        center;
+
+
+    min-height:
+        52px;
+
+
+    padding:
+        0 22px;
+
+
+    border-radius:
+        999px;
+
+
+    text-decoration:
+        none !important;
+
+
+    font-size:
+        13px;
+
+
+    font-weight:
+        850;
+}
+
+
+#ms-sss-v3 .mss-btn-red {
+
+    background:
+        var(--red);
+
+
+    color:
+        #fff !important;
+
+
+    box-shadow:
+        0 12px 28px rgba(207,87,68,.20);
+}
+
+
+#ms-sss-v3 .mss-btn-white {
+
+    background:
+        #fff;
+
+
+    color:
+        var(--dark) !important;
+
+
+    border:
+        1px solid var(--border);
+}
+
+
+#ms-sss-v3 .mss-btn-green {
+
+    background:
+        var(--green);
+
+
+    color:
+        #111 !important;
+}
+
+
+
+/* ============================================================
+   TRUST
+   ============================================================ */
+
+#ms-sss-v3 .mss-trust {
+
+    padding:
+        0 0 90px;
+}
+
+
+#ms-sss-v3 .mss-trust-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+
+    overflow:
+        hidden;
+
+
+    background:
+        var(--dark);
+
+
+    border-radius:
+        20px;
+}
+
+
+#ms-sss-v3 .mss-trust-grid > div {
+
+    padding:
+        26px 18px;
+
+
+    text-align:
+        center;
+
+
+    color:
+        #fff;
+
+
+    border-right:
+        1px solid rgba(255,255,255,.1);
+}
+
+
+#ms-sss-v3 .mss-trust-grid > div:last-child {
+
+    border-right:
+        0;
+}
+
+
+#ms-sss-v3 .mss-trust-grid strong,
+#ms-sss-v3 .mss-trust-grid span {
+
+    display:
+        block;
+}
+
+
+#ms-sss-v3 .mss-trust-grid span {
+
+    margin-top:
+        6px;
+
+
+    color:
+        #bbb9c0;
+
+
+    font-size:
+        11px;
+}
+
+
+
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+
+#ms-sss-v3 .mss-heading {
+
+    max-width:
+        750px;
+
+
+    margin-bottom:
+        38px;
+}
+
+
+#ms-sss-v3 .mss-heading > span,
+#ms-sss-v3 .mss-dynamic-copy > span,
+#ms-sss-v3 .mss-corporate-panel > div > span,
+#ms-sss-v3 .mss-final-panel > div:first-child > span {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        11px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        10px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.7px;
+}
+
+
+#ms-sss-v3 .mss-heading h2,
+#ms-sss-v3 .mss-dynamic h2,
+#ms-sss-v3 .mss-corporate h2,
+#ms-sss-v3 .mss-final h2 {
+
+    margin:
+        0 !important;
+
+
+    font-size:
+        clamp(
+            43px,
+            5vw,
+            66px
+        ) !important;
+
+
+    font-weight:
+        500 !important;
+
+
+    line-height:
+        .97 !important;
+
+
+    letter-spacing:
+        -3px !important;
+}
+
+
+#ms-sss-v3 .mss-heading p {
+
+    margin:
+        16px 0 0;
+
+
+    color:
+        var(--muted);
+}
+
+
+
+/* ============================================================
+   FAQ SECTION
+   ============================================================ */
+
+#ms-sss-v3 .mss-faq-section {
+
+    padding:
+        95px 0;
+
+
+    background:
+        var(--soft);
+}
+
+
+
+/* SEARCH */
+
+#ms-sss-v3 .mss-search {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    gap:
+        13px;
+
+
+    max-width:
+        760px;
+
+
+    min-height:
+        64px;
+
+
+    margin-bottom:
+        16px;
+
+
+    padding:
+        0 20px;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid var(--border);
+
+
+    border-radius:
+        17px;
+}
+
+
+#ms-sss-v3 .mss-search > span {
+
+    font-size:
+        27px;
+}
+
+
+#ms-sss-v3 .mss-search input {
+
+    width:
+        100%;
+
+
+    padding:
+        0 !important;
+
+
+    margin:
+        0 !important;
+
+
+    background:
+        transparent !important;
+
+
+    color:
+        var(--text) !important;
+
+
+    border:
+        0 !important;
+
+
+    outline:
+        0 !important;
+
+
+    box-shadow:
+        none !important;
+
+
+    font-size:
+        16px !important;
+}
+
+
+
+/* FILTERS */
+
+#ms-sss-v3 .mss-filters {
+
+    display:
+        flex;
+
+
+    flex-wrap:
+        wrap;
+
+
+    gap:
+        7px;
+
+
+    margin-bottom:
+        35px;
+}
+
+
+#ms-sss-v3 .mss-filters button {
+
+    min-height:
+        40px;
+
+
+    padding:
+        0 15px;
+
+
+    background:
+        transparent;
+
+
+    color:
+        var(--text);
+
+
+    border:
+        1px solid #d8d1c4;
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        11px;
+
+
+    font-weight:
+        800;
+
+
+    cursor:
+        pointer;
+}
+
+
+#ms-sss-v3 .mss-filters button.active {
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-color:
+        var(--dark);
+}
+
+
+
+/* ============================================================
+   FAQ LAYOUT
+   ============================================================ */
+
+#ms-sss-v3 .mss-faq-layout {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        310px 1fr;
+
+
+    gap:
+        18px;
+
+
+    align-items:
+        start;
+}
+
+
+
+/* SIDEBAR */
+
+#ms-sss-v3 .mss-sidebar {
+
+    display:
+        grid;
+
+
+    gap:
+        13px;
+
+
+    position:
+        sticky;
+
+
+    top:
+        25px;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card,
+#ms-sss-v3 .mss-warning-card {
+
+    padding:
+        28px;
+
+
+    border-radius:
+        21px;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card {
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+}
+
+
+#ms-sss-v3 .mss-warning-card {
+
+    background:
+        #fff;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card small,
+#ms-sss-v3 .mss-warning-card small {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        24px;
+
+
+    color:
+        var(--yellow);
+
+
+    font-size:
+        9px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1.4px;
+}
+
+
+#ms-sss-v3 .mss-warning-card small {
+
+    color:
+        var(--red);
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card h3,
+#ms-sss-v3 .mss-warning-card h3 {
+
+    margin:
+        0 0 16px !important;
+
+
+    font-size:
+        27px !important;
+
+
+    line-height:
+        1.04 !important;
+
+
+    letter-spacing:
+        -1px !important;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card p {
+
+    color:
+        #c1bfc6;
+
+
+    font-size:
+        13px;
+
+
+    line-height:
+        1.6;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card > strong {
+
+    display:
+        block;
+
+
+    margin:
+        20px 0;
+
+
+    font-size:
+        17px;
+}
+
+
+#ms-sss-v3 .mss-whatsapp-card a {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        center;
+
+
+    min-height:
+        46px;
+
+
+    background:
+        var(--green);
+
+
+    color:
+        #111 !important;
+
+
+    border-radius:
+        999px;
+
+
+    text-decoration:
+        none !important;
+
+
+    font-size:
+        12px;
+
+
+    font-weight:
+        900;
+}
+
+
+#ms-sss-v3 .mss-warning-card p {
+
+    margin:
+        0 0 20px;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        13px;
+
+
+    line-height:
+        1.6;
+}
+
+
+#ms-sss-v3 .mss-warning-card a {
+
+    color:
+        var(--text) !important;
+
+
+    text-decoration:
+        none !important;
+
+
+    font-size:
+        12px;
+
+
+    font-weight:
+        850;
+}
+
+
+
+/* ============================================================
+   FAQ QUESTIONS
+   ============================================================ */
+
+#ms-sss-v3 .mss-list {
+
+    display:
+        grid;
+
+
+    gap:
+        9px;
+}
+
+
+#ms-sss-v3 .mss-item {
+
+    overflow:
+        hidden;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid var(--border);
+
+
+    border-radius:
+        17px;
+}
+
+
+#ms-sss-v3 .mss-item[hidden] {
+
+    display:
+        none !important;
+}
+
+
+#ms-sss-v3 .mss-question {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        20px;
+
+
+    width:
+        100%;
+
+
+    padding:
+        23px 25px;
+
+
+    margin:
+        0 !important;
+
+
+    background:
+        #fff !important;
+
+
+    color:
+        var(--text) !important;
+
+
+    border:
+        0 !important;
+
+
+    text-align:
+        left;
+
+
+    cursor:
+        pointer;
+}
+
+
+#ms-sss-v3 .mss-question > span {
+
+    display:
+        block;
+}
+
+
+#ms-sss-v3 .mss-question small {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        7px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        9px;
+
+
+    font-weight:
+        900;
+
+
+    letter-spacing:
+        1px;
+
+
+    text-transform:
+        uppercase;
+}
+
+
+#ms-sss-v3 .mss-question strong {
+
+    display:
+        block;
+
+
+    font-size:
+        18px;
+
+
+    line-height:
+        1.3;
+}
+
+
+#ms-sss-v3 .mss-plus {
+
+    display:
+        grid;
+
+
+    place-items:
+        center;
+
+
+    flex:
+        0 0 40px;
+
+
+    width:
+        40px;
+
+
+    height:
+        40px;
+
+
+    background:
+        var(--bg);
+
+
+    border-radius:
+        999px;
+
+
+    font-size:
+        25px;
+
+
+    font-weight:
+        400;
+
+
+    transition:
+        transform .2s ease;
+}
+
+
+#ms-sss-v3
+.mss-question[aria-expanded="true"]
+.mss-plus {
+
+    transform:
+        rotate(45deg);
+}
+
+
+#ms-sss-v3 .mss-answer {
+
+    display:
+        grid;
+
+
+    grid-template-rows:
+        0fr;
+
+
+    transition:
+        grid-template-rows .28s ease;
+}
+
+
+#ms-sss-v3 .mss-answer > div {
+
+    overflow:
+        hidden;
+}
+
+
+#ms-sss-v3 .mss-item.open .mss-answer {
+
+    grid-template-rows:
+        1fr;
+}
+
+
+#ms-sss-v3 .mss-answer p {
+
+    margin:
+        0 !important;
+
+
+    padding:
+        0 25px 25px;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        14px;
+
+
+    line-height:
+        1.72;
+}
+
+
+#ms-sss-v3 .mss-no-results {
+
+    padding:
+        38px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        18px;
+}
+
+
+#ms-sss-v3 .mss-no-results strong {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        8px;
+
+
+    font-size:
+        20px;
+}
+
+
+#ms-sss-v3 .mss-no-results p {
+
+    margin:
+        0;
+
+
+    color:
+        var(--muted);
+}
+
+
+
+/* ============================================================
+   DYNAMIC
+   ============================================================ */
+
+#ms-sss-v3 .mss-dynamic {
+
+    padding:
+        100px 0;
+}
+
+
+#ms-sss-v3 .mss-dynamic-panel {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1.15fr .85fr;
+
+
+    gap:
+        50px;
+
+
+    padding:
+        52px;
+
+
+    background:
+        #fff;
+
+
+    border-radius:
+        27px;
+}
+
+
+#ms-sss-v3 .mss-dynamic-copy p {
+
+    max-width:
+        650px;
+
+
+    margin:
+        20px 0 0;
+
+
+    color:
+        var(--muted);
+
+
+    line-height:
+        1.65;
+}
+
+
+#ms-sss-v3 .mss-dynamic-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        1fr 1fr;
+
+
+    gap:
+        9px;
+}
+
+
+#ms-sss-v3 .mss-dynamic-grid > div {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    justify-content:
+        center;
+
+
+    min-height:
+        110px;
+
+
+    padding:
+        18px;
+
+
+    background:
+        var(--bg);
+
+
+    border-radius:
+        15px;
+}
+
+
+#ms-sss-v3 .mss-dynamic-grid strong,
+#ms-sss-v3 .mss-dynamic-grid span {
+
+    display:
+        block;
+}
+
+
+#ms-sss-v3 .mss-dynamic-grid span {
+
+    margin-top:
+        5px;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        11px;
+}
+
+
+
+/* ============================================================
+   STEPS
+   ============================================================ */
+
+#ms-sss-v3 .mss-steps {
+
+    padding:
+        0 0 100px;
+}
+
+
+#ms-sss-v3 .mss-step-grid {
+
+    display:
+        grid;
+
+
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+
+
+    gap:
+        12px;
+}
+
+
+#ms-sss-v3 .mss-step-grid article {
+
+    min-height:
+        250px;
+
+
+    padding:
+        26px;
+
+
+    background:
+        #fff;
+
+
+    border:
+        1px solid var(--border);
+
+
+    border-radius:
+        20px;
+}
+
+
+#ms-sss-v3 .mss-step-grid article > b {
+
+    display:
+        block;
+
+
+    margin-bottom:
+        50px;
+
+
+    color:
+        var(--red);
+
+
+    font-size:
+        11px;
+}
+
+
+#ms-sss-v3 .mss-step-grid h3 {
+
+    margin:
+        0 0 12px !important;
+
+
+    font-size:
+        21px !important;
+}
+
+
+#ms-sss-v3 .mss-step-grid p {
+
+    margin:
+        0;
+
+
+    color:
+        var(--muted);
+
+
+    font-size:
+        13px;
+
+
+    line-height:
+        1.6;
+}
+
+
+
+/* ============================================================
+   CORPORATE
+   ============================================================ */
+
+#ms-sss-v3 .mss-corporate {
+
+    padding:
+        0 0 100px;
+}
+
+
+#ms-sss-v3 .mss-corporate-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        45px;
+
+
+    padding:
+        52px;
+
+
+    background:
+        var(--soft);
+
+
+    border-radius:
+        27px;
+}
+
+
+#ms-sss-v3 .mss-corporate-panel > div {
+
+    max-width:
+        720px;
+}
+
+
+#ms-sss-v3 .mss-corporate p {
+
+    margin:
+        18px 0 0;
+
+
+    color:
+        var(--muted);
+
+
+    line-height:
+        1.65;
+}
+
+
+
+/* ============================================================
+   FINAL CTA
+   ============================================================ */
+
+#ms-sss-v3 .mss-final {
+
+    padding:
+        0 0 100px;
+}
+
+
+#ms-sss-v3 .mss-final-panel {
+
+    display:
+        flex;
+
+
+    align-items:
+        center;
+
+
+    justify-content:
+        space-between;
+
+
+    gap:
+        45px;
+
+
+    padding:
+        52px;
+
+
+    background:
+        var(--dark);
+
+
+    color:
+        #fff;
+
+
+    border-radius:
+        27px;
+}
+
+
+#ms-sss-v3 .mss-final-panel > div:first-child {
+
+    max-width:
+        680px;
+}
+
+
+#ms-sss-v3
+.mss-final-panel > div:first-child > span {
+
+    color:
+        var(--yellow);
+}
+
+
+#ms-sss-v3 .mss-final h2 {
+
+    color:
+        #fff;
+}
+
+
+#ms-sss-v3 .mss-final p {
+
+    margin:
+        18px 0 0;
+
+
+    color:
+        #c4c2c8;
+
+
+    line-height:
+        1.6;
+}
+
+
+#ms-sss-v3 .mss-final-buttons {
+
+    display:
+        flex;
+
+
+    flex-direction:
+        column;
+
+
+    gap:
+        10px;
+
+
+    min-width:
+        275px;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+
+    #ms-sss-v3 .mss-hero-grid,
+    #ms-sss-v3 .mss-dynamic-panel {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #ms-sss-v3 .mss-faq-layout {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #ms-sss-v3 .mss-sidebar {
+
+        position:
+            static;
+
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #ms-sss-v3 .mss-step-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    #ms-sss-v3 .mss-corporate-panel,
+    #ms-sss-v3 .mss-final-panel {
+
+        flex-direction:
+            column;
+
+
+        align-items:
+            flex-start;
+    }
+
+
+    #ms-sss-v3 .mss-final-buttons {
+
+        width:
+            100%;
+    }
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+
+    #ms-sss-v3 .mss-wrap {
+
+        width:
+            calc(100% - 32px) !important;
+    }
+
+
+    /* HERO */
+
+    #ms-sss-v3 .mss-hero {
+
+        padding:
+            36px 0 24px;
+    }
+
+
+    #ms-sss-v3 .mss-hero-copy {
+
+        padding:
+            30px 25px;
+    }
+
+
+    #ms-sss-v3 .mss-kicker {
+
+        font-size:
+            8px;
+    }
+
+
+    #ms-sss-v3 h1 {
+
+        margin-top:
+            35px !important;
+
+
+        font-size:
+            49px !important;
+
+
+        line-height:
+            .93 !important;
+
+
+        letter-spacing:
+            -3px !important;
+    }
+
+
+    #ms-sss-v3 .mss-lead {
+
+        font-size:
+            16px;
+    }
+
+
+    #ms-sss-v3 .mss-actions {
+
+        display:
+            grid;
+    }
+
+
+    #ms-sss-v3 .mss-btn {
+
+        width:
+            100%;
+    }
+
+
+    #ms-sss-v3 .mss-hero-info {
+
+        padding:
+            31px 25px;
+    }
+
+
+    #ms-sss-v3 .mss-duration {
+
+        font-size:
+            72px;
+    }
+
+
+    /* TRUST */
+
+    #ms-sss-v3 .mss-trust {
+
+        padding-bottom:
+            60px;
+    }
+
+
+    #ms-sss-v3 .mss-trust-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    /* FAQ */
+
+    #ms-sss-v3 .mss-faq-section {
+
+        padding:
+            70px 0;
+    }
+
+
+    #ms-sss-v3 .mss-heading h2,
+    #ms-sss-v3 .mss-dynamic h2,
+    #ms-sss-v3 .mss-corporate h2,
+    #ms-sss-v3 .mss-final h2 {
+
+        font-size:
+            41px !important;
+
+
+        line-height:
+            1 !important;
+    }
+
+
+    #ms-sss-v3 .mss-search {
+
+        min-height:
+            58px;
+    }
+
+
+    #ms-sss-v3 .mss-filters {
+
+        flex-wrap:
+            nowrap;
+
+
+        overflow-x:
+            auto;
+
+
+        padding-bottom:
+            6px;
+
+
+        scrollbar-width:
+            none;
+    }
+
+
+    #ms-sss-v3 .mss-filters::-webkit-scrollbar {
+
+        display:
+            none;
+    }
+
+
+    #ms-sss-v3 .mss-filters button {
+
+        flex:
+            0 0 auto;
+    }
+
+
+    #ms-sss-v3 .mss-sidebar {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #ms-sss-v3 .mss-question {
+
+        padding:
+            20px 18px;
+    }
+
+
+    #ms-sss-v3 .mss-question strong {
+
+        font-size:
+            16px;
+    }
+
+
+    #ms-sss-v3 .mss-answer p {
+
+        padding:
+            0 18px 21px;
+    }
+
+
+    /* DYNAMIC */
+
+    #ms-sss-v3 .mss-dynamic {
+
+        padding:
+            70px 0;
+    }
+
+
+    #ms-sss-v3 .mss-dynamic-panel {
+
+        padding:
+            30px 24px;
+    }
+
+
+    #ms-sss-v3 .mss-dynamic-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    /* STEPS */
+
+    #ms-sss-v3 .mss-steps {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #ms-sss-v3 .mss-step-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    #ms-sss-v3 .mss-step-grid article {
+
+        min-height:
+            0;
+    }
+
+
+    #ms-sss-v3 .mss-step-grid article > b {
+
+        margin-bottom:
+            28px;
+    }
+
+
+    /* CORPORATE */
+
+    #ms-sss-v3 .mss-corporate {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #ms-sss-v3 .mss-corporate-panel {
+
+        padding:
+            30px 24px;
+    }
+
+
+    /* FINAL */
+
+    #ms-sss-v3 .mss-final {
+
+        padding-bottom:
+            70px;
+    }
+
+
+    #ms-sss-v3 .mss-final-panel {
+
+        padding:
+            30px 24px;
+    }
+
+
+    #ms-sss-v3 .mss-final-buttons {
+
+        min-width:
+            0;
+    }
+
+}
+
+</style>
+
+        <?php
+    },
+    9999
+);
+
+
+/* ============================================================
+   8. JAVASCRIPT
+   ACCORDION + FILTER + SEARCH
+   ============================================================ */
+
+add_action(
+    'wp_footer',
+    function () {
+
+        if ( ! ms_sss_v3_is_page() ) {
+            return;
+        }
+
+        ?>
+
+<script id="ms-sss-v3-js">
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const page =
+            document.getElementById(
+                'ms-sss-v3'
+            );
+
+        if ( ! page ) {
+            return;
+        }
+
+
+        const items =
+            Array.from(
+                page.querySelectorAll(
+                    '.mss-item'
+                )
+            );
+
+
+        const buttons =
+            page.querySelectorAll(
+                '.mss-question'
+            );
+
+
+        const filters =
+            page.querySelectorAll(
+                '.mss-filters button'
+            );
+
+
+        const input =
+            document.getElementById(
+                'mss-search-input'
+            );
+
+
+        const noResults =
+            document.getElementById(
+                'mss-no-results'
+            );
+
+
+        let activeFilter =
+            'all';
+
+
+
+        /* =====================================================
+           ACCORDION
+           ===================================================== */
+
+        buttons.forEach(
+            function ( button ) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        const item =
+                            button.closest(
+                                '.mss-item'
+                            );
+
+
+                        const wasOpen =
+                            item.classList.contains(
+                                'open'
+                            );
+
+
+                        items.forEach(
+                            function ( other ) {
+
+                                if (
+                                    other !== item
+                                ) {
+
+                                    other.classList.remove(
+                                        'open'
+                                    );
+
+
+                                    const otherButton =
+                                        other.querySelector(
+                                            '.mss-question'
+                                        );
+
+
+                                    if ( otherButton ) {
+
+                                        otherButton.setAttribute(
+                                            'aria-expanded',
+                                            'false'
+                                        );
+                                    }
+                                }
+
+                            }
+                        );
+
+
+                        if ( wasOpen ) {
+
+                            item.classList.remove(
+                                'open'
+                            );
+
+
+                            button.setAttribute(
+                                'aria-expanded',
+                                'false'
+                            );
+
+                        } else {
+
+                            item.classList.add(
+                                'open'
+                            );
+
+
+                            button.setAttribute(
+                                'aria-expanded',
+                                'true'
+                            );
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+
+        /* =====================================================
+           TÜRKÇE ARAMA NORMALİZASYONU
+           ===================================================== */
+
+        function normalizeText( value ) {
+
+            return String(
+                value || ''
+            )
+            .toLocaleLowerCase(
+                'tr-TR'
+            )
+            .normalize(
+                'NFD'
+            )
+            .replace(
+                /[\u0300-\u036f]/g,
+                ''
+            )
+            .replace(
+                /ı/g,
+                'i'
+            );
+        }
+
+
+
+        /* =====================================================
+           FİLTRE
+           ===================================================== */
+
+        function applyFilter() {
+
+            const query =
+                normalizeText(
+                    input
+                    ? input.value.trim()
+                    : ''
+                );
+
+
+            let visible =
+                0;
+
+
+            items.forEach(
+                function ( item ) {
+
+
+                    const category =
+                        item.dataset.category || '';
+
+
+                    const text =
+                        normalizeText(
+                            item.dataset.search || ''
+                        );
+
+
+                    const categoryMatch =
+                        activeFilter === 'all' ||
+                        category === activeFilter;
+
+
+                    const searchMatch =
+                        ! query ||
+                        text.includes(
+                            query
+                        );
+
+
+                    const show =
+                        categoryMatch &&
+                        searchMatch;
+
+
+                    item.hidden =
+                        ! show;
+
+
+                    if ( show ) {
+
+                        visible++;
+
+                    } else {
+
+                        item.classList.remove(
+                            'open'
+                        );
+
+
+                        const button =
+                            item.querySelector(
+                                '.mss-question'
+                            );
+
+
+                        if ( button ) {
+
+                            button.setAttribute(
+                                'aria-expanded',
+                                'false'
+                            );
+                        }
+
+                    }
+
+                }
+            );
+
+
+            if ( noResults ) {
+
+                noResults.hidden =
+                    visible > 0;
+            }
+
+        }
+
+
+
+        /* =====================================================
+           CATEGORY FILTERS
+           ===================================================== */
+
+        filters.forEach(
+            function ( filter ) {
+
+                filter.addEventListener(
+                    'click',
+                    function () {
+
+                        filters.forEach(
+                            function ( item ) {
+
+                                item.classList.remove(
+                                    'active'
+                                );
+                            }
+                        );
+
+
+                        filter.classList.add(
+                            'active'
+                        );
+
+
+                        activeFilter =
+                            filter.dataset.filter || 'all';
+
+
+                        applyFilter();
+
+                    }
+                );
+
+            }
+        );
+
+
+
+        /* =====================================================
+           SEARCH
+           ===================================================== */
+
+        if ( input ) {
+
+            input.addEventListener(
+                'input',
+                applyFilter
+            );
+        }
+
+    }
+);
+
+</script>
+
+        <?php
+    },
+    9999
+);

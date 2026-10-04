@@ -1,0 +1,5237 @@
+/**
+ * ============================================================
+ * MADAGASKAR SİRKİ — KURUMSAL SAYFASI V6 + KOMMO ÖZEL ALANLAR
+ * ============================================================
+ *
+ * /kurumsal/ sayfasını tamamen yeniler.
+ * Masaüstü + tablet + mobil uyumludur.
+ *
+ * ============================================================
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/* ============================================================
+   1. KURUMSAL SAYFADA MIYIZ?
+   ============================================================ */
+
+function mdg_is_corporate_page_v2() {
+    return is_page( 'kurumsal' );
+}
+
+
+/* ============================================================
+   2. BODY CLASS
+   ============================================================ */
+
+add_filter(
+    'body_class',
+    function ( $classes ) {
+
+        if ( mdg_is_corporate_page_v2() ) {
+            $classes[] = 'mdg-corporate-page';
+        }
+
+        return $classes;
+    }
+);
+
+
+/* ============================================================
+   3. SAYFA HTML
+   ============================================================ */
+
+function mdg_render_corporate_page_v2() {
+
+    $shows_url   = home_url( '/gosteriler/' );
+    $contact_url = home_url( '/iletisim-2/' );
+
+    $whatsapp_url =
+        'https://wa.me/903129113710?text=' .
+        rawurlencode(
+            'Merhaba, Madagaskar Sirki için kurumsal etkinlik ve gösteri teklifi almak istiyorum.'
+        );
+
+
+    /* GERÇEK GÖSTERİ GÖRSELLERİ */
+
+    $hero_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_00000000e998820a9db3ae89302f6fbc.png';
+
+    $show_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_0000000096dc820a81af4ef56f90b184-1.png';
+
+    $palyaco_image =
+        'https://madagaskarsirki.com/wp-content/uploads/2026/08/file_000000007b5c820ab8f7c645893acfd3.png';
+
+
+    /* FORM DURUMU */
+
+    $form_status =
+        isset( $_GET['mdg_teklif'] )
+            ? sanitize_key( wp_unslash( $_GET['mdg_teklif'] ) )
+            : '';
+
+
+    ob_start();
+    ?>
+
+<main id="mdg-corporate" class="mdg-corporate">
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="mdgc-hero">
+
+        <div class="mdgc-wrap mdgc-hero-grid">
+
+
+            <div class="mdgc-hero-copy">
+
+                <span class="mdgc-kicker">
+                    MADAGASKAR SİRKİ · KURUMSAL ETKİNLİKLER
+                </span>
+
+                <h1>
+                    Kurumunuza özel
+                    <br>
+                    sahne deneyimi.
+                </h1>
+
+                <p class="mdgc-lead">
+                    Okullar, belediyeler, alışveriş merkezleri,
+                    festivaller ve özel organizasyonlar için
+                    Madagaskar Sirki'nin profesyonel sahne
+                    gösterilerini etkinliğinize taşıyoruz.
+                </p>
+
+
+                <div class="mdgc-pills">
+
+                    <span>Kuruma Özel Program</span>
+                    <span>Uluslararası Sanatçılar</span>
+                    <span>Aile Dostu</span>
+                    <span>Hayvansız Gösteri</span>
+
+                </div>
+
+
+                <div class="mdgc-actions">
+
+                    <a
+                        class="mdgc-btn mdgc-btn-primary"
+                        href="#kurumsal-form"
+                    >
+                        Kurumsal Teklif İste
+                    </a>
+
+                    <a
+                        class="mdgc-btn mdgc-btn-secondary"
+                        href="<?php echo esc_url( $shows_url ); ?>"
+                    >
+                        Gösterileri İncele
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <div class="mdgc-hero-media">
+
+                <img
+                    src="<?php echo esc_url( $hero_image ); ?>"
+                    alt="Madagaskar Sirki Kurumsal Gösteri"
+                    fetchpriority="high"
+                    decoding="async"
+                >
+
+                <div class="mdgc-image-overlay">
+
+                    <span>
+                        CANLI SAHNE
+                    </span>
+
+                    <strong>
+                        Etkinliğinize
+                        <br>
+                        heyecan katın.
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HIZLI ÖZELLİKLER
+         ===================================================== -->
+
+    <section class="mdgc-quick">
+
+        <div class="mdgc-wrap">
+
+            <div class="mdgc-quick-grid">
+
+                <div>
+                    <strong>Kuruma Özel</strong>
+                    <span>Etkinliğe uygun program</span>
+                </div>
+
+                <div>
+                    <strong>Profesyonel</strong>
+                    <span>Uluslararası sahne ekibi</span>
+                </div>
+
+                <div>
+                    <strong>Aile Dostu</strong>
+                    <span>Geniş izleyici kitlesi</span>
+                </div>
+
+                <div>
+                    <strong>Canlı</strong>
+                    <span>Sahne performansı</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         KİMLER İÇİN?
+         ===================================================== -->
+
+    <section class="mdgc-clients">
+
+        <div class="mdgc-wrap">
+
+            <header class="mdgc-section-head">
+
+                <span class="mdgc-label">
+                    KİMLER İÇİN?
+                </span>
+
+                <h2>
+                    Farklı etkinliklere,
+                    tek güçlü sahne.
+                </h2>
+
+                <p>
+                    Etkinliğin türüne, hedef kitlesine ve
+                    organizasyon yapısına göre uygun gösteri
+                    içeriği oluşturulabilir.
+                </p>
+
+            </header>
+
+
+            <div class="mdgc-client-grid">
+
+
+                <article>
+
+                    <span class="mdgc-icon">🏫</span>
+
+                    <small>01</small>
+
+                    <h3>Okullar</h3>
+
+                    <p>
+                        Öğrenciler ve ailelere yönelik özel günler,
+                        şenlikler ve sosyal etkinlikler için
+                        renkli sahne programları.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span class="mdgc-icon">🏛️</span>
+
+                    <small>02</small>
+
+                    <h3>Belediyeler</h3>
+
+                    <p>
+                        Festival, çocuk etkinliği, kültür-sanat
+                        programı ve açık ya da kapalı alan
+                        organizasyonları için gösteriler.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span class="mdgc-icon">🏬</span>
+
+                    <small>03</small>
+
+                    <h3>AVM'ler</h3>
+
+                    <p>
+                        Ziyaretçi deneyimini güçlendiren,
+                        ailelerin ilgisini çeken ve etkinlik
+                        alanına hareket kazandıran programlar.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span class="mdgc-icon">🎪</span>
+
+                    <small>04</small>
+
+                    <h3>Festivaller</h3>
+
+                    <p>
+                        Sahne programını güçlendiren,
+                        yüksek enerjili ve farklı disiplinlerden
+                        performansların bir araya geldiği gösteriler.
+                    </p>
+
+                </article>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         SAHNE DENEYİMİ
+         ===================================================== -->
+
+    <section class="mdgc-experience">
+
+        <div class="mdgc-wrap mdgc-experience-grid">
+
+
+            <div class="mdgc-experience-copy">
+
+                <span class="mdgc-label">
+                    SAHNE DENEYİMİ
+                </span>
+
+                <h2>
+                    Etkinliğinize göre
+                    şekillenen gösteri.
+                </h2>
+
+                <p>
+                    Madagaskar Sirki programında akrobasi,
+                    denge, partner performansları, Hula Hoop,
+                    bisiklet gösterileri, palyaço ve farklı
+                    sahne disiplinleri yer alır.
+                </p>
+
+                <p>
+                    Kurumsal organizasyonlarda etkinliğin yapısı,
+                    alanı ve hedef kitlesi dikkate alınarak
+                    uygun performanslardan oluşan program
+                    planlanabilir.
+                </p>
+
+                <p>
+                    Gösterinin merkezinde profesyonel
+                    sanatçılar ve insan yeteneği bulunur.
+                    Program hayvansızdır.
+                </p>
+
+            </div>
+
+
+            <div class="mdgc-experience-media">
+
+                <img
+                    src="<?php echo esc_url( $show_image ); ?>"
+                    alt="Madagaskar Sirki Akrobasi Ekibi"
+                    loading="lazy"
+                    decoding="async"
+                >
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         NELER SUNUYORUZ
+         ===================================================== -->
+
+    <section class="mdgc-services">
+
+        <div class="mdgc-wrap">
+
+            <header class="mdgc-section-head">
+
+                <span class="mdgc-label">
+                    KURUMSAL PROGRAM
+                </span>
+
+                <h2>
+                    Etkinliğin ihtiyacına göre.
+                </h2>
+
+            </header>
+
+
+            <div class="mdgc-service-grid">
+
+
+                <article>
+
+                    <span>🤸</span>
+
+                    <h3>Akrobasi</h3>
+
+                    <p>
+                        Güç, denge, koordinasyon ve takım
+                        çalışmasının birleştiği yüksek
+                        enerjili sahne performansları.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span>⛸️</span>
+
+                    <h3>Partner Gösterileri</h3>
+
+                    <p>
+                        İkili paten ve partner akrobasi
+                        gibi uyum ve zamanlama gerektiren
+                        görsel performanslar.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span>⭕</span>
+
+                    <h3>Görsel Şovlar</h3>
+
+                    <p>
+                        Hula Hoop, bisiklet ve farklı
+                        sahne disiplinleriyle tempolu
+                        gösteri bölümleri.
+                    </p>
+
+                </article>
+
+
+                <article>
+
+                    <span>🤡</span>
+
+                    <h3>Eğlence</h3>
+
+                    <p>
+                        Palyaço ve seyirci etkileşimli
+                        bölümlerle çocukların ve ailelerin
+                        programa dahil olduğu renkli anlar.
+                    </p>
+
+                </article>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         NASIL ÇALIŞIYOR?
+         ===================================================== -->
+
+    <section class="mdgc-process">
+
+        <div class="mdgc-wrap">
+
+            <div class="mdgc-process-panel">
+
+                <header>
+
+                    <span class="mdgc-label">
+                        NASIL ÇALIŞIYOR?
+                    </span>
+
+                    <h2>
+                        Dört adımda
+                        etkinlik planı.
+                    </h2>
+
+                </header>
+
+
+                <div class="mdgc-process-grid">
+
+
+                    <article>
+
+                        <strong>01</strong>
+
+                        <h3>Etkinliği Anlatın</h3>
+
+                        <p>
+                            Tarih, şehir, mekân, izleyici
+                            profili ve etkinlik türünü paylaşın.
+                        </p>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>02</strong>
+
+                        <h3>Programı Belirleyelim</h3>
+
+                        <p>
+                            Etkinliğe uygun gösteri içeriği ve
+                            sahne programı değerlendirilir.
+                        </p>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>03</strong>
+
+                        <h3>Planlama</h3>
+
+                        <p>
+                            Sahne, teknik ihtiyaçlar,
+                            ulaşım ve organizasyon detayları
+                            birlikte netleştirilir.
+                        </p>
+
+                    </article>
+
+
+                    <article>
+
+                        <strong>04</strong>
+
+                        <h3>Gösteri</h3>
+
+                        <p>
+                            Profesyonel sanatçılar etkinlik
+                            günü programı canlı olarak sahneye taşır.
+                        </p>
+
+                    </article>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         AİLE / ÇOCUK ETKİNLİKLERİ
+         ===================================================== -->
+
+    <section class="mdgc-family">
+
+        <div class="mdgc-wrap mdgc-family-grid">
+
+
+            <div class="mdgc-family-media">
+
+                <img
+                    src="<?php echo esc_url( $palyaco_image ); ?>"
+                    alt="Madagaskar Sirki Aile ve Çocuk Etkinlikleri"
+                    loading="lazy"
+                    decoding="async"
+                >
+
+            </div>
+
+
+            <div class="mdgc-family-copy">
+
+                <span class="mdgc-label">
+                    AİLE VE ÇOCUK ETKİNLİKLERİ
+                </span>
+
+                <h2>
+                    İzleyicinin yalnızca bakmadığı,
+                    yaşadığı bir etkinlik.
+                </h2>
+
+                <p>
+                    Kurumsal etkinliklerde hedef yalnızca
+                    sahnede bir performans gerçekleştirmek değil;
+                    izleyicinin ilgisini canlı tutan,
+                    etkinliğin genel deneyimini güçlendiren
+                    bir program oluşturmaktır.
+                </p>
+
+
+                <div class="mdgc-mini-grid">
+
+                    <div>
+                        <strong>Aile Dostu</strong>
+                        <span>Ortak deneyim</span>
+                    </div>
+
+                    <div>
+                        <strong>Hayvansız</strong>
+                        <span>İnsan yeteneği</span>
+                    </div>
+
+                    <div>
+                        <strong>Canlı</strong>
+                        <span>Sahne performansı</span>
+                    </div>
+
+                    <div>
+                        <strong>Esnek</strong>
+                        <span>Program planlaması</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         TEKLİF İÇİN GEREKENLER
+         ===================================================== -->
+
+    <section class="mdgc-brief">
+
+        <div class="mdgc-wrap">
+
+            <header class="mdgc-section-head">
+
+                <span class="mdgc-label">
+                    TEKLİF İÇİN
+                </span>
+
+                <h2>
+                    Bize dört bilgiyi iletin.
+                </h2>
+
+            </header>
+
+
+            <div class="mdgc-brief-grid">
+
+
+                <div>
+
+                    <strong>Etkinlik Tarihi</strong>
+
+                    <span>
+                        Planlanan gün veya tarih aralığı
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>Şehir ve Mekân</strong>
+
+                    <span>
+                        Etkinliğin yapılacağı yer
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>Etkinlik Türü</strong>
+
+                    <span>
+                        Festival, okul, AVM, belediye vb.
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>İzleyici Profili</strong>
+
+                    <span>
+                        Katılımcı grubu ve tahmini sayı
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         KURUMSAL TEKLİF FORMU
+         ===================================================== -->
+
+    <section
+        class="mdgc-form-section"
+        id="kurumsal-form"
+    >
+
+        <div class="mdgc-wrap">
+
+            <div class="mdgc-form-panel">
+
+
+                <div class="mdgc-form-copy">
+
+                    <span class="mdgc-label">
+                        KURUMSAL TEKLİF FORMU
+                    </span>
+
+                    <h2>
+                        Etkinliğinizi
+                        kısaca anlatın.
+                    </h2>
+
+                    <p>
+                        Temel bilgileri bırakın; talebiniz
+                        Madagaskar Sirki kurumsal ekibine kaydedilsin.
+                        Uygun program, teknik ihtiyaçlar ve teklif
+                        için sizinle iletişime geçelim.
+                    </p>
+
+
+                    <div class="mdgc-form-note">
+
+                        <strong>Hızlı bilgi</strong>
+
+                        <span>
+                            Kurum, şehir, yaklaşık tarih ve etkinlik
+                            türünü paylaşmanız ilk değerlendirme için yeterlidir.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mdgc-form-card">
+
+
+                    <?php if ( 'ok' === $form_status ) : ?>
+
+                        <div class="mdgc-form-alert mdgc-form-success">
+
+                            <strong>
+                                Talebiniz alındı.
+                            </strong>
+
+                            <span>
+                                Kurumsal ekibimiz teklif talebinizi
+                                inceleyerek sizinle iletişime geçecektir.
+                            </span>
+
+                        </div>
+
+                    <?php elseif ( 'error' === $form_status ) : ?>
+
+                        <div class="mdgc-form-alert mdgc-form-error">
+
+                            <strong>
+                                Form gönderilemedi.
+                            </strong>
+
+                            <span>
+                                Lütfen zorunlu alanları kontrol ederek
+                                yeniden deneyin veya WhatsApp üzerinden bize ulaşın.
+                            </span>
+
+                        </div>
+
+                    <?php elseif ( 'rate' === $form_status ) : ?>
+
+                        <div class="mdgc-form-alert mdgc-form-error">
+
+                            <strong>
+                                Talebiniz işleniyor.
+                            </strong>
+
+                            <span>
+                                Lütfen kısa bir süre bekleyip tekrar deneyin.
+                            </span>
+
+                        </div>
+
+                    <?php endif; ?>
+
+
+                    <form
+                        class="mdgc-quote-form"
+                        method="post"
+                        action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="mdg_corporate_quote"
+                        >
+
+                        <?php
+                        wp_nonce_field(
+                            'mdg_corporate_quote',
+                            'mdg_corporate_quote_nonce'
+                        );
+                        ?>
+
+
+                        <div
+                            class="mdgc-hp"
+                            aria-hidden="true"
+                        >
+
+                            <label>
+                                Web sitesi
+
+                                <input
+                                    type="text"
+                                    name="website"
+                                    tabindex="-1"
+                                    autocomplete="off"
+                                >
+                            </label>
+
+                        </div>
+
+
+                        <div class="mdgc-form-grid">
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Kurum Adı *
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="company"
+                                    required
+                                    maxlength="120"
+                                    autocomplete="organization"
+                                    placeholder="Kurum / kuruluş adı"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Yetkili Ad Soyad *
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="contact_name"
+                                    required
+                                    maxlength="100"
+                                    autocomplete="name"
+                                    placeholder="Ad Soyad"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Telefon *
+                                </span>
+
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    required
+                                    maxlength="30"
+                                    autocomplete="tel"
+                                    placeholder="05xx xxx xx xx"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Şehir *
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="city"
+                                    required
+                                    maxlength="80"
+                                    autocomplete="address-level2"
+                                    placeholder="Etkinliğin yapılacağı şehir"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Planlanan Tarih
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="event_date"
+                                    maxlength="80"
+                                    placeholder="Örn. Ekim 2026 / tarih aralığı"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Etkinlik Türü *
+                                </span>
+
+                                <select
+                                    name="event_type"
+                                    required
+                                >
+
+                                    <option value="">
+                                        Seçiniz
+                                    </option>
+
+                                    <option value="Okul">
+                                        Okul
+                                    </option>
+
+                                    <option value="Belediye">
+                                        Belediye
+                                    </option>
+
+                                    <option value="AVM">
+                                        AVM
+                                    </option>
+
+                                    <option value="Festival">
+                                        Festival
+                                    </option>
+
+                                    <option value="Özel Organizasyon">
+                                        Özel Organizasyon
+                                    </option>
+
+                                    <option value="Diğer">
+                                        Diğer
+                                    </option>
+
+                                </select>
+
+                            </label>
+
+
+                            <label class="mdgc-field">
+
+                                <span>
+                                    Tahmini Katılımcı
+                                </span>
+
+                                <input
+                                    type="number"
+                                    name="audience"
+                                    min="1"
+                                    max="1000000"
+                                    inputmode="numeric"
+                                    placeholder="Örn. 500"
+                                >
+
+                            </label>
+
+
+                            <label class="mdgc-field mdgc-field-full">
+
+                                <span>
+                                    Kısa Not
+                                </span>
+
+                                <textarea
+                                    name="note"
+                                    rows="4"
+                                    maxlength="1200"
+                                    placeholder="Mekân, sahne, program veya özel beklentinizi kısaca yazabilirsiniz."
+                                ></textarea>
+
+                            </label>
+
+
+                        </div>
+
+
+                        <label class="mdgc-consent">
+
+                            <input
+                                type="checkbox"
+                                name="contact_consent"
+                                value="1"
+                                required
+                            >
+
+                            <span>
+                                Teklif talebim kapsamında benimle
+                                iletişime geçilmesini kabul ediyorum.
+                            </span>
+
+                        </label>
+
+
+                        <div class="mdgc-form-actions">
+
+                            <button
+                                type="submit"
+                                class="mdgc-btn mdgc-btn-primary mdgc-submit"
+                            >
+                                Kurumsal Teklif İste
+                            </button>
+
+                            <a
+                                class="mdgc-form-whatsapp"
+                                href="<?php echo esc_url( $whatsapp_url ); ?>"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                WhatsApp ile hızlı iletişim →
+                            </a>
+
+                        </div>
+
+
+                    </form>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CTA
+         ===================================================== -->
+
+    <section class="mdgc-cta">
+
+        <div class="mdgc-wrap">
+
+            <div class="mdgc-cta-panel">
+
+
+                <div class="mdgc-cta-copy">
+
+                    <span>
+                        KURUMSAL ETKİNLİKLER
+                    </span>
+
+                    <h2>
+                        Etkinliğinizi birlikte
+                        planlayalım.
+                    </h2>
+
+                    <p>
+                        Etkinliğinizin temel bilgilerini
+                        bize iletin; uygun gösteri programını
+                        birlikte değerlendirelim.
+                    </p>
+
+                </div>
+
+
+                <div class="mdgc-cta-actions">
+
+                    <a
+                        class="mdgc-btn mdgc-btn-primary"
+                        href="<?php echo esc_url( $whatsapp_url ); ?>"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        WhatsApp ile Teklif Al
+                    </a>
+
+                    <a
+                        class="mdgc-btn mdgc-btn-light"
+                        href="<?php echo esc_url( $contact_url ); ?>"
+                    >
+                        İletişim Bilgileri
+                    </a>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+    <?php
+
+    return ob_get_clean();
+}
+
+
+/* ============================================================
+   4. KURUMSAL TALEPLER — YÖNETİM KAYDI
+   ============================================================ */
+
+add_action(
+    'init',
+    function () {
+
+        register_post_type(
+            'mdg_corp_lead',
+            array(
+                'labels' => array(
+                    'name'          => 'Kurumsal Talepler',
+                    'singular_name' => 'Kurumsal Talep',
+                    'menu_name'     => 'Kurumsal Talepler',
+                ),
+
+                /*
+                 * Kurumsal talepler hiçbir zaman ziyaretçiye açık değildir.
+                 * REST, arşiv, tekil URL ve ön yüz sorguları kapalıdır.
+                 */
+                'public'             => false,
+                'publicly_queryable' => false,
+                'exclude_from_search'=> true,
+                'has_archive'        => false,
+                'rewrite'            => false,
+                'query_var'          => false,
+                'show_ui'            => true,
+                'show_in_menu'       => true,
+                'show_in_rest'       => false,
+
+                'menu_icon'          => 'dashicons-businessperson',
+
+                'supports'           => array(
+                    'title',
+                ),
+
+                /*
+                 * Yönetim ekranını yalnız manage_options yetkisi
+                 * bulunan yöneticiler görebilir.
+                 * Manuel "Yeni Ekle" kapatılır; kayıtlar yalnız web formundan oluşur.
+                 */
+                'capabilities' => array(
+                    'edit_post'              => 'manage_options',
+                    'read_post'              => 'manage_options',
+                    'delete_post'            => 'manage_options',
+                    'edit_posts'             => 'manage_options',
+                    'edit_others_posts'      => 'manage_options',
+                    'publish_posts'          => 'manage_options',
+                    'read_private_posts'     => 'manage_options',
+                    'delete_posts'           => 'manage_options',
+                    'delete_private_posts'   => 'manage_options',
+                    'delete_published_posts' => 'manage_options',
+                    'delete_others_posts'    => 'manage_options',
+                    'edit_private_posts'     => 'manage_options',
+                    'edit_published_posts'   => 'manage_options',
+                    'create_posts'           => 'do_not_allow',
+                ),
+
+                'map_meta_cap'       => false,
+            )
+        );
+
+    }
+);
+
+
+/* ============================================================
+   4B. ESKİ KURUMSAL KAYITLARI ÖZEL DURUMA AL
+   ============================================================ */
+
+/*
+ * Önceki V2/V3 sürümlerinde kayıtlar "publish" statüsünde tutuluyordu.
+ * CPT zaten public değildi; buna rağmen WordPress yönetim ekranında
+ * "Herkese açık" ibaresi görülebiliyordu.
+ *
+ * Bu geçiş bir kez çalışır ve yalnız mdg_corp_lead kayıtlarını
+ * publish -> private durumuna çevirir. Hiçbir kayıt silinmez.
+ */
+
+add_action(
+    'init',
+    function () {
+
+        if (
+            get_option(
+                'mdg_corp_private_migration_v1'
+            )
+        ) {
+            return;
+        }
+
+        $lead_ids =
+            get_posts(
+                array(
+                    'post_type'      => 'mdg_corp_lead',
+                    'post_status'    => 'publish',
+                    'posts_per_page' => -1,
+                    'fields'         => 'ids',
+                    'no_found_rows'  => true,
+                )
+            );
+
+        foreach ( $lead_ids as $lead_id ) {
+
+            wp_update_post(
+                array(
+                    'ID'          => absint( $lead_id ),
+                    'post_status' => 'private',
+                )
+            );
+        }
+
+        update_option(
+            'mdg_corp_private_migration_v1',
+            current_time( 'mysql' ),
+            false
+        );
+
+    },
+    30
+);
+
+
+/* ============================================================
+   5. KOMMO ENTEGRASYONU
+   ============================================================ */
+
+/**
+ * Bu sürüm, mevcut çalışan WooCommerce → Kommo snippet'indeki
+ * MS_KOMMO_TOKEN ve MS_KOMMO_BASE_URL sabitlerini yeniden kullanır.
+ *
+ * Güvenlik için token bu kodun içine tekrar yazılmaz.
+ *
+ * MDG_CORP_KOMMO_PIPELINE_ID = 0 ise Kommo varsayılan pipeline'ı kullanır.
+ * Daha sonra kurumsal talepler için ayrı pipeline açılırsa ID buraya yazılabilir.
+ */
+
+if ( ! defined( 'MDG_CORP_KOMMO_PIPELINE_ID' ) ) {
+    define(
+        'MDG_CORP_KOMMO_PIPELINE_ID',
+        0
+    );
+}
+
+/*
+ * Ayrı Kurumsal pipeline oluşturulduktan sonra ilk aşamanın
+ * status ID'si buraya girilebilir.
+ */
+if ( ! defined( 'MDG_CORP_KOMMO_STATUS_ID' ) ) {
+    define(
+        'MDG_CORP_KOMMO_STATUS_ID',
+        0
+    );
+}
+
+/*
+ * ID'ler 0 bırakılırsa sistem Kommo'da pipeline ve aşamayı
+ * aşağıdaki adlarla otomatik bulur.
+ */
+if ( ! defined( 'MDG_CORP_KOMMO_PIPELINE_NAME' ) ) {
+    define(
+        'MDG_CORP_KOMMO_PIPELINE_NAME',
+        'Kurumsal Talepler'
+    );
+}
+
+if ( ! defined( 'MDG_CORP_KOMMO_STATUS_NAME' ) ) {
+    define(
+        'MDG_CORP_KOMMO_STATUS_NAME',
+        'İlk Temas'
+    );
+}
+
+if ( ! defined( 'MDG_CORP_KOMMO_TAG' ) ) {
+    define(
+        'MDG_CORP_KOMMO_TAG',
+        'Kurumsal Talep'
+    );
+}
+
+
+function mdg_corp_kommo_ready_v3() {
+
+    if (
+        ! defined( 'MS_KOMMO_TOKEN' ) ||
+        ! defined( 'MS_KOMMO_BASE_URL' )
+    ) {
+        return false;
+    }
+
+    $token =
+        trim(
+            (string) MS_KOMMO_TOKEN
+        );
+
+    return (
+        '' !== $token &&
+        'YENI_KOMMO_TOKENINI_BURAYA_YAPISTIR' !== $token
+    );
+}
+
+
+function mdg_corp_kommo_request_v3(
+    $method,
+    $path,
+    $body = null
+) {
+
+    if ( ! mdg_corp_kommo_ready_v3() ) {
+
+        return new WP_Error(
+            'mdg_kommo_not_ready',
+            'Kommo erişim ayarları hazır değil.'
+        );
+    }
+
+
+    $url =
+        rtrim(
+            (string) MS_KOMMO_BASE_URL,
+            '/'
+        ) .
+        '/' .
+        ltrim(
+            (string) $path,
+            '/'
+        );
+
+
+    $args = array(
+        'method'  => strtoupper( $method ),
+        'timeout' => 20,
+        'headers' => array(
+            'Authorization' =>
+                'Bearer ' . MS_KOMMO_TOKEN,
+            'Accept' =>
+                'application/json',
+            'Content-Type' =>
+                'application/json',
+        ),
+    );
+
+
+    if ( null !== $body ) {
+        $args['body'] =
+            wp_json_encode(
+                $body
+            );
+    }
+
+
+    $response =
+        wp_remote_request(
+            $url,
+            $args
+        );
+
+
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
+
+
+    $code =
+        (int) wp_remote_retrieve_response_code(
+            $response
+        );
+
+
+    if (
+        $code < 200 ||
+        $code >= 300
+    ) {
+
+        $response_body =
+            wp_remote_retrieve_body(
+                $response
+            );
+
+        return new WP_Error(
+            'mdg_kommo_http_error',
+            'Kommo HTTP ' . $code,
+            array(
+                'http_code' => $code,
+                'response'  => $response_body,
+            )
+        );
+    }
+
+
+    if ( 204 === $code ) {
+        return array();
+    }
+
+
+    $decoded =
+        json_decode(
+            wp_remote_retrieve_body(
+                $response
+            ),
+            true
+        );
+
+
+    return is_array( $decoded )
+        ? $decoded
+        : array();
+}
+
+
+function mdg_corp_normalize_phone_v3( $phone ) {
+
+    $digits =
+        preg_replace(
+            '/\D+/',
+            '',
+            (string) $phone
+        );
+
+
+    if ( ! $digits ) {
+        return '';
+    }
+
+
+    /*
+     * Türkiye:
+     * 05xxxxxxxxx -> +905xxxxxxxxx
+     * 5xxxxxxxxx  -> +905xxxxxxxxx
+     * 905xxxxxxxxx -> +905xxxxxxxxx
+     */
+
+    if (
+        11 === strlen( $digits ) &&
+        '0' === substr( $digits, 0, 1 )
+    ) {
+        return
+            '+90' .
+            substr(
+                $digits,
+                1
+            );
+    }
+
+
+    if (
+        10 === strlen( $digits ) &&
+        '5' === substr( $digits, 0, 1 )
+    ) {
+        return
+            '+90' .
+            $digits;
+    }
+
+
+    if (
+        12 === strlen( $digits ) &&
+        '90' === substr( $digits, 0, 2 )
+    ) {
+        return
+            '+' .
+            $digits;
+    }
+
+
+    return
+        '+' .
+        $digits;
+}
+
+
+function mdg_corp_extract_contact_phones_v3( $contact ) {
+
+    $phones = array();
+
+    $fields =
+        isset(
+            $contact['custom_fields_values']
+        ) &&
+        is_array(
+            $contact['custom_fields_values']
+        )
+            ? $contact['custom_fields_values']
+            : array();
+
+
+    foreach ( $fields as $field ) {
+
+        $field_code =
+            isset( $field['field_code'] )
+                ? strtoupper(
+                    (string) $field['field_code']
+                )
+                : '';
+
+        $values =
+            isset( $field['values'] ) &&
+            is_array( $field['values'] )
+                ? $field['values']
+                : array();
+
+
+        /*
+         * Bazı Kommo cevaplarında PHONE field_code gelmeyebilir.
+         * Bu nedenle değerleri de güvenli şekilde tarıyoruz.
+         */
+        foreach ( $values as $value_row ) {
+
+            if (
+                ! isset(
+                    $value_row['value']
+                )
+            ) {
+                continue;
+            }
+
+            $value =
+                (string) $value_row['value'];
+
+            if (
+                'PHONE' === $field_code ||
+                preg_match(
+                    '/[0-9]{7,}/',
+                    $value
+                )
+            ) {
+
+                $normalized =
+                    mdg_corp_normalize_phone_v3(
+                        $value
+                    );
+
+                if ( $normalized ) {
+                    $phones[] =
+                        $normalized;
+                }
+            }
+        }
+    }
+
+
+    return array_values(
+        array_unique(
+            $phones
+        )
+    );
+}
+
+
+function mdg_corp_find_contact_v3( $phone ) {
+
+    $normalized =
+        mdg_corp_normalize_phone_v3(
+            $phone
+        );
+
+
+    if ( ! $normalized ) {
+        return 0;
+    }
+
+
+    $result =
+        mdg_corp_kommo_request_v3(
+            'GET',
+            'contacts?query=' .
+            rawurlencode(
+                $normalized
+            ) .
+            '&limit=25'
+        );
+
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+
+    $contacts =
+        isset(
+            $result['_embedded']['contacts']
+        ) &&
+        is_array(
+            $result['_embedded']['contacts']
+        )
+            ? $result['_embedded']['contacts']
+            : array();
+
+
+    foreach ( $contacts as $contact ) {
+
+        $phones =
+            mdg_corp_extract_contact_phones_v3(
+                $contact
+            );
+
+        if (
+            in_array(
+                $normalized,
+                $phones,
+                true
+            )
+        ) {
+            return
+                isset( $contact['id'] )
+                    ? absint(
+                        $contact['id']
+                    )
+                    : 0;
+        }
+    }
+
+
+    return 0;
+}
+
+
+function mdg_corp_create_contact_v3(
+    $contact_name,
+    $phone
+) {
+
+    $normalized =
+        mdg_corp_normalize_phone_v3(
+            $phone
+        );
+
+
+    $body = array(
+        array(
+            'name' =>
+                $contact_name,
+            'custom_fields_values' =>
+                array(
+                    array(
+                        'field_code' =>
+                            'PHONE',
+                        'values' =>
+                            array(
+                                array(
+                                    'value' =>
+                                        $normalized,
+                                    'enum_code' =>
+                                        'MOB',
+                                ),
+                            ),
+                    ),
+                ),
+        ),
+    );
+
+
+    $result =
+        mdg_corp_kommo_request_v3(
+            'POST',
+            'contacts',
+            $body
+        );
+
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+
+    $contact_id =
+        isset(
+            $result['_embedded']['contacts'][0]['id']
+        )
+            ? absint(
+                $result['_embedded']['contacts'][0]['id']
+            )
+            : 0;
+
+
+    if ( ! $contact_id ) {
+
+        return new WP_Error(
+            'mdg_kommo_contact_missing',
+            'Kommo kişi kaydı oluşturuldu ancak kişi ID alınamadı.'
+        );
+    }
+
+
+    return $contact_id;
+}
+
+
+function mdg_corp_get_or_create_contact_v3(
+    $contact_name,
+    $phone
+) {
+
+    $contact_id =
+        mdg_corp_find_contact_v3(
+            $phone
+        );
+
+
+    if ( is_wp_error( $contact_id ) ) {
+        return $contact_id;
+    }
+
+
+    if ( $contact_id ) {
+        return $contact_id;
+    }
+
+
+    return
+        mdg_corp_create_contact_v3(
+            $contact_name,
+            $phone
+        );
+}
+
+
+function mdg_corp_resolve_pipeline_status_v5() {
+
+    $configured_pipeline_id =
+        defined( 'MDG_CORP_KOMMO_PIPELINE_ID' )
+            ? absint( MDG_CORP_KOMMO_PIPELINE_ID )
+            : 0;
+
+    $configured_status_id =
+        defined( 'MDG_CORP_KOMMO_STATUS_ID' )
+            ? absint( MDG_CORP_KOMMO_STATUS_ID )
+            : 0;
+
+
+    if (
+        $configured_pipeline_id &&
+        $configured_status_id
+    ) {
+        return array(
+            'pipeline_id' => $configured_pipeline_id,
+            'status_id'   => $configured_status_id,
+            'source'      => 'configured_ids',
+        );
+    }
+
+
+    $cached =
+        get_transient(
+            'mdg_corp_kommo_pipeline_status_v5'
+        );
+
+    if (
+        is_array( $cached ) &&
+        ! empty( $cached['pipeline_id'] ) &&
+        ! empty( $cached['status_id'] )
+    ) {
+        return $cached;
+    }
+
+
+    $result =
+        mdg_corp_kommo_request_v3(
+            'GET',
+            'leads/pipelines'
+        );
+
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+
+    $pipelines =
+        isset(
+            $result['_embedded']['pipelines']
+        ) &&
+        is_array(
+            $result['_embedded']['pipelines']
+        )
+            ? $result['_embedded']['pipelines']
+            : array();
+
+
+    $wanted_pipeline_name =
+        defined( 'MDG_CORP_KOMMO_PIPELINE_NAME' )
+            ? trim(
+                (string) MDG_CORP_KOMMO_PIPELINE_NAME
+            )
+            : 'Kurumsal Talepler';
+
+    $wanted_status_name =
+        defined( 'MDG_CORP_KOMMO_STATUS_NAME' )
+            ? trim(
+                (string) MDG_CORP_KOMMO_STATUS_NAME
+            )
+            : 'İlk Temas';
+
+
+    foreach ( $pipelines as $pipeline ) {
+
+        $pipeline_name =
+            isset( $pipeline['name'] )
+                ? trim(
+                    (string) $pipeline['name']
+                )
+                : '';
+
+        if (
+            0 !== strcasecmp(
+                $pipeline_name,
+                $wanted_pipeline_name
+            )
+        ) {
+            continue;
+        }
+
+
+        $pipeline_id =
+            isset( $pipeline['id'] )
+                ? absint(
+                    $pipeline['id']
+                )
+                : 0;
+
+
+        $statuses =
+            isset(
+                $pipeline['_embedded']['statuses']
+            ) &&
+            is_array(
+                $pipeline['_embedded']['statuses']
+            )
+                ? $pipeline['_embedded']['statuses']
+                : array();
+
+
+        foreach ( $statuses as $status ) {
+
+            $status_name =
+                isset( $status['name'] )
+                    ? trim(
+                        (string) $status['name']
+                    )
+                    : '';
+
+            if (
+                0 !== strcasecmp(
+                    $status_name,
+                    $wanted_status_name
+                )
+            ) {
+                continue;
+            }
+
+
+            $status_id =
+                isset( $status['id'] )
+                    ? absint(
+                        $status['id']
+                    )
+                    : 0;
+
+
+            if (
+                $pipeline_id &&
+                $status_id
+            ) {
+
+                $resolved =
+                    array(
+                        'pipeline_id' =>
+                            $pipeline_id,
+                        'status_id' =>
+                            $status_id,
+                        'source' =>
+                            'auto_name_match',
+                    );
+
+
+                set_transient(
+                    'mdg_corp_kommo_pipeline_status_v5',
+                    $resolved,
+                    6 * HOUR_IN_SECONDS
+                );
+
+
+                return $resolved;
+            }
+        }
+
+
+        return new WP_Error(
+            'mdg_kommo_status_not_found',
+            sprintf(
+                'Kommo pipeline bulundu ancak "%s" aşaması bulunamadı.',
+                $wanted_status_name
+            )
+        );
+    }
+
+
+    return new WP_Error(
+        'mdg_kommo_pipeline_not_found',
+        sprintf(
+            'Kommo "%s" pipeline bulunamadı.',
+            $wanted_pipeline_name
+        )
+    );
+}
+
+
+function mdg_corp_required_lead_fields_v6() {
+
+    /*
+     * Kommo lead kartında tutulacak kurumsal alanlar.
+     * "Şehir" hesabınızda zaten varsa sistem onu yeniden kullanır;
+     * aynı isimde ikinci bir alan oluşturmaz.
+     *
+     * Planlanan Tarih özellikle text tutulur; form "Ekim 2026",
+     * "01.11.2026" veya tarih aralığı gibi esnek giriş kabul ediyor.
+     */
+    return array(
+        'company' => array(
+            'name' => 'Kurum Adı',
+            'type' => 'text',
+        ),
+        'contact_name' => array(
+            'name' => 'Yetkili',
+            'type' => 'text',
+        ),
+        'city' => array(
+            'name' => 'Şehir',
+            'type' => 'text',
+        ),
+        'event_date' => array(
+            'name' => 'Planlanan Tarih',
+            'type' => 'text',
+        ),
+        'event_type' => array(
+            'name' => 'Etkinlik Türü',
+            'type' => 'text',
+        ),
+        'audience' => array(
+            'name' => 'Tahmini Katılımcı',
+            'type' => 'numeric',
+        ),
+    );
+}
+
+
+function mdg_corp_get_all_lead_fields_v6() {
+
+    $all_fields = array();
+
+    for ( $page = 1; $page <= 20; $page++ ) {
+
+        $result =
+            mdg_corp_kommo_request_v3(
+                'GET',
+                'leads/custom_fields?limit=250&page=' .
+                absint( $page )
+            );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+
+        $fields =
+            isset(
+                $result['_embedded']['custom_fields']
+            ) &&
+            is_array(
+                $result['_embedded']['custom_fields']
+            )
+                ? $result['_embedded']['custom_fields']
+                : array();
+
+
+        if ( empty( $fields ) ) {
+            break;
+        }
+
+
+        $all_fields =
+            array_merge(
+                $all_fields,
+                $fields
+            );
+
+
+        $page_count =
+            isset( $result['_page_count'] )
+                ? absint( $result['_page_count'] )
+                : 0;
+
+        if (
+            $page_count &&
+            $page >= $page_count
+        ) {
+            break;
+        }
+
+
+        if ( count( $fields ) < 250 ) {
+            break;
+        }
+    }
+
+
+    return $all_fields;
+}
+
+
+function mdg_corp_resolve_lead_fields_v6() {
+
+    $cache_key =
+        'mdg_corp_kommo_lead_fields_v6';
+
+
+    $cached =
+        get_transient(
+            $cache_key
+        );
+
+
+    $specs =
+        mdg_corp_required_lead_fields_v6();
+
+
+    if ( is_array( $cached ) ) {
+
+        $all_present = true;
+
+        foreach ( array_keys( $specs ) as $key ) {
+
+            if ( empty( $cached[ $key ] ) ) {
+                $all_present = false;
+                break;
+            }
+        }
+
+
+        if ( $all_present ) {
+            return $cached;
+        }
+    }
+
+
+    $existing_fields =
+        mdg_corp_get_all_lead_fields_v6();
+
+
+    if ( is_wp_error( $existing_fields ) ) {
+        return $existing_fields;
+    }
+
+
+    $resolved = array();
+    $missing  = array();
+
+
+    foreach ( $specs as $key => $spec ) {
+
+        $wanted_name =
+            trim(
+                (string) $spec['name']
+            );
+
+
+        foreach ( $existing_fields as $field ) {
+
+            $field_name =
+                isset( $field['name'] )
+                    ? trim(
+                        (string) $field['name']
+                    )
+                    : '';
+
+            $field_id =
+                isset( $field['id'] )
+                    ? absint(
+                        $field['id']
+                    )
+                    : 0;
+
+
+            if (
+                $field_id &&
+                0 === strcasecmp(
+                    $field_name,
+                    $wanted_name
+                )
+            ) {
+
+                $resolved[ $key ] =
+                    $field_id;
+
+                break;
+            }
+        }
+
+
+        if ( empty( $resolved[ $key ] ) ) {
+
+            $missing[ $key ] =
+                array(
+                    'name' =>
+                        $wanted_name,
+                    'type' =>
+                        (string) $spec['type'],
+                );
+        }
+    }
+
+
+    /*
+     * Eksik alanları Kommo'da otomatik oluştur.
+     * Bu endpoint Kommo tarafında admin yetkisi ister.
+     * Yetki yoksa lead yine oluşturulur; ayrıntılar notta kalır
+     * ve WordPress kaydında "Kısmi" durumu görülebilir.
+     */
+    if ( ! empty( $missing ) ) {
+
+        $create_payload =
+            array_values(
+                $missing
+            );
+
+
+        $created =
+            mdg_corp_kommo_request_v3(
+                'POST',
+                'leads/custom_fields',
+                $create_payload
+            );
+
+
+        if ( is_wp_error( $created ) ) {
+            return $created;
+        }
+
+
+        $created_fields =
+            isset(
+                $created['_embedded']['custom_fields']
+            ) &&
+            is_array(
+                $created['_embedded']['custom_fields']
+            )
+                ? $created['_embedded']['custom_fields']
+                : array();
+
+
+        foreach ( $missing as $key => $spec ) {
+
+            foreach ( $created_fields as $field ) {
+
+                $field_name =
+                    isset( $field['name'] )
+                        ? trim(
+                            (string) $field['name']
+                        )
+                        : '';
+
+                $field_id =
+                    isset( $field['id'] )
+                        ? absint(
+                            $field['id']
+                        )
+                        : 0;
+
+
+                if (
+                    $field_id &&
+                    0 === strcasecmp(
+                        $field_name,
+                        (string) $spec['name']
+                    )
+                ) {
+
+                    $resolved[ $key ] =
+                        $field_id;
+
+                    break;
+                }
+            }
+        }
+    }
+
+
+    foreach ( array_keys( $specs ) as $key ) {
+
+        if ( empty( $resolved[ $key ] ) ) {
+
+            return new WP_Error(
+                'mdg_kommo_field_missing',
+                'Kommo özel alanı çözülemedi: ' .
+                $specs[ $key ]['name']
+            );
+        }
+    }
+
+
+    set_transient(
+        $cache_key,
+        $resolved,
+        6 * HOUR_IN_SECONDS
+    );
+
+
+    return $resolved;
+}
+
+
+function mdg_corp_build_custom_field_values_v6(
+    $field_ids,
+    $data
+) {
+
+    $values = array();
+
+
+    foreach ( $field_ids as $key => $field_id ) {
+
+        if (
+            ! array_key_exists(
+                $key,
+                $data
+            )
+        ) {
+            continue;
+        }
+
+
+        $value =
+            $data[ $key ];
+
+
+        if (
+            null === $value ||
+            '' === trim(
+                (string) $value
+            )
+        ) {
+            continue;
+        }
+
+
+        if ( 'audience' === $key ) {
+
+            $value =
+                (string) absint(
+                    $value
+                );
+
+            if ( '0' === $value ) {
+                continue;
+            }
+        }
+
+
+        $values[] =
+            array(
+                'field_id' =>
+                    absint(
+                        $field_id
+                    ),
+                'values' =>
+                    array(
+                        array(
+                            'value' =>
+                                (string) $value,
+                        ),
+                    ),
+            );
+    }
+
+
+    return $values;
+}
+
+
+function mdg_corp_update_lead_fields_v6(
+    $kommo_lead_id,
+    $data
+) {
+
+    $field_ids =
+        mdg_corp_resolve_lead_fields_v6();
+
+
+    if ( is_wp_error( $field_ids ) ) {
+        return $field_ids;
+    }
+
+
+    $custom_fields_values =
+        mdg_corp_build_custom_field_values_v6(
+            $field_ids,
+            $data
+        );
+
+
+    if ( empty( $custom_fields_values ) ) {
+        return $field_ids;
+    }
+
+
+    $result =
+        mdg_corp_kommo_request_v3(
+            'PATCH',
+            'leads/' .
+            absint(
+                $kommo_lead_id
+            ),
+            array(
+                'custom_fields_values' =>
+                    $custom_fields_values,
+            )
+        );
+
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+
+    return $field_ids;
+}
+
+
+function mdg_corp_create_lead_v3(
+    $company,
+    $city,
+    $event_type,
+    $contact_id
+) {
+
+    $lead =
+        array(
+            'name' =>
+                sprintf(
+                    'Kurumsal Talep — %s — %s',
+                    $company,
+                    $city
+                ),
+            '_embedded' =>
+                array(
+                    'contacts' =>
+                        array(
+                            array(
+                                'id' =>
+                                    absint(
+                                        $contact_id
+                                    ),
+                            ),
+                        ),
+                    'tags' =>
+                        array(
+                            array(
+                                'name' =>
+                                    MDG_CORP_KOMMO_TAG,
+                            ),
+                            array(
+                                'name' =>
+                                    $event_type,
+                            ),
+                        ),
+                ),
+        );
+
+
+    $routing =
+        mdg_corp_resolve_pipeline_status_v5();
+
+
+    if ( is_wp_error( $routing ) ) {
+        return $routing;
+    }
+
+
+    $lead['pipeline_id'] =
+        absint(
+            $routing['pipeline_id']
+        );
+
+    $lead['status_id'] =
+        absint(
+            $routing['status_id']
+        );
+
+
+    $result =
+        mdg_corp_kommo_request_v3(
+            'POST',
+            'leads',
+            array(
+                $lead,
+            )
+        );
+
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+
+    $lead_id =
+        isset(
+            $result['_embedded']['leads'][0]['id']
+        )
+            ? absint(
+                $result['_embedded']['leads'][0]['id']
+            )
+            : 0;
+
+
+    if ( ! $lead_id ) {
+
+        return new WP_Error(
+            'mdg_kommo_lead_missing',
+            'Kommo lead oluşturuldu ancak lead ID alınamadı.'
+        );
+    }
+
+
+    return $lead_id;
+}
+
+
+function mdg_corp_add_lead_note_v3(
+    $kommo_lead_id,
+    $local_lead_id,
+    $data
+) {
+
+    $text =
+        "MADAGASKAR SİRKİ — KURUMSAL WEB FORMU\n\n" .
+        "Kurum: " .
+        $data['company'] .
+        "\n" .
+        "Yetkili: " .
+        $data['contact_name'] .
+        "\n" .
+        "Telefon: " .
+        $data['phone'] .
+        "\n" .
+        "Şehir: " .
+        $data['city'] .
+        "\n" .
+        "Planlanan Tarih: " .
+        (
+            $data['event_date']
+                ? $data['event_date']
+                : '-'
+        ) .
+        "\n" .
+        "Etkinlik Türü: " .
+        $data['event_type'] .
+        "\n" .
+        "Tahmini Katılımcı: " .
+        (
+            $data['audience']
+                ? $data['audience']
+                : '-'
+        ) .
+        "\n\nNot:\n" .
+        (
+            $data['note']
+                ? $data['note']
+                : '-'
+        ) .
+        "\n\nWordPress Talep No: #" .
+        absint(
+            $local_lead_id
+        );
+
+
+    return
+        mdg_corp_kommo_request_v3(
+            'POST',
+            'leads/notes',
+            array(
+                array(
+                    'entity_id' =>
+                        absint(
+                            $kommo_lead_id
+                        ),
+                    'note_type' =>
+                        'common',
+                    'params' =>
+                        array(
+                            'text' =>
+                                $text,
+                        ),
+                ),
+            )
+        );
+}
+
+
+function mdg_corp_sync_to_kommo_v3(
+    $local_lead_id,
+    $data
+) {
+
+    if ( ! mdg_corp_kommo_ready_v3() ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'config_missing'
+        );
+
+        return new WP_Error(
+            'mdg_kommo_not_ready',
+            'Kommo ayarları bulunamadı.'
+        );
+    }
+
+
+    $existing_lead =
+        absint(
+            get_post_meta(
+                $local_lead_id,
+                '_mdg_kommo_lead_id',
+                true
+            )
+        );
+
+
+    if ( $existing_lead ) {
+        return $existing_lead;
+    }
+
+
+    update_post_meta(
+        $local_lead_id,
+        '_mdg_kommo_status',
+        'syncing'
+    );
+
+
+    $contact_id =
+        mdg_corp_get_or_create_contact_v3(
+            $data['contact_name'],
+            $data['phone']
+        );
+
+
+    if ( is_wp_error( $contact_id ) ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'error'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_error',
+            $contact_id->get_error_message()
+        );
+
+        return $contact_id;
+    }
+
+
+    update_post_meta(
+        $local_lead_id,
+        '_mdg_kommo_contact_id',
+        absint(
+            $contact_id
+        )
+    );
+
+
+    $kommo_lead_id =
+        mdg_corp_create_lead_v3(
+            $data['company'],
+            $data['city'],
+            $data['event_type'],
+            $contact_id
+        );
+
+
+    if ( is_wp_error( $kommo_lead_id ) ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'error'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_error',
+            $kommo_lead_id->get_error_message()
+        );
+
+        return $kommo_lead_id;
+    }
+
+
+    update_post_meta(
+        $local_lead_id,
+        '_mdg_kommo_lead_id',
+        absint(
+            $kommo_lead_id
+        )
+    );
+
+
+    $routing =
+        mdg_corp_resolve_pipeline_status_v5();
+
+    if ( is_array( $routing ) ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_pipeline_id',
+            absint( $routing['pipeline_id'] )
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status_id',
+            absint( $routing['status_id'] )
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_routing_source',
+            sanitize_text_field(
+                isset( $routing['source'] )
+                    ? $routing['source']
+                    : ''
+            )
+        );
+    }
+
+
+    /*
+     * Kurumsal bilgileri Kommo lead özel alanlarına yaz.
+     * Not kaydı ayrıca tutulmaya devam eder; böylece iki ayrı
+     * okunabilir kayıt vardır.
+     */
+    $field_result =
+        mdg_corp_update_lead_fields_v6(
+            $kommo_lead_id,
+            $data
+        );
+
+
+    if ( is_wp_error( $field_result ) ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_status',
+            'error'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_error',
+            $field_result->get_error_message()
+        );
+
+    } else {
+
+        delete_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_error'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_status',
+            'success'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_ids',
+            wp_json_encode(
+                $field_result
+            )
+        );
+    }
+
+
+    $note_result =
+        mdg_corp_add_lead_note_v3(
+            $kommo_lead_id,
+            $local_lead_id,
+            $data
+        );
+
+
+    if ( is_wp_error( $note_result ) ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'partial'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_error',
+            'Lead oluşturuldu; not eklenemedi: ' .
+            $note_result->get_error_message()
+        );
+
+        return $kommo_lead_id;
+    }
+
+
+    $field_status =
+        (string) get_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_field_status',
+            true
+        );
+
+
+    if ( 'error' === $field_status ) {
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'partial'
+        );
+
+        $field_error =
+            (string) get_post_meta(
+                $local_lead_id,
+                '_mdg_kommo_field_error',
+                true
+            );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_error',
+            'Lead ve not oluşturuldu; özel alanlar yazılamadı: ' .
+            $field_error
+        );
+
+    } else {
+
+        delete_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_error'
+        );
+
+        update_post_meta(
+            $local_lead_id,
+            '_mdg_kommo_status',
+            'success'
+        );
+    }
+
+
+    update_post_meta(
+        $local_lead_id,
+        '_mdg_kommo_synced_at',
+        current_time(
+            'mysql'
+        )
+    );
+
+
+    return $kommo_lead_id;
+}
+
+
+/* ============================================================
+   6. FORM GÖNDERİMİ
+   ============================================================ */
+
+function mdg_handle_corporate_quote_v2() {
+
+    $redirect_base =
+        home_url( '/kurumsal/' );
+
+
+    if (
+        ! isset( $_POST['mdg_corporate_quote_nonce'] ) ||
+        ! wp_verify_nonce(
+            sanitize_text_field(
+                wp_unslash(
+                    $_POST['mdg_corporate_quote_nonce']
+                )
+            ),
+            'mdg_corporate_quote'
+        )
+    ) {
+
+        wp_safe_redirect(
+            add_query_arg(
+                'mdg_teklif',
+                'error',
+                $redirect_base
+            ) . '#kurumsal-form'
+        );
+
+        exit;
+    }
+
+
+    /* Basit bot kontrolü */
+
+    if (
+        ! empty( $_POST['website'] )
+    ) {
+
+        wp_safe_redirect(
+            add_query_arg(
+                'mdg_teklif',
+                'ok',
+                $redirect_base
+            ) . '#kurumsal-form'
+        );
+
+        exit;
+    }
+
+
+    /* Çok hızlı tekrar gönderimi engelle */
+
+    $ip =
+        isset( $_SERVER['REMOTE_ADDR'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_SERVER['REMOTE_ADDR']
+                )
+            )
+            : 'unknown';
+
+    $rate_key =
+        'mdg_corp_quote_' .
+        md5( $ip );
+
+    if ( get_transient( $rate_key ) ) {
+
+        wp_safe_redirect(
+            add_query_arg(
+                'mdg_teklif',
+                'rate',
+                $redirect_base
+            ) . '#kurumsal-form'
+        );
+
+        exit;
+    }
+
+
+    $company =
+        isset( $_POST['company'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['company']
+                )
+            )
+            : '';
+
+    $contact_name =
+        isset( $_POST['contact_name'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['contact_name']
+                )
+            )
+            : '';
+
+    $phone =
+        isset( $_POST['phone'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['phone']
+                )
+            )
+            : '';
+
+    $city =
+        isset( $_POST['city'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['city']
+                )
+            )
+            : '';
+
+    $event_date =
+        isset( $_POST['event_date'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['event_date']
+                )
+            )
+            : '';
+
+    $event_type =
+        isset( $_POST['event_type'] )
+            ? sanitize_text_field(
+                wp_unslash(
+                    $_POST['event_type']
+                )
+            )
+            : '';
+
+    $audience =
+        isset( $_POST['audience'] )
+            ? absint(
+                $_POST['audience']
+            )
+            : 0;
+
+    $note =
+        isset( $_POST['note'] )
+            ? sanitize_textarea_field(
+                wp_unslash(
+                    $_POST['note']
+                )
+            )
+            : '';
+
+    $consent =
+        ! empty(
+            $_POST['contact_consent']
+        );
+
+
+    $allowed_types =
+        array(
+            'Okul',
+            'Belediye',
+            'AVM',
+            'Festival',
+            'Özel Organizasyon',
+            'Diğer',
+        );
+
+
+    if (
+        ! $company ||
+        ! $contact_name ||
+        ! $phone ||
+        ! $city ||
+        ! $event_type ||
+        ! in_array(
+            $event_type,
+            $allowed_types,
+            true
+        ) ||
+        ! $consent
+    ) {
+
+        wp_safe_redirect(
+            add_query_arg(
+                'mdg_teklif',
+                'error',
+                $redirect_base
+            ) . '#kurumsal-form'
+        );
+
+        exit;
+    }
+
+
+    $post_title =
+        sprintf(
+            '%s — %s — %s',
+            $company,
+            $city,
+            current_time( 'd.m.Y H:i' )
+        );
+
+
+    $lead_id =
+        wp_insert_post(
+            array(
+                'post_type'   => 'mdg_corp_lead',
+                'post_status' => 'private',
+                'post_title'  => $post_title,
+            ),
+            true
+        );
+
+
+    if ( is_wp_error( $lead_id ) ) {
+
+        wp_safe_redirect(
+            add_query_arg(
+                'mdg_teklif',
+                'error',
+                $redirect_base
+            ) . '#kurumsal-form'
+        );
+
+        exit;
+    }
+
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_company',
+        $company
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_contact_name',
+        $contact_name
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_phone',
+        $phone
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_city',
+        $city
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_event_date',
+        $event_date
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_event_type',
+        $event_type
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_audience',
+        $audience
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_note',
+        $note
+    );
+
+    update_post_meta(
+        $lead_id,
+        '_mdg_contact_consent',
+        1
+    );
+
+
+    /*
+     * Kommo senkronizasyonu.
+     * Kommo geçici olarak erişilemez olsa bile WordPress kaydı korunur
+     * ve ziyaretçiye form hatası gösterilmez.
+     */
+
+    $kommo_data =
+        array(
+            'company' =>
+                $company,
+            'contact_name' =>
+                $contact_name,
+            'phone' =>
+                $phone,
+            'city' =>
+                $city,
+            'event_date' =>
+                $event_date,
+            'event_type' =>
+                $event_type,
+            'audience' =>
+                $audience,
+            'note' =>
+                $note,
+        );
+
+
+    mdg_corp_sync_to_kommo_v3(
+        $lead_id,
+        $kommo_data
+    );
+
+
+    /* Site yöneticisine e-posta bildirimi */
+
+    $recipient =
+        apply_filters(
+            'mdg_corporate_quote_recipient',
+            get_option( 'admin_email' )
+        );
+
+
+    $subject =
+        sprintf(
+            'Yeni Kurumsal Teklif Talebi — %s',
+            $company
+        );
+
+
+    $message =
+        "Yeni kurumsal teklif talebi alındı.\n\n" .
+        "Kurum: {$company}\n" .
+        "Yetkili: {$contact_name}\n" .
+        "Telefon: {$phone}\n" .
+        "Şehir: {$city}\n" .
+        "Planlanan Tarih: {$event_date}\n" .
+        "Etkinlik Türü: {$event_type}\n" .
+        "Tahmini Katılımcı: " .
+        ( $audience ? $audience : '-' ) .
+        "\n\nNot:\n" .
+        ( $note ? $note : '-' ) .
+        "\n\nTalep No: {$lead_id}\n";
+
+
+    if ( is_email( $recipient ) ) {
+
+        wp_mail(
+            $recipient,
+            $subject,
+            $message
+        );
+    }
+
+
+    set_transient(
+        $rate_key,
+        1,
+        30
+    );
+
+
+    wp_safe_redirect(
+        add_query_arg(
+            'mdg_teklif',
+            'ok',
+            $redirect_base
+        ) . '#kurumsal-form'
+    );
+
+    exit;
+}
+
+
+add_action(
+    'admin_post_nopriv_mdg_corporate_quote',
+    'mdg_handle_corporate_quote_v2'
+);
+
+add_action(
+    'admin_post_mdg_corporate_quote',
+    'mdg_handle_corporate_quote_v2'
+);
+
+
+/* ============================================================
+   7. TALEP LİSTESİ SÜTUNLARI
+   ============================================================ */
+
+add_filter(
+    'manage_mdg_corp_lead_posts_columns',
+    function ( $columns ) {
+
+        return array(
+            'cb'           => $columns['cb'],
+            'title'        => 'Talep',
+            'mdg_contact'  => 'Yetkili',
+            'mdg_phone'    => 'Telefon',
+            'mdg_city'     => 'Şehir',
+            'mdg_type'     => 'Etkinlik',
+            'mdg_date'     => 'Planlanan Tarih',
+            'mdg_kommo'    => 'Kommo',
+            'date'         => 'Kayıt',
+        );
+
+    }
+);
+
+
+add_action(
+    'manage_mdg_corp_lead_posts_custom_column',
+    function ( $column, $post_id ) {
+
+        if ( 'mdg_contact' === $column ) {
+
+            echo esc_html(
+                get_post_meta(
+                    $post_id,
+                    '_mdg_contact_name',
+                    true
+                )
+            );
+        }
+
+        if ( 'mdg_phone' === $column ) {
+
+            echo esc_html(
+                get_post_meta(
+                    $post_id,
+                    '_mdg_phone',
+                    true
+                )
+            );
+        }
+
+        if ( 'mdg_city' === $column ) {
+
+            echo esc_html(
+                get_post_meta(
+                    $post_id,
+                    '_mdg_city',
+                    true
+                )
+            );
+        }
+
+        if ( 'mdg_type' === $column ) {
+
+            echo esc_html(
+                get_post_meta(
+                    $post_id,
+                    '_mdg_event_type',
+                    true
+                )
+            );
+        }
+
+        if ( 'mdg_date' === $column ) {
+
+            echo esc_html(
+                get_post_meta(
+                    $post_id,
+                    '_mdg_event_date',
+                    true
+                )
+            );
+        }
+
+        if ( 'mdg_kommo' === $column ) {
+
+            $status =
+                (string) get_post_meta(
+                    $post_id,
+                    '_mdg_kommo_status',
+                    true
+                );
+
+            $kommo_lead_id =
+                absint(
+                    get_post_meta(
+                        $post_id,
+                        '_mdg_kommo_lead_id',
+                        true
+                    )
+                );
+
+
+            if (
+                'success' === $status &&
+                $kommo_lead_id
+            ) {
+
+                echo '<strong style="color:#198754">Aktarıldı</strong>';
+
+            } elseif (
+                'partial' === $status &&
+                $kommo_lead_id
+            ) {
+
+                echo '<strong style="color:#b7791f">Kısmi</strong>';
+
+            } elseif (
+                'error' === $status
+            ) {
+
+                echo '<strong style="color:#b42318">Hata</strong>';
+
+            } elseif (
+                'config_missing' === $status
+            ) {
+
+                echo '<span style="color:#6b7280">Ayar yok</span>';
+
+            } elseif (
+                'syncing' === $status
+            ) {
+
+                echo '<span>Gönderiliyor…</span>';
+
+            } else {
+
+                echo '<span style="color:#6b7280">—</span>';
+            }
+        }
+
+    },
+    10,
+    2
+);
+
+
+/* ============================================================
+   8. TALEP DETAY KUTUSU
+   ============================================================ */
+
+add_action(
+    'add_meta_boxes_mdg_corp_lead',
+    function () {
+
+        add_meta_box(
+            'mdg_corp_lead_details',
+            'Kurumsal Talep Detayları',
+            function ( $post ) {
+
+                $company =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_company',
+                        true
+                    );
+
+                $contact_name =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_contact_name',
+                        true
+                    );
+
+                $phone =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_phone',
+                        true
+                    );
+
+                $city =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_city',
+                        true
+                    );
+
+                $event_date =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_event_date',
+                        true
+                    );
+
+                $event_type =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_event_type',
+                        true
+                    );
+
+                $audience =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_audience',
+                        true
+                    );
+
+                $note =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_note',
+                        true
+                    );
+
+                $kommo_status =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_kommo_status',
+                        true
+                    );
+
+                $kommo_lead_id =
+                    absint(
+                        get_post_meta(
+                            $post->ID,
+                            '_mdg_kommo_lead_id',
+                            true
+                        )
+                    );
+
+                $kommo_contact_id =
+                    absint(
+                        get_post_meta(
+                            $post->ID,
+                            '_mdg_kommo_contact_id',
+                            true
+                        )
+                    );
+
+                $kommo_error =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_kommo_error',
+                        true
+                    );
+
+                $kommo_synced_at =
+                    get_post_meta(
+                        $post->ID,
+                        '_mdg_kommo_synced_at',
+                        true
+                    );
+
+                $kommo_web_base = '';
+
+                if ( defined( 'MS_KOMMO_BASE_URL' ) ) {
+                    $kommo_web_base =
+                        preg_replace(
+                            '#/api/v4/?$#',
+                            '',
+                            rtrim(
+                                (string) MS_KOMMO_BASE_URL,
+                                '/'
+                            )
+                        );
+                }
+
+                ?>
+
+                <table
+                    class="widefat striped"
+                    style="max-width:900px"
+                >
+
+                    <tbody>
+
+                        <tr>
+                            <th style="width:180px">Kurum</th>
+                            <td><?php echo esc_html( $company ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Yetkili</th>
+                            <td><?php echo esc_html( $contact_name ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Telefon</th>
+                            <td>
+                                <?php if ( $phone ) : ?>
+                                    <a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>">
+                                        <?php echo esc_html( $phone ); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Şehir</th>
+                            <td><?php echo esc_html( $city ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Planlanan Tarih</th>
+                            <td><?php echo esc_html( $event_date ? $event_date : '-' ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Etkinlik Türü</th>
+                            <td><?php echo esc_html( $event_type ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Tahmini Katılımcı</th>
+                            <td><?php echo esc_html( $audience ? $audience : '-' ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Not</th>
+                            <td><?php echo nl2br( esc_html( $note ? $note : '-' ) ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Kommo Durumu</th>
+                            <td>
+                                <?php
+                                $status_labels =
+                                    array(
+                                        'success'        => 'Aktarıldı',
+                                        'partial'        => 'Kısmi aktarıldı',
+                                        'error'          => 'Hata',
+                                        'config_missing' => 'Kommo ayarı bulunamadı',
+                                        'syncing'        => 'Gönderiliyor',
+                                    );
+
+                                echo esc_html(
+                                    isset(
+                                        $status_labels[
+                                            $kommo_status
+                                        ]
+                                    )
+                                        ? $status_labels[
+                                            $kommo_status
+                                        ]
+                                        : '-'
+                                );
+                                ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Kommo Lead</th>
+                            <td>
+                                <?php if (
+                                    $kommo_lead_id &&
+                                    $kommo_web_base
+                                ) : ?>
+                                    <a
+                                        href="<?php echo esc_url(
+                                            $kommo_web_base .
+                                            '/leads/detail/' .
+                                            $kommo_lead_id
+                                        ); ?>"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        #<?php echo esc_html( $kommo_lead_id ); ?> kartını aç
+                                    </a>
+                                <?php elseif ( $kommo_lead_id ) : ?>
+                                    #<?php echo esc_html( $kommo_lead_id ); ?>
+                                <?php else : ?>
+                                    -
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Kommo Contact</th>
+                            <td>
+                                <?php echo esc_html(
+                                    $kommo_contact_id
+                                        ? '#' . $kommo_contact_id
+                                        : '-'
+                                ); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Kommo Senkron</th>
+                            <td><?php echo esc_html( $kommo_synced_at ? $kommo_synced_at : '-' ); ?></td>
+                        </tr>
+
+                        <tr>
+                            <th>Kommo Özel Alanlar</th>
+                            <td>
+                                <?php
+                                $field_sync_status =
+                                    (string) get_post_meta(
+                                        $post->ID,
+                                        '_mdg_kommo_field_status',
+                                        true
+                                    );
+
+                                echo esc_html(
+                                    'success' === $field_sync_status
+                                        ? 'Aktarıldı'
+                                        : (
+                                            'error' === $field_sync_status
+                                                ? 'Hata'
+                                                : '-'
+                                        )
+                                );
+                                ?>
+                            </td>
+                        </tr>
+
+                        <?php if ( $kommo_error ) : ?>
+                            <tr>
+                                <th>Kommo Hata</th>
+                                <td><?php echo esc_html( $kommo_error ); ?></td>
+                            </tr>
+                        <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+                <?php
+            },
+            'mdg_corp_lead',
+            'normal',
+            'high'
+        );
+
+    }
+);
+
+
+/* ============================================================
+   9. SAYFA İÇERİĞİNİ DEĞİŞTİR
+   ============================================================ */
+
+add_filter(
+    'the_content',
+    function ( $content ) {
+
+        if (
+            is_admin() ||
+            ! mdg_is_corporate_page_v2() ||
+            ! in_the_loop() ||
+            ! is_main_query()
+        ) {
+            return $content;
+        }
+
+        return mdg_render_corporate_page_v2();
+
+    },
+    999
+);
+
+
+/* ============================================================
+   5. CSS
+   ============================================================ */
+
+add_action(
+    'wp_head',
+    function () {
+
+        if ( ! mdg_is_corporate_page_v2() ) {
+            return;
+        }
+
+        ?>
+
+<style id="mdg-corporate-v1">
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+body.mdg-corporate-page {
+    background: #f6f2e8 !important;
+    overflow-x: hidden !important;
+}
+
+body.mdg-corporate-page .entry-title,
+body.mdg-corporate-page .wp-block-post-title {
+    display: none !important;
+}
+
+#mdg-corporate,
+#mdg-corporate * {
+    box-sizing: border-box;
+}
+
+#mdg-corporate {
+
+    --bg: #f6f2e8;
+    --soft: #ede7da;
+    --white: #ffffff;
+    --dark: #0d0d17;
+    --text: #111118;
+    --muted: #69676d;
+    --red: #cf5744;
+    --yellow: #f4bd42;
+    --border: #e5dfd3;
+
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 100vw;
+    max-width: 100vw;
+
+    margin: 0;
+
+    background: var(--bg);
+    color: var(--text);
+
+    overflow: hidden;
+}
+
+#mdg-corporate .mdgc-wrap {
+
+    width:
+        min(
+            1180px,
+            calc(100% - 48px)
+        );
+
+    margin: 0 auto;
+}
+
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+#mdg-corporate .mdgc-hero {
+    padding: 70px 0 28px;
+}
+
+#mdg-corporate .mdgc-hero-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1.04fr .96fr;
+
+    gap: 18px;
+}
+
+#mdg-corporate .mdgc-hero-copy,
+#mdg-corporate .mdgc-hero-media {
+
+    min-height: 610px;
+
+    border-radius: 28px;
+
+    overflow: hidden;
+}
+
+#mdg-corporate .mdgc-hero-copy {
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 54px;
+
+    background: #fff;
+}
+
+#mdg-corporate .mdgc-kicker {
+
+    display: inline-flex;
+    align-self: flex-start;
+
+    padding: 11px 17px;
+
+    background: var(--dark);
+    color: #fff;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.1px;
+}
+
+#mdg-corporate h1 {
+
+    margin: 49px 0 26px;
+
+    font-size:
+        clamp(
+            56px,
+            6vw,
+            82px
+        );
+
+    font-weight: 500;
+    line-height: .90;
+    letter-spacing: -4px;
+}
+
+#mdg-corporate .mdgc-lead {
+
+    margin: 0;
+
+    color: #4d4b50;
+
+    font-size: 19px;
+    line-height: 1.62;
+}
+
+#mdg-corporate .mdgc-pills {
+
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 9px;
+
+    margin: 32px 0;
+}
+
+#mdg-corporate .mdgc-pills span {
+
+    padding: 10px 14px;
+
+    background: var(--bg);
+
+    border: 1px solid #ddd6c9;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#mdg-corporate .mdgc-actions {
+
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 11px;
+
+    margin-top: auto;
+}
+
+
+
+/* HERO IMAGE */
+
+#mdg-corporate .mdgc-hero-media {
+
+    position: relative;
+
+    background: #111;
+}
+
+#mdg-corporate .mdgc-hero-media img {
+
+    position: absolute;
+
+    inset: 0;
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
+}
+
+#mdg-corporate .mdgc-hero-media::after {
+
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.78),
+            transparent 56%
+        );
+}
+
+#mdg-corporate .mdgc-image-overlay {
+
+    position: absolute;
+    z-index: 2;
+
+    left: 36px;
+    right: 36px;
+    bottom: 38px;
+
+    color: #fff;
+}
+
+#mdg-corporate .mdgc-image-overlay span {
+
+    display: inline-flex;
+
+    margin-bottom: 13px;
+
+    padding: 8px 12px;
+
+    background: rgba(13,13,23,.8);
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 900;
+}
+
+#mdg-corporate .mdgc-image-overlay strong {
+
+    display: block;
+
+    font-size:
+        clamp(
+            38px,
+            4vw,
+            57px
+        );
+
+    font-weight: 500;
+
+    line-height: .93;
+
+    letter-spacing: -2px;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#mdg-corporate .mdgc-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 52px;
+
+    padding: 0 22px;
+
+    border-radius: 999px;
+
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 850;
+}
+
+#mdg-corporate .mdgc-btn-primary {
+
+    background: var(--red);
+    color: #fff;
+
+    box-shadow:
+        0 12px 28px
+        rgba(207,87,68,.22);
+}
+
+#mdg-corporate .mdgc-btn-secondary {
+
+    background: #fff;
+    color: var(--dark);
+
+    border: 1px solid var(--border);
+}
+
+#mdg-corporate .mdgc-btn-light {
+
+    background: #fff;
+    color: var(--dark);
+}
+
+
+
+/* ============================================================
+   QUICK
+   ============================================================ */
+
+#mdg-corporate .mdgc-quick {
+    padding: 0 0 90px;
+}
+
+#mdg-corporate .mdgc-quick-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    overflow: hidden;
+
+    background: var(--dark);
+
+    border-radius: 21px;
+}
+
+#mdg-corporate .mdgc-quick-grid > div {
+
+    padding: 27px 20px;
+
+    text-align: center;
+
+    color: #fff;
+
+    border-right:
+        1px solid
+        rgba(255,255,255,.12);
+}
+
+#mdg-corporate
+.mdgc-quick-grid > div:last-child {
+    border-right: 0;
+}
+
+#mdg-corporate .mdgc-quick-grid strong,
+#mdg-corporate .mdgc-quick-grid span {
+    display: block;
+}
+
+#mdg-corporate .mdgc-quick-grid strong {
+    margin-bottom: 6px;
+}
+
+#mdg-corporate .mdgc-quick-grid span {
+
+    color: #bbb9c0;
+
+    font-size: 12px;
+}
+
+
+
+/* ============================================================
+   COMMON HEADINGS
+   ============================================================ */
+
+#mdg-corporate .mdgc-label {
+
+    display: block;
+
+    margin-bottom: 13px;
+
+    color: var(--red);
+
+    font-size: 11px;
+    font-weight: 900;
+
+    letter-spacing: 1.7px;
+}
+
+#mdg-corporate .mdgc-section-head {
+
+    max-width: 780px;
+
+    margin-bottom: 44px;
+}
+
+#mdg-corporate .mdgc-section-head h2,
+#mdg-corporate .mdgc-experience h2,
+#mdg-corporate .mdgc-process h2,
+#mdg-corporate .mdgc-family h2,
+#mdg-corporate .mdgc-cta h2 {
+
+    margin: 0;
+
+    font-size:
+        clamp(
+            44px,
+            5vw,
+            68px
+        );
+
+    font-weight: 500;
+
+    line-height: .96;
+
+    letter-spacing: -3px;
+}
+
+#mdg-corporate .mdgc-section-head > p {
+
+    max-width: 650px;
+
+    margin: 20px 0 0;
+
+    color: var(--muted);
+
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+
+
+/* ============================================================
+   CLIENTS
+   ============================================================ */
+
+#mdg-corporate .mdgc-clients {
+
+    padding: 95px 0;
+
+    background: var(--soft);
+}
+
+#mdg-corporate .mdgc-client-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+    gap: 14px;
+}
+
+#mdg-corporate .mdgc-client-grid article {
+
+    min-height: 330px;
+
+    padding: 28px;
+
+    background: #fff;
+
+    border-radius: 22px;
+
+    border:
+        1px solid
+        var(--border);
+}
+
+#mdg-corporate .mdgc-icon {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 48px;
+    height: 48px;
+
+    margin-bottom: 42px;
+
+    background: var(--bg);
+
+    border-radius: 14px;
+
+    font-size: 22px;
+}
+
+#mdg-corporate .mdgc-client-grid small {
+
+    display: block;
+
+    margin-bottom: 13px;
+
+    color: var(--red);
+
+    font-weight: 900;
+}
+
+#mdg-corporate .mdgc-client-grid h3 {
+
+    margin: 0 0 15px;
+
+    font-size: 24px;
+}
+
+#mdg-corporate .mdgc-client-grid p {
+
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 14px;
+
+    line-height: 1.65;
+}
+
+
+
+/* ============================================================
+   EXPERIENCE
+   ============================================================ */
+
+#mdg-corporate .mdgc-experience {
+    padding: 100px 0;
+}
+
+#mdg-corporate .mdgc-experience-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 50px;
+
+    align-items: center;
+}
+
+#mdg-corporate .mdgc-experience-copy p {
+
+    margin: 24px 0 0;
+
+    color: #5d5a60;
+
+    font-size: 17px;
+    line-height: 1.72;
+}
+
+#mdg-corporate .mdgc-experience-media {
+
+    overflow: hidden;
+
+    border-radius: 28px;
+}
+
+#mdg-corporate .mdgc-experience-media img {
+
+    display: block;
+
+    width: 100%;
+
+    aspect-ratio: 4 / 5;
+
+    object-fit: cover;
+}
+
+
+
+/* ============================================================
+   SERVICES
+   ============================================================ */
+
+#mdg-corporate .mdgc-services {
+
+    padding: 100px 0;
+
+    background: var(--soft);
+}
+
+#mdg-corporate .mdgc-service-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+    gap: 14px;
+}
+
+#mdg-corporate .mdgc-service-grid article {
+
+    min-height: 300px;
+
+    padding: 28px;
+
+    background: #fff;
+
+    border: 1px solid var(--border);
+
+    border-radius: 22px;
+}
+
+#mdg-corporate .mdgc-service-grid article > span {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 47px;
+    height: 47px;
+
+    margin-bottom: 40px;
+
+    background: var(--bg);
+
+    border-radius: 14px;
+
+    font-size: 21px;
+}
+
+#mdg-corporate .mdgc-service-grid h3 {
+
+    margin: 0 0 13px;
+
+    font-size: 22px;
+}
+
+#mdg-corporate .mdgc-service-grid p {
+
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 14px;
+
+    line-height: 1.63;
+}
+
+
+
+/* ============================================================
+   PROCESS
+   ============================================================ */
+
+#mdg-corporate .mdgc-process {
+    padding: 100px 0;
+}
+
+#mdg-corporate .mdgc-process-panel {
+
+    padding: 54px;
+
+    background: var(--dark);
+
+    color: #fff;
+
+    border-radius: 28px;
+}
+
+#mdg-corporate .mdgc-process-panel header {
+
+    max-width: 760px;
+
+    margin-bottom: 48px;
+}
+
+#mdg-corporate .mdgc-process h2 {
+    color: #fff;
+}
+
+#mdg-corporate .mdgc-process-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+    gap: 12px;
+}
+
+#mdg-corporate .mdgc-process-grid article {
+
+    min-height: 260px;
+
+    padding: 25px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    border:
+        1px solid
+        rgba(255,255,255,.1);
+
+    border-radius: 18px;
+}
+
+#mdg-corporate .mdgc-process-grid strong {
+
+    display: block;
+
+    margin-bottom: 45px;
+
+    color: var(--yellow);
+
+    font-size: 13px;
+}
+
+#mdg-corporate .mdgc-process-grid h3 {
+
+    margin: 0 0 13px;
+
+    color: #fff;
+
+    font-size: 20px;
+}
+
+#mdg-corporate .mdgc-process-grid p {
+
+    margin: 0;
+
+    color: #c2c0c7;
+
+    font-size: 13px;
+
+    line-height: 1.62;
+}
+
+
+
+/* ============================================================
+   FAMILY
+   ============================================================ */
+
+#mdg-corporate .mdgc-family {
+
+    padding: 100px 0;
+
+    background: var(--soft);
+}
+
+#mdg-corporate .mdgc-family-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        .95fr 1.05fr;
+
+    gap: 50px;
+
+    align-items: center;
+}
+
+#mdg-corporate .mdgc-family-media {
+
+    overflow: hidden;
+
+    border-radius: 28px;
+}
+
+#mdg-corporate .mdgc-family-media img {
+
+    display: block;
+
+    width: 100%;
+
+    aspect-ratio: 4 / 5;
+
+    object-fit: cover;
+}
+
+#mdg-corporate .mdgc-family-copy > p {
+
+    margin: 25px 0 0;
+
+    color: var(--muted);
+
+    font-size: 17px;
+
+    line-height: 1.7;
+}
+
+#mdg-corporate .mdgc-mini-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 35px;
+}
+
+#mdg-corporate .mdgc-mini-grid > div {
+
+    padding: 21px;
+
+    background: #fff;
+
+    border-radius: 16px;
+}
+
+#mdg-corporate .mdgc-mini-grid strong,
+#mdg-corporate .mdgc-mini-grid span {
+    display: block;
+}
+
+#mdg-corporate .mdgc-mini-grid strong {
+    margin-bottom: 6px;
+}
+
+#mdg-corporate .mdgc-mini-grid span {
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+
+/* ============================================================
+   BRIEF
+   ============================================================ */
+
+#mdg-corporate .mdgc-brief {
+    padding: 100px 0;
+}
+
+#mdg-corporate .mdgc-brief-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+    gap: 12px;
+}
+
+#mdg-corporate .mdgc-brief-grid > div {
+
+    padding: 26px;
+
+    background: #fff;
+
+    border: 1px solid var(--border);
+
+    border-radius: 18px;
+}
+
+#mdg-corporate .mdgc-brief-grid strong,
+#mdg-corporate .mdgc-brief-grid span {
+    display: block;
+}
+
+#mdg-corporate .mdgc-brief-grid strong {
+    margin-bottom: 8px;
+}
+
+#mdg-corporate .mdgc-brief-grid span {
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+#mdg-corporate .mdgc-form-section {
+
+    padding: 100px 0;
+
+    background: var(--soft);
+}
+
+#mdg-corporate .mdgc-form-panel {
+
+    display: grid;
+
+    grid-template-columns:
+        .82fr 1.18fr;
+
+    gap: 42px;
+
+    padding: 46px;
+
+    background: #fff;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 28px;
+}
+
+#mdg-corporate .mdgc-form-copy {
+
+    padding: 10px 6px;
+}
+
+#mdg-corporate .mdgc-form-copy h2 {
+
+    margin: 0;
+
+    font-size:
+        clamp(
+            42px,
+            5vw,
+            62px
+        );
+
+    font-weight: 500;
+
+    line-height: .97;
+
+    letter-spacing: -3px;
+}
+
+#mdg-corporate .mdgc-form-copy > p {
+
+    margin: 23px 0 0;
+
+    color: var(--muted);
+
+    font-size: 16px;
+
+    line-height: 1.7;
+}
+
+#mdg-corporate .mdgc-form-note {
+
+    margin-top: 30px;
+
+    padding: 20px;
+
+    background: var(--bg);
+
+    border-radius: 16px;
+}
+
+#mdg-corporate .mdgc-form-note strong,
+#mdg-corporate .mdgc-form-note span {
+
+    display: block;
+}
+
+#mdg-corporate .mdgc-form-note strong {
+
+    margin-bottom: 6px;
+}
+
+#mdg-corporate .mdgc-form-note span {
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.55;
+}
+
+#mdg-corporate .mdgc-form-card {
+
+    padding: 30px;
+
+    background: var(--bg);
+
+    border-radius: 22px;
+}
+
+#mdg-corporate .mdgc-form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 16px;
+}
+
+#mdg-corporate .mdgc-field {
+
+    display: block;
+}
+
+#mdg-corporate .mdgc-field-full {
+
+    grid-column: 1 / -1;
+}
+
+#mdg-corporate .mdgc-field > span {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--text);
+
+    font-size: 12px;
+
+    font-weight: 850;
+}
+
+#mdg-corporate .mdgc-field input,
+#mdg-corporate .mdgc-field select,
+#mdg-corporate .mdgc-field textarea {
+
+    width: 100%;
+
+    margin: 0;
+
+    padding: 13px 14px;
+
+    background: #fff;
+
+    color: var(--text);
+
+    border:
+        1px solid
+        #dcd5c8;
+
+    border-radius: 12px;
+
+    outline: none;
+
+    font: inherit;
+
+    font-size: 14px;
+}
+
+#mdg-corporate .mdgc-field input,
+#mdg-corporate .mdgc-field select {
+
+    min-height: 49px;
+}
+
+#mdg-corporate .mdgc-field textarea {
+
+    resize: vertical;
+}
+
+#mdg-corporate .mdgc-field input:focus,
+#mdg-corporate .mdgc-field select:focus,
+#mdg-corporate .mdgc-field textarea:focus {
+
+    border-color: var(--red);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(207,87,68,.10);
+}
+
+#mdg-corporate .mdgc-consent {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin-top: 18px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+#mdg-corporate .mdgc-consent input {
+
+    width: 17px;
+    height: 17px;
+
+    margin-top: 1px;
+
+    flex: 0 0 auto;
+}
+
+#mdg-corporate .mdgc-form-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin-top: 24px;
+}
+
+#mdg-corporate .mdgc-submit {
+
+    border: 0;
+
+    cursor: pointer;
+}
+
+#mdg-corporate .mdgc-form-whatsapp {
+
+    color: var(--text);
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 850;
+}
+
+#mdg-corporate .mdgc-form-alert {
+
+    margin-bottom: 20px;
+
+    padding: 17px 18px;
+
+    border-radius: 14px;
+}
+
+#mdg-corporate .mdgc-form-alert strong,
+#mdg-corporate .mdgc-form-alert span {
+
+    display: block;
+}
+
+#mdg-corporate .mdgc-form-alert strong {
+
+    margin-bottom: 4px;
+}
+
+#mdg-corporate .mdgc-form-alert span {
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+#mdg-corporate .mdgc-form-success {
+
+    background: #e7f6ec;
+
+    color: #1d5b33;
+}
+
+#mdg-corporate .mdgc-form-error {
+
+    background: #fbe9e6;
+
+    color: #8d3326;
+}
+
+#mdg-corporate .mdgc-hp {
+
+    position: absolute !important;
+
+    left: -9999px !important;
+
+    width: 1px !important;
+    height: 1px !important;
+
+    overflow: hidden !important;
+}
+
+
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+#mdg-corporate .mdgc-cta {
+    padding: 0 0 100px;
+}
+
+#mdg-corporate .mdgc-cta-panel {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 50px;
+
+    padding: 54px;
+
+    background: var(--dark);
+
+    color: #fff;
+
+    border-radius: 28px;
+}
+
+#mdg-corporate .mdgc-cta-copy {
+    max-width: 700px;
+}
+
+#mdg-corporate .mdgc-cta-copy > span {
+
+    display: block;
+
+    margin-bottom: 13px;
+
+    color: var(--yellow);
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    letter-spacing: 1.6px;
+}
+
+#mdg-corporate .mdgc-cta h2 {
+    color: #fff;
+}
+
+#mdg-corporate .mdgc-cta p {
+
+    margin: 20px 0 0;
+
+    color: #c5c3ca;
+
+    font-size: 15px;
+
+    line-height: 1.6;
+}
+
+#mdg-corporate .mdgc-cta-actions {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 11px;
+
+    min-width: 280px;
+}
+
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    #mdg-corporate .mdgc-hero-grid,
+    #mdg-corporate .mdgc-experience-grid,
+    #mdg-corporate .mdgc-family-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #mdg-corporate .mdgc-client-grid,
+    #mdg-corporate .mdgc-service-grid,
+    #mdg-corporate .mdgc-process-grid,
+    #mdg-corporate .mdgc-brief-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    #mdg-corporate .mdgc-form-panel {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #mdg-corporate .mdgc-cta-panel {
+
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+    }
+
+    #mdg-corporate .mdgc-cta-actions {
+        width: 100%;
+    }
+
+}
+
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    body.mdg-corporate-page {
+        background:
+            #f6f2e8 !important;
+    }
+
+    #mdg-corporate {
+
+        width:
+            100vw !important;
+
+        max-width:
+            100vw !important;
+
+        background:
+            #f6f2e8 !important;
+    }
+
+    #mdg-corporate .mdgc-wrap {
+        width:
+            calc(100% - 32px);
+    }
+
+
+    /* HERO */
+
+    #mdg-corporate .mdgc-hero {
+        padding:
+            36px 0 25px;
+    }
+
+    #mdg-corporate .mdgc-hero-copy {
+
+        min-height: 0;
+
+        padding:
+            31px 26px;
+    }
+
+    #mdg-corporate .mdgc-kicker {
+        font-size: 9px;
+    }
+
+    #mdg-corporate h1 {
+
+        margin-top: 37px;
+
+        font-size: 52px;
+
+        line-height: .92;
+
+        letter-spacing: -3px;
+    }
+
+    #mdg-corporate .mdgc-lead {
+        font-size: 17px;
+    }
+
+    #mdg-corporate .mdgc-pills {
+
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    #mdg-corporate .mdgc-pills span {
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        min-height: 55px;
+
+        text-align: center;
+    }
+
+    #mdg-corporate .mdgc-actions {
+        display: grid;
+    }
+
+    #mdg-corporate .mdgc-btn {
+        width: 100%;
+    }
+
+    #mdg-corporate .mdgc-hero-media {
+        min-height: 510px;
+    }
+
+    #mdg-corporate .mdgc-image-overlay {
+
+        left: 25px;
+        right: 25px;
+        bottom: 27px;
+    }
+
+
+    /* QUICK */
+
+    #mdg-corporate .mdgc-quick {
+        padding-bottom: 60px;
+    }
+
+    #mdg-corporate .mdgc-quick-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    /* SECTIONS */
+
+    #mdg-corporate .mdgc-clients,
+    #mdg-corporate .mdgc-experience,
+    #mdg-corporate .mdgc-services,
+    #mdg-corporate .mdgc-process,
+    #mdg-corporate .mdgc-family,
+    #mdg-corporate .mdgc-brief,
+    #mdg-corporate .mdgc-form-section {
+
+        padding:
+            70px 0;
+    }
+
+    #mdg-corporate .mdgc-section-head h2,
+    #mdg-corporate .mdgc-experience h2,
+    #mdg-corporate .mdgc-process h2,
+    #mdg-corporate .mdgc-family h2,
+    #mdg-corporate .mdgc-cta h2 {
+
+        font-size: 42px;
+
+        line-height: 1;
+    }
+
+
+    /* CARDS */
+
+    #mdg-corporate .mdgc-client-grid,
+    #mdg-corporate .mdgc-service-grid,
+    #mdg-corporate .mdgc-process-grid,
+    #mdg-corporate .mdgc-brief-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #mdg-corporate .mdgc-client-grid article,
+    #mdg-corporate .mdgc-service-grid article,
+    #mdg-corporate .mdgc-process-grid article {
+
+        min-height: 0;
+    }
+
+
+    /* IMAGES */
+
+    #mdg-corporate .mdgc-experience-media img,
+    #mdg-corporate .mdgc-family-media img {
+
+        aspect-ratio:
+            4 / 3;
+    }
+
+
+    /* PROCESS */
+
+    #mdg-corporate .mdgc-process-panel {
+        padding:
+            30px 25px;
+    }
+
+
+    /* MINI */
+
+    #mdg-corporate .mdgc-mini-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+
+    /* FORM */
+
+    #mdg-corporate .mdgc-form-panel {
+
+        grid-template-columns:
+            1fr;
+
+        padding:
+            30px 24px;
+    }
+
+    #mdg-corporate .mdgc-form-card {
+
+        padding:
+            22px 18px;
+    }
+
+    #mdg-corporate .mdgc-form-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #mdg-corporate .mdgc-field-full {
+
+        grid-column:
+            auto;
+    }
+
+    #mdg-corporate .mdgc-form-actions {
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+    }
+
+    #mdg-corporate .mdgc-form-whatsapp {
+
+        text-align:
+            center;
+    }
+
+
+    /* CTA */
+
+    #mdg-corporate .mdgc-cta {
+        padding-bottom: 70px;
+    }
+
+    #mdg-corporate .mdgc-cta-panel {
+        padding:
+            30px 25px;
+    }
+
+    #mdg-corporate .mdgc-cta-actions {
+
+        min-width: 0;
+
+        width: 100%;
+    }
+
+}
+
+</style>
+
+        <?php
+    },
+    9999
+);

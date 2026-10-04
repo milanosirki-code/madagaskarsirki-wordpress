@@ -1,0 +1,195 @@
+/**
+ * Madagaskar Sirki – Temiz XML Sitemap V2
+ *
+ * WordPress çekirdek sitemap'inden:
+ * - Teknik eklenti kayıtlarını,
+ * - MailPoet sistem sayfalarını,
+ * - Kullanıcı/yazar haritasını,
+ * - Ürün etiketi arşivlerini,
+ * - Eski ve özel sayfaları kaldırır.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/**
+ * Gereksiz özel yazı türlerini sitemap dizininden kaldır.
+ */
+add_filter( 'wp_sitemaps_post_types', function ( $post_types ) {
+
+    $excluded_post_types = array(
+        'tc_events',
+        'tc_api_keys',
+        'mailpoet_page',
+        'mailpoet_email',
+        'mailpoet_newsletter',
+        'shop_coupon',
+        'shop_order',
+        'shop_order_refund',
+        'product_variation',
+        'attachment',
+    );
+
+    foreach ( $excluded_post_types as $post_type ) {
+        if ( isset( $post_types[ $post_type ] ) ) {
+            unset( $post_types[ $post_type ] );
+        }
+    }
+
+    return $post_types;
+}, 20 );
+
+
+/**
+ * Gereksiz sınıflandırmaları sitemap dizininden kaldır.
+ *
+ * Ürün kategorileri korunur; ürün etiketleri kaldırılır.
+ */
+add_filter( 'wp_sitemaps_taxonomies', function ( $taxonomies ) {
+
+    $excluded_taxonomies = array(
+        'product_tag',
+        'post_tag',
+        'product_shipping_class',
+        'pa_event',
+        'pa_date',
+        'pa_time',
+    );
+
+    foreach ( $excluded_taxonomies as $taxonomy ) {
+        if ( isset( $taxonomies[ $taxonomy ] ) ) {
+            unset( $taxonomies[ $taxonomy ] );
+        }
+    }
+
+    return $taxonomies;
+}, 20 );
+
+
+/**
+ * Kullanıcı/yazar sitemap sağlayıcısını tamamen kaldır.
+ */
+add_filter(
+    'wp_sitemaps_add_provider',
+    function ( $provider, $name ) {
+
+        if ( 'users' === $name ) {
+            return false;
+        }
+
+        return $provider;
+    },
+    20,
+    2
+);
+
+
+/**
+ * Eski, özel, sistem ve kullanıcıya özel sayfaları
+ * yazı/sayfa sitemap sorgusundan çıkar.
+ */
+add_filter(
+    'wp_sitemaps_posts_query_args',
+    function ( $args, $post_type ) {
+
+        /*
+         * Eski ve yönlendirilmiş içerikler:
+         * 180, 192
+         *
+         * Eski gösteri sayfaları:
+         * 235, 236, 237, 238, 239, 241
+         *
+         * Eski galeri sayfaları:
+         * 308, 309, 310
+         *
+         * Özel bilet ve sistem sayfaları:
+         * 1250, 1251, 1252, 1284–1289, 1535
+         */
+        $excluded_ids = array(
+            180,
+            192,
+            235,
+            236,
+            237,
+            238,
+            239,
+            241,
+            308,
+            309,
+            310,
+            1250,
+            1251,
+            1252,
+            1284,
+            1285,
+            1286,
+            1287,
+            1288,
+            1289,
+            1535,
+        );
+
+        $existing_exclusions = array();
+
+        if ( ! empty( $args['post__not_in'] ) &&
+             is_array( $args['post__not_in'] ) ) {
+            $existing_exclusions = $args['post__not_in'];
+        }
+
+        $args['post__not_in'] = array_values(
+            array_unique(
+                array_merge(
+                    $existing_exclusions,
+                    $excluded_ids
+                )
+            )
+        );
+
+        return $args;
+    },
+    20,
+    2
+);
+
+
+/**
+ * Teknik içeriklerin doğrudan adresleri açılırsa
+ * arama motorlarına noindex bildir.
+ */
+add_filter( 'wp_robots', function ( $robots ) {
+
+    $technical_post_types = array(
+        'tc_events',
+        'tc_api_keys',
+        'mailpoet_page',
+        'mailpoet_email',
+        'mailpoet_newsletter',
+    );
+
+    if ( is_singular( $technical_post_types ) ||
+         is_author() ||
+         is_tax( 'product_tag' ) ) {
+
+        $robots['noindex'] = true;
+        $robots['nofollow'] = true;
+
+        unset( $robots['index'] );
+        unset( $robots['follow'] );
+    }
+
+    return $robots;
+}, 20 );
+
+
+/**
+ * Sitemap önbelleğinin yanlış içerik göstermesini azalt.
+ */
+add_action( 'init', function () {
+
+    if ( function_exists( 'wp_cache_flush_group' ) ) {
+        wp_cache_flush_group( 'sitemaps' );
+    }
+
+}, 99 );

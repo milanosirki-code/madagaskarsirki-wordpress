@@ -1,0 +1,151 @@
+/**
+ * Madagaskar Sirki – Hukuki Sayfalar İletişim Standardı V1
+ *
+ * Yalnızca belirlenen hukuki sayfalarda:
+ * - Telefonu +90 506 034 38 74 yapar
+ * - Ankara merkez adresini tam kurumsal biçime getirir
+ *
+ * WhatsApp numarasını değiştirmez.
+ * Footer'a dokunmaz.
+ * Bir defa çalışır.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+add_action( 'init', function () {
+
+    $version_key = 'ms_hukuki_iletisim_standard_v1';
+
+    // Daha önce başarıyla çalıştıysa tekrar işlem yapma.
+    if ( get_option( $version_key ) ) {
+        return;
+    }
+
+    $target_slugs = array(
+        'kvkk-aydinlatma-metni',
+        'gizlilik-ve-cerez-politikasi',
+        'on-bilgilendirme-formu',
+        'mesafeli-satis-sozlesmesi',
+        'iptal-iade-ve-bilet-teslimati',
+    );
+
+    $old_address =
+        'Kızılay Mah. Menekşe 1 Cad. Şeref Apt. Blok No: 3 İç Kapı No: 11 Çankaya / Ankara';
+
+    $new_address =
+        'Kızılay Mahallesi, Menekşe 1 Caddesi, Şeref Apartmanı No: 3, İç Kapı No: 11, Çankaya / Ankara';
+
+    $old_phone = '+90 312 911 37 10';
+    $new_phone = '+90 506 034 38 74';
+
+    $updated_pages = array();
+
+    foreach ( $target_slugs as $slug ) {
+
+        $page = get_page_by_path( $slug );
+
+        if (
+            ! $page instanceof WP_Post ||
+            'page' !== $page->post_type
+        ) {
+            continue;
+        }
+
+        $content = $page->post_content;
+        $updated = $content;
+
+        /*
+         * 1. Adresi standartlaştır.
+         */
+        $updated = str_replace(
+            $old_address,
+            $new_address,
+            $updated
+        );
+
+        /*
+         * 2. Yalnız "Telefon" alanındaki 0312 numarasını değiştir.
+         *
+         * WhatsApp bağlantılarına / numaralarına dokunmaz.
+         */
+        $patterns = array(
+            '/Telefon:\s*\+90\s*312\s*911\s*37\s*10/iu',
+            '/<strong>\s*Telefon\s*<\/strong>\s*\+90\s*312\s*911\s*37\s*10/iu',
+            '/<strong>\s*Telefon:\s*<\/strong>\s*\+90\s*312\s*911\s*37\s*10/iu',
+        );
+
+        $replacements = array(
+            'Telefon: ' . $new_phone,
+            '<strong>Telefon</strong> ' . $new_phone,
+            '<strong>Telefon:</strong> ' . $new_phone,
+        );
+
+        $updated = preg_replace(
+            $patterns,
+            $replacements,
+            $updated
+        );
+
+        /*
+         * Gutenberg/list bloklarında telefon numarası
+         * ayrı HTML etiketleri içinde bulunabiliyorsa,
+         * Telefon etiketiyle aynı bloktaki numarayı değiştir.
+         */
+        $updated = preg_replace_callback(
+            '/(<li[^>]*>.*?Telefon.*?)(\+90\s*312\s*911\s*37\s*10)(.*?<\/li>)/isu',
+            function ( $matches ) use ( $new_phone ) {
+                return $matches[1] . $new_phone . $matches[3];
+            },
+            $updated
+        );
+
+        /*
+         * Paragraf içinde Telefon geçen olası yapı.
+         */
+        $updated = preg_replace_callback(
+            '/(<p[^>]*>.*?Telefon.*?)(\+90\s*312\s*911\s*37\s*10)(.*?<\/p>)/isu',
+            function ( $matches ) use ( $new_phone ) {
+                return $matches[1] . $new_phone . $matches[3];
+            },
+            $updated
+        );
+
+        if (
+            is_string( $updated ) &&
+            $updated !== $content
+        ) {
+
+            $result = wp_update_post(
+                array(
+                    'ID'           => $page->ID,
+                    'post_content' => $updated,
+                ),
+                true
+            );
+
+            if ( ! is_wp_error( $result ) ) {
+                $updated_pages[] = array(
+                    'id'   => $page->ID,
+                    'slug' => $slug,
+                );
+
+                clean_post_cache( $page->ID );
+            }
+        }
+    }
+
+    /*
+     * İşlemin yapıldığını kaydet.
+     */
+    update_option(
+        $version_key,
+        array(
+            'date'  => current_time( 'mysql' ),
+            'pages' => $updated_pages,
+        ),
+        false
+    );
+
+}, 20 );
