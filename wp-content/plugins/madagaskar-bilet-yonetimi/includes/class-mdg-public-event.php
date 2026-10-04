@@ -100,9 +100,14 @@ final class MDG_Public_Event {
                 'capacity' => (int) $session->capacity_total,
                 'start_at' => (string) $session->start_at,
                 'end_at'   => (string) $session->end_at,
+                // Taslak önizlemede saat kontrolü yapılmaz; yalnızca canlı satış sayfasında.
+                'closed'   => ! $is_preview && MDG_Sessions::sales_closed_by_time( $session ),
             );
         }
         $first = $session_data ? $session_data[0] : null;
+        $open_sessions = array_values( array_filter( $session_data, static function ( $s ) { return empty( $s['closed'] ); } ) );
+        $sales_ended   = $session_data && ! $open_sessions;
+        $summary_session = $open_sessions ? $open_sessions[0] : $first;
         $date_label = $first ? wp_date( 'd F Y, l', strtotime( $first['date'] . ' 12:00:00' ) ) : 'Tarih hazırlanıyor';
 
         $ticket_data = array();
@@ -127,7 +132,7 @@ final class MDG_Public_Event {
         $public_url = $is_preview ? '' : self::live_url( $event );
         if ( $public_url ) {
             $schema['url'] = $public_url;
-            if ( null !== $min_price ) {
+            if ( null !== $min_price && ! $sales_ended ) {
                 $schema['offers'] = array(
                     '@type'         => 'AggregateOffer',
                     'url'           => $public_url . '#bilet-secimi',
@@ -140,9 +145,11 @@ final class MDG_Public_Event {
             }
         }
         $organizer_display = self::organizer_display_name( $event->organizer_name );
-        $first_session_summary = $first ? wp_date( 'd F', strtotime( $first['date'] . ' 12:00:00' ) ) . ' · ' . $first['time'] : 'Seans seçimi';
+        $first_session_summary = $summary_session ? wp_date( 'd F', strtotime( $summary_session['date'] . ' 12:00:00' ) ) . ' · ' . $summary_session['time'] : 'Seans seçimi';
+        $cta_url   = $sales_ended ? home_url( '/bilet-al/' ) : '#bilet-secimi';
+        $cta_label = $sales_ended ? 'Güncel Gösteriler' : 'Bilet Al';
         $mapping_ready = self::sales_mapping_complete( (int) $event->id );
-        $sales_enabled = $mapping_ready && ( ( $is_preview && current_user_can( 'manage_woocommerce' ) ) || ( ! $is_preview && MDG_Status::ONSALE === (string) $event->status ) );
+        $sales_enabled = $mapping_ready && ! $sales_ended && ( ( $is_preview && current_user_can( 'manage_woocommerce' ) ) || ( ! $is_preview && MDG_Status::ONSALE === (string) $event->status ) );
         if ( $sales_enabled ) {
             $cart_test_config = array(
                 'enabled'  => true,
@@ -195,16 +202,18 @@ final class MDG_Public_Event {
                 <div><span>Salon</span><strong><?php echo esc_html( $event->venue_name ); ?></strong></div>
                 <?php if ( null !== $min_price ) : ?><div><span>Fiyat</span><strong><?php echo esc_html( self::money( $min_price ) ); ?>'den başlayan</strong></div><?php endif; ?>
             </div>
-            <a class="mdg-primary-cta" href="#bilet-secimi">Bilet Seçimine Git</a>
+            <a class="mdg-primary-cta" href="<?php echo esc_url( $cta_url ); ?>"><?php echo $sales_ended ? 'Güncel Gösterilere Git' : 'Bilet Seçimine Git'; ?></a>
             <div class="mdg-trust-line"><span><?php echo $sales_enabled ? '✓ Güvenli ödeme' : '✓ Güvenli ödeme hazırlanıyor'; ?></span><span>✓ QR bilet</span><span>✓ Mobil bilet</span></div>
         </div>
     </section>
 
     <section class="mdg-ticket-card" id="bilet-secimi">
-        <div class="mdg-section-heading"><div><span class="mdg-eyebrow">BİLET SEÇİMİ</span><h2>Seansınızı ve biletlerinizi seçin</h2></div><span class="mdg-preview-chip"><?php echo $sales_enabled ? ( $is_preview ? 'Güvenli ödeme' : 'Satışta' ) : 'Bilet önizleme'; ?></span></div>
-        <?php if ( $session_data ) : ?>
+        <div class="mdg-section-heading"><div><span class="mdg-eyebrow">BİLET SEÇİMİ</span><h2>Seansınızı ve biletlerinizi seçin</h2></div><span class="mdg-preview-chip"><?php echo $sales_ended ? 'Satış sona erdi' : ( $sales_enabled ? ( $is_preview ? 'Güvenli ödeme' : 'Satışta' ) : 'Bilet önizleme' ); ?></span></div>
+        <?php if ( $sales_ended ) : ?>
+            <p class="mdg-preview-note"><strong>Bu gösterinin bilet satışı sona erdi.</strong> Güncel gösteriler için <a href="<?php echo esc_url( home_url( '/bilet-al/' ) ); ?>">Bilet Al</a> sayfasına bakabilirsiniz.</p>
+        <?php elseif ( $open_sessions ) : ?>
             <div class="mdg-session-picker" data-mdg-session-picker>
-                <?php foreach ( $session_data as $i => $s ) : ?>
+                <?php foreach ( $open_sessions as $i => $s ) : ?>
                     <button type="button" class="mdg-session-option<?php echo 0 === $i ? ' is-selected' : ''; ?>" data-session-id="<?php echo esc_attr( $s['id'] ); ?>" data-session-time="<?php echo esc_attr( $s['time'] ); ?>" data-session-date="<?php echo esc_attr( wp_date( 'd F', strtotime( $s['date'] . ' 12:00:00' ) ) ); ?>" aria-pressed="<?php echo 0 === $i ? 'true' : 'false'; ?>">
                         <span><?php echo esc_html( wp_date( 'd M', strtotime( $s['date'] . ' 12:00:00' ) ) ); ?></span>
                         <strong><?php echo esc_html( $s['time'] ); ?></strong>
@@ -213,6 +222,7 @@ final class MDG_Public_Event {
             </div>
         <?php else : ?><p>Henüz seans tanımlanmadı.</p><?php endif; ?>
 
+        <?php if ( ! $sales_ended ) : ?>
         <div class="mdg-ticket-options" data-mdg-ticket-options>
             <?php foreach ( $ticket_data as $ticket ) : ?>
                 <div class="mdg-ticket-option" data-ticket-code="<?php echo esc_attr( $ticket['code'] ); ?>" data-ticket-price="<?php echo esc_attr( (string) $ticket['price'] ); ?>" data-ticket-units="<?php echo esc_attr( (string) $ticket['units'] ); ?>">
@@ -224,6 +234,7 @@ final class MDG_Public_Event {
         </div>
         <div class="mdg-ticket-summary"><div><span>Seçilen kişi</span><strong data-mdg-people>0</strong></div><div><span>Toplam</span><strong data-mdg-total>0 ₺</strong></div><button type="button" class="mdg-checkout-preview" data-mdg-checkout-preview disabled>Devam etmek için bilet seçin</button></div>
         <p class="mdg-preview-note"><?php echo $sales_enabled ? 'Bilet seçiminiz sepete güvenli biçimde aktarılır; ödeme adımında sipariş bilgilerinizi tamamlayabilirsiniz.' : 'Bilet satışı henüz etkinleştirilmedi.'; ?></p><div class="mdg-cart-test-message" data-mdg-cart-test-message hidden></div>
+        <?php endif; ?>
     </section>
 
     <section class="mdg-content-grid">
@@ -259,8 +270,8 @@ final class MDG_Public_Event {
     </section>
 </main>
 
-<div class="mdg-desktop-sticky" data-mdg-desktop-sticky><div><strong><?php echo esc_html( $event->title ); ?></strong><span><b data-mdg-sticky-session><?php echo esc_html( $first_session_summary ); ?></b> · <b data-mdg-sticky-price><?php echo null !== $min_price ? esc_html( self::money($min_price) . "'den başlayan" ) : 'Bilet seçimi'; ?></b></span></div><a href="#bilet-secimi">Bilet Al</a></div>
-<div class="mdg-mobile-sticky"><div><span data-mdg-mobile-summary><?php echo esc_html( $first_session_summary ); ?><?php echo null !== $min_price ? esc_html( ' · ' . self::money($min_price) . "'den" ) : ''; ?></span><strong><?php echo esc_html( $event->title ); ?></strong></div><a href="#bilet-secimi">Bilet Al</a></div>
+<div class="mdg-desktop-sticky" data-mdg-desktop-sticky><div><strong><?php echo esc_html( $event->title ); ?></strong><span><b data-mdg-sticky-session><?php echo esc_html( $first_session_summary ); ?></b> · <b data-mdg-sticky-price><?php echo null !== $min_price ? esc_html( self::money($min_price) . "'den başlayan" ) : 'Bilet seçimi'; ?></b></span></div><a href="<?php echo esc_url( $cta_url ); ?>"><?php echo esc_html( $cta_label ); ?></a></div>
+<div class="mdg-mobile-sticky"><div><span data-mdg-mobile-summary><?php echo esc_html( $first_session_summary ); ?><?php echo null !== $min_price ? esc_html( ' · ' . self::money($min_price) . "'den" ) : ''; ?></span><strong><?php echo esc_html( $event->title ); ?></strong></div><a href="<?php echo esc_url( $cta_url ); ?>"><?php echo esc_html( $cta_label ); ?></a></div>
 <div class="mdg-lightbox" data-mdg-lightbox-modal hidden><button type="button" data-mdg-lightbox-close aria-label="Kapat">×</button><img src="" alt="Gösteri görseli"></div>
 <script>window.MDG_EVENT_SALES=<?php echo wp_json_encode( $cart_test_config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ); ?>;</script>
 <script src="<?php echo esc_url( MDG_BILET_URL . 'assets/public-event.js?ver=' . rawurlencode( MDG_BILET_VERSION ) ); ?>" defer></script>

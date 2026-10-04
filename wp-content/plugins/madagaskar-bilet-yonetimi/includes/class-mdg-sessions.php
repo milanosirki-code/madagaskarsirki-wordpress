@@ -40,6 +40,51 @@ final class MDG_Sessions {
         }
     }
 
+    /**
+     * Seansın satışı saat nedeniyle kapandı mı?
+     *
+     * Herkese açık listelerin zaten uyguladığı iki kuralı tek yerde toplar:
+     *  - seans bittiyse (end_at < şimdi) kapalıdır (MDG_Public_Tickets ile aynı),
+     *  - seansın yerel başlangıç günü bugünden önceyse kapalıdır
+     *    (hatalı/eski end_at değerlerine karşı; Issue #87 ile aynı koruma).
+     * Okunamayan tarih satışı kapatmaz; mevcut davranış korunur.
+     *
+     * @param object|array $session start_at / end_at alanları UTC MySQL biçiminde.
+     * @param int|null     $now_ts  Test için; boşsa time().
+     */
+    public static function sales_closed_by_time( $session, $now_ts = null ) {
+        $session  = (object) $session;
+        $now_ts   = null === $now_ts ? time() : (int) $now_ts;
+        $start_ts = self::utc_timestamp( isset( $session->start_at ) ? $session->start_at : '' );
+        $end_ts   = self::utc_timestamp( isset( $session->end_at ) ? $session->end_at : '' );
+
+        $closed = $end_ts > 0 && $end_ts < $now_ts;
+
+        if ( ! $closed && $start_ts > 0 ) {
+            try {
+                $tz        = wp_timezone();
+                $start_day = ( new DateTimeImmutable( '@' . $start_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
+                $today     = ( new DateTimeImmutable( '@' . $now_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
+                $closed    = $start_day < $today;
+            } catch ( Exception $e ) {
+                $closed = false;
+            }
+        }
+
+        return (bool) apply_filters( 'mdg_session_sales_closed_by_time', $closed, $session, $now_ts );
+    }
+
+    private static function utc_timestamp( $utc_mysql ) {
+        $utc_mysql = trim( (string) $utc_mysql );
+        if ( '' === $utc_mysql || 0 === strpos( $utc_mysql, '0000-00-00' ) ) { return 0; }
+        try {
+            $dt = new DateTimeImmutable( $utc_mysql, new DateTimeZone( 'UTC' ) );
+            return max( 0, (int) $dt->getTimestamp() );
+        } catch ( Exception $e ) {
+            return 0;
+        }
+    }
+
     public static function normalize_from_request( $duration_minutes ) {
         $dates = isset( $_POST['session_date'] ) && is_array( $_POST['session_date'] ) ? wp_unslash( $_POST['session_date'] ) : array();
         $times = isset( $_POST['session_time'] ) && is_array( $_POST['session_time'] ) ? wp_unslash( $_POST['session_time'] ) : array();

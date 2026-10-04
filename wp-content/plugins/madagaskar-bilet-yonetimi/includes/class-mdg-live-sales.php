@@ -55,6 +55,9 @@ final class MDG_Live_Sales {
         if ( ! $session || MDG_Status::ONSALE !== (string) $session->status ) {
             wp_send_json_error( array( 'message' => 'Seçtiğiniz seans şu anda satışa açık değil.' ), 409 );
         }
+        if ( class_exists( 'MDG_Sessions' ) && MDG_Sessions::sales_closed_by_time( $session ) ) {
+            wp_send_json_error( array( 'message' => 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen sayfayı yenileyip başka bir seans seçin.' ), 409 );
+        }
         if ( ! (int) $session->wc_product_id || ! (int) $session->tickera_event_id ) {
             wp_send_json_error( array( 'message' => 'Seans satış bağlantısı hazır değil.' ), 409 );
         }
@@ -187,6 +190,10 @@ final class MDG_Live_Sales {
             if ( ! $session || MDG_Status::ONSALE !== (string) $session->status ) {
                 self::release_created( $created );
                 self::throw_capacity_error( 'Seçtiğiniz seans artık satışa açık değil.' );
+            }
+            if ( class_exists( 'MDG_Sessions' ) && MDG_Sessions::sales_closed_by_time( $session ) ) {
+                self::release_created( $created );
+                self::throw_capacity_error( 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen sepetinizi güncelleyip başka bir seans seçin.' );
             }
             $hold = MDG_Capacity::hold(
                 (int) $session_id,
