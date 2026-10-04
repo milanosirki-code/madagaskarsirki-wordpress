@@ -1,8 +1,7 @@
 /**
- * Madagaskar Sirki — Toplu Fatura Açıklaması v1.0.0
- * Mevcut fatura takip ekranındaki seçili siparişlerden, Mikro/e-Portal
- * açıklama alanına kopyalanabilecek toplu metin üretir.
- * Sipariş/fatura durumunu değiştirmez.
+ * Madagaskar Sirki — Toplu Fatura Açıklaması v1.0.4
+ * Fatura Takip ekranındaki seçili siparişlerden Mikro/e-Portal
+ * açıklama metni üretir. Sipariş/fatura durumunu değiştirmez.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,12 +19,12 @@ function mdg_tfa_program_name( $order ) {
 		$name = wp_strip_all_tags( $item->get_name() );
 		$name = preg_replace( '/\s+/u', ' ', trim( $name ) );
 
-		// Yaygın bilet tipi son eklerini açıklamadan çıkar.
 		$name = preg_replace(
 			'/\s*(?:Bileti\s*[-–—]\s*)?(?:Çocuk(?:\s*3\s*[-–]\s*12\s*Yaş)?|Yetişkin(?:\s*13\+)?|Aile\s*Paketi.*)$/iu',
 			'',
 			$name
 		);
+
 		$name = trim( preg_replace( '/\s*[-–—]\s*$/u', '', $name ) );
 
 		if ( $name !== '' ) {
@@ -35,11 +34,7 @@ function mdg_tfa_program_name( $order ) {
 
 	$programs = array_values( array_unique( $programs ) );
 
-	if ( empty( $programs ) ) {
-		return 'Program bilgisi yok';
-	}
-
-	return implode( ' / ', $programs );
+	return $programs ? implode( ' / ', $programs ) : 'Program bilgisi yok';
 }
 
 function mdg_tfa_order_row( $order ) {
@@ -53,13 +48,10 @@ function mdg_tfa_order_row( $order ) {
 	}
 
 	$name = trim( $order->get_formatted_billing_full_name() );
-	if ( $name === '' ) {
-		$name = 'Müşteri adı yok';
-	}
 
 	return [
 		'id'      => $order->get_id(),
-		'name'    => $name,
+		'name'    => $name !== '' ? $name : 'Müşteri adı yok',
 		'program' => mdg_tfa_program_name( $order ),
 		'date'    => $date ? wp_date( 'd.m.Y', $date->getTimestamp() ) : '-',
 		'net'     => $net,
@@ -74,6 +66,7 @@ function mdg_tfa_render_page() {
 	}
 
 	$raw_ids = isset( $_GET['order_ids'] ) ? sanitize_text_field( wp_unslash( $_GET['order_ids'] ) ) : '';
+
 	$ids = array_values(
 		array_unique(
 			array_filter(
@@ -83,17 +76,19 @@ function mdg_tfa_render_page() {
 	);
 
 	$rows = [];
+
 	foreach ( $ids as $id ) {
 		$order = wc_get_order( $id );
+
 		if ( $order ) {
 			$rows[] = mdg_tfa_order_row( $order );
 		}
 	}
 
-	$sum_net = 0.0;
-	$sum_vat = 0.0;
+	$sum_net   = 0.0;
+	$sum_vat   = 0.0;
 	$sum_total = 0.0;
-	$lines = [];
+	$lines     = [];
 
 	foreach ( $rows as $row ) {
 		$sum_net   += $row['net'];
@@ -127,23 +122,24 @@ function mdg_tfa_render_page() {
 	?>
 	<div class="wrap">
 		<h1>Toplu Fatura Açıklaması</h1>
-		<p>
-			Mevcut <strong>Fatura Takip</strong> ekranında siparişleri seçip
-			<strong>“Seçilenlerden Toplu Fatura Metni”</strong> düğmesine basın.
-			Bu ekran yalnızca metin üretir; sipariş veya fatura durumunu değiştirmez.
-		</p>
 
 		<?php if ( empty( $ids ) ) : ?>
 			<div class="notice notice-info inline">
-				<p>Henüz sipariş seçilmedi. Fatura Takip ekranına dönüp siparişleri işaretleyin.</p>
+				<p>
+					Bu ekran doğrudan kullanılmaz.
+					<strong>WooCommerce → Fatura Takip</strong> ekranına dönün,
+					siparişleri işaretleyin ve
+					<strong>“Seçilenlerden Toplu Fatura Metni”</strong> düğmesine basın.
+				</p>
 			</div>
 		<?php elseif ( empty( $rows ) ) : ?>
 			<div class="notice notice-warning inline">
 				<p>Seçilen siparişler okunamadı.</p>
 			</div>
 		<?php else : ?>
+
 			<div style="overflow-x:auto;max-width:1200px;background:#fff;border:1px solid #dcdcde;border-radius:8px;margin:18px 0;">
-				<table class="widefat striped" style="border:0;">
+				<table class="widefat striped" style="border:0;min-width:900px;">
 					<thead>
 						<tr>
 							<th>Sipariş</th>
@@ -180,14 +176,21 @@ function mdg_tfa_render_page() {
 			</div>
 
 			<h2>Mikro / e-Portal Açıklama Metni</h2>
-			<textarea id="mdg-tfa-copy" readonly style="width:100%;max-width:1200px;min-height:280px;font-family:monospace;font-size:13px;"><?php echo esc_textarea( $copy_text ); ?></textarea>
+
+			<textarea
+				id="mdg-tfa-copy"
+				readonly
+				style="width:100%;max-width:1200px;min-height:280px;font-family:monospace;font-size:13px;"
+			><?php echo esc_textarea( $copy_text ); ?></textarea>
+
 			<p>
-				<button type="button" class="button button-primary button-large" id="mdg-tfa-copy-btn">Açıklamayı Kopyala</button>
+				<button
+					type="button"
+					class="button button-primary button-large"
+					id="mdg-tfa-copy-btn"
+				>Açıklamayı Kopyala</button>
+
 				<span id="mdg-tfa-copy-status" style="margin-left:10px;font-weight:600;"></span>
-			</p>
-			<p style="color:#646970;">
-				Karakter sayısı: <strong><?php echo esc_html( mb_strlen( $copy_text ) ); ?></strong>.
-				KDV hesabı mevcut Fatura Takip modülündeki yöntemle uyumlu olarak toplam tutardan %10 KDV geriye doğru ayrıştırılarak hesaplanır.
 			</p>
 
 			<script>
@@ -195,6 +198,7 @@ function mdg_tfa_render_page() {
 				var btn = document.getElementById('mdg-tfa-copy-btn');
 				var box = document.getElementById('mdg-tfa-copy');
 				var status = document.getElementById('mdg-tfa-copy-status');
+
 				if (!btn || !box) return;
 
 				btn.addEventListener('click', function(){
@@ -202,26 +206,38 @@ function mdg_tfa_render_page() {
 						status.textContent = 'Kopyalandı.';
 						setTimeout(function(){ status.textContent = ''; }, 2500);
 					}
+
 					if (navigator.clipboard && window.isSecureContext) {
 						navigator.clipboard.writeText(box.value).then(ok).catch(function(){
-							box.focus(); box.select(); document.execCommand('copy'); ok();
+							box.focus();
+							box.select();
+							document.execCommand('copy');
+							ok();
 						});
 					} else {
-						box.focus(); box.select(); document.execCommand('copy'); ok();
+						box.focus();
+						box.select();
+						document.execCommand('copy');
+						ok();
 					}
 				});
 			})();
 			</script>
+
 		<?php endif; ?>
 	</div>
 	<?php
 }
 
+/**
+ * Gizli yönetim sayfası:
+ * menüde ayrı "Toplu Fatura" maddesi oluşturmaz.
+ */
 add_action( 'admin_menu', function() {
 	add_submenu_page(
-		'woocommerce',
+		null,
 		'Toplu Fatura Açıklaması',
-		'Toplu Fatura',
+		'Toplu Fatura Açıklaması',
 		'manage_woocommerce',
 		'mdg-toplu-fatura',
 		'mdg_tfa_render_page'
@@ -229,17 +245,11 @@ add_action( 'admin_menu', function() {
 }, 99 );
 
 /**
- * Mevcut Fatura Takip ekranına seçili siparişleri yeni sayfaya taşıyan buton ekler.
- * Fatura takip eklentisinin HTML'ini değiştirmez.
+ * Mevcut Fatura Takip ekranına, seçim butonlarının yanına toplu metin düğmesi ekler.
+ * Sayfa slug'ına güvenmez; ekrandaki mevcut Fatura Takip butonlarını arar.
  */
 add_action( 'admin_footer', function() {
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		return;
-	}
-
-	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-
-	if ( $page === 'mdg-toplu-fatura' || strpos( $page, 'fatura' ) === false ) {
 		return;
 	}
 
@@ -247,68 +257,153 @@ add_action( 'admin_footer', function() {
 	?>
 	<script>
 	(function(){
-		if (document.getElementById('mdg-tfa-open')) return;
+		var targetUrl = <?php echo wp_json_encode( $target ); ?>;
 
-		var wrap = document.querySelector('#wpbody-content .wrap') || document.querySelector('#wpbody-content');
-		if (!wrap) return;
+		function labelOf(el) {
+			return ((el.textContent || el.value || '') + '').replace(/\s+/g, ' ').trim();
+		}
 
-		var button = document.createElement('button');
-		button.type = 'button';
-		button.id = 'mdg-tfa-open';
-		button.className = 'button button-primary';
-		button.textContent = 'Seçilenlerden Toplu Fatura Metni';
-		button.style.margin = '8px 8px 8px 0';
+		function isFaturaTakipScreen() {
+			var candidates = document.querySelectorAll('button, input[type="submit"], a.button');
+			var found = 0;
+
+			for (var i = 0; i < candidates.length; i++) {
+				var label = labelOf(candidates[i]);
+
+				if (/^Fatura Kesildi$/i.test(label)) found++;
+				if (/^WhatsApp Gönderildi$/i.test(label)) found++;
+				if (/^Bekliyor Olarak Sıfırla$/i.test(label)) found++;
+			}
+
+			return found >= 2;
+		}
 
 		function findOrderId(checkbox) {
-			var root = checkbox.closest('tr') || checkbox.parentElement;
+			var root = checkbox.closest('tr') || checkbox.closest('li') || checkbox.parentElement;
 			if (!root) return 0;
 
 			var links = root.querySelectorAll('a');
+
 			for (var i = 0; i < links.length; i++) {
 				var txt = (links[i].textContent || '').trim();
 				var m = txt.match(/^#(\d+)$/);
-				if (m) return parseInt(m[1], 10);
+
+				if (m) {
+					return parseInt(m[1], 10);
+				}
 			}
 
 			var text = root.textContent || '';
 			var fallback = text.match(/#(\d{3,})/);
+
 			return fallback ? parseInt(fallback[1], 10) : 0;
 		}
 
-		button.addEventListener('click', function(){
-			var ids = [];
-			var checked = wrap.querySelectorAll('input[type="checkbox"]:checked');
-
-			for (var i = 0; i < checked.length; i++) {
-				var id = findOrderId(checked[i]);
-				if (id && ids.indexOf(id) === -1) ids.push(id);
+		function addButton() {
+			if (!isFaturaTakipScreen()) {
+				var existingOff = document.getElementById('mdg-tfa-open');
+				if (existingOff) existingOff.remove();
+				return false;
 			}
 
-			if (!ids.length) {
-				alert('Önce en az bir sipariş seçin.');
-				return;
+			// En az bir gerçek sipariş satırı var mı?
+			var orderLinks = document.querySelectorAll('a');
+			var hasOrder = false;
+
+			for (var k = 0; k < orderLinks.length; k++) {
+				if (/^#\d+$/.test((orderLinks[k].textContent || '').trim())) {
+					hasOrder = true;
+					break;
+				}
 			}
 
-			window.location.href = <?php echo wp_json_encode( $target ); ?> + '&order_ids=' + encodeURIComponent(ids.join(','));
+			var existing = document.getElementById('mdg-tfa-open');
+
+			if (!hasOrder) {
+				if (existing) existing.remove();
+				return false;
+			}
+
+			var candidates = document.querySelectorAll('button, input[type="submit"], a.button');
+			var anchor = null;
+
+			for (var i = 0; i < candidates.length; i++) {
+				var label = labelOf(candidates[i]);
+
+				if (/^Bekliyor Olarak Sıfırla$/i.test(label)) {
+					anchor = candidates[i];
+					break;
+				}
+			}
+
+			if (!anchor || !anchor.parentNode) {
+				return false;
+			}
+
+			var button = existing;
+
+			if (!button) {
+				button = document.createElement('button');
+				button.type = 'button';
+				button.id = 'mdg-tfa-open';
+				button.className = 'button button-primary';
+				button.textContent = 'Toplu Fatura Metni';
+				button.style.margin = '8px 8px 8px 0';
+
+				button.addEventListener('click', function(){
+					var ids = [];
+					var checked = document.querySelectorAll('input[type="checkbox"]:checked');
+
+					for (var i = 0; i < checked.length; i++) {
+						var id = findOrderId(checked[i]);
+
+						if (id && ids.indexOf(id) === -1) {
+							ids.push(id);
+						}
+					}
+
+					if (!ids.length) {
+						alert('Önce en az bir sipariş seçin.');
+						return;
+					}
+
+					window.location.href =
+						targetUrl +
+						'&order_ids=' +
+						encodeURIComponent(ids.join(','));
+				});
+			}
+
+			// Filtre/AJAX sonrası doğru aksiyon alanına yeniden yerleştir.
+			if (button.parentNode !== anchor.parentNode || button.previousElementSibling !== anchor) {
+				anchor.insertAdjacentElement('afterend', button);
+			}
+
+			return true;
+		}
+		// İlk yüklemede ekle; filtreleme/AJAX sonrası tablo ve işlem alanı
+		// yeniden çizilirse buton kaybolabileceği için gözlemci sürekli aktif kalır.
+		addButton();
+
+		var timer = null;
+
+		var observer = new MutationObserver(function(){
+			clearTimeout(timer);
+			timer = setTimeout(function(){
+				addButton();
+			}, 120);
 		});
 
-		var candidates = wrap.querySelectorAll('button, input[type="submit"], .button');
-		var anchor = null;
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
 
-		for (var i = 0; i < candidates.length; i++) {
-			var label = (candidates[i].textContent || candidates[i].value || '').trim();
-			if (/Fatura Kesildi|WhatsApp Gönderildi|Bekliyor Olarak Sıfırla/i.test(label)) {
-				anchor = candidates[i];
-			}
-		}
-
-		if (anchor && anchor.parentNode) {
-			anchor.parentNode.insertBefore(button, anchor.nextSibling);
-		} else {
-			var p = document.createElement('p');
-			p.appendChild(button);
-			wrap.insertBefore(p, wrap.firstChild);
-		}
+		// Mobil tarayıcılarda bazı yeniden çizimler MutationObserver dışından
+		// gerçekleşebildiği için düşük maliyetli emniyet kontrolü.
+		setInterval(function(){
+			addButton();
+		}, 1500);
 	})();
 	</script>
 	<?php

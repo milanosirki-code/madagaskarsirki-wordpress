@@ -93,3 +93,6 @@ PayTR/Tickera sandbox çalışması yönetici tarafından ertelendi ve bu iş li
 Sourcebranch codex/live-main-reconciliation-20261004, PR113; audit/statePR111. MainSHA başlangıçpini değişmedi; PRler henüz merge edilmedi.
 Rollback: portcommitleri revert; production değişmediğinden customerdata rollback yok. Diagnostics117/119pasif tutulur.
 Rapor/envanter/devir kaydı doğrulanmışmilano sirki → 00 - Site Kod ve Codex Yönetimi Driveklasörüne eklenir. Kaynak kodun kanonik sahibiGitHub'dır; Drive historicalworknotes aynasıdır.
+
+## Final read-back: concurrent live change
+Final active-code hash verification detected external snippet120 change from1.0.0 to **1.0.4**. The latest source/name/hash were recaptured and ported without any WordPress overwrite. Other42 active snippet hashes stayed unchanged. Inventory/source are updated for this latest version; static CI is rerun for the changed source record. No live order/refund/payment mutation calls were found in this helper.
