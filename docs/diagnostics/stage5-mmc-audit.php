@@ -31,6 +31,7 @@ function mdg_stage4_source_read($input) {
 }
 
 function mdg_stage5_admin_pages() {
+    static $cached=null; if($cached!==null)return $cached;
     require_once ABSPATH.'wp-admin/includes/plugin.php';
     require_once ABSPATH.'wp-admin/includes/template.php';
     require_once ABSPATH.'wp-admin/includes/class-wp-screen.php';
@@ -75,9 +76,10 @@ function mdg_stage5_admin_pages() {
         $entry['permission']=current_user_can($entry['capability']);
     }
     unset($entry);
-    return array_values($entries);
+    $cached=array_values($entries); return $cached;
 }
 function mdg_stage5_probe($input) {
+    if(($input['mode']??'')==='batch'){ $items=array(); foreach(array_slice((array)($input['slugs']??array()),0,12) as $slug)$items[]=mdg_stage5_probe(array('mode'=>'render','slug'=>$slug,'program_id'=>$input['program_id']??0)); return array('items'=>$items); }
     if(($input['mode']??'')==='hashes')return mdg_stage4_source_read($input);
     $guard=function($sql){if(!preg_match('/^\\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\\b/i',$sql))throw new RuntimeException('AUDIT_SQL_WRITE_BLOCKED');return $sql;};
     add_filter('query',$guard,PHP_INT_MAX);
@@ -114,7 +116,7 @@ add_action('wp_abilities_api_init',function(){
     if(!function_exists('wp_register_ability'))return;
     wp_register_ability('madagaskar/stage5-mmc-probe',array(
         'label'=>'Temporary read-only MMC audit','description'=>'Admin-only menu/render audit with SQL mutation blocking; never submits forms.',
-        'category'=>'madagaskar-saglik','input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('inventory','render','hashes')),'slug'=>array('type'=>'string'),'program_id'=>array('type'=>'integer'),'path'=>array('type'=>'string')),'required'=>array('mode')),
+        'category'=>'madagaskar-saglik','input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('inventory','render','hashes','batch')),'slug'=>array('type'=>'string'),'slugs'=>array('type'=>'array','items'=>array('type'=>'string'),'maxItems'=>12),'program_id'=>array('type'=>'integer'),'path'=>array('type'=>'string')),'required'=>array('mode')),
         'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_stage5_probe','permission_callback'=>function(){return current_user_can('manage_options');},
         'meta'=>array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'show_in_rest'=>true)
     ));
