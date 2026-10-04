@@ -115,12 +115,14 @@ function mdg_stage2_read( $input ) {
             'public-css'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/assets/public-event.css',
             'datetime'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-session-datetime.php',
             'transition-readme'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/readme.txt',
-            'family-readme'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/readme.txt'
+            'family-readme'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/readme.txt',
+            'tc-api'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.checkin_api.php',
+            'tc-orders'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.orders.php'
         );
         $key=$input['target']??'';
-        if($key==='snippet-controller'&&!is_readable($map[$key])) {
-            $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator(WP_PLUGIN_DIR.'/code-snippets',FilesystemIterator::SKIP_DOTS));
-            foreach($it as $file){if($file->isFile()&&!$file->isLink()&&$file->getFilename()==='Snippets_REST_Controller.php'){$map[$key]=$file->getPathname();break;}}
+        if(in_array($key,array('snippet-controller','tc-api','tc-orders'),true)&&!is_readable($map[$key])) {
+            $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator(WP_PLUGIN_DIR.($key==='snippet-controller'?'/code-snippets':'/tickera-event-ticketing-system'),FilesystemIterator::SKIP_DOTS));
+            foreach($it as $file){if($file->isFile()&&!$file->isLink()&&$file->getFilename()===($key==='snippet-controller'?'Snippets_REST_Controller.php':($key==='tc-api'?'class.checkin_api.php':'class.orders.php'))){$map[$key]=$file->getPathname();break;}}
         }
         if(!isset($map[$key])||!is_readable($map[$key])) return new WP_Error('source_missing','Whitelisted source unavailable.');
         $s=file_get_contents($map[$key]);
