@@ -66,7 +66,7 @@ final class MDG_Sessions {
                 $start_day = ( new DateTimeImmutable( '@' . $start_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
                 $today     = ( new DateTimeImmutable( '@' . $now_ts ) )->setTimezone( $tz )->format( 'Y-m-d' );
                 $closed    = $start_day < $today;
-            } catch ( Exception $e ) {
+            } catch ( Throwable $e ) {
                 $closed = false;
             }
         }
@@ -74,15 +74,19 @@ final class MDG_Sessions {
         return (bool) apply_filters( 'mdg_session_sales_closed_by_time', $closed, $session, $now_ts );
     }
 
+    /**
+     * UTC MySQL DATETIME -> Unix zaman damgası; okunamazsa 0.
+     * Bilerek istisna üretmeyen bir ayrıştırma kullanır: bozuk bir tarih
+     * değeri ödeme akışında hiçbir koşulda hata fırlatmamalıdır.
+     */
     private static function utc_timestamp( $utc_mysql ) {
         $utc_mysql = trim( (string) $utc_mysql );
-        if ( '' === $utc_mysql || 0 === strpos( $utc_mysql, '0000-00-00' ) ) { return 0; }
-        try {
-            $dt = new DateTimeImmutable( $utc_mysql, new DateTimeZone( 'UTC' ) );
-            return max( 0, (int) $dt->getTimestamp() );
-        } catch ( Exception $e ) {
-            return 0;
-        }
+        if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/', $utc_mysql, $m ) ) { return 0; }
+        $second = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+        if ( ! checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ) { return 0; }
+        if ( (int) $m[4] > 23 || (int) $m[5] > 59 || $second > 59 ) { return 0; }
+        $ts = gmmktime( (int) $m[4], (int) $m[5], $second, (int) $m[2], (int) $m[3], (int) $m[1] );
+        return $ts > 0 ? (int) $ts : 0;
     }
 
     public static function normalize_from_request( $duration_minutes ) {

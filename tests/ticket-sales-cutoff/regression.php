@@ -177,6 +177,10 @@ check( 'missing end_at with a past start day is closed', MDG_Sessions::sales_clo
 check( 'empty times never close sales', MDG_Sessions::sales_closed_by_time( $s( '', '' ), $now ), false );
 check( 'zero dates never close sales', MDG_Sessions::sales_closed_by_time( $s( '0000-00-00 00:00:00', '0000-00-00 00:00:00' ), $now ), false );
 check( 'unreadable times never close sales', MDG_Sessions::sales_closed_by_time( $s( 'not-a-date', 'also-bad' ), $now ), false );
+check( 'impossible calendar date never closes sales', MDG_Sessions::sales_closed_by_time( $s( '2026-13-40 09:00:00', '2026-13-40 10:00:00' ), $now ), false );
+check( 'impossible clock time never closes sales', MDG_Sessions::sales_closed_by_time( $s( '2026-10-03 25:00:00', '2026-10-03 26:00:00' ), $now ), false );
+check( 'fractional seconds are read', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04 09:00:00.000000', '2026-10-04 10:00:00.000000' ), $now ), true );
+check( 'ISO T separator and missing seconds are read', MDG_Sessions::sales_closed_by_time( $s( '2026-10-04T09:00', '2026-10-04T10:00' ), $now ), true );
 check( 'object without time fields never closes sales', MDG_Sessions::sales_closed_by_time( new stdClass(), $now ), false );
 check( 'array input is accepted', MDG_Sessions::sales_closed_by_time( array( 'start_at' => '2026-10-04 09:00:00', 'end_at' => '2026-10-04 10:00:00' ), $now ), true );
 
