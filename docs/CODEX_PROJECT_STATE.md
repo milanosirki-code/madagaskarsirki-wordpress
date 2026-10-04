@@ -60,3 +60,26 @@ Stage7 quota checkpoint:
 - Issue115 remains OPEN, verified production fix but incomplete cleanup/regression stage. Quota evidence comment5980626008; sanitized artifact docs/ISSUE_115_DEPLOYMENT_EVIDENCE.json. PR120 remains draft review, not merged.
 - Drive archive verified: https://drive.google.com/file/d/1hqNCNLVrVQuXyBWC7Z3bEiXDkVDtN5Aw/view?usp=drivesdk (same archive is updated with the recovery checkpoint).
 - Resume within115 before the requested Program9 school/field linkage and target validation stage.
+
+## Stage8 — Issue #121 read-only operations side effects removed (2026-10-04)
+
+- Issue #121 affected exactly three read-only abilities: `madagaskar/operations-plan-get`, `madagaskar/operations-summary`, `madagaskar/operations-checklist-list`.
+- Root cause: all three reached `MMC_Operations_Service::summary()`, which called `ensure_plan()`. That helper can create a missing plan, seed missing checklist rows, ensure an operations task, update the accommodation checklist rule, and log plan creation.
+- Old read chain: `ability -> callback -> summary() -> ensure_plan() -> plan/checklist/task/log writes`.
+- Corrected read chain: `ability -> callback -> get_plan()/checklist()/summary() -> SELECT-only aggregation`.
+- Minimum production patch: `summary()` no longer calls `ensure_plan()`; it reads `get_plan()` and adds `plan_exists`. Existing response keys remain. Ability registrations remain read-only.
+- Operations admin GET/render now uses `get_plan()`. A missing plan renders an explicit `Plan Oluştur / Hazırla` POST action; GET no longer initializes domain state.
+- Explicit write paths retain `ensure_plan()`: event seeding/backfill, plan save/update, resource assignment, schedule sync/add, explicit AI ensure/update and explicit admin initialize.
+- Branch: `codex/fix-readonly-operations-121`. Production-code tested head: `74f54bcbe81689981ad0c03a62bf8bc4a87f9eb4`. PR #126: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/126.
+- CI before documentation: five applicable workflows PASS. Issue121 contract: 29 assertions; missing/existing reads write-free; explicit initialize preserved and idempotent.
+- Production deploy completed 2026-10-04. Only `class-mmc-operations-service.php` and `class-mmc-operations-admin.php` changed. Service live blob `bc7fc782657c255a3eaff71536203b8611047e1c`, SHA256 `b40a95f88d830b7e5fc8a4ece39c03ec51379e2bef532202a5f4369fbaaaf1e3`. Admin live blob `43a2f40d80e3f60feddfa228ef3e22dae9ef5f67`, SHA256 `2b5a8b09645f91760c71488aa1eb46a7fdeb37ddeea853446b61698a9fdde152`.
+- Existing-plan live smoke: all three actual read abilities returned correct data; full plan/checklist/task/log fingerprints and plan `updated_at` were byte/logically unchanged before/after.
+- Missing-plan live smoke used request-local SELECT masking plus a pre-SQL domain-write guard because no safe natural missing-plan production fixture existed. It returned plan null, `plan_exists=false`, zero summary, empty checklist, zero domain write attempts, zero warnings, and rendered the explicit initialize button. No production plan was deleted or fabricated.
+- Explicit initialize was not executed against a real production program. The actual-service synthetic CI fixture proves first-run plan/checklist/task/log creation and second-run no-duplicate idempotency.
+- Operations UI: existing plan renders plan/checklist/summary; missing-plan guarded render shows explicit initialize. Both targeted renders had zero captured warnings and zero write attempts.
+- Final read-only classification over the same 59-item inventory: SAFE51, SIDE_EFFECT_TECHNICAL8, SIDE_EFFECT_DOMAIN0, NEEDS_REVIEW0.
+- Final live health:16/16 OK. Active Code Snippets `code_error`:0. Temporary Issue121 deploy/test helpers were deactivated and trashed with `code_error=null`.
+- Program #9 data was not modified. Kommo dynamic sources, sales/tickets, Issue #112, family-package code and unrelated operations refactors were not changed.
+- Evidence: `docs/ISSUE_121_READONLY_OPERATIONS.md`, `docs/ISSUE_121_READONLY_SCAN.json`, `docs/ISSUE_121_DEPLOYMENT_EVIDENCE.json`.
+- Next requested stage after Issue #121 closure: Kommo dynamic program source system.
+
