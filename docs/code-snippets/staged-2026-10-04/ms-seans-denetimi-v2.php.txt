@@ -1,11 +1,12 @@
 /**
- * Madagaskar Sirki – Geçmiş Seans Denetimi V1 (SALT OKUNUR)
+ * Madagaskar Sirki – Seans Denetimi V2 (SALT OKUNUR)
  *
- * Amaç: Issue #116 için iki soruya cevap vermek.
- *  1. Hangi etkinlikler ve seanslar bittiği halde hâlâ satışta?
- *  2. Seansı bittikten sonra açılmış sipariş var mı, ödenmiş mi?
+ * Kural (işletme sahibi kararı, 4 Ekim 2026): satış seans BAŞLADIĞINDA kapanır.
+ * Bu ekran o kurala göre iki soruya cevap verir (Issue #116):
+ *  1. Hangi etkinlikler ve seanslar başladığı halde hâlâ satışta?
+ *  2. Seansı başladıktan sonra açılmış sipariş var mı, ödenmiş mi?
  *
- * Ekran: Araçlar > Geçmiş Seans Denetimi
+ * Ekran: Araçlar > Seans Denetimi
  * Yetki: manage_woocommerce
  *
  * Bu snippet:
@@ -80,7 +81,7 @@ if ( ! function_exists( 'ms_gsd_yerel' ) ) {
 
 
 /**
- * Satışta görünen ama bütün seansları bitmiş etkinlikler.
+ * Satışta görünen ama bütün seansları başlamış etkinlikler.
  */
 if ( ! function_exists( 'ms_gsd_biten_etkinlikler' ) ) {
     function ms_gsd_biten_etkinlikler( $simdi_utc ) {
@@ -92,13 +93,13 @@ if ( ! function_exists( 'ms_gsd_biten_etkinlikler' ) ) {
         $satirlar = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT e.id, e.title, e.public_slug, e.province_name, e.district,
-                        MAX(s.end_at) AS son_bitis, COUNT(s.id) AS seans_sayisi
+                        MAX(s.start_at) AS son_baslangic, COUNT(s.id) AS seans_sayisi
                  FROM {$etkinlikler} e
                  INNER JOIN {$seanslar} s ON s.event_id = e.id
                  WHERE e.status = %s
                  GROUP BY e.id
-                 HAVING MAX(s.end_at) < %s
-                 ORDER BY MAX(s.end_at) DESC
+                 HAVING MAX(s.start_at) <= %s
+                 ORDER BY MAX(s.start_at) DESC
                  LIMIT 100",
                 'onsale',
                 $simdi_utc
@@ -111,7 +112,7 @@ if ( ! function_exists( 'ms_gsd_biten_etkinlikler' ) ) {
 
 
 /**
- * Satıştaki etkinliklerin, son N günde bitmiş seansları.
+ * Satıştaki etkinliklerin, son N günde başlamış seansları.
  */
 if ( ! function_exists( 'ms_gsd_biten_seanslar' ) ) {
     function ms_gsd_biten_seanslar( $simdi_utc, $baslangic_utc ) {
@@ -126,9 +127,9 @@ if ( ! function_exists( 'ms_gsd_biten_seanslar' ) ) {
                  FROM {$seanslar} s
                  INNER JOIN {$etkinlikler} e ON e.id = s.event_id
                  WHERE e.status = %s
-                   AND s.end_at < %s
-                   AND s.end_at >= %s
-                 ORDER BY s.end_at DESC
+                   AND s.start_at <= %s
+                   AND s.start_at >= %s
+                 ORDER BY s.start_at DESC
                  LIMIT 300",
                 'onsale',
                 $simdi_utc,
@@ -142,7 +143,7 @@ if ( ! function_exists( 'ms_gsd_biten_seanslar' ) ) {
 
 
 /**
- * Son N günde bitmiş seanslara bağlı sipariş kalemleri.
+ * Son N günde başlamış seanslara bağlı sipariş kalemleri.
  */
 if ( ! function_exists( 'ms_gsd_siparis_kalemleri' ) ) {
     function ms_gsd_siparis_kalemleri( $simdi_utc, $baslangic_utc ) {
@@ -159,8 +160,8 @@ if ( ! function_exists( 'ms_gsd_siparis_kalemleri' ) ) {
                  FROM {$harita} m
                  INNER JOIN {$seanslar} s ON s.id = m.session_id
                  INNER JOIN {$etkinlikler} e ON e.id = m.event_id
-                 WHERE s.end_at < %s
-                   AND s.end_at >= %s
+                 WHERE s.start_at <= %s
+                   AND s.start_at >= %s
                  ORDER BY m.order_id DESC
                  LIMIT 2000",
                 $simdi_utc,
@@ -174,7 +175,7 @@ if ( ! function_exists( 'ms_gsd_siparis_kalemleri' ) ) {
 
 
 /**
- * Seansı bittikten sonra açılmış siparişleri bulur.
+ * Seansı başladıktan sonra açılmış siparişleri bulur.
  * Sipariş tarihi WooCommerce'ten okunur; eşleme tablosundaki kayıt tarihi
  * sonradan yapılan senkronlarda değişebildiği için karar ona göre verilmez.
  */
@@ -203,9 +204,9 @@ if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
 
             $olusturma = $order->get_date_created();
             $olusturma = $olusturma ? (int) $olusturma->getTimestamp() : 0;
-            $bitis     = ms_gsd_zaman( $kalem->end_at );
+            $baslangic = ms_gsd_zaman( $kalem->start_at );
 
-            if ( ! $olusturma || ! $bitis || $olusturma <= $bitis ) {
+            if ( ! $olusturma || ! $baslangic || $olusturma < $baslangic ) {
                 continue;
             }
 
@@ -215,10 +216,9 @@ if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
             $sonuc[] = array(
                 'order_id'   => $order_id,
                 'etkinlik'   => (string) $kalem->title,
-                'seans'      => ms_gsd_zaman( $kalem->start_at ),
-                'bitis'      => $bitis,
+                'seans'      => $baslangic,
                 'olusturma'  => $olusturma,
-                'gecikme_dk' => (int) floor( ( $olusturma - $bitis ) / 60 ),
+                'gecikme_dk' => (int) floor( ( $olusturma - $baslangic ) / 60 ),
                 'durum'      => $durum,
                 'odendi'     => in_array( $durum, $odenmis, true ) || (bool) $odeme,
                 'adet'       => (int) $kalem->quantity,
@@ -261,13 +261,13 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
 
         $gec_odenmis = count( $gec_no );
 
-        echo '<div class="wrap"><h1>Geçmiş Seans Denetimi</h1>';
-        echo '<p>Salt okunur. Kapsam: son ' . esc_html( (string) $gun ) . ' gün. Rapor saati: ' . esc_html( ms_gsd_yerel( $simdi ) ) . '</p>';
+        echo '<div class="wrap"><h1>Seans Denetimi</h1>';
+        echo '<p>Salt okunur. Kural: satış seans başladığında kapanır. Kapsam: son ' . esc_html( (string) $gun ) . ' gün. Rapor saati: ' . esc_html( ms_gsd_yerel( $simdi ) ) . '</p>';
 
-        echo '<h2>1. Bütün seansları bitmiş, hâlâ "satışta" etkinlikler: ' . esc_html( (string) count( $etkinlikler ) ) . '</h2>';
+        echo '<h2>1. Bütün seansları başlamış, hâlâ "satışta" etkinlikler: ' . esc_html( (string) count( $etkinlikler ) ) . '</h2>';
 
         if ( $etkinlikler ) {
-            echo '<table class="widefat striped"><thead><tr><th>Etkinlik</th><th>Başlık</th><th>Yer</th><th>Seans</th><th>Son seans bitişi</th><th>Sayfa</th></tr></thead><tbody>';
+            echo '<table class="widefat striped"><thead><tr><th>Etkinlik</th><th>Başlık</th><th>Yer</th><th>Seans</th><th>Son seans başlangıcı</th><th>Sayfa</th></tr></thead><tbody>';
 
             foreach ( $etkinlikler as $e ) {
                 $adres = $e->public_slug ? home_url( '/etkinlik/' . rawurlencode( (string) $e->public_slug ) . '/' ) : '';
@@ -277,7 +277,7 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
                 echo '<td>' . esc_html( (string) $e->title ) . '</td>';
                 echo '<td>' . esc_html( trim( $e->province_name . ' / ' . $e->district, ' /' ) ) . '</td>';
                 echo '<td>' . esc_html( (string) absint( $e->seans_sayisi ) ) . '</td>';
-                echo '<td>' . esc_html( ms_gsd_yerel( ms_gsd_zaman( $e->son_bitis ) ) ) . '</td>';
+                echo '<td>' . esc_html( ms_gsd_yerel( ms_gsd_zaman( $e->son_baslangic ) ) ) . '</td>';
                 echo '<td>' . ( $adres ? '<a href="' . esc_url( $adres ) . '" target="_blank" rel="noopener">aç</a>' : '—' ) . '</td>';
                 echo '</tr>';
             }
@@ -287,7 +287,7 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
             echo '<p>Yok.</p>';
         }
 
-        echo '<h2>2. Satıştaki etkinliklerin bitmiş seansları: ' . esc_html( (string) count( $seanslar ) ) . '</h2>';
+        echo '<h2>2. Satıştaki etkinliklerin başlamış seansları: ' . esc_html( (string) count( $seanslar ) ) . '</h2>';
 
         if ( $seanslar ) {
             echo '<table class="widefat striped"><thead><tr><th>Seans</th><th>Etkinlik</th><th>Başlangıç</th><th>Bitiş</th><th>Seans durumu</th><th>Ürün</th><th>V4 kilidi</th><th>Şu an satın alınabilir mi?</th></tr></thead><tbody>';
@@ -315,18 +315,17 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
             echo '<p>Yok.</p>';
         }
 
-        echo '<h2>3. Seansı bittikten sonra açılmış sipariş kalemleri: ' . esc_html( (string) count( $gec ) ) . '</h2>';
+        echo '<h2>3. Seansı başladıktan sonra açılmış sipariş kalemleri: ' . esc_html( (string) count( $gec ) ) . '</h2>';
         echo '<p>Ödenmiş sipariş: <strong>' . esc_html( (string) $gec_odenmis ) . '</strong> · Ödenmiş kalem tutarı: <strong>' . esc_html( number_format( $gec_tutar, 2, ',', '.' ) ) . ' TL</strong></p>';
 
         if ( $gec ) {
-            echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Etkinlik</th><th>Seans</th><th>Seans bitişi</th><th>Sipariş saati</th><th>Gecikme</th><th>Durum</th><th>Ödendi mi?</th><th>Adet</th><th>Kalem tutarı</th></tr></thead><tbody>';
+            echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Etkinlik</th><th>Seans başlangıcı</th><th>Sipariş saati</th><th>Gecikme</th><th>Durum</th><th>Ödendi mi?</th><th>Adet</th><th>Kalem tutarı</th></tr></thead><tbody>';
 
             foreach ( $gec as $g ) {
                 echo '<tr>';
                 echo '<td>#' . esc_html( (string) $g['order_id'] ) . '</td>';
                 echo '<td>' . esc_html( $g['etkinlik'] ) . '</td>';
                 echo '<td>' . esc_html( ms_gsd_yerel( $g['seans'] ) ) . '</td>';
-                echo '<td>' . esc_html( ms_gsd_yerel( $g['bitis'] ) ) . '</td>';
                 echo '<td>' . esc_html( ms_gsd_yerel( $g['olusturma'] ) ) . '</td>';
                 echo '<td>' . esc_html( (string) $g['gecikme_dk'] ) . ' dk</td>';
                 echo '<td>' . esc_html( $g['durum'] ) . '</td>';
@@ -350,10 +349,10 @@ add_action(
     'admin_menu',
     function () {
         add_management_page(
-            'Geçmiş Seans Denetimi',
-            'Geçmiş Seans Denetimi',
+            'Seans Denetimi',
+            'Seans Denetimi',
             'manage_woocommerce',
-            'ms-gecmis-seans-denetimi',
+            'ms-seans-denetimi',
             'ms_gsd_sayfa'
         );
     }

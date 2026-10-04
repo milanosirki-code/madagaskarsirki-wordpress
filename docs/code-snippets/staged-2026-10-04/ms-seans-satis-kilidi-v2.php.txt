@@ -1,24 +1,27 @@
 /**
- * Madagaskar Sirki – Geçmiş Seans Satış Kilidi V1 (GEÇİCİ KÖPRÜ)
+ * Madagaskar Sirki – Seans Satış Kilidi V2 (GEÇİCİ KÖPRÜ)
  *
- * Amaç: Seansı bitmiş bilet ürünlerinin satın alınmasını, eklenti dosyalarına
+ * Amaç: Seansı başlamış bilet ürünlerinin satın alınmasını, eklenti dosyalarına
  * dokunmadan durdurmak. Issue #116'nın kalıcı çözümü (PR #117) canlıya alınana
  * kadar kullanılır; PR #117 canlıya alınınca bu snippet devre dışı bırakılır.
  *
+ * Kural (işletme sahibi kararı, 4 Ekim 2026): satış seans BAŞLADIĞINDA kapanır.
+ * - Başlangıç saati geldiyse veya geçtiyse (start_at <= şimdi) kapalıdır.
+ * - Başlangıç okunabiliyor ve gelecekteyse açıktır; end_at bozuk olsa bile.
+ * - Başlangıç okunamıyorsa bitişe bakılır: end_at < şimdi ise kapalıdır.
+ * - İkisi de okunamıyorsa hiçbir şey kapanmaz.
+ *
  * Nasıl çalışır:
  * - WooCommerce'in "satın alınabilir mi" sorusuna, ürünün bağlı olduğu MDG
- *   seansı bitmişse "hayır" cevabı verir. V4 satış kapatma kilidiyle aynı
- *   filtreleri kullanır; V4 kilidine dokunmaz.
- * - Kural, herkese açık listelerle aynıdır: seans bittiyse (end_at < şimdi)
- *   ya da seansın yerel başlangıç günü bugünden önceyse kapalıdır.
+ *   seanslarının hepsi kapalıysa "hayır" cevabı verir. V4 satış kapatma
+ *   kilidiyle aynı filtreleri kullanır; V4 kilidine dokunmaz.
  * - Yalnızca "evet"i "hayır"a çevirir; hiçbir zaman kapalı bir ürünü açmaz.
- * - Tarih okunamazsa, seans bulunamazsa ya da herhangi bir hata olursa
- *   hiçbir şeyi kapatmaz.
+ * - Seans bulunamazsa ya da herhangi bir hata olursa hiçbir şeyi kapatmaz.
  *
  * Bu snippet:
  * - Veritabanına yazmaz; ürün, sipariş, bilet, etkinlik durumu değiştirmez.
  * - Etkinlik sayfasındaki seans düğmelerini gizlemez (onu PR #117 yapar).
- *   Bitmiş seans seçilirse sepete eklerken "şu anda satın alınamıyor" denir.
+ *   Başlamış seans seçilirse sepete eklerken "şu anda satın alınamıyor" denir.
  * - Yönetim ekranlarında (AJAX dışı) devreye girmez.
  *
  * Hook'lar: woocommerce_is_purchasable, woocommerce_variation_is_purchasable
@@ -66,8 +69,8 @@ if ( ! function_exists( 'ms_gsk_zaman' ) ) {
  * Seansın satışı saat nedeniyle kapandı mı?
  * PR #117 canlıdaysa eklentinin kendi kuralını kullanır.
  */
-if ( ! function_exists( 'ms_gsk_seans_bitti_mi' ) ) {
-    function ms_gsk_seans_bitti_mi( $seans, $simdi = null ) {
+if ( ! function_exists( 'ms_gsk_seans_kapali_mi' ) ) {
+    function ms_gsk_seans_kapali_mi( $seans, $simdi = null ) {
         if ( class_exists( 'MDG_Sessions' ) && method_exists( 'MDG_Sessions', 'sales_closed_by_time' ) ) {
             return (bool) MDG_Sessions::sales_closed_by_time( $seans, $simdi );
         }
@@ -77,26 +80,18 @@ if ( ! function_exists( 'ms_gsk_seans_bitti_mi' ) ) {
         $baslangic = ms_gsk_zaman( isset( $seans->start_at ) ? $seans->start_at : '' );
         $bitis     = ms_gsk_zaman( isset( $seans->end_at ) ? $seans->end_at : '' );
 
-        if ( $bitis > 0 && $bitis < $simdi ) {
-            return true;
-        }
-
         if ( $baslangic > 0 ) {
-            $dilim = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'Europe/Istanbul' );
-            $gun   = ( new DateTimeImmutable( '@' . $baslangic ) )->setTimezone( $dilim )->format( 'Y-m-d' );
-            $bugun = ( new DateTimeImmutable( '@' . $simdi ) )->setTimezone( $dilim )->format( 'Y-m-d' );
-
-            return $gun < $bugun;
+            return $baslangic <= $simdi;
         }
 
-        return false;
+        return $bitis > 0 && $bitis < $simdi;
     }
 }
 
 
 /**
- * Ürün (ana ürün kimliği) bitmiş bir seansa mı bağlı?
- * Ürüne bağlı bütün seanslar bittiyse true döner.
+ * Ürün (ana ürün kimliği) satışı kapanmış bir seansa mı bağlı?
+ * Ürüne bağlı bütün seansların satışı kapandıysa true döner.
  */
 if ( ! function_exists( 'ms_gsk_urun_kapali_mi' ) ) {
     function ms_gsk_urun_kapali_mi( $urun_id ) {
@@ -131,7 +126,7 @@ if ( ! function_exists( 'ms_gsk_urun_kapali_mi' ) ) {
                 $kapali = true;
 
                 foreach ( $seanslar as $seans ) {
-                    if ( ! ms_gsk_seans_bitti_mi( $seans ) ) {
+                    if ( ! ms_gsk_seans_kapali_mi( $seans ) ) {
                         $kapali = false;
                         break;
                     }
