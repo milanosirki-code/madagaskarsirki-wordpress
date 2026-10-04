@@ -1,6 +1,33 @@
 # Madagaskar Sirki — Codex Project State
 
-## Güncel devir: 3 Ekim 2026 (UTC)
+## Güncel devir — Aşama 5, 4 Ekim 2026 (UTC)
+
+- Yönetici kapsamı: PR #113 merge + MMC menü/fonksiyon/ability denetimi. PayTR sandbox/tam checkout ertelendi; #112 açık/nonblocking. #107 merge edilmez. Family 1.1.3 ve AI bootstrap 0.7.0 deploy edilmez.
+- Güncel main SHA: `8a6659d6f247a439171c92c4460a32146407ae9f`. PR #113 reviewed head: `67b38ae173ce21c9962fe4067478831d71f56e1b`; merge başarılı, CI 3/3 yeşil.
+- Audit branch: `codex/current-system-audit-20261003`, PR #111. Yeni main audit geçmişine alınmış; wp-content production source farkı yok. Son tanı kaynağı commit: `c9244fd185c9513ab5b51a9512e268fd820dfde4`.
+- Canlı MMC 1.3.47 / Okul Tanıtım 1.7.9 / AI 0.6.1. 120 snippet, 43 aktif, code_error 0; post-audit sağlık 16/16.
+- Source inventory: MATCH 191, WHITESPACE_ONLY 2, LIVE_AHEAD 0, GITHUB_AHEAD 2, NO_REPO_SOURCE 0. 28 pasif diagnostic/installer production sayımına dahil değil. Fresh MMC 43/43 ve aktif snippet 43/43 hash main ile aynı. Diğer plugin dosyaları için Stage 4 capture + yeni main blob eşleşmesi kullanıldı; Stage 5'te tamamı yeniden okunmadı.
+- Menü haritası: toplam 71; mmc-* 31 (CSS gizlenen detaylar dahil), görünür mmc-* 15. Live callback render OK 67, NEEDS_REVIEW 4 (GET yerel SQL yazma isteği engellendi). UI_BUG/menu DATA_BUG/API_BUG/PHP_ERROR/INCOMPLETE/DEAD/DUPLICATE saptanan 0. Ability sonucu DATA_BUG 1 (#114). Görsel CSS/JS, form write akışı ve diğer rollerin negative permission testi yapılmadı.
+- Ability: madagaskar/* 98; read-only etiketli 59 çağrı döndü; write 39 registration/input-output schema/callback/permission kaynak kontrolü, çalıştırılmadı. Execute/permission callback eksik 0. UI_ONLY 29 / UI_AI 42 (kısmi kapsama); AI_ONLY ayrı utility 2.
+- Salt okunur etiket önemli sınır: program-integrity-checks, Kommo ensure_profile UPDATE yoluna ulaşabilir (#115). İlk metadata bazlı çağrı bunu saptamadan önce çalıştığı için yerel profil/source metadata güncellenmiş olabilir. Sonraki render testleri SQL mutation öncesinde bloke etti. Harici CRM, ödeme/sipariş/bilet veya program durum write işlemi çağrılmadı.
+- Kök neden #114: MMC_Sales_Service::summary içindeki filtresiz SUM(gross_amount), failed nominal tutarları brüt satışa katıyor. Event #9: 25 processing / 28.250 TL + 4 failed / 5.000 TL nominal → API gross 33.250 TL; net 28.250 TL ve capacity 73 doğru. Bu raporlama/alan semantiği kusuru; ödeme/kapasite arızası kanıtı değil.
+- Kök neden #115: integrity checks → status_bridge_preview → ensure_profile → profile update. mmc-kommo/mmc-integrity/mmc-finance/mdg-kommo-active-events-source ekranlarının GET yerel write yan etkileri güvenli audit tarafından engellendi; native PHP fatal sayılmadı. DESC metadata false positive diagnostic'te düzeltildi; system/snippet ekranı ardından başarılı.
+- Operasyonel uyarılar: Program #9 hedef ilçe/okul yok, aday eski okul programı #7 bridge kaydedilmemiş; eşleşme/işletme hedefi doğrulanmadan repair yok. Kommo AI refresh_needed; downstream retrieval tazeliği kanıtlanmadı (#82).
+- Değiştirilen GitHub dosyaları: docs/MMC_MODULE_AUDIT.md; docs/MMC_MODULE_AUDIT_20261004.json; docs/STAGE5_SOURCE_VERIFICATION_20261004.json; docs/CODEX_PROJECT_STATE.md; docs/diagnostics/stage5-mmc-audit.php. PR #111 güncel audit/devir açıklaması. #114 ve #115 açıldı.
+- WordPress karşılığı: yalnız geçici #119 backup→GitHub diagnostic→PHP CI→kontrollü aktivasyon→read-only probes→özgün kod restore/pasif→GET readback. #119 code_error yok, byte equality doğrulandı; #117 pasif. Kalıcı production snippet/plugin kodu değişmedi/deploy yok.
+- Test: PR #113 CI runları 37177289680 / 37177289672 / 37177289673 başarılı. Son diagnostic PHP syntax 37180627884 başarılı. 71 canlı callback denemesi, 59 ability read çağrısı, 98 callback metadata kontrolü, 43 MMC ve 43 aktif snippet hash karşılaştırması, snippet 120/code_error 0 ve health 16/16 readback. Yerel JSON kapsam/sayım/callback/secret pattern doğrulaması rapor kaydından önce uygulanır.
+- Aile regression seviyesi: family_2_2 = 2 yetişkin + 2 çocuk / capacity_units 4 standardı değiştirilmedi; source/hash/definition korundu. Gerçek paid order veya capacity mutation testi yapılmadı.
+- Deployment bekleyenler: yalnız bilinen family 1.1.3 / AI 0.7.0; bu görev deploy yetkisi olarak kullanılmaz.
+- Açık issue: #115, #114, #112 (ertelendi/nonblocking), #105, #87, #82, #57.
+- Öncelik: P0 yeni bulgu yok; P1 #114 gross semantiği; P2 doğrulanmış okul/saha setup/bridge ihtiyacı; P3 #115 read-only purity ve #82 retrieval; P4 GET side effects/AI coverage/visual proof. Sıradaki en yüksek teknik iş #114 için ayrı sales-reporting patch PR'ı.
+- Rollback: main merge revert yalnız repo kaynağını geri alır; otomatik live deployment yok. Diagnostic #119 zaten restore/pasif. Legacy 43 order/104 instance değiştirilmedi; cleanup/PayTR testlerine dönülmedi.
+- Rapor ayrıntıları: docs/MMC_MODULE_AUDIT.md ve JSON. Güncel Drive çalışma kayıtları milano sirki / 00 - Site Kod ve Codex Yönetimi altında; aynı project-state dosya ID'si korunur.
+
+---
+
+## Tarihsel çalışma kayıtları (en son bölüm yukarıdadır)
+
+## Tarihsel devir: 3 Ekim 2026 (UTC)
 
 Bu kayıt canlı program/fiyat listesi değildir. Dinamik veriyi işlem anında canlıda doğrula. En son yönetici talimatı → doğrulanmış canlı program → canlı WordPress/WooCommerce/MMC/Kommo → güncel GitHub → güncel Drive → tarihsel dosyalar sırası geçerlidir.
 
