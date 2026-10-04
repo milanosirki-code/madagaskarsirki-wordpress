@@ -1,0 +1,28 @@
+name: Tickera Payment Contract
+on:
+  pull_request:
+    paths:
+      - 'tests/tickera-payment/**'
+      - '.github/workflows/tickera-payment-contract.yml'
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-live-sales.php'
+permissions:
+  contents: read
+jobs:
+  native-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Syntax
+        run: php -l tests/tickera-payment/reproduction.php
+      - name: Run exact native method contract with synthetic persistence
+        run: php -d error_reporting=E_ALL tests/tickera-payment/reproduction.php > /tmp/tickera-contract-results.json
+      - name: Show result
+        run: cat /tmp/tickera-contract-results.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tickera-native-contract-results
+          path: /tmp/tickera-contract-results.json
