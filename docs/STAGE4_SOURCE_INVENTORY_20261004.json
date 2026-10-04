@@ -889,22 +889,22 @@
     },
     {
       "id": 120,
-      "name": "Madagaskar Toplu Fatura Açıklaması v1.0.0",
+      "name": "Madagaskar Toplu Fatura Açıklaması v1.0.4",
       "active": true,
       "scope": "global",
-      "live_sha256": "30f0e50486c525934d13e522a1bdc32602e86faa3255a1a10ea2a921cb82bf89",
-      "git_blob_sha": "04d842d842418f28e52f9f6d46f5a35a44116160",
+      "live_sha256": "0adfb7d98ec511071e3a1f9f536c652aa56717f5a60617db1905489cac2daef9",
+      "git_blob_sha": "5800acef3a36e520808339dba50ec62db4d6632c",
       "main_status": "NO_REPO_SOURCE",
       "main_sources": [],
       "production_source": "docs/code-snippets/production/snippet-120.php.txt",
       "reconciled_status": "MATCH",
-      "github_sha256": "30f0e50486c525934d13e522a1bdc32602e86faa3255a1a10ea2a921cb82bf89",
-      "github_blob_sha": "04d842d842418f28e52f9f6d46f5a35a44116160",
+      "github_sha256": "0adfb7d98ec511071e3a1f9f536c652aa56717f5a60617db1905489cac2daef9",
+      "github_blob_sha": "5800acef3a36e520808339dba50ec62db4d6632c",
       "hooks": [
         "admin_menu",
         "admin_footer"
       ],
-      "notes": "New since Stage3; read-only invoice-description helper; no invoice/order status changes."
+      "notes": "Concurrent live update observed during final verification: v1.0.0 → v1.0.4. Latest byte-exact source captured without overwriting WordPress; no order/refund/payment mutation calls."
     }
   ],
   "inactive_snippets": [
@@ -3884,7 +3884,7 @@
     },
     {
       "path": "docs/code-snippets/production/snippet-120.php.txt",
-      "sha256": "30f0e50486c525934d13e522a1bdc32602e86faa3255a1a10ea2a921cb82bf89",
+      "sha256": "0adfb7d98ec511071e3a1f9f536c652aa56717f5a60617db1905489cac2daef9",
       "kind": "snippet_body"
     },
     {
@@ -4008,5 +4008,11 @@
     "Issue112 is open historical follow-up and not a production blocker.",
     "No production deployment; main-ahead versions remain separate deployment items.",
     "Always persist work and notes in GitHub and Drive."
-  ]
+  ],
+  "concurrent_live_update": {
+    "snippet_id": 120,
+    "version": "1.0.4",
+    "captured_latest": true,
+    "other_active_hashes_unchanged": 42
+  }
 }

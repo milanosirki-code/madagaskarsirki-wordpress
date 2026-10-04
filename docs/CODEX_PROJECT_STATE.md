@@ -196,7 +196,7 @@ Her önemli çalışma sonunda yapılan iş, teknik notlar, kanıtlar, test sonu
 - PR107:22file → **ALREADY_MAIN1 /NEEDS_PORT3 /OBSOLETE2 /HISTORICAL16**; #15/#30/#103 current bodies PR113'e port edildi, Sales current main'de. Directmerge yok; draft tarihsel arşiv olarak bırakıldı.
 - CI kök nedeni: madagaskar-plugins-ci.yml'de literal backslash-n üç grep'i birleştiriyor ve eski1.7.4/1.3.30 etiketleri kalmıştı. Gerçek satır sonu ve güncel school1.7.9/MMC1.3.47 paket etiketleriyle düzeltildi; production PHP hatası değildi.
 - Tests: source commit **a2ace24da441e7f2bb787ed4bc788f6b95ebeac5** üzerinde **66hash PASS /58PHP syntax PASS**, diagnostics-in-production0; archive run37176867325, ChangedPHP run37176867285, PluginsCI run37176867272 başarılı. Source kayıt işlemi için safe read-only validation; gerçek para/order/ticket/Kommo write yok.
-- Son source branch/commit/PR: **codex/live-main-reconciliation-20261004 /252b76ab8a109f0cc93884bf1853d1bb215c4b09 /PR113**. Audit/state branch **codex/current-system-audit-20261003 /PR111**.
+- Son source branch/commit/PR: **codex/live-main-reconciliation-20261004 /67b38ae173ce21c9962fe4067478831d71f56e1b /PR113**. Audit/state branch **codex/current-system-audit-20261003 /PR111**.
 - WordPress: kalıcı snippet/plugin kaynak değişikliği **yok**. Diagnostic **119** geçici salt-okunur reader için syntax sonrası kullanıldı; özgün kod byte-exact geri yüklendi, active=false/code_error=null. **117pasif**. Production deployment **yok**.
 - GitHub dosyaları: docs/code-snippets/production/43body+README;20 canonical plugin source/readme;3 historical version captures; docs/STAGE4_SOURCE_INVENTORY_20261004.json; docs/STAGE4_PR107_DISPOSITION_20261004.json; docs/STAGE4_ACTIVE_SNIPPETS_20261004.csv; docs/STAGE4_RECONCILIATION_20261004.md; tests/validate-production-source-archive.py; production-source-archive workflow; pluginCI; audit-only docs/diagnostics/stage4-source-reader.php.
 - Açık riskler: PR113 portu merge edilene kadar main source drift sayıları devam eder. 2 ileri plugin bootstrap sürümü ayrı deploymentreview bekler. school-bridge-status ability lookup404, sonraki MMC runtime function/registration denetiminde bakılacak; doğrudan fatal/kapalıplugin sonucu değildir. Source kayıtları fonksiyonel tam UI regression iddiası değildir.
@@ -207,3 +207,6 @@ Her önemli çalışma sonunda yapılan iş, teknik notlar, kanıtlar, test sonu
 - Drive raporu: https://drive.google.com/file/d/11fgcM2PqYfz1BJX75V0cfGvt3zhRxqDj/view?usp=drivesdk
 - Drive envanteri: https://drive.google.com/file/d/1Pi6Kbkv8xb4X4BLBA8C_tI593lknaCdp/view?usp=drivesdk
 - Devir dosyası snapshot'ı aynı doğrulanmış Drive klasörüne kaydedilir; final link PR111/113 açıklamalarında. Her önemli iş için GitHub+Drive kayıt standardı geçerli.
+
+### Aşama4 final read-back — eşzamanlı canlı değişiklik
+Son aktif hash kontrolünde snippet120 başka çalışma tarafından1.0.0→1.0.4 güncellendi. Yeni isim/body/hash tekrar alınıp PR113'e işlendi; diğer42 aktif hash değişmedi. WordPress overwrite yapılmadı. Sourcecommit 67b38ae173ce21c9962fe4067478831d71f56e1b. Bu değişiklik için static archive/PHP CI tekrar doğrulanır; PayTR/sandbox çalışması başlatılmaz.
