@@ -12,7 +12,22 @@ define( 'HOUR_IN_SECONDS', 3600 );
 define( 'MDG_BILET_URL', 'https://example.test/wp-content/plugins/madagaskar-bilet-yonetimi/' );
 define( 'MDG_BILET_VERSION', 'test' );
 date_default_timezone_set( 'UTC' );
-set_error_handler( function ( $no, $str, $file, $line ) { throw new ErrorException( $str, 0, $no, $file, $line ); } );
+// Warnings and notices fail the run. Deprecations are reported but do not fail it,
+// so a newer PHP on the CI runner cannot turn an unrelated deprecation into a red build.
+set_error_handler( function ( $no, $str, $file, $line ) {
+    if ( in_array( $no, array( E_DEPRECATED, E_USER_DEPRECATED ), true ) ) {
+        echo 'DEPRECATED (PHP ' . PHP_VERSION . '): ' . $str . ' in ' . basename( $file ) . ':' . $line . "\n";
+        return true;
+    }
+    throw new ErrorException( $str, 0, $no, $file, $line );
+} );
+// Surface the reason in the GitHub check annotations as well as the log.
+set_exception_handler( function ( $e ) {
+    $where = basename( $e->getFile() ) . ':' . $e->getLine();
+    echo 'FAIL (PHP ' . PHP_VERSION . '): ' . get_class( $e ) . ': ' . $e->getMessage() . ' at ' . $where . "\n";
+    echo '::error title=ticket-sales-cutoff regression::' . str_replace( array( "\r", "\n" ), ' ', get_class( $e ) . ': ' . $e->getMessage() . ' at ' . $where . ' (PHP ' . PHP_VERSION . ')' ) . "\n";
+    exit( 1 );
+} );
 
 /* ---------- WordPress stubs ---------- */
 $filters = array();
@@ -197,7 +212,7 @@ $wpdb->types = array(
     (object) array( 'id' => 32, 'session_id' => 2, 'wc_variation_id' => 802, 'capacity_units' => 1, 'is_active' => 1 ),
 );
 $reserve = new ReflectionMethod( 'MDG_Live_Sales', 'reserve_or_throw' );
-$reserve->setAccessible( true );
+if ( PHP_VERSION_ID < 80100 ) { $reserve->setAccessible( true ); }
 $order_for = function ( $variation ) { $o = new WC_Order(); $o->variations = array( $variation ); return $o; };
 
 MDG_Capacity::$holds = array();
@@ -218,7 +233,7 @@ $wpdb->writes = 0;
 
 /* ================= 4. Event page markup ================= */
 $render = new ReflectionMethod( 'MDG_Public_Event', 'render' );
-$render->setAccessible( true );
+if ( PHP_VERSION_ID < 80100 ) { $render->setAccessible( true ); }
 $event = (object) array(
     'id' => 9, 'status' => 'onsale', 'title' => 'Madagaskar Sirki – Test', 'seo_title' => '', 'seo_description' => '',
     'short_description' => 'Kısa açıklama', 'long_description' => 'Uzun açıklama', 'hero_attachment_id' => 0,
