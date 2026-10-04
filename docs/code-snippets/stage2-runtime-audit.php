@@ -39,7 +39,7 @@ function mdg_stage2_read( $input ) {
     if ( $mode === 'runtime' ) {
         global $wp_filter;
         $out = array( 'utc'=>gmdate('c'), 'hooks'=>array(), 'routes'=>array() );
-        foreach ( array('woocommerce_checkout_create_order','woocommerce_checkout_order_created','woocommerce_checkout_order_processed','woocommerce_store_api_checkout_order_processed','woocommerce_payment_complete','woocommerce_order_status_changed','woocommerce_order_status_processing','woocommerce_order_status_completed','code_snippets/deactivate_snippet','shutdown') as $hook ) {
+        foreach ( array('woocommerce_checkout_create_order','woocommerce_checkout_order_created','woocommerce_checkout_order_processed','woocommerce_store_api_checkout_order_processed','woocommerce_payment_complete','woocommerce_order_status_changed','woocommerce_order_status_processing','woocommerce_order_status_completed','code_snippets/deactivate_snippet','tc_order_is_paid','tickera_order_is_paid','tc_results_before_ticket_checkin','tickera_results_before_ticket_checkin','tc_allow_tickets_download','tc_validate_downloadable_ticket_order_status','woocommerce_new_order_item','woocommerce_store_api_checkout_update_order_from_request','shutdown') as $hook ) {
             $out['hooks'][$hook] = array();
             if ( isset($wp_filter[$hook]) ) {
                 foreach ( $wp_filter[$hook]->callbacks as $priority=>$callbacks ) {
@@ -117,7 +117,10 @@ function mdg_stage2_read( $input ) {
             'transition-readme'=>WP_PLUGIN_DIR.'/madagaskar-bilet-yonetimi-v4/readme.txt',
             'family-readme'=>WP_PLUGIN_DIR.'/madagaskar-aile-paketi-22/readme.txt',
             'tc-api'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.checkin_api.php',
-            'tc-orders'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.orders.php'
+            'tc-orders'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.orders.php',
+            'tc-order'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/classes/class.order.php',
+            'tc-functions'=>WP_PLUGIN_DIR.'/tickera-event-ticketing-system/includes/general-functions.php',
+            'checkinera'=>WP_PLUGIN_DIR.'/checkinera-premium/index.php'
         );
         $key=$input['target']??'';
         if(in_array($key,array('snippet-controller','tc-api','tc-orders'),true)&&!is_readable($map[$key])) {
