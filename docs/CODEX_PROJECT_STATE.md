@@ -210,3 +210,11 @@ Her önemli çalışma sonunda yapılan iş, teknik notlar, kanıtlar, test sonu
 
 ### Aşama4 final read-back — eşzamanlı canlı değişiklik
 Son aktif hash kontrolünde snippet120 başka çalışma tarafından1.0.0→1.0.4 güncellendi. Yeni isim/body/hash tekrar alınıp PR113'e işlendi; diğer42 aktif hash değişmedi. WordPress overwrite yapılmadı. Sourcecommit 67b38ae173ce21c9962fe4067478831d71f56e1b. Bu değişiklik için static archive/PHP CI tekrar doğrulanır; PayTR/sandbox çalışması başlatılmaz.
+
+### Aşama4 kapanış — doğrulanmış son durum
+- Son source SHA **67b38ae173ce21c9962fe4067478831d71f56e1b** için ArchiveCI **37177289672 PASS (66hash/58PHP)**, ChangedPHP **37177289673 PASS**, PluginsCI **37177289680 PASS**.
+- Son salt-okunur SQL read-back: **43/43 aktif snippet hash'i latest inventory ile MATCH**; snippet120 **1.0.4** dahil.
+- **PR111 ve PR113 ready for review (draft=false)**. PR107 draft tarihsel arşiv; hiçbir PR merge edilmedi. Main SHA hâlâ6e21a5e4217c085d6668f6932a874f846845a7de.
+- Uzlaştırma/port hazırlığı tamamlandı; main source-owner uyumu PR113 merge sonrasında geçerli olacak. WordPress production deployment yapılmadı;119 eski koduyla pasif/temiz.
+- Drive'da rapor/envanter/devir snapshot'ları aynı dosya ID'leri korunarak güncellendi ve metadata read-back ile doğrulandı: devir https://drive.google.com/file/d/1cCipf_lqxDSfMQs-0MjVPogkrD5bIKNH/view?usp=drivesdk
+- Sonraki teknik iş **MMC menü/fonksiyon/ability denetimi**; PayTR/Tickera sandbox ertelenmiş,112 non-blocking.
