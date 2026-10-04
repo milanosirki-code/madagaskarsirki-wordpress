@@ -363,13 +363,15 @@ class MMC_Operations_Service {
 
     public static function summary( $program_id ) {
         global $wpdb;
-        $program_id=absint($program_id); self::ensure_plan($program_id);
+        $program_id=absint($program_id);
+        $plan_exists=(bool) self::get_plan($program_id);
         $check=$wpdb->prefix.'mmc_operation_checklist'; $res=$wpdb->prefix.'mmc_program_resources';
         $all=$wpdb->get_row($wpdb->prepare("SELECT COUNT(*) total, SUM(status='done') done_count, SUM(status='problem') problems FROM $check WHERE program_id=%d AND status<>'not_applicable'",$program_id),ARRAY_A);
         $pre=$wpdb->get_row($wpdb->prepare("SELECT COUNT(*) total, SUM(status='done') done_count, SUM(status='problem') problems FROM $check WHERE program_id=%d AND phase IN ('pre_departure','venue_setup') AND is_required=1 AND status<>'not_applicable'",$program_id),ARRAY_A);
         $counts=$wpdb->get_results($wpdb->prepare("SELECT resource_type,COUNT(*) total FROM $res WHERE program_id=%d AND status<>'cancelled' GROUP BY resource_type",$program_id),OBJECT_K);
         $pre_total=(int)($pre['total']??0); $pre_done=(int)($pre['done_count']??0);
         return array(
+            'plan_exists'=>$plan_exists,
             'check_total'=>(int)($all['total']??0),'check_done'=>(int)($all['done_count']??0),'problems'=>(int)($all['problems']??0),
             'pre_total'=>$pre_total,'pre_done'=>$pre_done,'pre_percent'=>$pre_total?round(100*$pre_done/$pre_total,1):0,
             'vehicles'=>isset($counts['vehicle'])?(int)$counts['vehicle']->total:0,
