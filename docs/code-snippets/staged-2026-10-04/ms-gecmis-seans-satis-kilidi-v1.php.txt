@@ -1,0 +1,182 @@
+/**
+ * Madagaskar Sirki – Geçmiş Seans Satış Kilidi V1 (GEÇİCİ KÖPRÜ)
+ *
+ * Amaç: Seansı bitmiş bilet ürünlerinin satın alınmasını, eklenti dosyalarına
+ * dokunmadan durdurmak. Issue #116'nın kalıcı çözümü (PR #117) canlıya alınana
+ * kadar kullanılır; PR #117 canlıya alınınca bu snippet devre dışı bırakılır.
+ *
+ * Nasıl çalışır:
+ * - WooCommerce'in "satın alınabilir mi" sorusuna, ürünün bağlı olduğu MDG
+ *   seansı bitmişse "hayır" cevabı verir. V4 satış kapatma kilidiyle aynı
+ *   filtreleri kullanır; V4 kilidine dokunmaz.
+ * - Kural, herkese açık listelerle aynıdır: seans bittiyse (end_at < şimdi)
+ *   ya da seansın yerel başlangıç günü bugünden önceyse kapalıdır.
+ * - Yalnızca "evet"i "hayır"a çevirir; hiçbir zaman kapalı bir ürünü açmaz.
+ * - Tarih okunamazsa, seans bulunamazsa ya da herhangi bir hata olursa
+ *   hiçbir şeyi kapatmaz.
+ *
+ * Bu snippet:
+ * - Veritabanına yazmaz; ürün, sipariş, bilet, etkinlik durumu değiştirmez.
+ * - Etkinlik sayfasındaki seans düğmelerini gizlemez (onu PR #117 yapar).
+ *   Bitmiş seans seçilirse sepete eklerken "şu anda satın alınamıyor" denir.
+ * - Yönetim ekranlarında (AJAX dışı) devreye girmez.
+ *
+ * Hook'lar: woocommerce_is_purchasable, woocommerce_variation_is_purchasable
+ * (öncelik 98; V4 kilidi 99'da çalışmaya devam eder).
+ * Bağımlılık: wp_mdg_sessions tablosu (Madagaskar Bilet Yönetimi), WooCommerce.
+ * Geri alma: bu snippet'i devre dışı bırakmak yeterlidir.
+ * Code Snippets kullanırken <?php etiketi eklemeyin.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/**
+ * UTC MySQL tarihini zaman damgasına çevirir; okunamazsa 0.
+ * Bilerek istisna üretmeyen bir ayrıştırma kullanır.
+ */
+if ( ! function_exists( 'ms_gsk_zaman' ) ) {
+    function ms_gsk_zaman( $utc ) {
+        $utc = trim( (string) $utc );
+
+        if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/', $utc, $m ) ) {
+            return 0;
+        }
+
+        $saniye = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+
+        if ( ! checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ) {
+            return 0;
+        }
+
+        if ( (int) $m[4] > 23 || (int) $m[5] > 59 || $saniye > 59 ) {
+            return 0;
+        }
+
+        $ts = gmmktime( (int) $m[4], (int) $m[5], $saniye, (int) $m[2], (int) $m[3], (int) $m[1] );
+
+        return $ts > 0 ? (int) $ts : 0;
+    }
+}
+
+
+/**
+ * Seansın satışı saat nedeniyle kapandı mı?
+ * PR #117 canlıdaysa eklentinin kendi kuralını kullanır.
+ */
+if ( ! function_exists( 'ms_gsk_seans_bitti_mi' ) ) {
+    function ms_gsk_seans_bitti_mi( $seans, $simdi = null ) {
+        if ( class_exists( 'MDG_Sessions' ) && method_exists( 'MDG_Sessions', 'sales_closed_by_time' ) ) {
+            return (bool) MDG_Sessions::sales_closed_by_time( $seans, $simdi );
+        }
+
+        $seans     = (object) $seans;
+        $simdi     = null === $simdi ? time() : (int) $simdi;
+        $baslangic = ms_gsk_zaman( isset( $seans->start_at ) ? $seans->start_at : '' );
+        $bitis     = ms_gsk_zaman( isset( $seans->end_at ) ? $seans->end_at : '' );
+
+        if ( $bitis > 0 && $bitis < $simdi ) {
+            return true;
+        }
+
+        if ( $baslangic > 0 ) {
+            $dilim = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'Europe/Istanbul' );
+            $gun   = ( new DateTimeImmutable( '@' . $baslangic ) )->setTimezone( $dilim )->format( 'Y-m-d' );
+            $bugun = ( new DateTimeImmutable( '@' . $simdi ) )->setTimezone( $dilim )->format( 'Y-m-d' );
+
+            return $gun < $bugun;
+        }
+
+        return false;
+    }
+}
+
+
+/**
+ * Ürün (ana ürün kimliği) bitmiş bir seansa mı bağlı?
+ * Ürüne bağlı bütün seanslar bittiyse true döner.
+ */
+if ( ! function_exists( 'ms_gsk_urun_kapali_mi' ) ) {
+    function ms_gsk_urun_kapali_mi( $urun_id ) {
+        $urun_id = absint( $urun_id );
+
+        if ( ! $urun_id ) {
+            return false;
+        }
+
+        if ( ! isset( $GLOBALS['ms_gsk_onbellek'] ) || ! is_array( $GLOBALS['ms_gsk_onbellek'] ) ) {
+            $GLOBALS['ms_gsk_onbellek'] = array();
+        }
+
+        if ( array_key_exists( $urun_id, $GLOBALS['ms_gsk_onbellek'] ) ) {
+            return $GLOBALS['ms_gsk_onbellek'][ $urun_id ];
+        }
+
+        global $wpdb;
+
+        $kapali = false;
+
+        if ( is_object( $wpdb ) && isset( $wpdb->prefix ) ) {
+            $tablo    = $wpdb->prefix . 'mdg_sessions';
+            $seanslar = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, start_at, end_at FROM {$tablo} WHERE wc_product_id = %d",
+                    $urun_id
+                )
+            );
+
+            if ( is_array( $seanslar ) && $seanslar ) {
+                $kapali = true;
+
+                foreach ( $seanslar as $seans ) {
+                    if ( ! ms_gsk_seans_bitti_mi( $seans ) ) {
+                        $kapali = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $GLOBALS['ms_gsk_onbellek'][ $urun_id ] = $kapali;
+
+        return $kapali;
+    }
+}
+
+
+/**
+ * Satın alınabilirlik filtresi. Her hata yutulur; hata halinde karar değişmez.
+ */
+if ( ! function_exists( 'ms_gsk_filtre' ) ) {
+    function ms_gsk_filtre( $satin_alinabilir, $urun = null ) {
+        if ( ! $satin_alinabilir ) {
+            return $satin_alinabilir;
+        }
+
+        try {
+            if ( function_exists( 'is_admin' ) && is_admin() && ! ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+                return $satin_alinabilir;
+            }
+
+            if ( ! is_object( $urun ) || ! method_exists( $urun, 'get_id' ) ) {
+                return $satin_alinabilir;
+            }
+
+            $ana_id = method_exists( $urun, 'get_parent_id' ) ? absint( $urun->get_parent_id() ) : 0;
+            $id     = $ana_id ? $ana_id : absint( $urun->get_id() );
+
+            if ( ms_gsk_urun_kapali_mi( $id ) ) {
+                return false;
+            }
+        } catch ( \Throwable $e ) {
+            return $satin_alinabilir;
+        }
+
+        return $satin_alinabilir;
+    }
+}
+
+add_filter( 'woocommerce_is_purchasable', 'ms_gsk_filtre', 98, 2 );
+add_filter( 'woocommerce_variation_is_purchasable', 'ms_gsk_filtre', 98, 2 );

@@ -1,0 +1,21 @@
+name: MMC Collected Gross Contract
+on:
+  pull_request:
+    paths:
+      - 'tests/mmc-sales/**'
+      - '.github/workflows/mmc-sales-contract.yml'
+      - 'wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php'
+permissions:
+  contents: read
+jobs:
+  collected-gross:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite
+          coverage: none
+      - run: php -l tests/mmc-sales/gross-revenue.php
+      - run: php -d error_reporting=E_ALL tests/mmc-sales/gross-revenue.php

@@ -1,0 +1,104 @@
+{
+  "issue": 114,
+  "production_file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php",
+  "deploy": {
+    "utc": "2026-10-04T12:42:52+00:00",
+    "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php",
+    "before_blob": "1af29700f0281f64c1d490fc7398b0408b812684",
+    "before_sha256": "8af41d4457cc8fe911d63124bd6adfc0905f5096134b0d3e31580ef349834a77",
+    "snapshot": {
+      "orders_count": "43",
+      "old_gross": "47000.00",
+      "corrected_gross": "42000.00",
+      "net_revenue": "42000.00",
+      "capacity": "107",
+      "refunds": "0.00"
+    },
+    "action": "apply",
+    "after_blob": "8d635658d0feebc5d63a2ba1d937eeec6cd2dda7",
+    "after_sha256": "3fb93c6e28489b30fbd837181aef87217d65b0cd5a6997524f1fb278e45456df",
+    "readback_matches": true
+  },
+  "postdeploy": {
+    "utc": "2026-10-04T12:43:00+00:00",
+    "git_blob": "8d635658d0feebc5d63a2ba1d937eeec6cd2dda7",
+    "sha256": "3fb93c6e28489b30fbd837181aef87217d65b0cd5a6997524f1fb278e45456df",
+    "summary": {
+      "orders_count": "43",
+      "ticket_count": "107",
+      "sold_capacity": "107",
+      "gross_revenue": "42000.00",
+      "nominal_order_value": "47000.00",
+      "refunded_amount": "0.00",
+      "net_revenue": "42000.00",
+      "failed_orders": 4
+    },
+    "ability_summary": {
+      "orders_count": "43",
+      "ticket_count": "107",
+      "sold_capacity": "107",
+      "gross_revenue": "42000.00",
+      "nominal_order_value": "47000.00",
+      "refunded_amount": "0.00",
+      "net_revenue": "42000.00",
+      "failed_orders": 4
+    },
+    "dashboard_sales": {
+      "ticket_count": "107",
+      "sold_capacity": "107",
+      "net_revenue": "42000.00",
+      "failed_orders": 4,
+      "capacity": 1500,
+      "occupancy": 7.1,
+      "orders_count": "43",
+      "gross_revenue": "42000.00",
+      "nominal_order_value": "47000.00",
+      "refunded_amount": "0.00"
+    },
+    "sales_ui": {
+      "rendered": true,
+      "net_value_present": true,
+      "bytes": 17898
+    },
+    "native_woo_payment_states": {
+      "processing|paid=1|date=1|tx=0": 39,
+      "failed|paid=0|date=0|tx=0": 4
+    },
+    "php_warnings": []
+  },
+  "final_ability_summary": {
+    "orders_count": "43",
+    "ticket_count": "107",
+    "sold_capacity": "107",
+    "gross_revenue": "42000.00",
+    "nominal_order_value": "47000.00",
+    "refunded_amount": "0.00",
+    "net_revenue": "42000.00",
+    "failed_orders": 4
+  },
+  "final_health_summary": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 120,
+    "active": 43,
+    "code_error_count": 0,
+    "diagnostic119_restored_body_exact": true,
+    "diagnostic119_active": false,
+    "diagnostic119_code_error": null
+  },
+  "tests": {
+    "assertions": 79,
+    "php": "8.4",
+    "result": "PASS",
+    "run": 37202923567,
+    "changed_php_syntax": 37202923590,
+    "plugins_ci": 37202923577,
+    "source_archive": 37202923565,
+    "reconciliation": 37202923653
+  },
+  "scope": "One sales summary aggregation only; no customer/order/ledger/mapping/payment/family/profile mutation."
+}
