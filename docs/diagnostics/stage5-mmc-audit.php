@@ -80,6 +80,21 @@ function mdg_stage5_admin_pages() {
 }
 function mdg_stage5_probe($input) {
     if(($input['mode']??'')==='batch'){ $items=array(); foreach(array_slice((array)($input['slugs']??array()),0,12) as $slug)$items[]=mdg_stage5_probe(array('mode'=>'render','slug'=>$slug,'program_id'=>$input['program_id']??0)); return array('items'=>$items); }
+    if(($input['mode']??'')==='ability-info') {
+        $out=array();foreach((array)($input['names']??array()) as $name) {
+            if(strpos($name,'madagaskar/')!==0)continue;
+            $a=function_exists('wp_get_ability')?wp_get_ability($name):null;$row=array('name'=>$name,'registered'=>(bool)$a);
+            if($a){foreach((new ReflectionObject($a))->getProperties() as $p) {
+                if(!in_array($p->getName(),array('execute_callback','permission_callback'),true))continue;
+                $p->setAccessible(true);$cb=$p->getValue($a);$key=$p->getName();$row[$key]=array('callable'=>is_callable($cb));
+                if(is_callable($cb)){ $ref=is_array($cb)?new ReflectionMethod($cb[0],$cb[1]):new ReflectionFunction($cb);
+                    $row[$key]['file']=str_replace(ABSPATH,'',$ref->getFileName());$row[$key]['line']=$ref->getStartLine();
+                    $row[$key]['callback']=is_array($cb)?(is_object($cb[0])?get_class($cb[0]):$cb[0]).'::'.$cb[1]:(is_string($cb)?$cb:'closure');
+                }
+            }}
+            $out[]=$row;
+        }return array('items'=>$out);
+    }
     if(($input['mode']??'')==='hashes')return mdg_stage4_source_read($input);
     $guard=function($sql){if(!preg_match('/^\\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\\b/i',$sql))throw new RuntimeException('AUDIT_SQL_WRITE_BLOCKED');return $sql;};
     add_filter('query',$guard,PHP_INT_MAX);
@@ -105,7 +120,7 @@ function mdg_stage5_probe($input) {
             $out=array('slug'=>$slug,'bytes'=>strlen($html),'forms'=>substr_count($html,'<form'),'tables'=>substr_count($html,'<table'),'rows'=>substr_count($html,'<tr'),'contains_heading'=>(bool)preg_match('/<h[123]\\b/i',$html),'error_notice_count'=>substr_count($html,'notice-error'),'callback'=>$page['callbacks'],'permission'=>$page['permission']);
         }
         $out['warnings']=$warnings;return $out;
-    }catch(Throwable $e){return array('slug'=>$input['slug']??'','status'=>$e->getMessage()==='AUDIT_SQL_WRITE_BLOCKED'?'READ_ONLY_WRITE_BLOCKED':'PHP_ERROR','exception'=>get_class($e),'reason'=>in_array($e->getMessage(),array('AUDIT_SQL_WRITE_BLOCKED','AUDIT_WP_DIE'),true)?$e->getMessage():'exception_message_redacted','file'=>str_replace(ABSPATH,'',$e->getFile()),'line'=>$e->getLine(),'warnings'=>$warnings);}
+    }catch(Throwable $e){return array('slug'=>$input['slug']??'','status'=>$e->getMessage()==='AUDIT_SQL_WRITE_BLOCKED'?'READ_ONLY_WRITE_BLOCKED':'PHP_ERROR','exception'=>get_class($e),'reason'=>in_array($e->getMessage(),array('AUDIT_SQL_WRITE_BLOCKED','AUDIT_WP_DIE'),true)?$e->getMessage():'exception_message_redacted','file'=>str_replace(ABSPATH,'',$e->getFile()),'line'=>$e->getLine(),'warnings'=>$warnings,'trace'=>array_map(function($t){return array('class'=>$t['class']??'','method'=>$t['function']??'','file'=>isset($t['file'])?str_replace(ABSPATH,'',$t['file']):'','line'=>$t['line']??0);},array_slice($e->getTrace(),0,12)));}
     finally{
         while(ob_get_level()>$level)ob_end_clean();
         $_GET=$oldget;$_POST=$oldpost;$_REQUEST=$oldrequest;$_SERVER['REQUEST_METHOD']=$oldmethod;
@@ -116,7 +131,7 @@ add_action('wp_abilities_api_init',function(){
     if(!function_exists('wp_register_ability'))return;
     wp_register_ability('madagaskar/stage5-mmc-probe',array(
         'label'=>'Temporary read-only MMC audit','description'=>'Admin-only menu/render audit with SQL mutation blocking; never submits forms.',
-        'category'=>'madagaskar-saglik','input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('inventory','render','hashes','batch')),'slug'=>array('type'=>'string'),'slugs'=>array('type'=>'array','items'=>array('type'=>'string'),'maxItems'=>12),'program_id'=>array('type'=>'integer'),'path'=>array('type'=>'string')),'required'=>array('mode')),
+        'category'=>'madagaskar-saglik','input_schema'=>array('type'=>'object','properties'=>array('mode'=>array('type'=>'string','enum'=>array('inventory','render','hashes','batch','ability-info')),'slug'=>array('type'=>'string'),'names'=>array('type'=>'array','items'=>array('type'=>'string')),'slugs'=>array('type'=>'array','items'=>array('type'=>'string'),'maxItems'=>12),'program_id'=>array('type'=>'integer'),'path'=>array('type'=>'string')),'required'=>array('mode')),
         'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_stage5_probe','permission_callback'=>function(){return current_user_can('manage_options');},
         'meta'=>array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'show_in_rest'=>true)
     ));
