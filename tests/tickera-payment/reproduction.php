@@ -2,7 +2,7 @@
 /** Exact captured native methods, isolated synthetic persistence; no HTTP/PayTR/customer data. */
 namespace {
     define('ABSPATH', __DIR__);
-    $GLOBALS['orders']=[]; $GLOBALS['items']=[]; $GLOBALS['tickets']=[]; $GLOBALS['meta']=[];
+    $GLOBALS['orders']=[]; $GLOBALS['items']=[]; $GLOBALS['ticket_posts']=[]; $GLOBALS['meta']=[];
     $GLOBALS['filters']=[]; $GLOBALS['timeline']=[]; $GLOBALS['checks']=0;
     function expect($ok,$message){$GLOBALS['checks']++;if(!$ok)throw new \RuntimeException($message);}
     function apply_filters($hook,$value,...$args){foreach($GLOBALS['filters'][$hook]??[] as $cb)$value=$cb($value,...$args);return $value;}
@@ -12,15 +12,15 @@ namespace {
     function __( $s,$domain=''){return $s;} function sanitize_text_field($s){return is_scalar($s)?(string)$s:'';}
     function tickera_sanitize_array($a,...$args){return $a;} function get_option(...$args){return [];} function get_current_user_id(){return 0;}
     function get_post_type($id){return isset($GLOBALS['orders'][$id])?'shop_order_placehold':'tc_tickets_instances';}
-    function get_post_meta($id,$key,$single=true){return $GLOBALS['meta'][$id][$key]??'';}
+    function get_post_meta($id,$key='',$single=true){if($key==='')return array_map(fn($v)=>[$v],$GLOBALS['meta'][$id]??[]);return $GLOBALS['meta'][$id][$key]??'';}
     function add_post_meta($id,$key,$value){$GLOBALS['meta'][$id][$key]=$value;}
     function update_post_meta($id,$key,$value){$GLOBALS['meta'][$id][$key]=$value;}
-    function wp_insert_post($data,$error=false){$id=50000+count($GLOBALS['tickets']);$GLOBALS['tickets'][$id]=$data;$GLOBALS['timeline'][]=['T1','native_instance_created',$id];return $id;}
+    function wp_insert_post($data,$error=false){$id=50000+count($GLOBALS['ticket_posts']);$GLOBALS['ticket_posts'][$id]=$data;$GLOBALS['timeline'][]=['T1','native_instance_created',$id];return $id;}
     function wc_get_order($id){return $GLOBALS['orders'][$id]??false;}
     function tc_wb_parse_meta_value($v){return is_array($v)?$v:[];}
     function tickera_timestamp_to_local($v=null){return $v??1700000000;}
     function tickera_format_date($v,...$rest){return (string)$v;}
-    function tickera_ticket_code_to_id($code){foreach($GLOBALS['tickets'] as $id=>$p)if(get_post_meta($id,'ticket_code',true)===$code)return $id;return false;}
+    function tickera_ticket_code_to_id($code){foreach($GLOBALS['ticket_posts'] as $id=>$p)if(get_post_meta($id,'ticket_code',true)===$code)return $id;return false;}
     function absint($v){return abs((int)$v);} function tickera_do_timestamp(){return 0;}
     class WC_Order {
         public $id,$status='pending',$paid=null,$items=[],$meta=[];
@@ -50,14 +50,14 @@ namespace {
 }
 namespace Tickera {
     class TC_Cart_Form {function __construct($id){}function get_owner_info_fields(){return [];}}
-    class TC_Orders {static function get_tickets_ids($order,$status='',$sort='ASC'){return array_keys(array_filter($GLOBALS['tickets'],fn($p)=>$p['post_parent']===$order));}}
+    class TC_Orders {static function get_tickets_ids($order,$status='',$sort='ASC'){return array_keys(array_filter($GLOBALS['ticket_posts'],fn($p)=>$p['post_parent']===$order));}}
     class TC_Order {
         public $details;
         function __construct($id){$this->details=(object)['ID'=>$id,'post_status'=>wc_get_order($id)->get_status(),'tc_order_date'=>1700000000,'tc_cart_info'=>[]];}
     }
     class TC_Ticket_Instance {
         public $details,$id;
-        function __construct($id){$this->id=$id;$p=$GLOBALS['tickets'][$id];$m=$GLOBALS['meta'][$id];$this->details=(object)array_merge(['ID'=>$id,'ticket_type_id'=>801,'first_name'=>'Synthetic','last_name'=>'Attendee','address'=>'','city'=>'','state'=>'','country'=>''],$p,$m);}
+        function __construct($id){$this->id=$id;$p=$GLOBALS['ticket_posts'][$id];$m=$GLOBALS['meta'][$id];$this->details=(object)array_merge(['ID'=>$id,'ticket_type_id'=>801,'first_name'=>'Synthetic','last_name'=>'Attendee','address'=>'','city'=>'','state'=>'','country'=>''],$p,$m);}
         function get_ticket_checkins(){return get_post_meta($this->id,'tc_checkins',true);}
         static function sort_attendance_records(&$a){}
     }
