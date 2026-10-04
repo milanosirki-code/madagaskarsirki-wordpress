@@ -1,19 +1,27 @@
 /**
- * Madagaskar Sirki – Seans Denetimi V2 (SALT OKUNUR)
+ * Madagaskar Sirki – Seans Denetimi V3 (SALT OKUNUR)
  *
  * Kural (işletme sahibi kararı, 4 Ekim 2026): satış seans BAŞLADIĞINDA kapanır.
  * Bu ekran o kurala göre iki soruya cevap verir (Issue #116):
  *  1. Hangi etkinlikler ve seanslar başladığı halde hâlâ satışta?
  *  2. Seansı başladıktan sonra açılmış sipariş var mı, ödenmiş mi?
+ *  3. Bu siparişlerin biletleri girişte okutulmuş mu?
+ *
+ * İkinci karar (4 Ekim 2026): seans başladıktan sonra satılmış ve
+ * KULLANILMAMIŞ biletler başka seansa aktarılır. Bu ekran aktarım yapmaz;
+ * yalnızca hangi siparişlerin aday olduğunu gösterir. Girişte okutulmuş
+ * bilet kullanılmış sayılır ve aday değildir.
  *
  * Ekran: Araçlar > Seans Denetimi
  * Yetki: manage_woocommerce
  *
  * Bu snippet:
- * - Yalnızca SELECT sorgusu çalıştırır ve WooCommerce siparişini okur.
+ * - Yalnızca SELECT sorgusu çalıştırır; WooCommerce siparişini ve Tickera
+ *   bilet kayıtlarını (adet ve okutulma durumu) okur.
  * - Hiçbir şey yazmaz: sipariş, bilet, ürün, etkinlik, seçenek, günlük yok.
- * - Müşteri adı, telefonu, e-postası veya adresi göstermez; yalnızca sipariş
- *   numarası, durum, tutar ve saat gösterir.
+ * - Müşteri adı, telefonu, e-postası veya adresi göstermez; bilet kodunu da
+ *   göstermez. Yalnızca sipariş numarası, durum, tutar, saat ve bilet
+ *   sayıları gösterir.
  * - Ziyaretçi tarafında hiçbir şey çalıştırmaz.
  *
  * Kullanım: etkinleştir, ekranı aç, sonucu kaydet, devre dışı bırak.
@@ -21,8 +29,11 @@
  *
  * Hook: admin_menu.
  * Bağımlılık: wp_mdg_events, wp_mdg_sessions, wp_mdg_order_map tabloları
- * (Madagaskar Bilet Yönetimi), WooCommerce.
+ * (Madagaskar Bilet Yönetimi), WooCommerce, Tickera (tc_tickets_instances,
+ * tc_checkins metası).
  * Sınır: yalnızca wp_mdg_order_map içinde kaydı olan siparişleri görür.
+ * Bilet sayıları sipariş geneline aittir; bir siparişte birden çok seans
+ * varsa okutulma durumu seans bazında ayrıştırılmaz.
  * Geri alma: bu snippet'i devre dışı bırakmak yeterlidir.
  * Code Snippets kullanırken <?php etiketi eklemeyin.
  */
@@ -175,6 +186,78 @@ if ( ! function_exists( 'ms_gsd_siparis_kalemleri' ) ) {
 
 
 /**
+ * Siparişin Tickera biletlerini sayar: toplam, girişte okutulan, geçersiz kılınan.
+ * Yalnızca okur. Bilet kodu veya sahibi okunmaz.
+ */
+if ( ! function_exists( 'ms_gsd_bilet_durumu' ) ) {
+    function ms_gsd_bilet_durumu( $order_id ) {
+        $sonuc = array( 'toplam' => 0, 'okutulan' => 0, 'gecersiz' => 0, 'biliniyor' => false );
+
+        $order_id = absint( $order_id );
+
+        if ( ! $order_id || ! function_exists( 'get_posts' ) || ! function_exists( 'post_type_exists' ) || ! post_type_exists( 'tc_tickets_instances' ) ) {
+            return $sonuc;
+        }
+
+        $idler = get_posts(
+            array(
+                'post_type'      => 'tc_tickets_instances',
+                'post_status'    => 'any',
+                'post_parent'    => $order_id,
+                'posts_per_page' => 100,
+                'fields'         => 'ids',
+                'no_found_rows'  => true,
+            )
+        );
+
+        if ( ! is_array( $idler ) ) {
+            return $sonuc;
+        }
+
+        $sonuc['biliniyor'] = true;
+
+        foreach ( $idler as $bilet_id ) {
+            $bilet_id = absint( $bilet_id );
+
+            if ( ! $bilet_id ) {
+                continue;
+            }
+
+            $sonuc['toplam']++;
+
+            if ( 'yes' === get_post_meta( $bilet_id, '_mdg_invalidated', true ) ) {
+                $sonuc['gecersiz']++;
+            }
+
+            $girisler = get_post_meta( $bilet_id, 'tc_checkins', true );
+
+            if ( is_array( $girisler ) && $girisler ) {
+                $gecti = false;
+
+                foreach ( $girisler as $giris ) {
+                    if ( ! is_array( $giris ) || ! isset( $giris['status'] ) ) {
+                        $gecti = true;
+                        break;
+                    }
+
+                    if ( 'pass' === strtolower( (string) $giris['status'] ) ) {
+                        $gecti = true;
+                        break;
+                    }
+                }
+
+                if ( $gecti ) {
+                    $sonuc['okutulan']++;
+                }
+            }
+        }
+
+        return $sonuc;
+    }
+}
+
+
+/**
  * Seansı başladıktan sonra açılmış siparişleri bulur.
  * Sipariş tarihi WooCommerce'ten okunur; eşleme tablosundaki kayıt tarihi
  * sonradan yapılan senkronlarda değişebildiği için karar ona göre verilmez.
@@ -183,6 +266,7 @@ if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
     function ms_gsd_gec_siparisler( array $kalemler ) {
         $sonuc    = array();
         $siparis  = array();
+        $biletler = array();
         $odenmis  = function_exists( 'wc_get_is_paid_statuses' ) ? (array) wc_get_is_paid_statuses() : array( 'processing', 'completed' );
 
         foreach ( $kalemler as $kalem ) {
@@ -212,6 +296,26 @@ if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
 
             $durum  = (string) $order->get_status();
             $odeme  = method_exists( $order, 'get_date_paid' ) ? $order->get_date_paid() : null;
+            $odendi = in_array( $durum, $odenmis, true ) || (bool) $odeme;
+
+            if ( ! array_key_exists( $order_id, $biletler ) ) {
+                $biletler[ $order_id ] = ms_gsd_bilet_durumu( $order_id );
+            }
+
+            $bilet     = $biletler[ $order_id ];
+            $kullanilmamis = max( 0, $bilet['toplam'] - $bilet['okutulan'] - $bilet['gecersiz'] );
+
+            if ( ! $odendi ) {
+                $oneri = '—';
+            } elseif ( ! $bilet['biliniyor'] || 0 === $bilet['toplam'] ) {
+                $oneri = 'Bilet bulunamadı; elle incele';
+            } elseif ( 0 === $kullanilmamis && 0 === $bilet['okutulan'] ) {
+                $oneri = 'Geçersiz kılınmış; işlem yok';
+            } elseif ( 0 === $kullanilmamis ) {
+                $oneri = 'Kullanılmış; işlem yok';
+            } else {
+                $oneri = 'AKTARIM ADAYI (' . $kullanilmamis . ' bilet)';
+            }
 
             $sonuc[] = array(
                 'order_id'   => $order_id,
@@ -220,9 +324,14 @@ if ( ! function_exists( 'ms_gsd_gec_siparisler' ) ) {
                 'olusturma'  => $olusturma,
                 'gecikme_dk' => (int) floor( ( $olusturma - $baslangic ) / 60 ),
                 'durum'      => $durum,
-                'odendi'     => in_array( $durum, $odenmis, true ) || (bool) $odeme,
+                'odendi'     => $odendi,
                 'adet'       => (int) $kalem->quantity,
                 'tutar'      => (float) $kalem->line_total,
+                'bilet'      => (int) $bilet['toplam'],
+                'okutulan'   => (int) $bilet['okutulan'],
+                'gecersiz'   => (int) $bilet['gecersiz'],
+                'aday'       => $odendi && $kullanilmamis > 0,
+                'oneri'      => $oneri,
             );
         }
 
@@ -251,15 +360,21 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
         $gec_odenmis = 0;
         $gec_tutar   = 0.0;
         $gec_no      = array();
+        $aday_no     = array();
 
         foreach ( $gec as $satir ) {
             if ( $satir['odendi'] ) {
                 $gec_no[ $satir['order_id'] ] = true;
                 $gec_tutar += $satir['tutar'];
             }
+
+            if ( $satir['aday'] ) {
+                $aday_no[ $satir['order_id'] ] = true;
+            }
         }
 
         $gec_odenmis = count( $gec_no );
+        $aday_sayisi = count( $aday_no );
 
         echo '<div class="wrap"><h1>Seans Denetimi</h1>';
         echo '<p>Salt okunur. Kural: satış seans başladığında kapanır. Kapsam: son ' . esc_html( (string) $gun ) . ' gün. Rapor saati: ' . esc_html( ms_gsd_yerel( $simdi ) ) . '</p>';
@@ -316,10 +431,11 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
         }
 
         echo '<h2>3. Seansı başladıktan sonra açılmış sipariş kalemleri: ' . esc_html( (string) count( $gec ) ) . '</h2>';
-        echo '<p>Ödenmiş sipariş: <strong>' . esc_html( (string) $gec_odenmis ) . '</strong> · Ödenmiş kalem tutarı: <strong>' . esc_html( number_format( $gec_tutar, 2, ',', '.' ) ) . ' TL</strong></p>';
+        echo '<p>Ödenmiş sipariş: <strong>' . esc_html( (string) $gec_odenmis ) . '</strong> · Ödenmiş kalem tutarı: <strong>' . esc_html( number_format( $gec_tutar, 2, ',', '.' ) ) . ' TL</strong> · Aktarım adayı sipariş: <strong>' . esc_html( (string) $aday_sayisi ) . '</strong></p>';
+        echo '<p>Aktarım adayı: ödenmiş ve girişte okutulmamış bileti olan sipariş. Okutulmuş bilet kullanılmış sayılır. Bilet sayıları sipariş geneline aittir.</p>';
 
         if ( $gec ) {
-            echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Etkinlik</th><th>Seans başlangıcı</th><th>Sipariş saati</th><th>Gecikme</th><th>Durum</th><th>Ödendi mi?</th><th>Adet</th><th>Kalem tutarı</th></tr></thead><tbody>';
+            echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Etkinlik</th><th>Seans başlangıcı</th><th>Sipariş saati</th><th>Gecikme</th><th>Durum</th><th>Ödendi mi?</th><th>Adet</th><th>Kalem tutarı</th><th>Bilet</th><th>Okutulan</th><th>Geçersiz</th><th>Öneri</th></tr></thead><tbody>';
 
             foreach ( $gec as $g ) {
                 echo '<tr>';
@@ -332,6 +448,10 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
                 echo '<td>' . ( $g['odendi'] ? '<strong>EVET</strong>' : 'hayır' ) . '</td>';
                 echo '<td>' . esc_html( (string) $g['adet'] ) . '</td>';
                 echo '<td>' . esc_html( number_format( $g['tutar'], 2, ',', '.' ) ) . ' TL</td>';
+                echo '<td>' . esc_html( (string) $g['bilet'] ) . '</td>';
+                echo '<td>' . esc_html( (string) $g['okutulan'] ) . '</td>';
+                echo '<td>' . esc_html( (string) $g['gecersiz'] ) . '</td>';
+                echo '<td>' . ( $g['aday'] ? '<strong>' . esc_html( $g['oneri'] ) . '</strong>' : esc_html( $g['oneri'] ) ) . '</td>';
                 echo '</tr>';
             }
 
@@ -340,7 +460,7 @@ if ( ! function_exists( 'ms_gsd_sayfa' ) ) {
             echo '<p>Yok.</p>';
         }
 
-        echo '<p><em>Bu ekran hiçbir kaydı değiştirmez. İade, iptal veya satış kapatma buradan yapılmaz.</em></p></div>';
+        echo '<p><em>Bu ekran hiçbir kaydı değiştirmez. Aktarım, iade, iptal veya satış kapatma buradan yapılmaz.</em></p></div>';
     }
 }
 
