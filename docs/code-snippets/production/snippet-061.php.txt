@@ -1,0 +1,214 @@
+/** Madagaskar: mevcut tek günlük etkinliğin tarihini, kimlikleri koruyarak düzenler. v1.1.0 */
+if (!defined('ABSPATH')) { exit; }
+final class MDG_Date_Edit_2026 {
+    const PAGE = 'mdg-date-edit';
+    static function boot() {
+        add_action('admin_menu', function () {
+            add_submenu_page('mdg-publish', 'Etkinlik Tarihi', 'Etkinlik Tarihi', 'manage_options', self::PAGE, array(__CLASS__, 'render'), 8);
+        }, 999);
+        add_action('admin_notices', function () {
+            if (current_user_can('manage_options') && ($_GET['page'] ?? '') === 'mdg-v5-events') {
+                echo '<div class="notice notice-info"><p><a class="button" href="'.esc_url(admin_url('admin.php?page='.self::PAGE)).'">Etkinlik Tarihini Değiştir</a> Seans saatlerini koruyarak mevcut etkinliğin tarihini düzenleyin.</p></div>';
+            }
+        });
+    }
+    static function fail($message) { throw new RuntimeException($message); }
+    static function hash($value) { return hash('sha256', serialize($value)); }
+    static function plan($id, $date, $text_date = '') {
+        global $wpdb;
+        if (!class_exists('MDG_Events') || !class_exists('MDG_Sessions')) self::fail('Etkinlik motoru bulunamadı.');
+        $new = DateTimeImmutable::createFromFormat('!Y-m-d', $date, wp_timezone());
+        if (!$new || $new->format('Y-m-d') !== $date || $date < current_time('Y-m-d')) self::fail('Bugün veya ilerisi için geçerli bir tarih seçin.');
+        $event = MDG_Events::get($id);
+        if (!$event) self::fail('Etkinlik bulunamadı.');
+        $sessions = MDG_Sessions::by_event($id);
+        if (!$sessions) self::fail('Seans bulunamadı.');
+        $old_dates = array(); $tickera = array(); $products = array(); $types = array(); $changes = array(); $rows = array();
+        foreach ($sessions as $s) {
+            $start = new DateTimeImmutable($s->start_at, new DateTimeZone('UTC'));
+            $end = new DateTimeImmutable($s->end_at, new DateTimeZone('UTC'));
+            $local = $start->setTimezone(wp_timezone());
+            $old_dates[$local->format('Y-m-d')] = true;
+            if ((int)$s->sold_units || (int)$s->held_units) self::fail('Satılmış veya rezerve bileti olan etkinlikte bu araç kullanılamaz. Biletli erteleme işlemi gerekir.');
+            if (!$s->wc_product_id || !$s->tickera_event_id) self::fail('Seansın WooCommerce / Tickera eşlemesi eksik.');
+            $pid = (int)$s->wc_product_id; $tid = (int)$s->tickera_event_id;
+            if (isset($products[$pid])) self::fail('Bir ürün birden fazla seansa bağlı.');
+            if (get_post_type($pid) !== 'product' || (int)get_post_meta($pid, '_mdg_session_id', true) !== (int)$s->id || (int)get_post_meta($pid, '_mdg_event_id', true) !== $id || (int)get_post_meta($pid, '_event_name', true) !== $tid) self::fail('Ürün eşlemesi doğrulanamadı.');
+            if (get_post_type($tid) !== 'tc_events' || (int)get_post_meta($tid, '_mdg_event_id', true) !== $id) self::fail('Tickera eşlemesi doğrulanamadı.');
+            $fresh = new DateTimeImmutable($date.' '.$local->format('H:i:s'), wp_timezone());
+            $duration = $end->getTimestamp() - $start->getTimestamp();
+            if ($duration <= 0) self::fail('Seans süresi geçersiz.');
+            $start_new = $fresh->setTimezone(new DateTimeZone('UTC'));
+            $end_new = $start_new->modify('+'.$duration.' seconds');
+            $changes[] = array('id'=>(int)$s->id, 'old_start'=>$s->start_at, 'old_end'=>$s->end_at, 'start_at'=>$start_new->format('Y-m-d H:i:s'), 'end_at'=>$end_new->format('Y-m-d H:i:s'));
+            $rows[] = array('old'=>$local->format('d.m.Y H:i'), 'new'=>$fresh->format('d.m.Y H:i'), 'product'=>$pid, 'tickera'=>$tid);
+            $products[$pid] = $local->format('Y-m-d'); $tickera[$tid] = true;
+            $stypes = MDG_Sessions::ticket_types_by_session($s->id);
+            if (!$stypes) self::fail('Bilet türleri bulunamadı.');
+            foreach ($stypes as $t) {
+                $vid = (int)$t->wc_variation_id;
+                if (!$vid || get_post_type($vid) !== 'product_variation' || (int)wp_get_post_parent_id($vid) !== $pid) self::fail('Varyasyon eşlemesi doğrulanamadı.');
+                $types[] = (array)$t; $products[$vid] = $local->format('Y-m-d');
+            }
+        }
+        if (count($old_dates) !== 1 || count($tickera) !== 1) self::fail('Bu araç tek günlük, tek Tickera kaydına bağlı etkinlikler içindir.');
+        $old_date = key($old_dates);
+        if ($old_date === $date && !$text_date) self::fail('Etkinlik zaten seçtiğiniz tarihte.');
+        if ($text_date) {
+            $td = DateTimeImmutable::createFromFormat('!Y-m-d', $text_date, wp_timezone());
+            if (!$td || $td->format('Y-m-d') !== $text_date || $text_date === $date) self::fail('Açıklama için farklı ve geçerli bir eski tarih girin.');
+        }
+        $text_date = $text_date ?: $old_date;
+        $tid = (int)key($tickera);
+        $ticket_count = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} m JOIN {$wpdb->posts} p ON p.ID=m.post_id WHERE p.post_type='tc_tickets_instances' AND m.meta_key='event_id' AND m.meta_value=%s", (string)$tid));
+        if ($ticket_count) self::fail('Bu etkinliğe bağlı bilet kayıtları var; biletli erteleme işlemi gerekir.');
+        $ids = array_map('intval', array_keys($products));
+        $in = implode(',', $ids);
+        $lookup = $wpdb->prefix.'wc_order_product_lookup';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($lookup))) !== $lookup) self::fail('Sipariş denetim tablosu bulunamadı.');
+        $order_count = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$lookup} WHERE product_id IN ($in) OR variation_id IN ($in)");
+        $items = $wpdb->prefix.'woocommerce_order_itemmeta';
+        $order_meta_count = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$items} WHERE meta_key IN ('_product_id','_variation_id') AND meta_value IN ($in)");
+        if ($order_count || $order_meta_count) self::fail('Bu etkinliğe bağlı sipariş satırı var; biletli erteleme işlemi gerekir.');
+        $post_changes = array(); $post_before = array();
+        foreach (array_merge($ids, array($tid)) as $pid) {
+            $post = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->posts} WHERE ID=%d", $pid), ARRAY_A);
+            $post_before[$pid] = $post;
+            $fields = array();
+            foreach (array('post_title','post_content','post_excerpt') as $field) {
+                $value = self::replace_date($post[$field], $text_date, $date);
+                if ($value !== $post[$field]) $fields[$field] = array('old'=>$post[$field], 'new'=>$value);
+            }
+            if ($post['post_type'] === 'product' && $old_date !== $date && empty($fields['post_title'])) self::fail('Ürün başlığındaki tarih tanınamadı: '.$post['post_title']);
+            if ($fields) $post_changes[$pid] = array('old'=>$post['post_title'], 'new'=>$fields['post_title']['new'] ?? $post['post_title'], 'fields'=>$fields);
+        }
+        $event_changes = array();
+        foreach (array('title','short_description','long_description','faq_json','seo_title','seo_description') as $field) {
+            $old = (string)($event->$field ?? '');
+            $value = self::replace_date($old, $text_date, $date);
+            if ($value !== $old) $event_changes[$field] = array('old'=>$old, 'new'=>$value);
+        }
+        $meta_changes = array();
+        foreach (array('event_date_time', 'event_end_date_time') as $key) {
+            $meta = $wpdb->get_results($wpdb->prepare("SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE post_id=%d AND meta_key=%s", $tid, $key), ARRAY_A);
+            if (count($meta) !== 1) self::fail('Tickera tarih alanı eksik veya tekrarlı.');
+            $v = $meta[0]['meta_value'];
+            if (substr($v, 0, 10) !== $old_date || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/', $v)) self::fail('Tickera tarihi seanslarla uyuşmuyor.');
+            $meta_changes[$key] = array('meta_id'=>(int)$meta[0]['meta_id'], 'old'=>$v, 'new'=>$date.substr($v, 10));
+        }
+        $all_ids = array_merge($ids, array($tid));
+        $all_in = implode(',', $all_ids);
+        $all_meta = $wpdb->get_results("SELECT * FROM {$wpdb->postmeta} WHERE post_id IN ($all_in) ORDER BY meta_id", ARRAY_A);
+        $before = array('event'=>(array)$event, 'sessions'=>array_map(function($s){return (array)$s;}, $sessions), 'types'=>$types, 'posts'=>$post_before, 'tickera'=>$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->posts} WHERE ID=%d", $tid), ARRAY_A), 'meta'=>$all_meta);
+        return array('event_id'=>$id, 'title'=>$event->title, 'date'=>$date, 'old_date'=>$old_date, 'text_date'=>$text_date, 'event_changes'=>$event_changes, 'rows'=>$rows, 'sessions'=>$changes, 'posts'=>$post_changes, 'meta'=>$meta_changes, 'tickera'=>$tid, 'ids'=>$all_ids, 'before'=>$before, 'hash'=>self::hash($before));
+    }
+    static function replace_date($text, $old, $new) {
+        $days = array('Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi');
+        $od = new DateTimeImmutable($old.' 12:00:00', wp_timezone());
+        $nd = new DateTimeImmutable($new.' 12:00:00', wp_timezone());
+        $ol = self::label($old); $nl = self::label($new);
+        return str_replace(array($ol.' '.$days[(int)$od->format('w')], $ol, $od->format('d.m.Y'), $old), array($nl.' '.$days[(int)$nd->format('w')], $nl, $nd->format('d.m.Y'), $new), $text);
+    }
+    static function label($date) {
+        $months = array(1=>'Ocak',2=>'Şubat',3=>'Mart',4=>'Nisan',5=>'Mayıs',6=>'Haziran',7=>'Temmuz',8=>'Ağustos',9=>'Eylül',10=>'Ekim',11=>'Kasım',12=>'Aralık');
+        return (int)substr($date,8,2).' '.$months[(int)substr($date,5,2)].' '.substr($date,0,4);
+    }
+    static function apply($p, $expected) {
+        global $wpdb;
+        $tables = array(MDG_DB::table('events'), MDG_DB::table('sessions'), MDG_DB::table('ticket_types'), $wpdb->posts, $wpdb->postmeta, $wpdb->options);
+        foreach ($tables as $table) {
+            $status = $wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS LIKE %s', $wpdb->esc_like($table)));
+            if (!$status || strtolower($status->Engine) !== 'innodb') self::fail('Atomik kayıt için gerekli veritabanı desteği bulunamadı.');
+        }
+        $snapshot_key = 'mdg_date_backup_'.wp_generate_uuid4();
+        if (!add_option($snapshot_key, array('user'=>get_current_user_id(), 'at'=>current_time('mysql'), 'plan'=>$p), '', false)) self::fail('Yedek kaydedilemedi.');
+        $table = MDG_DB::table('sessions'); $events = MDG_DB::table('events');
+        $wpdb->query('START TRANSACTION');
+        try {
+            $wpdb->get_results($wpdb->prepare("SELECT id FROM {$events} WHERE id=%d FOR UPDATE", $p['event_id']));
+            $wpdb->get_results($wpdb->prepare("SELECT id FROM {$table} WHERE event_id=%d FOR UPDATE", $p['event_id']));
+            $fresh = self::plan($p['event_id'], $p['date'], $p['text_date']);
+            if (!hash_equals($expected, $fresh['hash']) || !hash_equals($p['hash'], $fresh['hash'])) self::fail('Kayıt önizlemeden sonra değişmiş. Yeniden önizleyin.');
+            foreach ($p['sessions'] as $s) {
+                if ($s['start_at'] === $s['old_start'] && $s['end_at'] === $s['old_end']) continue;
+                $ok = $wpdb->update($table, array('start_at'=>$s['start_at'], 'end_at'=>$s['end_at']), array('id'=>$s['id'], 'event_id'=>$p['event_id'], 'start_at'=>$s['old_start'], 'end_at'=>$s['old_end']));
+                if ($ok !== 1) self::fail('Seans tarihi kaydedilemedi.');
+            }
+            foreach ($p['event_changes'] as $field=>$change) {
+                if ($wpdb->update($events, array($field=>$change['new']), array('id'=>$p['event_id'], $field=>$change['old'])) !== 1) self::fail('Etkinlik açıklaması kaydedilemedi.');
+            }
+            foreach ($p['posts'] as $id=>$change) {
+                foreach ($change['fields'] as $field=>$values) {
+                    if ($wpdb->update($wpdb->posts, array($field=>$values['new']), array('ID'=>$id, $field=>$values['old'])) !== 1) self::fail('Ürün açıklaması kaydedilemedi.');
+                }
+            }
+            foreach ($p['meta'] as $change) {
+                if ($change['new'] === $change['old']) continue;
+                if ($wpdb->update($wpdb->postmeta, array('meta_value'=>$change['new']), array('meta_id'=>$change['meta_id'], 'meta_value'=>$change['old'])) !== 1) self::fail('Tickera tarihi kaydedilemedi.');
+            }
+            foreach ($p['sessions'] as $s) {
+                $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id=%d", $s['id']), ARRAY_A);
+                $old = null;
+                foreach ($p['before']['sessions'] as $b) if ((int)$b['id'] === $s['id']) $old = $b;
+                $old['start_at'] = $s['start_at']; $old['end_at'] = $s['end_at'];
+                if ($row !== $old) self::fail('Seans doğrulaması başarısız.');
+            }
+            foreach ($p['posts'] as $id=>$change) if ($wpdb->get_var($wpdb->prepare("SELECT post_title FROM {$wpdb->posts} WHERE ID=%d", $id)) !== $change['new']) self::fail('Ürün doğrulaması başarısız.');
+            foreach ($p['meta'] as $change) if ($wpdb->get_var($wpdb->prepare("SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_id=%d", $change['meta_id'])) !== $change['new']) self::fail('Tickera doğrulaması başarısız.');
+            $expected_meta = $p['before']['meta'];
+            foreach ($expected_meta as &$m) foreach ($p['meta'] as $change) if ((int)$m['meta_id'] === $change['meta_id']) $m['meta_value'] = $change['new'];
+            unset($m);
+            $in = implode(',', array_map('intval', $p['ids']));
+            if ($wpdb->get_results("SELECT * FROM {$wpdb->postmeta} WHERE post_id IN ($in) ORDER BY meta_id", ARRAY_A) !== $expected_meta) self::fail('Fiyat / ürün meta bütünlüğü doğrulanamadı.');
+            foreach ($p['before']['posts'] as $id=>$old_post) {
+                if (isset($p['posts'][$id])) foreach ($p['posts'][$id]['fields'] as $field=>$values) $old_post[$field] = $values['new'];
+                $read_post = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->posts} WHERE ID=%d", $id), ARRAY_A);
+                if ($read_post !== $old_post) self::fail('Ürün kimliği / içerik bütünlüğü doğrulanamadı.');
+            }
+            $expected_event = $p['before']['event'];
+            foreach ($p['event_changes'] as $field=>$values) $expected_event[$field] = $values['new'];
+            if ($wpdb->get_row($wpdb->prepare("SELECT * FROM {$events} WHERE id=%d", $p['event_id']), ARRAY_A) !== $expected_event) self::fail('Etkinlik bütünlüğü doğrulanamadı.');
+            if ($wpdb->query('COMMIT') === false) self::fail('İşlem tamamlanamadı.');
+        } catch (Throwable $e) {
+            $wpdb->query('ROLLBACK');
+            throw $e;
+        }
+        foreach ($p['ids'] as $id) { clean_post_cache($id); wp_cache_delete($id, 'post_meta'); if (function_exists('wc_delete_product_transients')) wc_delete_product_transients($id); }
+        update_option($snapshot_key.'_result', array('status'=>'verified', 'at'=>current_time('mysql')), false);
+        return $snapshot_key;
+    }
+    static function render() {
+        if (!current_user_can('manage_options')) return;
+        global $wpdb;
+        echo '<div class="wrap"><h1>Etkinlik Tarihini Değiştir</h1><p>Tek günlük etkinliklerde tüm seansların tarihi birlikte değişir; saatler, süreler, fiyatlar ve bağlantılar korunur. Sipariş veya bilet kaydı olan etkinlikler bu araçla değiştirilemez.</p>';
+        $id = absint($_POST['event_id'] ?? 0); $date = sanitize_text_field(wp_unslash($_POST['new_date'] ?? ''));
+        $text_date = sanitize_text_field(wp_unslash($_POST['text_date'] ?? ''));
+        $plan = null;
+        try {
+            if (isset($_POST['mdg_date_action'])) {
+                check_admin_referer('mdg_date_edit');
+                $plan = self::plan($id, $date, $text_date);
+                if ($_POST['mdg_date_action'] === 'save') {
+                    self::apply($plan, sanitize_text_field(wp_unslash($_POST['plan_hash'] ?? '')));
+                    echo '<div class="notice notice-success inline"><p><strong>'.esc_html($plan['title']).': tarih '.esc_html(self::label($date)).' olarak kaydedildi. '.count($plan['sessions']).' seans doğrulandı; saatler korundu.</strong></p></div>';
+                    $plan = null;
+                }
+            }
+        } catch (Throwable $e) { echo '<div class="notice notice-error inline"><p>'.esc_html($e->getMessage()).'</p></div>'; $plan = null; }
+        $events = $wpdb->get_results('SELECT id,title FROM '.MDG_DB::table('events').' ORDER BY id DESC');
+        echo '<form method="post">'; wp_nonce_field('mdg_date_edit');
+        echo '<p><label for="mdg-date-event">Etkinlik</label><br><select id="mdg-date-event" name="event_id" required><option value="">Seçin</option>';
+        foreach ($events as $event) echo '<option value="'.(int)$event->id.'" '.selected($id, $event->id, false).'>#'.(int)$event->id.' — '.esc_html($event->title).'</option>';
+        echo '</select></p><p><label for="mdg-new-date">Yeni tarih</label><br><input type="date" id="mdg-new-date" name="new_date" value="'.esc_attr($date).'" required></p><p><label for="mdg-text-date">Açıklamalardaki eski tarih (yalnız metin onarımı için, isteğe bağlı)</label><br><input type="date" id="mdg-text-date" name="text_date" value="'.esc_attr($text_date).'"></p><button class="button button-primary" name="mdg_date_action" value="preview">Tarih Değişikliğini Önizle</button></form>';
+        if ($plan) {
+            echo '<h2>'.esc_html($plan['title']).' — Önizleme</h2><table class="widefat striped"><thead><tr><th>Mevcut tarih / saat</th><th>Yeni tarih / saat</th><th>Seans ürünü</th></tr></thead><tbody>';
+            foreach ($plan['rows'] as $r) echo '<tr><td>'.esc_html($r['old']).'</td><td>'.esc_html($r['new']).'</td><td>#'.(int)$r['product'].'</td></tr>';
+            echo '</tbody></table><h3>Bilet başlıkları</h3><ul>';
+            foreach ($plan['posts'] as $r) echo '<li>'.esc_html($r['new']).'</li>';
+            echo '</ul><p>'.count($plan['event_changes']).' etkinlik metin alanı güncellenecek.</p><form method="post">'; wp_nonce_field('mdg_date_edit');
+            echo '<input type="hidden" name="event_id" value="'.$id.'"><input type="hidden" name="new_date" value="'.esc_attr($date).'"><input type="hidden" name="text_date" value="'.esc_attr($text_date).'"><input type="hidden" name="plan_hash" value="'.esc_attr($plan['hash']).'"><button class="button button-primary" name="mdg_date_action" value="save">Önizlemedeki Tarih Değişikliğini Kaydet</button></form>';
+        }
+        echo '</div>';
+    }
+}
+MDG_Date_Edit_2026::boot();

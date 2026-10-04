@@ -1,0 +1,78 @@
+/**
+ * Madagaskar Sirki – SSS Dokunma Alanı V1
+ *
+ * Ana sayfadaki Sık Sorulan Sorular <summary> öğelerinin
+ * mobil dokunma alanını erişilebilir hâle getirir.
+ * WooCommerce, Tickera, Kommo, sepet ve ödeme alanlarına dokunmaz.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+add_action( 'wp_head', function () {
+
+    if ( is_admin() || ! is_front_page() ) {
+        return;
+    }
+    ?>
+    <style id="ms-faq-touch-target-v1">
+
+        .ms-home .ms-faq summary {
+            position: relative;
+            display: flex;
+            min-height: 56px;
+            width: 100%;
+            align-items: center;
+            padding: 18px 54px 18px 24px;
+            margin: 0;
+            list-style: none;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .ms-home .ms-faq summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .ms-home .ms-faq summary::marker {
+            content: "";
+        }
+
+        .ms-home .ms-faq summary::after {
+            position: absolute;
+            top: 50%;
+            right: 22px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            content: "";
+            transform: translateY(-65%) rotate(45deg);
+            transition: transform .2s ease;
+            pointer-events: none;
+        }
+
+        .ms-home .ms-faq details[open] > summary::after {
+            transform: translateY(-35%) rotate(225deg);
+        }
+
+        .ms-home .ms-faq details {
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .ms-home .ms-faq summary {
+                min-height: 60px;
+                padding: 18px 50px 18px 20px;
+                line-height: 1.45;
+            }
+
+            .ms-home .ms-faq summary::after {
+                right: 20px;
+            }
+        }
+
+    </style>
+    <?php
+}, 100 );

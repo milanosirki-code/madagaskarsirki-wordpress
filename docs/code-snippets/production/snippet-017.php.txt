@@ -1,0 +1,131 @@
+
+/**
+ * Madagaskar Sirki
+ * Tüm sosyal paylaşımlarda tek ve doğru görsel kullanır.
+ * Görsel, dosya adına değil WordPress Ortam ID'sine bağlıdır.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Sosyal paylaşım görselinin WordPress Ortam ID'si.
+ */
+function ms_sosyal_gorsel_id() {
+    return 1566;
+}
+
+/**
+ * Görsel URL'sini WordPress ortam kütüphanesinden alır.
+ */
+function ms_sosyal_gorsel_url() {
+    $image_url = wp_get_attachment_url( ms_sosyal_gorsel_id() );
+
+    if ( ! $image_url ) {
+        return '';
+    }
+
+    return esc_url_raw( $image_url );
+}
+
+/**
+ * Jetpack Open Graph ve Twitter görsellerini
+ * tek görsele indirir.
+ */
+add_filter( 'jetpack_open_graph_tags', function ( $tags ) {
+    $image_url = ms_sosyal_gorsel_url();
+
+    if ( ! $image_url ) {
+        return $tags;
+    }
+
+    /*
+     * Jetpack’in eski ve çoklu görsel alanlarını kaldır.
+     */
+    foreach ( array_keys( $tags ) as $key ) {
+        if (
+            strpos( $key, 'og:image' ) === 0 ||
+            strpos( $key, 'twitter:image' ) === 0
+        ) {
+            unset( $tags[ $key ] );
+        }
+    }
+
+    /*
+     * Tek sosyal paylaşım görselini ekle.
+     */
+    $tags['og:image']            = $image_url;
+    $tags['og:image:secure_url'] = $image_url;
+    $tags['og:image:width']      = 1731;
+    $tags['og:image:height']     = 909;
+    $tags['og:image:type']       = 'image/png';
+    $tags['og:image:alt']        = 'Madagaskar Sirki 2026–2027 Türkiye Turnesi';
+
+    $tags['twitter:image']       = $image_url;
+    $tags['twitter:image:alt']   = 'Madagaskar Sirki 2026–2027 Türkiye Turnesi';
+
+    return $tags;
+}, 999 );
+
+/**
+ * Jetpack’in sayfa içinden başka paylaşım görselleri
+ * seçmesini önler.
+ */
+add_filter(
+    'jetpack_images_get_images',
+    function ( $media, $post_id, $args ) {
+        $image_url = ms_sosyal_gorsel_url();
+
+        if ( ! $image_url ) {
+            return $media;
+        }
+
+        return array(
+            array(
+                'src'    => $image_url,
+                'width'  => 1731,
+                'height' => 909,
+            ),
+        );
+    },
+    999,
+    3
+);
+
+/**
+ * Ortam başlığını ve alternatif metni düzenler.
+ */
+add_action( 'init', function () {
+    $version_key   = 'ms_tek_sosyal_gorsel_v2';
+    $attachment_id = ms_sosyal_gorsel_id();
+
+    if ( get_option( $version_key ) ) {
+        return;
+    }
+
+    if ( get_post( $attachment_id ) ) {
+        wp_update_post(
+            array(
+                'ID'         => $attachment_id,
+                'post_title' => 'Madagaskar Sirki 2026–2027 Türkiye Turnesi',
+            )
+        );
+
+        update_post_meta(
+            $attachment_id,
+            '_wp_attachment_image_alt',
+            'Madagaskar Sirki 2026–2027 Türkiye Turnesi'
+        );
+    }
+
+    if ( function_exists( 'wp_cache_flush' ) ) {
+        wp_cache_flush();
+    }
+
+    update_option(
+        $version_key,
+        current_time( 'mysql' ),
+        false
+    );
+}, 99 );

@@ -1,0 +1,94 @@
+/**
+ * ==========================================================
+ * MADAGASKAR SİRKİ
+ * ŞEHİRLER SAYFASI ŞABLONU SERBEST BIRAK V1
+ * ==========================================================
+ *
+ * Amaç:
+ *
+ * Madagaskar Bilet Yönetimi eklentisinin /sehirler/
+ * sayfasını kendi public-cities.php şablonuyla tamamen
+ * değiştirmesini engeller.
+ *
+ * Böylece WordPress'teki gerçek Şehirler sayfasının
+ * (ID 1311) içeriği ve bizim msc-* tasarımımız kullanılır.
+ *
+ * ÖNEMLİ:
+ * - Madagaskar Bilet Yönetimi eklentisini kapatmaz.
+ * - Etkinliklere dokunmaz.
+ * - Seanslara dokunmaz.
+ * - Biletlere dokunmaz.
+ * - WooCommerce'e dokunmaz.
+ * - Tickera'ya dokunmaz.
+ * - Siparişlere dokunmaz.
+ * - Kommo'ya dokunmaz.
+ *
+ * Yalnızca Şehirler ana sayfasındaki eski plugin
+ * template override ve eski CSS yüklemesini kaldırır.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+/**
+ * WordPress ana sorguyu belirledikten sonra çalış.
+ *
+ * Böylece is_page(1311) güvenle kullanılabilir.
+ */
+add_action(
+	'wp',
+	function () {
+
+		/*
+		 * Yalnız Şehirler ana sayfası.
+		 */
+		if ( ! is_page( 1311 ) ) {
+			return;
+		}
+
+
+		/*
+		 * Madagaskar Bilet Yönetimi sınıfı yoksa
+		 * hiçbir işlem yapma.
+		 */
+		if ( ! class_exists( 'MDG_Public_Cities' ) ) {
+			return;
+		}
+
+
+		/*
+		 * 1.
+		 * Plugin'in:
+		 *
+		 * templates/public-cities.php
+		 *
+		 * dosyasını zorla kullanmasını engelle.
+		 */
+		remove_filter(
+			'template_include',
+			array(
+				'MDG_Public_Cities',
+				'template_include',
+			),
+			99
+		);
+
+
+		/*
+		 * 2.
+		 * Eski mdg-cities koyu tasarım CSS'ini
+		 * Şehirler sayfasında yükleme.
+		 */
+		remove_action(
+			'wp_enqueue_scripts',
+			array(
+				'MDG_Public_Cities',
+				'enqueue',
+			)
+		);
+
+	},
+	1
+);

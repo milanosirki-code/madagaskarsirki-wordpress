@@ -1,0 +1,233 @@
+/**
+ * MADAGASKAR SİRKİ
+ * Özel işlem sayfalarını arama motorlarından gizler
+ * ve Jetpack sitemap dosyalarından çıkarır.
+ *
+ * WooCommerce, PayTR ve Tickera çalışma düzenini değiştirmez.
+ */
+
+/**
+ * Gizlenecek WordPress sayfa kimlikleri.
+ *
+ * 1535: Biletlerim
+ * 1250: Sepet
+ * 1251: Ödeme
+ * 1252: Hesabım
+ * 1284: Tickets Cart
+ * 1285: Tickets Payment
+ * 1286: Tickets Order Confirmation
+ * 1287: Tickets Order Details
+ * 1288: Tickets Process Payment
+ * 1289: Tickets IPN Payment
+ */
+function ms_private_page_ids() {
+
+	return [
+		1535,
+		1250,
+		1251,
+		1252,
+		1284,
+		1285,
+		1286,
+		1287,
+		1288,
+		1289,
+	];
+}
+
+
+/**
+ * Sayfanın özel işlem sayfası olup olmadığını kontrol eder.
+ */
+function ms_is_private_transaction_page() {
+
+	if ( is_admin() ) {
+		return false;
+	}
+
+	if ( is_page( ms_private_page_ids() ) ) {
+		return true;
+	}
+
+	/**
+	 * WooCommerce sayfa kontrolleri.
+	 */
+	if (
+		function_exists( 'is_cart' ) &&
+		is_cart()
+	) {
+		return true;
+	}
+
+	if (
+		function_exists( 'is_checkout' ) &&
+		is_checkout()
+	) {
+		return true;
+	}
+
+	if (
+		function_exists( 'is_account_page' ) &&
+		is_account_page()
+	) {
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
+ * WordPress robots etiketlerine:
+ * noindex, noarchive ve follow ekler.
+ */
+add_filter(
+	'wp_robots',
+	function ( $robots ) {
+
+		if ( ! ms_is_private_transaction_page() ) {
+			return $robots;
+		}
+
+		unset(
+			$robots['index'],
+			$robots['archive']
+		);
+
+		$robots['noindex']   = true;
+		$robots['noarchive'] = true;
+		$robots['follow']    = true;
+
+		return $robots;
+	},
+	99
+);
+
+
+/**
+ * Jetpack normal sitemap'inden çıkarır.
+ */
+add_filter(
+	'jetpack_sitemap_skip_post',
+	function ( $skip, $post ) {
+
+		if (
+			isset( $post->ID ) &&
+			in_array(
+				(int) $post->ID,
+				ms_private_page_ids(),
+				true
+			)
+		) {
+			return true;
+		}
+
+		return $skip;
+	},
+	10,
+	2
+);
+
+
+/**
+ * Jetpack News sitemap'inden çıkarır.
+ */
+add_filter(
+	'jetpack_sitemap_news_skip_post',
+	function ( $skip, $post ) {
+
+		if (
+			isset( $post->ID ) &&
+			in_array(
+				(int) $post->ID,
+				ms_private_page_ids(),
+				true
+			)
+		) {
+			return true;
+		}
+
+		return $skip;
+	},
+	10,
+	2
+);
+
+
+/**
+ * Jetpack görsel sitemap'inden çıkarır.
+ */
+add_filter(
+	'jetpack_sitemap_image_skip_post',
+	function ( $skip, $post ) {
+
+		if (
+			isset( $post->ID ) &&
+			in_array(
+				(int) $post->ID,
+				ms_private_page_ids(),
+				true
+			)
+		) {
+			return true;
+		}
+
+		return $skip;
+	},
+	10,
+	2
+);
+
+
+/**
+ * Jetpack video sitemap'inden çıkarır.
+ */
+add_filter(
+	'jetpack_sitemap_video_skip_post',
+	function ( $skip, $post ) {
+
+		if (
+			isset( $post->ID ) &&
+			in_array(
+				(int) $post->ID,
+				ms_private_page_ids(),
+				true
+			)
+		) {
+			return true;
+		}
+
+		return $skip;
+	},
+	10,
+	2
+);
+
+
+/**
+ * Jetpack sitemap önbelleğini yalnızca bir kez temizler.
+ */
+add_action(
+	'init',
+	function () {
+
+		$version = 'ms-private-sitemap-v1';
+
+		if (
+			get_option( 'ms_private_sitemap_version' )
+			=== $version
+		) {
+			return;
+		}
+
+		do_action( 'jetpack_sitemaps_purge_data' );
+
+		update_option(
+			'ms_private_sitemap_version',
+			$version,
+			false
+		);
+	},
+	99
+);

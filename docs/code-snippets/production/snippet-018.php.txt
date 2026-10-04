@@ -1,0 +1,63 @@
+
+/**
+ * İletişim sayfasındaki İstanbul adresini,
+ * yazım ve çizgi farklılıklarından bağımsız olarak
+ * Ankara Ticaret Odası kayıtlarındaki resmî adresle değiştirir.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+add_action( 'init', function () {
+    $version_key = 'ms_iletisim_resmi_adres_v2';
+    $page_id     = 64;
+
+    if ( get_option( $version_key ) ) {
+        return;
+    }
+
+    $page = get_post( $page_id );
+
+    if ( ! $page || $page->post_type !== 'page' ) {
+        return;
+    }
+
+    $official_address = 'Kızılay Mah. Menekşe 1 Cad. Şeref Apt. Blok No: 3 İç Kapı No: 11 Çankaya / Ankara';
+
+    /*
+     * Eski adresin kısa çizgi, uzun çizgi ve HTML karakterli
+     * bütün biçimlerini yakalar.
+     */
+    $pattern = '/Maltepe\s+Mah\.\s*Litros\s+Yolu\s+Sok\.\s*No:\s*2\/1\s*Topkapı\s*(?:–|-|&#8211;)?\s*İstanbul\s*\/\s*Türkiye/iu';
+
+    $updated_content = preg_replace(
+        $pattern,
+        $official_address,
+        $page->post_content
+    );
+
+    if (
+        is_string( $updated_content ) &&
+        $updated_content !== $page->post_content
+    ) {
+        wp_update_post(
+            array(
+                'ID'           => $page_id,
+                'post_content' => $updated_content,
+            )
+        );
+    }
+
+    clean_post_cache( $page_id );
+
+    if ( function_exists( 'wp_cache_flush' ) ) {
+        wp_cache_flush();
+    }
+
+    update_option(
+        $version_key,
+        current_time( 'mysql' ),
+        false
+    );
+}, 20 );

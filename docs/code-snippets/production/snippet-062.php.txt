@@ -1,0 +1,16 @@
+/** Organizatör talebi: 10 Ekim 2026 Altınpark iptal duyurusu. Satış kilitleri V4 yönetiminde kapatılmıştır. */
+add_action('template_redirect', function () {
+    $path = wp_parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
+    if (untrailingslashit((string) $path) !== '/etkinlik/madagaskar-sirki-altinpark-10-ekim-2026') { return; }
+    nocache_headers();
+    header('X-Robots-Tag: noindex, follow', true);
+    wp_die('<div style="text-align:center;padding:16px"><p>MADAGASKAR SİRKİ</p><h1>Altınpark gösterileri iptal edilmiştir</h1><p>10 Ekim 2026 Cumartesi, ANFA Altınpark Expo B Salonu<br>12.00, 14.00, 16.00 ve 18.00 seansları</p><p>Bu etkinlik için bilet satışı kapatılmıştır.</p><p>Daha önce bilet aldıysanız bilgi ve destek için biletinizi satın aldığınız satış kanalıyla iletişime geçebilirsiniz.</p><p><a href="https://wa.me/903129113710">WhatsApp Bilet Desteği · 0312 911 37 10</a></p><p><a href="https://madagaskarsirki.com/sehirler/">Diğer şehirlerdeki gösterileri inceleyin</a></p></div>', 'Altınpark Gösterisi İptal Edildi – Madagaskar Sirki', array('response' => 200));
+}, -100);
+add_action('template_redirect', function () {
+    if (!is_page(array('bilet-al', 'sehirler'))) { return; }
+    ob_start(function ($html) {
+        return preg_replace_callback('~<article\b[^>]*>.*?</article>~si', function ($match) {
+            return strpos($match[0], '/etkinlik/madagaskar-sirki-altinpark-10-ekim-2026/') !== false ? '' : $match[0];
+        }, $html);
+    });
+}, -99);
