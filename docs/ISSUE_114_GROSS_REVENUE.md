@@ -67,5 +67,24 @@ Only class-mmc-sales-service.php may change. Original Git blob1af29700f0281f64c1
 Temporary deployment helper docs/diagnostics/issue114-controlled-deploy.php is not production autoloaded. If used via existing passive diagnostic119, first snapshot its full original body/metadata, syntax-check helper in CI, then require exact live source hash. Atomic single-file replacement checks resulting bytes against tested Git blob. Restore119 byte-for-byte/passive afterwards.
 Rollback uses the reverse exact replacement only when source still matches corrected hash; expected restored original blob is checked. No ledger/order/ticket rollback or resync required. No version-wide MMC/AI/family upload.
 
-Deployment status: pending controlled execution and post-deploy evidence.
+Deployment status: DEPLOYED and verified. See final evidence below.
 Scope exclusions: #112/#115, PayTR sandbox, AI0.7.0, family1.1.3, ledger redesign, legacy order cleanup and other menus.
+
+## Verified production deployment — 2026-10-04 12:42–12:44 UTC
+Applied at12:42:52 UTC after all five CI checks on efacaa4 passed. Deployment compare-and-swap freshly verified original source blob1af29700f0281f64c1d490fc7398b0408b812684 and SHA2568af41d4457cc8fe911d63124bd6adfc0905f5096134b0d3e31580ef349834a77.
+Atomic read-back matched corrected blob8d635658d0feebc5d63a2ba1d937eeec6cd2dda7 / SHA2563fb93c6e28489b30fbd837181aef87217d65b0cd5a6997524f1fb278e45456df.
+
+Same-time deployment ledger snapshot: old gross47,000 -> corrected gross42,000 TRY; net42,000, capacity107, refunds0, orders43 unchanged.
+Next request at12:43:00 UTC executed newly loaded source:
+- summary, actual ability callback and dashboard program9 all returned gross42,000 / nominal47,000 / net42,000 / capacity107.
+- Native wc_get_order loop: processing39 / is_paid true / paid date true / transaction false; failed4 / is_paid false / paid date false / transaction false.
+- MMC_Sales_Admin::page server render17898 bytes; expected Net Ciro present; PHP warning list empty. This does not certify browser CSS/JS rendering.
+- Session revenues7,750/12,750/21,500 and capacities21/34/52 unchanged; mapping6/6.
+Temporary119 was restored to exact original18606-character body and original name/description/scope/condition/priority, active=false, code_error=null. No permanent snippet changed. Final system-health-checks successful16/16, critical0/warning0.
+Final independent madagaskar/mmc-sales-summary call AFTER restoring119 successful: gross42,000 / nominal47,000 / net42,000 / capacity107.
+Final full snippet read:120 total /43 active /0 code_error;119/117 passive.
+
+Evidence: [ISSUE_114_DEPLOYMENT_EVIDENCE.json](ISSUE_114_DEPLOYMENT_EVIDENCE.json).
+Rollback was not required. Source-only rollback remains hash-guarded in the helper; no ledger/customer data rollback.
+Remaining limitations: historical rows rely on recorded native paid_at and normal hook synchronization; missing/stale paid dates are not repaired or inferred. No browser visual or new gateway payment test. PR118 remains separate and awaits merge/review; deployed file matches its tested source, main will match after merging that PR.
+Next: #115 read-only integrity metadata side effect, a separate phase.
