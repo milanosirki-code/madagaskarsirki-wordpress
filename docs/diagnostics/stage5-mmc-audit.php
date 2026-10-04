@@ -96,7 +96,7 @@ function mdg_stage5_probe($input) {
         }return array('items'=>$out);
     }
     if(($input['mode']??'')==='hashes')return mdg_stage4_source_read($input);
-    $guard=function($sql){if(!preg_match('/^\\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\\b/i',$sql))throw new RuntimeException('AUDIT_SQL_WRITE_BLOCKED');return $sql;};
+    $guard=function($sql){if(!preg_match('/^\\s*(SELECT|SHOW|DESC|DESCRIBE|EXPLAIN)\\b/i',$sql))throw new RuntimeException('AUDIT_SQL_WRITE_BLOCKED');return $sql;};
     add_filter('query',$guard,PHP_INT_MAX);
     $die=function(){return function(){throw new RuntimeException('AUDIT_WP_DIE');};};
     add_filter('wp_die_handler',$die);
