@@ -1,0 +1,172 @@
+{
+  "date": "2026-10-04",
+  "pr": 107,
+  "head": "f5e99a239b28bcafbaadc7bb0200e5bbedc9e3c1",
+  "main_sha": "6e21a5e4217c085d6668f6932a874f846845a7de",
+  "merge_performed": false,
+  "primary_counts": {
+    "ALREADY_MAIN": 1,
+    "NEEDS_PORT": 3,
+    "OBSOLETE": 2,
+    "HISTORICAL": 16,
+    "CURRENT": 0,
+    "ALREADY_LIVE": 0,
+    "CONFLICT": 0
+  },
+  "files": [
+    {
+      "path": "docs/live-captures/2026-10-03/anonymous-smoke-manifest.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/class-mmc-sales-service-after.php",
+      "category": "ALREADY_MAIN",
+      "reason": "Exact payload (trim-only wrapper difference) equals current main/live Sales Service; PR108 owns canonical1.3.47 cancellation guard.",
+      "owner": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-sales-service.php",
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/denizli-event-12-after.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/denizli-event-12-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-ai-guidelines-after.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-ai-guidelines-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-duplicate-didim-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-duplicate-efeler-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-locations-after.txt",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-locations-before.txt",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-program-after.txt",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/kommo-program-source-before.txt",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/mmc-1.3.47-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/mmc-main-comparison.json",
+      "category": "OBSOLETE",
+      "reason": "Comparison used old main1.3.30; current main/live1.3.47 and all43 MMC files exact. Original comparison is historical.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-103-payment-dry-run-after.php",
+      "category": "NEEDS_PORT",
+      "reason": "Exact current live body; source archived in audit but not owned by main. Ported unchanged into PR113.",
+      "owner": "docs/code-snippets/production/snippet-103.php.txt",
+      "resolved_by_pr": 113
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-103-payment-dry-run-before.php",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-15-after.php",
+      "category": "NEEDS_PORT",
+      "reason": "Exact current live body; source archived in audit but not owned by main. Ported unchanged into PR113.",
+      "owner": "docs/code-snippets/production/snippet-015.php.txt",
+      "resolved_by_pr": 113
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-15-before.php",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-30-after.php",
+      "category": "NEEDS_PORT",
+      "reason": "Exact current live body; source archived in audit but not owned by main. Ported unchanged into PR113.",
+      "owner": "docs/code-snippets/production/snippet-030.php.txt",
+      "resolved_by_pr": 113
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/snippet-30-before.php",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/ticket-datetime-fix-before.php",
+      "category": "OBSOLETE",
+      "reason": "Standalone activation/ownership superseded by canonical MDG datetime module in mergedPR110. Preserve before-source historically; do not reactivate.",
+      "owner": null,
+      "resolved_by_pr": null
+    },
+    {
+      "path": "docs/live-captures/2026-10-03/ticket-motor-before.json",
+      "category": "HISTORICAL",
+      "reason": "Timestamped before/after data or validation evidence; retain as historical, not current programme truth.",
+      "owner": null,
+      "resolved_by_pr": null
+    }
+  ]
+}
