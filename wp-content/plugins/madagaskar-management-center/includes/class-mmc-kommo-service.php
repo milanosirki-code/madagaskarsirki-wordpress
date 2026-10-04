@@ -905,9 +905,12 @@ class MMC_Kommo_Service {
             return new WP_Error( 'mmc_kommo_program_missing', 'Program bulunamadı.' );
         }
 
-        $profile = self::ensure_profile( $program_id );
-        if ( is_wp_error( $profile ) ) {
-            return $profile;
+        // Preview must not create or refresh persistent profile/source metadata.
+        // A missing profile represents a not-yet-created lead; write paths still
+        // call ensure_profile() explicitly before synchronizing.
+        $profile = self::get_profile( $program_id );
+        if ( ! $profile ) {
+            $profile = (object) array( 'kommo_lead_id' => 0 );
         }
 
         $pipeline_id = absint( get_option( 'mmc_kommo_pipeline_id', 0 ) );
