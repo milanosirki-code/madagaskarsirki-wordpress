@@ -21,9 +21,11 @@ Updated: 2026-10-04, Stage6. Previous full historical state remains in [audit br
 - Final health16/16, code_error0, snippets120/43active; temporary119 body restored byte-exact/passive/clean. No permanent snippet change.
 - family_2_2=2adult+2child, capacity_units4 preserved and regression checked.
 - MMC stays1.3.47. AI0.7.0/family1.1.3 not deployed. #112/#115/payment sandbox/other menus untouched.
-- Issue114 eligible for completed closure only after these final live checks; GitHub issue record provides authoritative current state.
+- Issue #114 CLOSED as completed at 2026-10-04T12:49:26Z after final live verification; evidence comment5980100912.
 - Rollback:not required; guarded reverse replacement restores original sales file; no customer/ledger data rollback.
 - Remaining risk: historical missing/stale native paid-date evidence not repaired; no browser visual test/new gateway test. PR118 review/merge remains; only deployed sales file is ahead of main until merge.
 - Evidence:[ISSUE_114_GROSS_REVENUE.md](ISSUE_114_GROSS_REVENUE.md), [ISSUE_114_DEPLOYMENT_EVIDENCE.json](ISSUE_114_DEPLOYMENT_EVIDENCE.json).
 
 Next:Issue #115 read-only integrity profile metadata side effect.
+
+Archive report verified in project Drive folder: https://drive.google.com/file/d/1NUfyWYPob7aSi2aPOSMeb6K3AqBMY1li/view?usp=drivesdk
