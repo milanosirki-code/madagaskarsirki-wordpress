@@ -1,0 +1,873 @@
+{
+  "status": "OPEN_PENDING_QUOTA_RECOVERY_AND_DIAGNOSTIC_RESTORATION",
+  "main_after_pr118": "4d5c7052acaff5cf4c4b5507298c4571f0f6be8b",
+  "sales_live_main_exact_match": true,
+  "production_patch_commit": "acbf2d71f19b796fb3d192b890969f6051035c3e",
+  "ci_validated_head": "d2db7238723958dc22ac13d335d119095c7b16a8",
+  "pr": 120,
+  "source_before": {
+    "class-mmc-sales-service.php": {
+      "git_blob": "8d635658d0feebc5d63a2ba1d937eeec6cd2dda7",
+      "sha256": "3fb93c6e28489b30fbd837181aef87217d65b0cd5a6997524f1fb278e45456df"
+    },
+    "class-mmc-kommo-service.php": {
+      "git_blob": "10418343eb9cc162e6c463a37f70bd040e9d5f07",
+      "sha256": "54e1bd23c808b6fe3222bd7cacf16d1f29a54a6c03f44da1cf6c27d91980c1b0"
+    }
+  },
+  "deploy": {
+    "at": "2026-10-04T13:15:04+00:00",
+    "rollback": false,
+    "before_blob": "10418343eb9cc162e6c463a37f70bd040e9d5f07",
+    "after_blob": "10cd9085aef52462aa68312c08c995297dedff87",
+    "readback_verified": true,
+    "sha256": "41c61b1e6fb1cdb7c6a8a6ca4f66c0ef673cd99f9916a9817421f1ac8db288a3"
+  },
+  "source_after": {
+    "class-mmc-sales-service.php": {
+      "git_blob": "8d635658d0feebc5d63a2ba1d937eeec6cd2dda7",
+      "sha256": "3fb93c6e28489b30fbd837181aef87217d65b0cd5a6997524f1fb278e45456df"
+    },
+    "class-mmc-kommo-service.php": {
+      "git_blob": "10cd9085aef52462aa68312c08c995297dedff87",
+      "sha256": "41c61b1e6fb1cdb7c6a8a6ca4f66c0ef673cd99f9916a9817421f1ac8db288a3"
+    }
+  },
+  "blocked_live_reproduction": [
+    {
+      "name": "madagaskar/program-integrity-checks",
+      "status": "EXPECTED_OR_SERVICE_ERROR",
+      "error_code": "ability_callback_exception",
+      "persistent_profile_unchanged": true,
+      "before": {
+        "captured_at": "2026-10-04T13:14:23+00:00",
+        "storage": "custom_table:mmc_kommo_profiles",
+        "row_count": 13,
+        "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+        "profile": {
+          "id": 9,
+          "program_id": 9,
+          "updated_at": "2026-10-04 08:32:20",
+          "field_types": {
+            "id": "string",
+            "program_id": "string",
+            "event_id": "string",
+            "source_token": "string",
+            "source_url": "string",
+            "source_hash": "string",
+            "ai_synced_hash": "string",
+            "search_keywords": "string",
+            "kommo_lead_id": "string",
+            "crm_status": "string",
+            "ai_source_id": "string",
+            "ai_source_status": "string",
+            "last_synced_at": "string",
+            "last_error": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      },
+      "after": {
+        "captured_at": "2026-10-04T13:14:23+00:00",
+        "storage": "custom_table:mmc_kommo_profiles",
+        "row_count": 13,
+        "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+        "profile": {
+          "id": 9,
+          "program_id": 9,
+          "updated_at": "2026-10-04 08:32:20",
+          "field_types": {
+            "id": "string",
+            "program_id": "string",
+            "event_id": "string",
+            "source_token": "string",
+            "source_url": "string",
+            "source_hash": "string",
+            "ai_synced_hash": "string",
+            "search_keywords": "string",
+            "kommo_lead_id": "string",
+            "crm_status": "string",
+            "ai_source_id": "string",
+            "ai_source_status": "string",
+            "last_synced_at": "string",
+            "last_error": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      },
+      "attempts": [
+        {
+          "operation": "UPDATE",
+          "table": "wp_mmc_kommo_profiles",
+          "columns": [
+            "event_id",
+            "source_url",
+            "source_hash",
+            "search_keywords",
+            "ai_source_status",
+            "updated_at",
+            "id"
+          ],
+          "type": "SIDE_EFFECT_DOMAIN",
+          "executed": false,
+          "trace": [
+            {
+              "class": "WP_Hook",
+              "method": "apply_filters",
+              "file": "wp-includes/plugin.php",
+              "line": 206
+            },
+            {
+              "class": "",
+              "method": "apply_filters",
+              "file": "wp-includes/class-wpdb.php",
+              "line": 2230
+            },
+            {
+              "class": "wpdb",
+              "method": "query",
+              "file": "wp-includes/class-wpdb.php",
+              "line": 2722
+            },
+            {
+              "class": "wpdb",
+              "method": "update",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+              "line": 142
+            },
+            {
+              "class": "MMC_Kommo_Service",
+              "method": "ensure_profile",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+              "line": 908
+            },
+            {
+              "class": "MMC_Kommo_Service",
+              "method": "status_bridge_preview",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-service.php",
+              "line": 221
+            },
+            {
+              "class": "MMC_Integrity_Service",
+              "method": "checks",
+              "file": "wp-content/plugins/madagaskar-ai-abilities/modules/system-health-integrity.php",
+              "line": 82
+            },
+            {
+              "class": "",
+              "method": "mdg_ai_integrity_checks",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 592
+            },
+            {
+              "class": "WP_Ability",
+              "method": "invoke_callback",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 679
+            },
+            {
+              "class": "WP_Ability",
+              "method": "do_execute",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 854
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "http": []
+    },
+    {
+      "name": "madagaskar/program-integrity-checks",
+      "status": "EXPECTED_OR_SERVICE_ERROR",
+      "error_code": "ability_callback_exception",
+      "persistent_profile_unchanged": true,
+      "before": {
+        "captured_at": "2026-10-04T13:14:41+00:00",
+        "storage": "custom_table:mmc_kommo_profiles",
+        "row_count": 13,
+        "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+        "profile": {
+          "id": 9,
+          "program_id": 9,
+          "updated_at": "2026-10-04 08:32:20",
+          "field_types": {
+            "id": "string",
+            "program_id": "string",
+            "event_id": "string",
+            "source_token": "string",
+            "source_url": "string",
+            "source_hash": "string",
+            "ai_synced_hash": "string",
+            "search_keywords": "string",
+            "kommo_lead_id": "string",
+            "crm_status": "string",
+            "ai_source_id": "string",
+            "ai_source_status": "string",
+            "last_synced_at": "string",
+            "last_error": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      },
+      "after": {
+        "captured_at": "2026-10-04T13:14:41+00:00",
+        "storage": "custom_table:mmc_kommo_profiles",
+        "row_count": 13,
+        "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+        "profile": {
+          "id": 9,
+          "program_id": 9,
+          "updated_at": "2026-10-04 08:32:20",
+          "field_types": {
+            "id": "string",
+            "program_id": "string",
+            "event_id": "string",
+            "source_token": "string",
+            "source_url": "string",
+            "source_hash": "string",
+            "ai_synced_hash": "string",
+            "search_keywords": "string",
+            "kommo_lead_id": "string",
+            "crm_status": "string",
+            "ai_source_id": "string",
+            "ai_source_status": "string",
+            "last_synced_at": "string",
+            "last_error": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      },
+      "attempts": [
+        {
+          "operation": "UPDATE",
+          "table": "wp_mmc_kommo_profiles",
+          "columns": [
+            "event_id",
+            "source_url",
+            "source_hash",
+            "search_keywords",
+            "ai_source_status",
+            "updated_at",
+            "id"
+          ],
+          "type": "SIDE_EFFECT_DOMAIN",
+          "executed": false,
+          "trace": [
+            {
+              "class": "WP_Hook",
+              "method": "apply_filters",
+              "file": "wp-includes/plugin.php",
+              "line": 206
+            },
+            {
+              "class": "",
+              "method": "apply_filters",
+              "file": "wp-includes/class-wpdb.php",
+              "line": 2230
+            },
+            {
+              "class": "wpdb",
+              "method": "query",
+              "file": "wp-includes/class-wpdb.php",
+              "line": 2722
+            },
+            {
+              "class": "wpdb",
+              "method": "update",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+              "line": 142
+            },
+            {
+              "class": "MMC_Kommo_Service",
+              "method": "ensure_profile",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php",
+              "line": 908
+            },
+            {
+              "class": "MMC_Kommo_Service",
+              "method": "status_bridge_preview",
+              "file": "wp-content/plugins/madagaskar-management-center/includes/class-mmc-integrity-service.php",
+              "line": 221
+            },
+            {
+              "class": "MMC_Integrity_Service",
+              "method": "checks",
+              "file": "wp-content/plugins/madagaskar-ai-abilities/modules/system-health-integrity.php",
+              "line": 82
+            },
+            {
+              "class": "",
+              "method": "mdg_ai_integrity_checks",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 592
+            },
+            {
+              "class": "WP_Ability",
+              "method": "invoke_callback",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 679
+            },
+            {
+              "class": "WP_Ability",
+              "method": "do_execute",
+              "file": "wp-includes/abilities-api/class-wp-ability.php",
+              "line": 854
+            }
+          ]
+        }
+      ],
+      "warnings": [],
+      "http": []
+    }
+  ],
+  "postdeploy_guarded": {
+    "name": "madagaskar/program-integrity-checks",
+    "status": "CALL_OK",
+    "error_code": null,
+    "summary": {
+      "ok": 13,
+      "warning": 4,
+      "critical": 0,
+      "info": 0
+    },
+    "checks": [
+      {
+        "key": "program",
+        "severity": "ok"
+      },
+      {
+        "key": "region",
+        "severity": "warning"
+      },
+      {
+        "key": "venue",
+        "severity": "ok"
+      },
+      {
+        "key": "event",
+        "severity": "ok"
+      },
+      {
+        "key": "publish",
+        "severity": "ok"
+      },
+      {
+        "key": "mdg_engine",
+        "severity": "ok"
+      },
+      {
+        "key": "mdg_bridge",
+        "severity": "ok"
+      },
+      {
+        "key": "mdg_schedule",
+        "severity": "ok"
+      },
+      {
+        "key": "mdg_identity",
+        "severity": "ok"
+      },
+      {
+        "key": "mdg_sales_reconcile",
+        "severity": "ok"
+      },
+      {
+        "key": "sales",
+        "severity": "ok"
+      },
+      {
+        "key": "marketing",
+        "severity": "ok"
+      },
+      {
+        "key": "field",
+        "severity": "warning"
+      },
+      {
+        "key": "school_bridge",
+        "severity": "warning"
+      },
+      {
+        "key": "kommo",
+        "severity": "warning"
+      },
+      {
+        "key": "operations",
+        "severity": "ok"
+      },
+      {
+        "key": "finance",
+        "severity": "ok"
+      }
+    ],
+    "persistent_profile_unchanged": true,
+    "before": {
+      "captured_at": "2026-10-04T13:15:07+00:00",
+      "storage": "custom_table:mmc_kommo_profiles",
+      "row_count": 13,
+      "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+      "profile": {
+        "id": 9,
+        "program_id": 9,
+        "updated_at": "2026-10-04 08:32:20",
+        "field_types": {
+          "id": "string",
+          "program_id": "string",
+          "event_id": "string",
+          "source_token": "string",
+          "source_url": "string",
+          "source_hash": "string",
+          "ai_synced_hash": "string",
+          "search_keywords": "string",
+          "kommo_lead_id": "string",
+          "crm_status": "string",
+          "ai_source_id": "string",
+          "ai_source_status": "string",
+          "last_synced_at": "string",
+          "last_error": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    },
+    "after": {
+      "captured_at": "2026-10-04T13:15:08+00:00",
+      "storage": "custom_table:mmc_kommo_profiles",
+      "row_count": 13,
+      "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+      "profile": {
+        "id": 9,
+        "program_id": 9,
+        "updated_at": "2026-10-04 08:32:20",
+        "field_types": {
+          "id": "string",
+          "program_id": "string",
+          "event_id": "string",
+          "source_token": "string",
+          "source_url": "string",
+          "source_hash": "string",
+          "ai_synced_hash": "string",
+          "search_keywords": "string",
+          "kommo_lead_id": "string",
+          "crm_status": "string",
+          "ai_source_id": "string",
+          "ai_source_status": "string",
+          "last_synced_at": "string",
+          "last_error": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    },
+    "attempts": [],
+    "warnings": [],
+    "http": [
+      {
+        "method": "GET",
+        "host": "milanosirki.kommo.com"
+      },
+      {
+        "method": "GET",
+        "host": "milanosirki.kommo.com"
+      }
+    ]
+  },
+  "real_GET_twice": {
+    "successful": true,
+    "before": {
+      "captured_at": "2026-10-04T13:16:07+00:00",
+      "storage": "custom_table:mmc_kommo_profiles",
+      "row_count": 13,
+      "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+      "profile": {
+        "id": 9,
+        "program_id": 9,
+        "updated_at": "2026-10-04 08:32:20",
+        "field_types": {
+          "id": "string",
+          "program_id": "string",
+          "event_id": "string",
+          "source_token": "string",
+          "source_url": "string",
+          "source_hash": "string",
+          "ai_synced_hash": "string",
+          "search_keywords": "string",
+          "kommo_lead_id": "string",
+          "crm_status": "string",
+          "ai_source_id": "string",
+          "ai_source_status": "string",
+          "last_synced_at": "string",
+          "last_error": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    },
+    "after": {
+      "captured_at": "2026-10-04T13:16:16+00:00",
+      "storage": "custom_table:mmc_kommo_profiles",
+      "row_count": 13,
+      "all_rows_sha256": "13817bf96338fdf95c3a93fa745b77e1780d89dea391839be657ddd69594bdb9",
+      "profile": {
+        "id": 9,
+        "program_id": 9,
+        "updated_at": "2026-10-04 08:32:20",
+        "field_types": {
+          "id": "string",
+          "program_id": "string",
+          "event_id": "string",
+          "source_token": "string",
+          "source_url": "string",
+          "source_hash": "string",
+          "ai_synced_hash": "string",
+          "search_keywords": "string",
+          "kommo_lead_id": "string",
+          "crm_status": "string",
+          "ai_source_id": "string",
+          "ai_source_status": "string",
+          "last_synced_at": "string",
+          "last_error": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    },
+    "profile_hash_unchanged": true,
+    "summary": {
+      "ok": 13,
+      "warning": 4,
+      "critical": 0,
+      "info": 0
+    }
+  },
+  "health_last_verified": {
+    "ok": 16,
+    "warning": 0,
+    "critical": 0,
+    "info": 0
+  },
+  "final_global_code_error": "NOT_YET_RECHECKED",
+  "tests": {
+    "actual_service_assertions": 19,
+    "php": "8.4",
+    "applicable_CI_workflows": 5,
+    "all_passing": true
+  },
+  "readonly_scan": {
+    "SAFE": 48,
+    "SIDE_EFFECT_TECHNICAL": 8,
+    "SIDE_EFFECT_DOMAIN": 3,
+    "NEEDS_REVIEW": 0
+  },
+  "guarded_smoke": [
+    {
+      "name": "madagaskar/kommo-unified-source-v2-preview",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/system-health-checks",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/program-integrity-checks",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/program-selected-venue-check",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/mmc-sales-health",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/mmc-sales-mappings",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/mmc-sales-summary",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/mmc-sales-recent-orders",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/dashboard-overview",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/dashboard-programs",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/dashboard-critical-alerts",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/tasks-list",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/task-get",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/tasks-summary",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/refund-preflight",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/refund-cases-list",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/refund-case-get",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/order-refunds-history",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-sales-product-status",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-postponement-mappings",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-postponement-map-get",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-postponement-preflight",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-transfer-scan",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/v4-transfer-last",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/customer-tickets-query",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/customer-ticket-lookups",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/sales-system-audit",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/daily-report-snapshot",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/report-runs",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/report-run-get",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/region-sources",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/region-districts",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/region-program-summary",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/population-lookup",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/population-target-summary",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/region-recent-imports",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/field-targets",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/field-summary",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/field-routes",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    },
+    {
+      "name": "madagaskar/field-recent-visits",
+      "status": "CALL_OK",
+      "warnings": [],
+      "sql_write_attempts": 0,
+      "profile_unchanged": true
+    }
+  ],
+  "smoke_success": 40,
+  "smoke_pending": 19,
+  "operations_followup": 121,
+  "rollback": "Not used; expected-hash reverse one-file replacement available.",
+  "temporary_snippet": {
+    "id": 119,
+    "originally_active": false,
+    "current_active": true,
+    "body": "first issue115 temporary diagnostic helper; batch update blocked",
+    "original_backup": "retained locally, not committed",
+    "restoration": "PENDING"
+  },
+  "quota": {
+    "resume_after_utc": "2026-10-04 15:20",
+    "banked_reset": "requires explicit user request; question pending"
+  },
+  "remaining": [
+    "19 guarded smoke calls",
+    "119 exact-body/metadata passive restoration and readback",
+    "final global code_error",
+    "independent post-cleanup health/integrity/sales",
+    "final issue closure only after verification"
+  ],
+  "drive_archive": "https://drive.google.com/file/d/1hqNCNLVrVQuXyBWC7Z3bEiXDkVDtN5Aw/view?usp=drivesdk"
+}
