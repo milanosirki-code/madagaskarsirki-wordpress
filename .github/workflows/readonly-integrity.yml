@@ -16,4 +16,8 @@ jobs:
           extensions: mbstring
           coverage: none
       - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+      - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php
+      - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php
+      - run: php -l wp-content/plugins/madagaskar-ai-abilities/modules/mmc-operations.php
       - run: php tests/mmc-integrity/readonly-preview.php
+      - run: php tests/mmc-integrity/operations-readonly-121.php
