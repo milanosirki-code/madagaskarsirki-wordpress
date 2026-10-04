@@ -1,0 +1,717 @@
+{
+  "date": "2026-10-04",
+  "patch_commit": "74f54bcbe81689981ad0c03a62bf8bc4a87f9eb4",
+  "readonly_count": 59,
+  "counts": {
+    "SAFE": 51,
+    "SIDE_EFFECT_TECHNICAL": 8,
+    "SIDE_EFFECT_DOMAIN": 0,
+    "NEEDS_REVIEW": 0
+  },
+  "methodology": "Incremental regression over the same 59-read-only inventory from Issue #115. The Issue #121 production diff changes only operations summary/admin read behavior; the other 56 ability callback paths are unchanged. The three affected callbacks were re-evaluated against the patched call graph, the actual-service CI contract, live existing-plan before/after domain fingerprints, and a guarded missing-plan production smoke that blocks domain writes before SQL.",
+  "searched_patterns": [
+    "update_option",
+    "add_option",
+    "update_user_meta",
+    "update_post_meta",
+    "wp_insert_post",
+    "wp_update_post",
+    "wpdb insert/update/delete/replace",
+    "SQL INSERT/UPDATE/DELETE",
+    "create",
+    "ensure",
+    "sync",
+    "refresh",
+    "save",
+    "set_transient",
+    "wp_cache_set"
+  ],
+  "scope_notes": [
+    "The three former operations SIDE_EFFECT_DOMAIN abilities are now SAFE in callback scope because summary() no longer calls ensure_plan().",
+    "The existing 8 SIDE_EFFECT_TECHNICAL classifications are unchanged and represent cache/transient warming, not operations domain state.",
+    "Explicit operations initialize/create/update/schedule/resource write paths still call ensure_plan() where appropriate and are outside the read-only classification.",
+    "Admin Operations GET/render was separately corrected to use get_plan(); missing plans expose an explicit POST initialize action.",
+    "Background cron/concurrent third-party hooks remain outside the guarded callback boundary; targeted production fingerprints and SQL-write guard cover the Issue #121 domain tables."
+  ],
+  "items": [
+    {
+      "name": "madagaskar/kommo-unified-source-v2-preview",
+      "callback": "mdg_kommo_unified_v2_preview",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 16,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/system-health-checks",
+      "callback": "mdg_ai_health_checks",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_Kommo_Service::connection_diagnostics",
+        "MMC_Kommo_Service::pipeline_catalog",
+        "MMC_Kommo_Service::pipeline_diagnostics",
+        "MMC_Kommo_Service::probe_named_token",
+        "MMC_School_Source_Service::source_info"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 97,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/program-integrity-checks",
+      "callback": "mdg_ai_integrity_checks",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_Kommo_Service::lead_snapshot",
+        "MMC_Kommo_Service::pipeline_catalog",
+        "MMC_Kommo_Service::probe_named_token"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 72,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/program-selected-venue-check",
+      "callback": "mdg_ai_integrity_selected_venue",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 11,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mmc-sales-health",
+      "callback": "mdg_ai_mmc_sales_health",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mmc-sales-mappings",
+      "callback": "mdg_ai_mmc_sales_mappings",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 8,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mmc-sales-summary",
+      "callback": "mdg_ai_mmc_sales_summary",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 10,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mmc-sales-recent-orders",
+      "callback": "mdg_ai_mmc_sales_recent_orders",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 5,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/dashboard-overview",
+      "callback": "mdg_ai_dashboard_overview",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 16,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/dashboard-programs",
+      "callback": "mdg_ai_dashboard_program_rows",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 14,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/dashboard-critical-alerts",
+      "callback": "mdg_ai_dashboard_alerts",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 14,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/tasks-list",
+      "callback": "mdg_ai_tasks_list",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 2,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/task-get",
+      "callback": "mdg_ai_task_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 2,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/tasks-summary",
+      "callback": "mdg_ai_tasks_summary",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 2,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/refund-preflight",
+      "callback": "mdg_ai_refund_preflight",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 12,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/refund-cases-list",
+      "callback": "mdg_ai_refund_cases_list",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 1,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/refund-case-get",
+      "callback": "mdg_ai_refund_case_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 1,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/order-refunds-history",
+      "callback": "mdg_ai_wc_refunds_for_order",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 1,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-sales-product-status",
+      "callback": "mdg_ai_v4_sales_product_status",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 3,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-postponement-mappings",
+      "callback": "mdg_ai_v4_postponement_mappings",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-postponement-map-get",
+      "callback": "mdg_ai_v4_postponement_map_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-postponement-preflight",
+      "callback": "mdg_ai_v4_postponement_preflight",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 15,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-transfer-scan",
+      "callback": "mdg_ai_v4_transfer_scan",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 9,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/v4-transfer-last",
+      "callback": "mdg_ai_v4_transfer_last",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/customer-tickets-query",
+      "callback": "mdg_ai_customer_tickets_query",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 3,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/customer-ticket-lookups",
+      "callback": "mdg_ai_customer_ticket_lookups",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/sales-system-audit",
+      "callback": "mdg_ai_sales_audit",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [
+        "OrderUtil::custom_orders_table_usage_is_enabled"
+      ],
+      "reachable_count": 3,
+      "classification": "SAFE",
+      "review_note": "Manually reviewed native read dependency: DateTime creates in-memory value; WooCommerce OrderUtil reads HPOS configuration."
+    },
+    {
+      "name": "madagaskar/daily-report-snapshot",
+      "callback": "mdg_ai_daily_report_snapshot",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [
+        "DateTime::createFromFormat"
+      ],
+      "reachable_count": 38,
+      "classification": "SAFE",
+      "review_note": "Manually reviewed native read dependency: DateTime creates in-memory value; WooCommerce OrderUtil reads HPOS configuration."
+    },
+    {
+      "name": "madagaskar/report-runs",
+      "callback": "mdg_ai_report_runs",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 5,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/report-run-get",
+      "callback": "mdg_ai_report_run_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 2,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/region-sources",
+      "callback": "mdg_ai_region_sources",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_School_Source_Service::source_info"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 21,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/region-districts",
+      "callback": "mdg_ai_region_districts",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_School_Source_Service::source_info"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 22,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/region-program-summary",
+      "callback": "mdg_ai_region_program_summary",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_School_Source_Service::source_info"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 28,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/population-lookup",
+      "callback": "mdg_ai_population_lookup",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 8,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/population-target-summary",
+      "callback": "mdg_ai_population_targets",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 6,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/region-recent-imports",
+      "callback": "mdg_ai_region_recent_imports",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 2,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/field-targets",
+      "callback": "mdg_ai_field_targets",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 6,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/field-summary",
+      "callback": "mdg_ai_field_summary",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/field-routes",
+      "callback": "mdg_ai_field_routes",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/field-recent-visits",
+      "callback": "mdg_ai_field_visits",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 5,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/field-share-links",
+      "callback": "mdg_ai_field_tokens",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/operations-plan-get",
+      "callback": "mdg_ai_ops_plan_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 14,
+      "classification": "SAFE",
+      "review_note": "Issue #121: patched read chain uses get_plan()/checklist()/summary SELECT-only aggregation; actual-service CI and guarded live smoke observed zero plan/checklist/task/log writes."
+    },
+    {
+      "name": "madagaskar/operations-summary",
+      "callback": "mdg_ai_ops_summary",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 11,
+      "classification": "SAFE",
+      "review_note": "Issue #121: patched read chain uses get_plan()/checklist()/summary SELECT-only aggregation; actual-service CI and guarded live smoke observed zero plan/checklist/task/log writes."
+    },
+    {
+      "name": "madagaskar/operations-resources-list",
+      "callback": "mdg_ai_ops_resources_list",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/operations-program-resources",
+      "callback": "mdg_ai_ops_program_resources",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 6,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/operations-checklist-list",
+      "callback": "mdg_ai_ops_checklist_list",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 15,
+      "classification": "SAFE",
+      "review_note": "Issue #121: patched read chain uses get_plan()/checklist()/summary SELECT-only aggregation; actual-service CI and guarded live smoke observed zero plan/checklist/task/log writes."
+    },
+    {
+      "name": "madagaskar/operations-schedule-list",
+      "callback": "mdg_ai_ops_schedule_list",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 5,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/marketing-pack-get",
+      "callback": "mdg_ai_marketing_pack_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 8,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/marketing-item-get",
+      "callback": "mdg_ai_marketing_item_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 3,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/meta-plan-get",
+      "callback": "mdg_ai_meta_plan_get",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 4,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mdg-bridge-status",
+      "callback": "mdg_ai_bridge_status",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 31,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mdg-bridge-candidates",
+      "callback": "mdg_ai_bridge_candidates",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 21,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/mdg-publish-preview",
+      "callback": "mdg_ai_bridge_publish_preview",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 23,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/kommo-configuration",
+      "callback": "mdg_ai_kommo_config",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_Kommo_Service::probe_named_token"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 9,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/kommo-connection-diagnostics",
+      "callback": "mdg_ai_kommo_connection",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_Kommo_Service::connection_diagnostics",
+        "MMC_Kommo_Service::probe_named_token"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 17,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/kommo-pipeline-diagnostics",
+      "callback": "mdg_ai_kommo_pipeline",
+      "domain_candidates": [],
+      "technical_candidates": [
+        "MMC_Kommo_Service::pipeline_diagnostics",
+        "MMC_Kommo_Service::probe_named_token"
+      ],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 17,
+      "classification": "SIDE_EFFECT_TECHNICAL",
+      "review_note": "Transient/object-cache warming only in this callback path; no business/profile mutation."
+    },
+    {
+      "name": "madagaskar/kommo-program-status",
+      "callback": "mdg_ai_kommo_program_status",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 7,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/kommo-source-consistency-check",
+      "callback": "mdg_ai_kommo_source_check",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 21,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    },
+    {
+      "name": "madagaskar/legacy-mdg-mmc-migration-preview",
+      "callback": "mdg_ai_legacy_mdg_mmc_migration_preview",
+      "domain_candidates": [],
+      "technical_candidates": [],
+      "option_candidates": [],
+      "unresolved": [],
+      "reachable_count": 12,
+      "classification": "SAFE",
+      "review_note": "Named callback/service path reads only; native WP/WC object getters can populate memory/object caches."
+    }
+  ],
+  "source_base": "6935f7e1009b9118583911b44ed26cfbe4e71862",
+  "issue": 121
+}
