@@ -1,0 +1,20 @@
+name: Read-only integrity contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  readonly-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+      - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+      - run: php -l docs/diagnostics/issue115-controlled-check.php
+      - run: php tests/mmc-integrity/readonly-preview.php
