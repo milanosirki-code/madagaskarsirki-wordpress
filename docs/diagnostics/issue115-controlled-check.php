@@ -115,6 +115,19 @@ add_action('rest_api_init',function(){
         $mode=$r->get_param('mode')?:'snapshot';
         if($mode==='snapshot')return ['sources'=>mmc115_sources(),'snapshot'=>mmc115_snapshot()];
         if($mode==='probe')return mmc115_probe((string)$r->get_param('name'),json_decode((string)$r->get_param('input'),true)?:[]);
+        if($mode==='batch'){
+            $calls=json_decode((string)$r->get_param('calls'),true);
+            if(!is_array($calls)||count($calls)>20)return new WP_Error('mmc115_batch','Maximum20 audited read-only calls.');
+            $out=[];
+            foreach($calls as $call){
+                $row=mmc115_probe((string)($call['name']??''),(array)($call['input']??[]));
+                if(is_wp_error($row)){$out[]=['name'=>$call['name']??'','status'=>'NOT_ALLOWED'];continue;}
+                foreach(['before','after'] as $stage){
+                    $row[$stage]=['captured_at'=>$row[$stage]['captured_at'],'all_rows_sha256'=>$row[$stage]['all_rows_sha256'],'profile_id'=>$row[$stage]['profile']['id']??null,'updated_at'=>$row[$stage]['profile']['updated_at']??null];
+                }
+                $out[]=$row;
+            }return ['items'=>$out];
+        }
         return new WP_Error('mmc115_mode','Invalid mode.');
     }]);
     register_rest_route('mmc-issue115/v1','/deploy',['methods'=>'POST','permission_callback'=>$permission,'callback'=>function($r){
