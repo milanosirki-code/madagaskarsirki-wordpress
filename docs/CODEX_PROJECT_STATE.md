@@ -174,3 +174,36 @@ Her önemli çalışma sonunda yapılan iş, teknik notlar, kanıtlar, test sonu
 - Drive tarihi belge niteliğindedir; canlı doğrulanmış program/veri ve güncel GitHub kaynak önceliği değişmez.
 - Aşama3 raporu Drive'a eklendi: https://drive.google.com/file/d/1rpLuPmZ6HuIo-bzjw_pabiiEnlLPDt1I/view?usp=drivesdk
 - Kaynak rapor: docs/TICKERA_PAYMENT_AUDIT_20261004.md; audit/state kaynak commit d124690c6550057aeb26c0d54520474700a04731, draft PR111, issue112. Bu kural ve güncel state snapshot'ı aynı çalışma kapsamında GitHub/Drive'a kaydedilir.
+
+
+## 2026-10-04 — Aşama 4: canlı kaynak sahipliği uzlaştırması
+
+**Yönetici kararı:** PayTR sandbox/tam checkout testleri ertelendi. Aşama3 yeterli kabul edildi; Issue112 açık tarihsel takip, production blocker değildir. Bu testlere dönülmedi. Önceki kurulum/test dönemi bulgusu yeni geliştirmeleri bloke etmez.
+
+- Main son SHA: **6e21a5e4217c085d6668f6932a874f846845a7de** (değişmedi; PR113 henüz merge edilmedi).
+- Production MMC: **1.3.47**; fresh **43/43 MMC dosyası main ile exact Git blob MATCH**. Region/Sales/load order/ledger/dashboard/bridge kaynağında patch yok.
+- Code Snippets: **120 toplam /43 aktif /0 code_error**; yeni #120 fatura açıklama helper dahil.
+- Mevcut main'e göre aktif snippet sayıları: **MATCH1, WHITESPACE_ONLY5, LIVE_AHEAD4, GITHUB_AHEAD0, NO_REPO_SOURCE33, OBSOLETE0**.
+- PR113 uzlaştırılmış branch'e göre aktif snippet sayıları: **MATCH43, WHITESPACE_ONLY0, LIVE_AHEAD0, GITHUB_AHEAD0, NO_REPO_SOURCE0, OBSOLETE0**. Main'e merge sonrası geçerli olur; şu anda main'in temizlendiği iddia edilmez.
+- Özel plugin kapsamı: **18 plugin /153 dosya hash'i**. 1 okulCSV veri seti kod kapsamı dışı, port edilmedi.
+- 152 plugin code/readme/asset için main: **MATCH127, WHITESPACE_ONLY2, LIVE_AHEAD2, GITHUB_AHEAD2, NO_REPO_SOURCE19**.
+- PR113 aynı kapsam: **MATCH148, WHITESPACE_ONLY2, LIVE_AHEAD0, GITHUB_AHEAD2, NO_REPO_SOURCE0**. 1 live aile readme'sinin owner'ı tarihsel sürüm arşividir; ileri canonical versiyon dokümanı diye sunulmaz.
+- Birleşik195 kaynak kaydı PR113: **MATCH191 / WHITESPACE_ONLY2 / LIVE_AHEAD0 / GITHUB_AHEAD2 / NO_REPO_SOURCE0**. 77 pasif snippet ayrı; 28 geçici tanı/installer OBSOLETE, diğer49 pasif tarihsel. Bunlar production drift sayısına katılmaz.
+- Yapılan iş/kök neden: main'de çoğu kalıcı aktif snippet ile9 legacy plugin paketinin exact source owner'ı yoktu; OkulTanıtım1.7.9 live ahead idi. 43 exact snippet body docs/code-snippets/production altında kaydedildi; 18 missing plugin source/readme +2 canlı okuldosyası canonical path'lerine port edildi. Eski snapshotlar çalışan canlı kaynak yerine deploy edilmedi.
+- Okul live1.7.9: MMC program/saha scope ve approved/manual venue doğrulaması mevcut ve korunuyor. main1.7.4 ile overwrite edilmedi.
+- Main-ahead AI0.7.0 (legacy migration write module) ve aile1.1.3 (MMC fiyat lookup) **korundu/deploy edilmedi**. Canlı0.6.1/1.1.2 exact version kaynakları tarihsel arşivde. family_2_2 =2yetişkin+2çocuk, capacity_units4 değişmedi.
+- Kommo canonical active owner **snippet110 MMC V2**. LegacyV1 docs/code-snippets/mdg-kommo-active-events-unified-source.php/#70 pasif referans. Fresh V2 readonly preview9program; downstream KommoAI freshness/retrieval bu aşamada yeniden test/değiştirilmedi.
+- PR107:22file → **ALREADY_MAIN1 /NEEDS_PORT3 /OBSOLETE2 /HISTORICAL16**; #15/#30/#103 current bodies PR113'e port edildi, Sales current main'de. Directmerge yok; draft tarihsel arşiv olarak bırakıldı.
+- CI kök nedeni: madagaskar-plugins-ci.yml'de literal backslash-n üç grep'i birleştiriyor ve eski1.7.4/1.3.30 etiketleri kalmıştı. Gerçek satır sonu ve güncel school1.7.9/MMC1.3.47 paket etiketleriyle düzeltildi; production PHP hatası değildi.
+- Tests: source commit **a2ace24da441e7f2bb787ed4bc788f6b95ebeac5** üzerinde **66hash PASS /58PHP syntax PASS**, diagnostics-in-production0; archive run37176867325, ChangedPHP run37176867285, PluginsCI run37176867272 başarılı. Source kayıt işlemi için safe read-only validation; gerçek para/order/ticket/Kommo write yok.
+- Son source branch/commit/PR: **codex/live-main-reconciliation-20261004 /252b76ab8a109f0cc93884bf1853d1bb215c4b09 /PR113**. Audit/state branch **codex/current-system-audit-20261003 /PR111**.
+- WordPress: kalıcı snippet/plugin kaynak değişikliği **yok**. Diagnostic **119** geçici salt-okunur reader için syntax sonrası kullanıldı; özgün kod byte-exact geri yüklendi, active=false/code_error=null. **117pasif**. Production deployment **yok**.
+- GitHub dosyaları: docs/code-snippets/production/43body+README;20 canonical plugin source/readme;3 historical version captures; docs/STAGE4_SOURCE_INVENTORY_20261004.json; docs/STAGE4_PR107_DISPOSITION_20261004.json; docs/STAGE4_ACTIVE_SNIPPETS_20261004.csv; docs/STAGE4_RECONCILIATION_20261004.md; tests/validate-production-source-archive.py; production-source-archive workflow; pluginCI; audit-only docs/diagnostics/stage4-source-reader.php.
+- Açık riskler: PR113 portu merge edilene kadar main source drift sayıları devam eder. 2 ileri plugin bootstrap sürümü ayrı deploymentreview bekler. school-bridge-status ability lookup404, sonraki MMC runtime function/registration denetiminde bakılacak; doğrudan fatal/kapalıplugin sonucu değildir. Source kayıtları fonksiyonel tam UI regression iddiası değildir.
+- Deployment bekleyenler: aile1.1.3 MMC family fiyat kaynağı; AI0.7.0 write migration modülü (otomatik deploy/activate yok).
+- Açık issue'lar: **112,105,87,82,57**;112 non-blocking/deferred.
+- Sonraki öncelik: **MMC menü ve fonksiyon/ability denetimi** → WC/MMC mutabakatı → Kommo dinamik kaynak → çekiliş → operasyon/görev → dashboard → raporlama → teknikborç. Bu aşamada bu modüllerde geliştirmeye başlanmadı.
+- Rollback: GitHub port/audit commitlerini revert; WordPress unchanged. Diagnostic119/117 pasif; finans/customer data rollback gerekmez.
+- Drive raporu: https://drive.google.com/file/d/11fgcM2PqYfz1BJX75V0cfGvt3zhRxqDj/view?usp=drivesdk
+- Drive envanteri: https://drive.google.com/file/d/1Pi6Kbkv8xb4X4BLBA8C_tI593lknaCdp/view?usp=drivesdk
+- Devir dosyası snapshot'ı aynı doğrulanmış Drive klasörüne kaydedilir; final link PR111/113 açıklamalarında. Her önemli iş için GitHub+Drive kayıt standardı geçerli.
