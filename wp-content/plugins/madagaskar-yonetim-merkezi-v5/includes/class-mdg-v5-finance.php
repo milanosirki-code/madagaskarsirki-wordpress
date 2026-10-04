@@ -1,0 +1,276 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+final class MDG_V5_Finance {
+    const DB_VERSION = '2.2.1';
+    const DB_OPTION = 'mdg_v5_finance_db_version';
+    const COUNT_OPTION = 'mdg_v5_month_program_counts';
+    const CAP = 'manage_woocommerce';
+
+    public static function boot() {
+        if ( get_option( self::DB_OPTION, '' ) !== self::DB_VERSION ) { self::create_tables(); }
+        foreach ( array( 'expense', 'income', 'fixed_cost' ) as $type ) {
+            add_action( 'admin_post_mdg_v5_save_' . $type, array( __CLASS__, 'save_' . $type ) );
+            add_action( 'admin_post_mdg_v5_delete_' . $type, array( __CLASS__, 'delete_' . $type ) );
+        }
+        add_action( 'admin_post_mdg_v5_save_program_count', array( __CLASS__, 'save_program_count' ) );
+        add_action( 'admin_post_mdg_v5_save_attendance', array( __CLASS__, 'save_attendance' ) );
+    }
+
+    private static function table( $name ) { global $wpdb; return $wpdb->prefix . 'mdg_v5_' . $name; }
+
+    private static function create_tables() {
+        global $wpdb; require_once ABSPATH . 'wp-admin/includes/upgrade.php'; $c = $wpdb->get_charset_collate();
+        dbDelta( "CREATE TABLE " . self::table('expenses') . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            scope VARCHAR(30) NOT NULL DEFAULT 'program',
+            province VARCHAR(100) NOT NULL DEFAULT '',
+            related_name VARCHAR(190) NOT NULL DEFAULT '',
+            category VARCHAR(100) NOT NULL DEFAULT '',
+            description VARCHAR(255) NOT NULL DEFAULT '',
+            vendor VARCHAR(190) NOT NULL DEFAULT '',
+            amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            expense_date DATE NOT NULL,
+            payment_method VARCHAR(60) NOT NULL DEFAULT '',
+            document_no VARCHAR(100) NOT NULL DEFAULT '',
+            attachment_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            notes TEXT NULL,
+            created_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY event_id (event_id),
+            KEY expense_date (expense_date),
+            KEY scope (scope),
+            KEY category (category)
+        ) {$c};" );
+        dbDelta( "CREATE TABLE " . self::table('incomes') . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            scope VARCHAR(30) NOT NULL DEFAULT 'program',
+            province VARCHAR(100) NOT NULL DEFAULT '',
+            category VARCHAR(100) NOT NULL DEFAULT '',
+            channel VARCHAR(100) NOT NULL DEFAULT '',
+            description VARCHAR(255) NOT NULL DEFAULT '',
+            gross_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            commission_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            net_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            ticket_count INT UNSIGNED NOT NULL DEFAULT 0,
+            income_date DATE NOT NULL,
+            collection_status VARCHAR(30) NOT NULL DEFAULT 'collected',
+            payment_method VARCHAR(60) NOT NULL DEFAULT '',
+            source_ref VARCHAR(150) NOT NULL DEFAULT '',
+            attachment_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            notes TEXT NULL,
+            created_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY event_id (event_id),
+            KEY income_date (income_date),
+            KEY channel (channel),
+            KEY source_ref (source_ref)
+        ) {$c};" );
+        dbDelta( "CREATE TABLE " . self::table('fixed_costs') . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            cost_month CHAR(7) NOT NULL,
+            cost_type VARCHAR(30) NOT NULL DEFAULT 'operating',
+            name VARCHAR(190) NOT NULL DEFAULT '',
+            headcount INT UNSIGNED NOT NULL DEFAULT 0,
+            pay_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            currency VARCHAR(10) NOT NULL DEFAULT 'TRY',
+            fx_rate DECIMAL(18,6) NOT NULL DEFAULT 1,
+            pay_basis VARCHAR(30) NOT NULL DEFAULT 'group',
+            insured_count INT UNSIGNED NOT NULL DEFAULT 0,
+            tax_per_person DECIMAL(18,2) NOT NULL DEFAULT 0,
+            salary_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+            tax_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+            total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+            document_no VARCHAR(100) NOT NULL DEFAULT '',
+            attachment_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            notes TEXT NULL,
+            created_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY cost_month (cost_month),
+            KEY cost_type (cost_type)
+        ) {$c};" );
+        dbDelta( "CREATE TABLE " . self::table('attendance') . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            avg_ticket_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+            manual_attendance INT UNSIGNED NOT NULL DEFAULT 0,
+            include_in_reports TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+            notes TEXT NULL,
+            updated_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY event_id (event_id)
+        ) {$c};" );
+        $expected_columns = array(
+            'expenses' => array('id','event_id','scope','province','related_name','category','description','vendor','amount','expense_date','payment_method','document_no','attachment_id','notes','created_by','created_at','updated_at'),
+            'incomes' => array('id','event_id','scope','province','category','channel','description','gross_amount','commission_amount','net_amount','ticket_count','income_date','collection_status','payment_method','source_ref','attachment_id','notes','created_by','created_at','updated_at'),
+            'fixed_costs' => array('id','cost_month','cost_type','name','headcount','pay_amount','currency','fx_rate','pay_basis','insured_count','tax_per_person','salary_total','tax_total','total_amount','document_no','attachment_id','notes','created_by','created_at','updated_at'),
+            'attendance' => array('id','event_id','avg_ticket_price','manual_attendance','include_in_reports','notes','updated_by','updated_at'),
+        );
+        foreach ($expected_columns as $name => $expected) {
+            $actual = (array)$wpdb->get_col('SHOW COLUMNS FROM ' . self::table($name));
+            if (array_diff($expected, $actual)) { return; }
+        }
+        update_option( self::DB_OPTION, self::DB_VERSION, false );
+    }
+
+    private static function events() { global $wpdb; return class_exists('MDG_DB') ? (array)$wpdb->get_results('SELECT * FROM '.MDG_DB::table('events').' ORDER BY id DESC LIMIT 1000') : array(); }
+    private static function date_from_record($record) {
+        foreach(array('event_date','session_date','start_date','starts_at','start_at','start_datetime','datetime','start_time','date') as$f){
+            if(empty($record->$f)||!is_scalar($record->$f))continue;
+            $raw=str_replace('T',' ',trim((string)$record->$f));
+            if(preg_match('/^(\d{4}-\d{2}-\d{2})$/',$raw,$m))return$m[1];
+            if(preg_match('/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}/',$raw))return function_exists('get_date_from_gmt')?get_date_from_gmt(substr($raw,0,19),'Y-m-d'):substr($raw,0,10);
+        }
+        return'';
+    }
+    private static function event_date($e) {
+        static $cache=array();$id=absint($e->id??0);if($id&&isset($cache[$id]))return$cache[$id];
+        $date=self::date_from_record($e);
+        if(!$date&&$id&&class_exists('MDG_Sessions')){
+            $dates=array();foreach((array)MDG_Sessions::by_event($id)as$s){$d=self::date_from_record($s);if($d)$dates[]=$d;}
+            if($dates){sort($dates,SORT_STRING);$date=$dates[0];}
+        }
+        if($id)$cache[$id]=$date;return$date;
+    }
+    private static function event_name($e) { $t=trim((string)($e->title??''));return$t?:trim((string)($e->province_name??'').' '.(string)($e->district??'')); }
+    private static function expense_categories(){return array('Salon Kirası','Temizlik / Güvenlik','Sanatçı / Personel','Ulaşım / Yakıt','Konaklama','Yemek','Reklam / Sosyal Medya','Afiş / Tanıtım','Teknik / Ses / Işık','Kantin Malzemesi','Araç Bakım / Onarım','Araç Sigorta / Kasko','Vize / Davetiye','Çalışma İzni / Harç','SGK / Sigorta','Muhasebe','Vergi / Resmî Harç','Kira / Aidat','Elektrik / Su / Doğalgaz','Ofis / Genel Yönetim','Diğer');}
+    private static function income_categories(){return array('Bilet Satışı','Kantin Yiyecek / Mısır','Kantin Oyuncak','Sponsorluk','Kurumsal / Toplu Satış','Diğer');}
+    private static function income_channels(){return array('Biletinial','Diğer Bilet Şirketi','Kapı Nakit','Kapı POS / Kredi Kartı','Havale / EFT','Kantin Nakit','Kantin POS / Kredi Kartı','Diğer');}
+    private static function payment_methods(){return array('Nakit','Kredi Kartı / POS','Banka Havalesi / EFT','Şirket Kartı','Ödenmedi','Diğer');}
+    private static function money_value($v){$r=preg_replace('/[^0-9,.-]/','',trim((string)wp_unslash($v)));if(false!==strpos($r,',')){$r=str_replace('.','',$r);$r=str_replace(',','.',$r);}return round((float)$r,2);}
+    private static function date_ok($d){return(bool)preg_match('/^\d{4}-\d{2}-\d{2}$/',(string)$d);}
+    private static function month_ok($m){return(bool)preg_match('/^\d{4}-\d{2}$/',(string)$m);}
+    private static function url($a=array()){return add_query_arg(array_merge(array('page'=>'mdg-v5-finance'),$a),admin_url('admin.php'));}
+    private static function upload($field,$current=0){if(empty($_FILES[$field]['name']))return absint($current);require_once ABSPATH.'wp-admin/includes/file.php';require_once ABSPATH.'wp-admin/includes/media.php';require_once ABSPATH.'wp-admin/includes/image.php';$id=media_handle_upload($field,0,array(),array('test_form'=>false));return is_wp_error($id)?$id:absint($id);}
+
+    public static function save_expense(){
+        if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_expense','mdg_v5_finance_nonce');global$wpdb;
+        $scope=sanitize_key($_POST['scope']??'program');$event=absint($_POST['event_id']??0);$amount=self::money_value($_POST['amount']??'');$date=sanitize_text_field(wp_unslash($_POST['expense_date']??''));$cat=sanitize_text_field(wp_unslash($_POST['category']??''));
+        if(!in_array($scope,array('program','province','general','person','vehicle'),true))$scope='program';
+        if($amount<=0||!self::date_ok($date)||!$cat||('program'===$scope&&!$event)){self::go_error('required','expense');}
+        $att=self::upload('document');if(is_wp_error($att))self::go_error('upload','expense');$now=current_time('mysql');
+        $saved = $wpdb->insert(self::table('expenses'),array('event_id'=>$event,'scope'=>$scope,'province'=>sanitize_text_field(wp_unslash($_POST['province']??'')),'related_name'=>sanitize_text_field(wp_unslash($_POST['related_name']??'')),'category'=>$cat,'description'=>sanitize_text_field(wp_unslash($_POST['description']??'')),'vendor'=>sanitize_text_field(wp_unslash($_POST['vendor']??'')),'amount'=>$amount,'expense_date'=>$date,'payment_method'=>sanitize_text_field(wp_unslash($_POST['payment_method']??'')),'document_no'=>sanitize_text_field(wp_unslash($_POST['document_no']??'')),'attachment_id'=>$att,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
+        if (false === $saved || !$wpdb->insert_id) {
+            wp_die('Gider kaydedilemedi. Girdiğiniz bilgileri korumak için tarayıcının Geri düğmesine basın. Lütfen yeniden denemeden önce kayıt listesini kontrol edin.', 'Gider kaydedilemedi', array('response'=>500, 'back_link'=>true));
+        }
+        self::go_saved('expense', substr($date,0,7));
+    }
+    public static function delete_expense(){self::delete_row('expenses','expense_id','mdg_v5_delete_expense_');}
+
+    public static function save_income(){
+        if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_income','mdg_v5_finance_nonce');global$wpdb;
+        $scope=sanitize_key($_POST['scope']??'program');$event=absint($_POST['event_id']??0);$category=sanitize_text_field(wp_unslash($_POST['category']??''));$gross=self::money_value($_POST['gross_amount']??'');$commission=max(0,self::money_value($_POST['commission_amount']??''));$date=sanitize_text_field(wp_unslash($_POST['income_date']??''));$channel=sanitize_text_field(wp_unslash($_POST['channel']??''));$ref=sanitize_text_field(wp_unslash($_POST['source_ref']??''));
+        $is_corporate='Kurumsal / Toplu Satış'===$category;if($is_corporate){$scope='general';$event=0;}
+        $description=sanitize_text_field(wp_unslash($_POST['description']??''));
+        if($gross<=0||!self::date_ok($date)||!$channel||('program'===$scope&&!$event)||($is_corporate&&!$description))self::go_error('required',$is_corporate?'corporate':'income');
+        if($ref&&(int)$wpdb->get_var($wpdb->prepare('SELECT id FROM '.self::table('incomes').' WHERE source_ref=%s AND channel=%s LIMIT 1',$ref,$channel)))self::go_error('duplicate','income');
+        $att=self::upload('document');if(is_wp_error($att))self::go_error('upload',$is_corporate?'corporate':'income');$now=current_time('mysql');
+        $wpdb->insert(self::table('incomes'),array('event_id'=>$event,'scope'=>$scope,'province'=>sanitize_text_field(wp_unslash($_POST['province']??'')),'category'=>$category,'channel'=>$channel,'description'=>$description,'gross_amount'=>$gross,'commission_amount'=>min($gross,$commission),'net_amount'=>max(0,$gross-$commission),'ticket_count'=>absint($_POST['ticket_count']??0),'income_date'=>$date,'collection_status'=>sanitize_key($_POST['collection_status']??'collected'),'payment_method'=>sanitize_text_field(wp_unslash($_POST['payment_method']??'')),'source_ref'=>$ref,'attachment_id'=>$att,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));self::go_saved($is_corporate?'corporate':'income');
+    }
+    public static function delete_income(){self::delete_row('incomes','income_id','mdg_v5_delete_income_');}
+
+    public static function save_fixed_cost(){
+        if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_fixed_cost','mdg_v5_finance_nonce');global$wpdb;
+        $month=sanitize_text_field(wp_unslash($_POST['cost_month']??''));$name=sanitize_text_field(wp_unslash($_POST['name']??''));$pay=self::money_value($_POST['pay_amount']??'');$fx=max(0,self::money_value($_POST['fx_rate']??1));$basis=sanitize_key($_POST['pay_basis']??'group');$head=absint($_POST['headcount']??0);$insured=absint($_POST['insured_count']??0);$taxpp=self::money_value($_POST['tax_per_person']??'');
+        if(!self::month_ok($month)||!$name||$pay<0||$fx<=0)self::go_error('required','fixed',$month);
+        $salary=round($pay*$fx*(('person'===$basis)?max(1,$head):1),2);$tax=round($insured*$taxpp,2);$att=self::upload('document');if(is_wp_error($att))self::go_error('upload','fixed',$month);$now=current_time('mysql');
+        $wpdb->insert(self::table('fixed_costs'),array('cost_month'=>$month,'cost_type'=>sanitize_key($_POST['cost_type']??'operating'),'name'=>$name,'headcount'=>$head,'pay_amount'=>$pay,'currency'=>sanitize_text_field(wp_unslash($_POST['currency']??'TRY')),'fx_rate'=>$fx,'pay_basis'=>$basis,'insured_count'=>$insured,'tax_per_person'=>$taxpp,'salary_total'=>$salary,'tax_total'=>$tax,'total_amount'=>$salary+$tax,'document_no'=>sanitize_text_field(wp_unslash($_POST['document_no']??'')),'attachment_id'=>$att,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));self::go_saved('fixed',$month);
+    }
+    public static function delete_fixed_cost(){self::delete_row('fixed_costs','fixed_id','mdg_v5_delete_fixed_cost_');}
+    private static function delete_row($table,$field,$nonce){if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');$id=absint($_POST[$field]??0);check_admin_referer($nonce.$id,'mdg_v5_finance_nonce');global$wpdb;if($id)$wpdb->delete(self::table($table),array('id'=>$id));wp_safe_redirect(self::url(array('finance_deleted'=>1)));exit;}
+    private static function go_error($e,$section,$month=''){wp_safe_redirect(self::url(array('finance_error'=>$e,'section'=>$section,'month'=>$month)));exit;}
+    private static function go_saved($section,$month=''){wp_safe_redirect(self::url(array('finance_saved'=>$section,'section'=>$section,'month'=>$month)));exit;}
+    public static function save_program_count(){if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_program_count','mdg_v5_finance_nonce');$m=sanitize_text_field(wp_unslash($_POST['cost_month']??''));$n=absint($_POST['program_count']??0);if(self::month_ok($m)){$map=(array)get_option(self::COUNT_OPTION,array());if($n)$map[$m]=$n;else unset($map[$m]);update_option(self::COUNT_OPTION,$map,false);}self::go_saved('fixed',$m);}
+    public static function save_attendance(){
+        if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_attendance','mdg_v5_finance_nonce');global$wpdb;
+        $event=absint($_POST['event_id']??0);$avg=self::money_value($_POST['avg_ticket_price']??'');$manual=absint($_POST['manual_attendance']??0);$month=sanitize_text_field(wp_unslash($_POST['month']??''));
+        if(!$event||$avg<=0){wp_safe_redirect(self::url(array('section'=>'attendance','month'=>$month,'finance_error'=>'required')));exit;}
+        $wpdb->replace(self::table('attendance'),array('event_id'=>$event,'avg_ticket_price'=>$avg,'manual_attendance'=>$manual,'include_in_reports'=>isset($_POST['include_in_reports'])?1:0,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'updated_by'=>get_current_user_id(),'updated_at'=>current_time('mysql')));
+        wp_safe_redirect(self::url(array('section'=>'attendance','month'=>$month,'finance_saved'=>'attendance')));exit;
+    }
+
+    private static function web_revenues($from,$to){
+        global$wpdb;
+        if(!class_exists('MDG_DB'))return array();
+
+        $month=substr((string)$from,0,7);
+        $month_events=self::month_events(self::events(),$month);
+        $event_ids=array_values(array_filter(array_map('absint',array_keys($month_events))));
+        if(!$event_ids)return array();
+
+        $paid_statuses=array('processing','completed','paid','wc-processing','wc-completed','wc-paid');
+        if(function_exists('wc_get_is_paid_statuses')){
+            foreach((array)wc_get_is_paid_statuses()as$status){
+                $status=sanitize_key($status);
+                if($status){$paid_statuses[]=$status;$paid_statuses[]='wc-'.$status;}
+            }
+        }
+        $paid_statuses=array_values(array_unique($paid_statuses));
+
+        $map=MDG_DB::table('order_map');
+        $event_placeholders=implode(',',array_fill(0,count($event_ids),'%d'));
+        $status_placeholders=implode(',',array_fill(0,count($paid_statuses),'%s'));
+        $sql="SELECT event_id,COALESCE(SUM(line_total),0) revenue FROM {$map} WHERE event_id IN ({$event_placeholders}) AND order_status IN ({$status_placeholders}) AND paid_at IS NOT NULL AND paid_at<>'0000-00-00 00:00:00' GROUP BY event_id";
+        $prepared=$wpdb->prepare($sql,array_merge($event_ids,$paid_statuses));
+
+        $out=array();
+        foreach((array)$wpdb->get_results($prepared)as$r)$out[(int)$r->event_id]=(float)$r->revenue;
+        return$out;
+    }
+    private static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
+    private static function money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_price((float)$n)):number_format_i18n((float)$n,2).' TL';}
+
+    public static function render(){
+        if(!current_user_can(self::CAP))return;MDG_Yonetim_Merkezi_V5::css();global$wpdb;
+        $section=sanitize_key($_GET['section']??'overview');$filter=sanitize_key($_GET['filter']??'all');$month=sanitize_text_field(wp_unslash($_GET['month']??wp_date('Y-m')));if(!self::month_ok($month))$month=wp_date('Y-m');$from=$month.'-01';$to=wp_date('Y-m-t',strtotime($from));$events=self::events();$names=array();$provinces=array();foreach($events as$e){$names[(int)$e->id]=self::event_name($e);if(!empty($e->province_name))$provinces[(string)$e->province_name]=(string)$e->province_name;}natcasesort($provinces);
+        $expenses=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('expenses').' WHERE expense_date BETWEEN %s AND %s ORDER BY expense_date DESC,id DESC',$from,$to));$incomes=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('incomes').' WHERE income_date BETWEEN %s AND %s ORDER BY income_date DESC,id DESC',$from,$to));$fixed=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('fixed_costs').' WHERE cost_month=%s ORDER BY id DESC',$month));$attendance=(array)$wpdb->get_results('SELECT event_id,avg_ticket_price,manual_attendance,include_in_reports,notes,updated_at FROM '.self::table('attendance'),OBJECT_K);$web=self::web_revenues($from,$to);
+        $web_total=array_sum($web);$manual=0;foreach($incomes as$r)if('collected'===$r->collection_status)$manual+=(float)$r->net_amount;$direct=0;$general=0;foreach($expenses as$r){if('program'===$r->scope)$direct+=(float)$r->amount;else$general+=(float)$r->amount;}$fixed_total=0;foreach($fixed as$r)$fixed_total+=(float)$r->total_amount;$all_month_events=self::month_events($events,$month);$month_events=array_filter($all_month_events,static function($e)use($attendance){$id=(int)$e->id;return!isset($attendance[$id])||(int)$attendance[$id]->include_in_reports===1;});$count_map=(array)get_option(self::COUNT_OPTION,array());$detected=count($month_events);$count=isset($count_map[$month])?absint($count_map[$month]):$detected;$share=$count?$fixed_total/$count:0;
+        echo'<div class="wrap mdgv5"><h1>Gelir, Gider ve Kârlılık Merkezi</h1>';if(!empty($_GET['finance_saved']))echo'<div class="notice notice-success is-dismissible"><p>Kayıt başarıyla kaydedildi.</p></div>';if(!empty($_GET['finance_deleted']))echo'<div class="notice notice-success is-dismissible"><p>Kayıt silindi. Yüklenen belge korunmuştur.</p></div>';if(!empty($_GET['finance_error']))echo'<div class="notice notice-error"><p>'.('duplicate'===$_GET['finance_error']?'Aynı kanal ve referans numarası daha önce kaydedilmiş.':'Zorunlu alanları ve tutarları kontrol edin.').'</p></div>';
+        echo'<div class="nav-tab-wrapper">';foreach(array('overview'=>'Genel Bakış','attendance'=>'Seyirci','income'=>'Program / Diğer Gelir','corporate'=>'Kurumsal Satış','expense'=>'Giderler','fixed'=>'Aylık Sabit Giderler')as$k=>$v)echo'<a class="nav-tab '.($section===$k?'nav-tab-active':'').'" href="'.esc_url(self::url(array('section'=>$k,'month'=>$month))).'">'.esc_html($v).'</a>';echo'</div><form method="get" class="mdgv5-filter"><input type="hidden" name="page" value="mdg-v5-finance"><input type="hidden" name="section" value="'.esc_attr($section).'"><label><strong>Rapor ayı</strong> <input type="month" name="month" value="'.esc_attr($month).'"></label>';
+        $filter_options=array();if(in_array($section,array('income','corporate'),true))$filter_options=array('all'=>'Tüm tahsilatlar','collected'=>'Tahsil edildi','pending'=>'Bekliyor');elseif('expense'===$section)$filter_options=array('all'=>'Tüm gider kapsamları','program'=>'Program','province'=>'İl','general'=>'Genel','person'=>'Personel','vehicle'=>'Araç');elseif('fixed'===$section)$filter_options=array('all'=>'Tüm sabit giderler','team'=>'Yabancı ekip','person'=>'Bireysel personel','operating'=>'Diğer sabit gider');if($filter_options){echo'<label><strong>Liste filtresi</strong><select name="filter">';foreach($filter_options as$k=>$v)echo'<option value="'.esc_attr($k).'" '.selected($filter,$k,false).'>'.esc_html($v).'</option>';echo'</select></label>';}echo'<button class="button">Göster</button></form>';
+        $shown_incomes=$incomes;$shown_expenses=$expenses;$shown_fixed=$fixed;if('all'!==$filter){if(in_array($section,array('income','corporate'),true))$shown_incomes=array_values(array_filter($incomes,static function($r)use($filter){return$r->collection_status===$filter;}));elseif('expense'===$section)$shown_expenses=array_values(array_filter($expenses,static function($r)use($filter){return$r->scope===$filter;}));elseif('fixed'===$section)$shown_fixed=array_values(array_filter($fixed,static function($r)use($filter){return$r->cost_type===$filter;}));}
+        if('attendance'===$section)self::render_attendance($month,$all_month_events,$attendance,$web,$incomes);elseif('income'===$section)self::render_income($names,$provinces,$shown_incomes,false);elseif('corporate'===$section)self::render_income($names,$provinces,$shown_incomes,true);elseif('expense'===$section)self::render_expense($names,$provinces,$shown_expenses);elseif('fixed'===$section)self::render_fixed($month,$shown_fixed,$detected,$count,$fixed_total,$share);else self::render_overview($names,$month_events,$web,$incomes,$expenses,$share,$web_total,$manual,$direct,$general,$fixed_total);echo'</div>';
+    }
+
+    private static function render_overview($names,$month_events,$web,$incomes,$expenses,$share,$web_total,$manual,$direct,$general,$fixed_total){
+        echo'<div class="mdgv5-grid">';self::card(self::money($web_total),'Web sitesi geliri','WooCommerce / PayTR otomatik');self::card(self::money($manual),'Diğer tahsil edilmiş gelir','Bilet şirketi, kapı ve kantin');self::card(self::money($direct+$general+$fixed_total),'Toplam gider','Program + genel + sabit');self::card(self::money($web_total+$manual-$direct-$general-$fixed_total),'İşletme net sonucu','Tüm gelirler − tüm giderler');echo'</div><div class="mdgv5-card"><h2>Aylık gider dağılımı</h2><table class="widefat striped"><thead><tr><th>Doğrudan program gideri</th><th>Genel gider</th><th>Aylık sabit gider</th><th>Program başına sabit gider</th></tr></thead><tbody><tr><td>'.esc_html(self::money($direct)).'</td><td>'.esc_html(self::money($general)).'</td><td>'.esc_html(self::money($fixed_total)).'</td><td><strong>'.esc_html(self::money($share)).'</strong></td></tr></tbody></table></div>';
+        $mi=array();foreach($incomes as$r)if('collected'===$r->collection_status)$mi[(int)$r->event_id]=($mi[(int)$r->event_id]??0)+(float)$r->net_amount;$ex=array();foreach($expenses as$r)if('program'===$r->scope)$ex[(int)$r->event_id]=($ex[(int)$r->event_id]??0)+(float)$r->amount;
+        echo'<div class="mdgv5-card"><h2>Program kârlılığı</h2><p class="mdgv5-sub">Faaliyet sonucu doğrudan giderleri; gerçek net sonuç ayrıca aylık sabit gider payını içerir.</p><table class="widefat striped"><thead><tr><th>Program</th><th>Web</th><th>Diğer gelir</th><th>Doğrudan gider</th><th>Faaliyet sonucu</th><th>Sabit gider payı</th><th>Gerçek net sonuç</th></tr></thead><tbody>';foreach($month_events as$id=>$e){$rev=($web[$id]??0)+($mi[$id]??0);$op=$rev-($ex[$id]??0);$net=$op-$share;echo'<tr><td><strong>#'.absint($id).' '.esc_html(self::event_name($e)).'</strong><div class="mdgv5-sub">'.esc_html(self::event_date($e)).'</div></td><td>'.esc_html(self::money($web[$id]??0)).'</td><td>'.esc_html(self::money($mi[$id]??0)).'</td><td>'.esc_html(self::money($ex[$id]??0)).'</td><td>'.esc_html(self::money($op)).'</td><td>'.esc_html(self::money($share)).'</td><td class="'.($net>=0?'mdgv5-ok':'mdgv5-bad').'">'.esc_html(self::money($net)).'</td></tr>';}if(!$month_events)echo'<tr><td colspan="7">Bu ay tarih bilgisi bulunan program bulunamadı. Program sayısını sabit gider ekranından elle girebilirsiniz.</td></tr>';echo'</tbody></table></div>';
+    }
+
+    private static function render_attendance($month,$events,$saved,$web,$incomes){
+        $manual_ticket_revenue=array();foreach($incomes as$r){if('collected'===$r->collection_status&&'Bilet Satışı'===$r->category&&$r->event_id)$manual_ticket_revenue[(int)$r->event_id]=($manual_ticket_revenue[(int)$r->event_id]??0)+(float)$r->gross_amount;}
+        $total=0;$programs=0;$included=0;foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;if(!$is_included)continue;$included++;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$manual_count?:$estimated;if($used){$total+=$used;$programs++;}}
+        echo'<div class="mdgv5-grid">';self::card(number_format_i18n($total),'Aylık toplam seyirci','Manuel sayı varsa o, yoksa tahmin');self::card(number_format_i18n($programs?round($total/$programs):0),'Program başına ortalama','Seyirci toplamı ÷ hesaplanan program');self::card(number_format_i18n($included),'Hesaba katılan program','İptal/taslak ve hariç tutulanlar yok');echo'</div>';
+        echo'<div class="mdgv5-card"><h2>Seyirci Sayısı Hesabı</h2><div class="mdgv5-note">Tahmini seyirci = yalnız bilet geliri ÷ ortalama bilet fiyatı. Eski/test programlarda “Hesaba dâhil” işaretini kaldırın. Mobilde tüm alanları görmek için tabloyu sola kaydırabilirsiniz.</div><table class="widefat striped"><thead><tr><th>Program</th><th>Bilet geliri</th><th>Ortalama bilet</th><th>Tahmini seyirci</th><th>Manuel/gerçek</th><th>Kullanılan sayı</th><th>Dâhil</th><th>Kaydet</th></tr></thead><tbody>';
+        foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$is_included?($manual_count?:$estimated):0;echo'<tr'.($is_included?'':' class="mdgv5-excluded"').'><td><strong>'.esc_html(self::event_name($e)).'</strong><div class="mdgv5-sub">'.esc_html(self::event_date($e)).'</div></td><td>'.esc_html(self::money($ticket_revenue)).'</td><td colspan="6"><form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="mdgv5-attendance-row"><input type="hidden" name="action" value="mdg_v5_save_attendance"><input type="hidden" name="event_id" value="'.absint($id).'"><input type="hidden" name="month" value="'.esc_attr($month).'">';wp_nonce_field('mdg_v5_save_attendance','mdg_v5_finance_nonce');echo'<input type="text" name="avg_ticket_price" value="'.esc_attr($avg?number_format($avg,2,',','.'):'350,00').'" aria-label="Ortalama bilet"><span>'.number_format_i18n($estimated).'</span><input type="number" min="0" name="manual_attendance" value="'.esc_attr($manual_count?:'').'" placeholder="Gerçek sayı" aria-label="Manuel seyirci"><strong>'.number_format_i18n($used).'</strong><label class="mdgv5-check"><input type="checkbox" name="include_in_reports" value="1" '.checked($is_included,true,false).'> Dâhil</label><button class="button">Kaydet</button></form></td></tr>';}
+        if(!$events)echo'<tr><td colspan="8">Bu ay için program bulunamadı.</td></tr>';echo'</tbody></table></div>';
+    }
+
+    private static function render_income($names,$provinces,$rows,$corporate=false){
+        $rows=array_values(array_filter($rows,static function($r)use($corporate){return $corporate?('Kurumsal / Toplu Satış'===$r->category):('Kurumsal / Toplu Satış'!==$r->category);}));
+        echo'<div class="mdgv5-card"><h2>'.($corporate?'Kurumsal Satış Ekle':'Program / Diğer Gelir Ekle').'</h2><div class="mdgv5-note">'.($corporate?'Bu gelir için etkinlik açmanız gerekmez. Kurum veya toplu alıcı bilgisiyle doğrudan kaydedilir.':'Web sitesi satışlarını buraya girmeyin; WooCommerce ve PayTR gelirleri otomatik alınır.').'</div><form method="post" enctype="multipart/form-data" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mdg_v5_save_income">';wp_nonce_field('mdg_v5_save_income','mdg_v5_finance_nonce');echo'<div class="mdgv5-finance-form">';
+        if($corporate){echo'<input type="hidden" name="scope" value="general"><input type="hidden" name="event_id" value="0"><input type="hidden" name="category" value="Kurumsal / Toplu Satış">';self::input('Kurum / müşteri *','description','');self::select('Tahsilat kanalı *','channel',array('Kurumsal Havale / EFT'=>'Havale / EFT','Kurumsal Nakit'=>'Nakit','Kurumsal POS / Kredi Kartı'=>'POS / Kredi Kartı','Diğer'=>'Diğer'),'Kurumsal Havale / EFT');}
+        else{self::select('Kapsam','scope',array('program'=>'Program','province'=>'İl','general'=>'Genel'),'program');self::select('Program','event_id',$names,'');self::select('İl','province',$provinces,'');self::select('Gelir grubu','category',array_combine(self::income_categories(),self::income_categories()),'');self::select('Satış kanalı *','channel',array_combine(self::income_channels(),self::income_channels()),'');self::input('Açıklama','description','');}
+        self::input('Brüt tutar (TL) *','gross_amount','');self::input('Komisyon / kesinti','commission_amount','0');self::input('Bilet adedi','ticket_count','0','number');self::input('Gelir tarihi *','income_date',wp_date('Y-m-d'),'date');self::select('Tahsilat durumu','collection_status',array('collected'=>'Tahsil edildi','pending'=>'Bekliyor'),'collected');self::input('Kaynak / sözleşme / mutabakat no','source_ref','');self::file_note();echo'</div><p><button class="button button-primary">'.($corporate?'Kurumsal Satışı Kaydet':'Geliri Kaydet').'</button></p></form></div><div class="mdgv5-card"><h2>'.($corporate?'Kurumsal Satış Kayıtları':'Program / Diğer Gelir Kayıtları').'</h2><table class="widefat striped"><thead><tr><th>Tarih</th><th>Program / kapsam</th><th>Kaynak</th><th>Brüt</th><th>Komisyon</th><th>Net</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>';foreach($rows as$r){echo'<tr><td>'.esc_html(wp_date('d.m.Y',strtotime($r->income_date))).'</td><td>'.esc_html($corporate?$r->description:($names[(int)$r->event_id]??ucfirst($r->scope))).'</td><td><strong>'.esc_html($r->channel).'</strong><div class="mdgv5-sub">'.esc_html($r->category.' '.$r->source_ref).'</div></td><td>'.esc_html(self::money($r->gross_amount)).'</td><td>'.esc_html(self::money($r->commission_amount)).'</td><td><strong>'.esc_html(self::money($r->net_amount)).'</strong></td><td>'.('collected'===$r->collection_status?'Tahsil edildi':'Bekliyor').'</td><td>';self::delete_button('mdg_v5_delete_income','income_id',$r->id);echo'</td></tr>';}if(!$rows)echo'<tr><td colspan="8">Bu ay gelir kaydı yok.</td></tr>';echo'</tbody></table></div>';}
+
+    private static function render_expense($names,$provinces,$rows){echo'<div class="mdgv5-card"><h2>Manuel Gider Ekle</h2><form method="post" enctype="multipart/form-data" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mdg_v5_save_expense">';wp_nonce_field('mdg_v5_save_expense','mdg_v5_finance_nonce');echo'<div class="mdgv5-finance-form">';self::select('Kapsam *','scope',array('program'=>'Doğrudan program gideri','province'=>'İl ortak gideri','general'=>'Genel / tek seferlik','person'=>'Personel','vehicle'=>'Araç'),'program');self::select('Program','event_id',$names,'');self::select('İl','province',$provinces,'');self::input('İlgili kişi / araç','related_name','');self::select('Kategori *','category',array_combine(self::expense_categories(),self::expense_categories()),'');self::input('Açıklama','description','');self::input('Tutar (TL) *','amount','');self::input('Gider tarihi *','expense_date',wp_date('Y-m-d'),'date');self::select('Ödeme yöntemi','payment_method',array_combine(self::payment_methods(),self::payment_methods()),'');self::input('Firma / kişi','vendor','');self::input('Belge / fatura no','document_no','');self::file_note();echo'</div><p><button class="button button-primary">Gideri Kaydet</button></p></form></div><div class="mdgv5-card"><h2>Gider Kayıtları</h2><table class="widefat striped"><thead><tr><th>Tarih</th><th>Kapsam</th><th>Kategori</th><th>Açıklama</th><th>Tutar</th><th>İşlem</th></tr></thead><tbody>';foreach($rows as$r){echo'<tr><td>'.esc_html(wp_date('d.m.Y',strtotime($r->expense_date))).'</td><td>'.esc_html('program'===$r->scope?($names[(int)$r->event_id]??'Program'):ucfirst($r->scope)).'</td><td>'.esc_html($r->category).'</td><td>'.esc_html($r->description).'</td><td><strong>'.esc_html(self::money($r->amount)).'</strong></td><td>';self::delete_button('mdg_v5_delete_expense','expense_id',$r->id);echo'</td></tr>';}if(!$rows)echo'<tr><td colspan="6">Bu ay gider kaydı yok.</td></tr>';echo'</tbody></table></div>';}
+
+    private static function render_fixed($month,$rows,$detected,$count,$total,$share){echo'<div class="mdgv5-grid">';self::card(self::money($total),'Aylık sabit gider',count($rows).' kayıt');self::card($detected,'Sistemin bulduğu program','İptal/taslak hariç');self::card($count,'Dağıtımda kullanılan program','Elle düzeltilebilir');self::card(self::money($share),'Program başına maliyet','Aylık sabit gider ÷ program');echo'</div><div class="mdgv5-card"><h2>Program Sayısı</h2><form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="mdgv5-filter"><input type="hidden" name="action" value="mdg_v5_save_program_count"><input type="hidden" name="cost_month" value="'.esc_attr($month).'">';wp_nonce_field('mdg_v5_save_program_count','mdg_v5_finance_nonce');echo'<label><strong>Dağıtımda kullanılacak program sayısı</strong> <input type="number" min="0" name="program_count" value="'.esc_attr($count).'"></label><button class="button">Program Sayısını Kaydet</button><span class="mdgv5-sub">0 girilirse sistemin tespit ettiği sayı kullanılır.</span></form></div>';
+        echo'<div class="mdgv5-card"><h2>Aylık Sabit Gider Ekle</h2><div class="mdgv5-note">Ekip ücreti kişi sayısıyla çarpılmaz. SGK/vergi yalnız tabi kişi sayısıyla çarpılır.</div><form method="post" enctype="multipart/form-data" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mdg_v5_save_fixed_cost"><input type="hidden" name="cost_month" value="'.esc_attr($month).'">';wp_nonce_field('mdg_v5_save_fixed_cost','mdg_v5_finance_nonce');echo'<div class="mdgv5-finance-form">';self::select('Kayıt türü','cost_type',array('team'=>'Yabancı ekip','person'=>'Bireysel personel','operating'=>'Diğer sabit gider'),'operating');self::input('Personel / ekip / gider adı *','name','');self::input('Kişi sayısı','headcount','0','number');self::input('Ücret / gider tutarı *','pay_amount','');self::select('Para birimi','currency',array('TRY'=>'TL','USD'=>'USD','EUR'=>'EUR'),'TRY');self::input('Kur','fx_rate','1');self::select('Ücret biçimi','pay_basis',array('group'=>'Ekip / kayıt toplamı','person'=>'Kişi başı'),'group');self::input('SGK/vergiye tabi kişi','insured_count','0','number');self::input('Kişi başı SGK/vergi','tax_per_person','0');self::input('Belge / fatura no','document_no','');self::file_note();echo'</div><p><button class="button button-primary">Sabit Gideri Kaydet</button></p></form></div><div class="mdgv5-card"><h2>Sabit Gider Listesi</h2><table class="widefat striped"><thead><tr><th>Ad</th><th>Kişi</th><th>Ücret</th><th>Kur</th><th>Maaş/gider</th><th>SGK/vergi</th><th>Toplam</th><th>İşlem</th></tr></thead><tbody>';foreach($rows as$r){echo'<tr><td><strong>'.esc_html($r->name).'</strong><div class="mdgv5-sub">'.esc_html($r->cost_type.' / '.$r->pay_basis).'</div></td><td>'.absint($r->headcount).'</td><td>'.esc_html(number_format_i18n($r->pay_amount,2).' '.$r->currency).'</td><td>'.esc_html(number_format_i18n($r->fx_rate,2)).'</td><td>'.esc_html(self::money($r->salary_total)).'</td><td>'.esc_html(self::money($r->tax_total)).'</td><td><strong>'.esc_html(self::money($r->total_amount)).'</strong></td><td>';self::delete_button('mdg_v5_delete_fixed_cost','fixed_id',$r->id);echo'</td></tr>';}if(!$rows)echo'<tr><td colspan="8">Bu ay sabit gider kaydı yok.</td></tr>';echo'</tbody><tfoot><tr><th colspan="6">Aylık toplam</th><th>'.esc_html(self::money($total)).'</th><th></th></tr></tfoot></table></div>';}
+
+    private static function card($v,$t,$n){echo'<div class="mdgv5-card"><div class="mdgv5-kpi">'.esc_html($v).'</div><h3>'.esc_html($t).'</h3><p class="mdgv5-sub">'.esc_html($n).'</p></div>';}
+    private static function input($label,$name,$value,$type='text'){echo'<label><strong>'.esc_html($label).'</strong><input type="'.esc_attr($type).'" name="'.esc_attr($name).'" value="'.esc_attr($value).'"></label>';}
+    private static function select($label,$name,$options,$value){echo'<label><strong>'.esc_html($label).'</strong><select name="'.esc_attr($name).'"><option value="">Seçin</option>';foreach($options as$k=>$v)echo'<option value="'.esc_attr($k).'" '.selected((string)$value,(string)$k,false).'>'.esc_html($v).'</option>';echo'</select></label>';}
+    private static function file_note(){echo'<label><strong>Fatura / makbuz</strong><input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png,.webp"></label><label class="mdgv5-wide"><strong>Not</strong><textarea name="notes" rows="3"></textarea></label>';}
+    private static function delete_button($action,$field,$id){echo'<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" onsubmit="return confirm(\'Bu kayıt silinsin mi?\');"><input type="hidden" name="action" value="'.esc_attr($action).'"><input type="hidden" name="'.esc_attr($field).'" value="'.absint($id).'">';wp_nonce_field($action.'_'.absint($id),'mdg_v5_finance_nonce');echo'<button class="button-link-delete">Sil</button></form>';}
+}
