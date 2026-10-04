@@ -344,6 +344,12 @@ class MMC_Sales_Service {
         return (int)$wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_sales_ledger WHERE event_id=%d", absint($event_id) ) );
     }
 
+    /**
+     * Collected gross is the original mapped line amount for a recorded payment,
+     * before refunds. paid_at is captured from WC_Order::get_date_paid(); unlike
+     * is_paid(), it retains payment history after a full refund. Nominal values
+     * remain in the ledger and are exposed separately, never as collected sales.
+     */
     public static function summary( $event_id ) {
         global $wpdb;
         $ledger = $wpdb->prefix . 'mmc_sales_ledger';
@@ -351,7 +357,10 @@ class MMC_Sales_Service {
             "SELECT COUNT(DISTINCT external_order_id) orders_count,
                     COALESCE(SUM(net_quantity),0) ticket_count,
                     COALESCE(SUM(capacity_units),0) sold_capacity,
-                    COALESCE(SUM(gross_amount),0) gross_revenue,
+                    COALESCE(SUM(CASE WHEN paid_at IS NOT NULL
+                        AND order_status NOT IN ('failed','cancelled','pending','checkout-draft')
+                        THEN gross_amount ELSE 0 END),0) gross_revenue,
+                    COALESCE(SUM(gross_amount),0) nominal_order_value,
                     COALESCE(SUM(refunded_amount),0) refunded_amount,
                     COALESCE(SUM(net_amount),0) net_revenue
              FROM $ledger WHERE event_id=%d",
