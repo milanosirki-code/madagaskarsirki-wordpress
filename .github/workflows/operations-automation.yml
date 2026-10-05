@@ -8,14 +8,31 @@ permissions:
 jobs:
   operations-automation:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: operations_fixture
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring
+          extensions: mbstring, mysqli
           coverage: none
       - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php
       - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php
       - run: php tests/mmc-integrity/operations-readonly-121.php
       - run: php tests/operations/automation-v1.php
+      - run: php tests/operations/automation-v2.php
+      - name: Real SQL in ephemeral database only
+        run: php tests/operations/automation-v2-mysql.php
+        env:
+          OPS_FIXTURE_DB: operations_fixture

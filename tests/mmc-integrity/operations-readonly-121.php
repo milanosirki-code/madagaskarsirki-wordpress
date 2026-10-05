@@ -17,20 +17,20 @@ function sanitize_textarea_field($v){ return (string)$v; }
 function wp_json_encode($v,$flags=0){ return json_encode($v,$flags); }
 function current_time($type){ return '2026-10-04 22:00:00'; }
 function get_current_user_id(){ return 501; }
-function current_user_can($cap){ return true; }
+function current_user_can($cap){ return $GLOBALS['fixture_authorized']??true; }
 function add_action(...$args){ return true; }
 
 class MMC_Program_Service {
     public static function all_programs(){return array(self::get_program(77));}
     public static function get_program($id){
         if ((int)$id !== 77) return null;
-        return (object)[
+        return (object)array_merge([
             'id'=>77,
             'program_code'=>'ISSUE121',
             'province_name'=>'Synthetic',
             'district_name'=>'Fixture',
             'status'=>$GLOBALS['fixture_program_status']??'preparation',
-        ];
+        ],$GLOBALS['fixture_program_fields']??[]);
     }
     public static function add_log($program_id,$action,$entity_type,$entity_id,$old_value,$new_value,$note){
         $GLOBALS['wpdb']->record_external_write('wp_mmc_logs',[

@@ -5,7 +5,8 @@ set_error_handler(static function($severity,$message,$file,$line){throw new Erro
 function wp_timezone(){return new DateTimeZone('Europe/Istanbul');}
 class MMC_Event_Service {
     public static array $rows=[];
-    public static function event_for_program($id){return (object)['id'=>17];}
+    public static ?object $fixture_event=null;
+    public static function event_for_program($id){return self::$fixture_event??(object)['id'=>17];}
     public static function sessions($id){return self::$rows;}
 }
 class AutomationDB extends OpsDB {

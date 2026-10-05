@@ -180,3 +180,11 @@ Issue129 deployment checkpoint:
 - Upcoming 9 programs; aggregate 1 query / 5.46ms; admin 17–18 queries / 10.82–13.45ms. No PHP warning/fatal; health16/16 warning0 critical0; snippets125/45 code_error0; temporary117 original/passive.
 - Rollback not required; exact before files retained. Remaining phase2 decisions: dates, owners, notifications and legacy cancelled tasks. GitHub evidence OPERATIONS_V1_BEFORE/AFTER/DEPLOYMENT JSON and schema reports; Drive lifecycle report `1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc` plus source/evidence ZIP, canonical project state updated/read back.
 - Final Drive Operations archive: `1gWzrQovHHM9JyQF6eT0x-3T2gIUlY9HI`; lifecycle report `1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc`; canonical state `1cCipf_lqxDSfMQs-0MjVPogkrD5bIKNH`.
+
+
+## 2026-10-05 — Phase1 closure / Operations Phase2 (#152)
+- PR151 merged at `a7883d8e4643a884f26dd33c15451646041cee7e`; live Operations service/admin byte-exact MATCH main; Issue150 CLOSED/completed. Closure GitHub/Drive records read back.
+- Branch `codex/operations-task-automation-v2`, Issue152. Existing task schema preserved; no migration/backfill, external messages or finance task policy.
+- Baseline141 open/total, all unmarked/protected as manual, due0/owner0; program owners13/13 valid; current operations/show_day0.
+- Canonical-only deadline resolver, managed-value provenance/manual overrides, owner fallback, program-scoped POST apply with cap/nonce/lock/CAS; new task INSERT enrichment; one-query in-app cards/filters/my tasks; additive read-only AI fields.
+- 171 isolated assertions pass. Production deploy/CI/final archives pending; see OPERATIONS_TASK_AUTOMATION_V2.md.
