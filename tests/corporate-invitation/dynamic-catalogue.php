@@ -1,0 +1,118 @@
+<?php
+define('ABSPATH',__DIR__);
+$hooks=array(); $products=array(); $event_rows=array(); $session_rows=array(); $ticket_rows=array(); $registry=array(); $stock=array();
+function add_shortcode($k,$v){global $hooks;$hooks['shortcode'][]=$k;}
+function add_filter($k,$v){global $hooks;$hooks['filter'][]=$k;}
+function add_action($k,$v){global $hooks;$hooks['action'][]=$k;}
+function get_option($k,$default){global $registry;return $registry;}
+function current_time($f,$utc=false){return $f==='Y-m-d'?'2026-10-05':'2026-10-05 07:40:00';}
+function wc_get_product($id){global $products;return $products[$id]??null;}
+function get_post(){return (object)array('post_content'=>'[mdg_corporate_campaigns]');}
+function post_password_required($p){return false;}
+function wp_verify_nonce($n,$action){return $n==='valid';}
+function sanitize_text_field($s){return strip_tags($s);}
+function wp_unslash($s){return $s;}
+function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES,'UTF-8');}
+function esc_attr($s){return esc_html($s);}
+function esc_url($s){return esc_html($s);}
+function wp_kses_post($s){return $s;}
+function get_permalink($p){return 'https://example.test/campaign/';}
+function wp_nonce_field($a,$n,$r=false){echo '<input name="'.$n.'" value="valid">';}
+function number_format_i18n($n,$d){return number_format($n,$d);}
+function wc_price($p){return number_format($p,2).' TL';}
+class MDG_Public_Tickets{static function active_events(){global $event_rows;return $event_rows;}}
+class MDG_Sessions {
+ static function by_event($id){global $session_rows;return $session_rows[$id]??array();}
+ static function ticket_types_by_session($id){global $ticket_rows;return $ticket_rows[$id]??array();}
+ static function local_parts($s){$d=new DateTimeImmutable($s,new DateTimeZone('UTC'));$d=$d->setTimezone(new DateTimeZone('Europe/Istanbul'));return array($d->format('Y-m-d'),$d->format('H:i'));}
+}
+class MDG_Capacity{static function available($id){global $stock;return $stock[$id]??100;}}
+class Product {
+ public $status='publish';public $parent=0;public $meta=array();public $price='500';public $stock=true;
+ function get_status(){return $this->status;}
+ function get_parent_id(){return $this->parent;}
+ function is_type($t){return $this->parent? $t==='variation':$t==='variable';}
+ function is_in_stock(){return $this->stock;}
+ function is_purchasable(){return true;}
+ function get_meta($k){return $this->meta[$k]??'';}
+ function get_price(){return $this->price;}
+}
+function event_fixture($id,$city,$time,$adult=500,$english=false){
+ global $event_rows,$session_rows,$ticket_rows,$products;
+ $event_rows[]=(object)array('id'=>$id,'province_name'=>$city,'district'=>'Merkez','status'=>'onsale','title'=>$city.' gösterisi '.$id,'venue_name'=>'Salon '.$id);
+ $s=$id*10;$p=$id*100;
+ $session_rows[$id]=array((object)array('id'=>$s,'event_id'=>$id,'status'=>'onsale','start_at'=>$time,'wc_product_id'=>$p));
+ $products[$p]=new Product();$ticket_rows[$s]=array();
+ foreach(array('child','adult') as $i=>$role){
+  $v=new Product();$v->parent=$p;$v->price=$role==='adult'?(string)$adult:'250';$v->meta=array('_mdg_event_id'=>$id,'_mdg_session_id'=>$s);$products[$p+$i+1]=$v;
+  $ticket_rows[$s][]=(object)array('code'=>$english?strtoupper($role):($role==='adult'?'YETISKIN':'COCUK'),'wc_variation_id'=>$p+$i+1,'is_active'=>1,'capacity_units'=>1);
+ }
+}
+require __DIR__.'/../../docs/code-snippets/mdg-corporate-campaigns.php';
+$c='MDG_Corporate_Campaigns_20261005';$count=0;
+function check($pass,$name){global $count;if(!$pass)throw new Exception($name);$count++;echo "PASS $name\n";}
+check($hooks===array('shortcode'=>array($c::SHORTCODE),'filter'=>array('wp_robots'),'action'=>array('template_redirect','admin_menu','admin_post_mdg_corporate_campaign_save','admin_post_mdg_corporate_campaign_toggle')),'no payment scanner cart hooks');
+foreach(array('TEST-DENIZLI','test-denizli','TeSt-DeNiZlI','TEST-DENİZLİ','test-denızlı',' TEST Denizli ','TEST_DENIZLI') as $code)check($c::normalize($code)==='test-denizli','case/Turkish/separator normalization '.$code);
+check($c::normalize('TEST-İZMİR')==='test-izmir','Turkish uppercase dotted I');
+check($c::normalize('test-us\'ak')==='','invalid punctuation rejected');
+check($c::normalize(array('bad'))==='','array code rejected');
+event_fixture(12,'Denizli','2026-10-08 14:30:00');
+event_fixture(10,'İzmir','2026-11-08 09:00:00',600);
+event_fixture(23,'Manisa','2026-10-18 09:00:00',500,true);
+$campaign=$c::resolve('test-denizli',$event_rows,array(),'2026-10-05');
+$cat=$c::catalogue($campaign,$event_rows);
+check(array_keys($cat)===array(12),'code reveals only its city');
+check($cat[12]['sessions'][120]['time']==='17:30','UTC converted to Turkey session time');
+$custom=array('kurum-denizli'=>array('province'=>'Denizli','name'=>'Kurum','active'=>true,'end_date'=>''));
+check($c::resolve('KURUM-DENİZLİ',$event_rows,$custom,'2026-10-05')['name']==='Kurum','custom code normalized');
+event_fixture(30,'Denizli','2026-10-22 14:30:00');
+$cat=$c::catalogue($campaign,$c::source_events());
+check(array_keys($cat)===array(12,30),'new same-city event automatically appears without code edit');
+$event_rows[3]->status='cancelled';
+check(!isset($c::catalogue($campaign,$event_rows)[30]),'cancelled event immediately hidden');
+$event_rows[3]->status='onsale';
+$session_rows[30][0]->start_at='2026-10-01 09:00:00';
+check(!isset($c::catalogue($campaign,$event_rows)[30]),'past session immediately hidden');
+$session_rows[30][0]->start_at='2026-10-22 14:30:00';
+$session_rows[30][0]->status='closed';
+check(!isset($c::catalogue($campaign,$event_rows)[30]),'closed session hidden');
+$session_rows[30][0]->status='onsale';
+$stock[300]=0;
+check(!isset($c::catalogue($campaign,$event_rows)[30]),'sold out shared capacity hidden');
+$stock[300]=100;
+$products[1202]->meta['_mdg_session_id']=99;
+check(!isset($c::catalogue($campaign,$event_rows)[12]),'bad mapping fails closed');
+$products[1202]->meta['_mdg_session_id']=120;
+$cat=$c::catalogue($campaign,$event_rows);
+check($c::quote($cat,'120','1','2')['total']===500.0,'one adult plus two children');
+check(isset($c::quote($cat,'120','1','3')['error']),'excess child blocked');
+check(isset($c::quote($cat,'100','1','2')['error']),'cross-city session tampering blocked');
+check(isset($c::quote($cat,'120','0','2')['error']),'child-only blocked');
+check(isset($c::quote($cat,'120','-1','2')['error']),'negative adults blocked');
+check(isset($c::quote($cat,'120','1.5','2')['error']),'decimal adults blocked');
+$stock[120]=2;
+$cat=$c::catalogue($campaign,$event_rows);
+check(isset($c::quote($cat,'120','1','2')['error']),'insufficient shared capacity blocked');
+$stock[120]=100;
+$izmir=$c::resolve('TEST-İZMİR',$event_rows,array(),'2026-10-05');
+check($c::quote($c::catalogue($izmir,$event_rows),'100','2','4')['total']===1200.0,'Izmir-specific current adult price');
+$manisa=$c::resolve('TEST-MANİSA',$event_rows,array(),'2026-10-05');
+check(isset($c::catalogue($manisa,$event_rows)[23]),'English ADULT/CHILD supported');
+$custom['kurum-denizli']['active']=false;
+check(null===$c::resolve('kurum-denizli',$event_rows,$custom,'2026-10-05'),'disabled code rejected');
+$custom['kurum-denizli']['active']=true;$custom['kurum-denizli']['end_date']='2026-10-04';
+check(null===$c::resolve('kurum-denizli',$event_rows,$custom,'2026-10-05'),'expired code rejected');
+$custom['kurum-denizli']['end_date']='2026-10-05';
+check(null!==$c::resolve('kurum-denizli',$event_rows,$custom,'2026-10-05'),'expiry inclusive final day');
+check(null===$c::resolve('random',$event_rows,array(),'2026-10-05'),'unknown code rejected');
+$_GET=array();$_POST=array();$_SERVER['REQUEST_METHOD']='GET';
+$h=$c::render();
+check(strpos($h,'data-event-id')===false && strpos($h,'mdg_campaign_code')!==false,'landing reveals no events before code');
+$_GET=array('kod'=>'test-izmir');$h=$c::render();
+check(strpos($h,'data-event-id="10"')!==false && strpos($h,'data-event-id="12"')===false,'code-prefilled link only selected city');
+$_GET=array();$_POST=array('mdg_campaign_action'=>'open','mdg_campaign_code'=>'TEST-DENIZLI','mdg_campaign_nonce'=>'invalid');$_SERVER['REQUEST_METHOD']='POST';
+$h=$c::render();
+check(strpos($h,'Sayfanın süresi doldu')!==false && strpos($h,'data-event-id')===false,'invalid nonce does not open catalogue');
+$_POST['mdg_campaign_nonce']='valid';$h=$c::render();
+check(strpos($h,'data-event-id="12"')!==false && strpos($h,'data-event-id="10"')===false,'valid POST opens correct city');
+echo "All $count dynamic catalogue checks passed.\n";
