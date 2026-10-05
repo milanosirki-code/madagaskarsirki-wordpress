@@ -142,6 +142,16 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             return array('error'=>'Seçilen seans kampanyanıza ait değil veya artık satışa açık değil.');
         }
 
+        public static function event_intro($event) {
+            $short=trim((string)($event->short_description??''));
+            $long=trim((string)($event->long_description??''));
+            return array(
+                'hero'=>max(0,(int)($event->hero_attachment_id??0)),
+                'short'=>$short,
+                'about'=>$long!==''?wp_trim_words(wp_strip_all_tags(strip_shortcodes($long)),65,'…'):'Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.'
+            );
+        }
+
         private static function input( $source, $key ) {
             $v = $source[$key] ?? '';
             return is_string($v) ? sanitize_text_field(wp_unslash($v)) : '';
@@ -170,7 +180,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             ob_start(); ?>
             <section class="mdg-campaigns" aria-label="Kurumsal kampanyalar">
             <style>
-            .mdg-campaigns{max-width:900px;margin:24px auto;color:#29221c;font-family:inherit}.mdg-campaigns *{box-sizing:border-box}.mdg-campaigns .mc-intro,.mdg-campaigns .mc-card{padding:clamp(20px,4vw,36px);border:1px solid #e3d2b9;border-radius:16px;background:#fff8ed;margin-bottom:22px}.mdg-campaigns h2{font-size:clamp(26px,5vw,42px);line-height:1.15;margin:8px 0 18px}.mdg-campaigns h3{margin:0 0 12px;color:#8e291e}.mdg-campaigns p{line-height:1.6}.mdg-campaigns .mc-kicker{font-weight:700;color:#9b3027;letter-spacing:.07em}.mdg-campaigns label{display:block;font-weight:600}.mdg-campaigns input,.mdg-campaigns select{display:block;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #9a8870;border-radius:6px;background:#fff;color:#29221c;font:inherit;min-height:48px}.mdg-campaigns button{padding:14px 22px;border:0;border-radius:6px;background:#a93428;color:#fff;font:inherit;font-weight:700;cursor:pointer}.mdg-campaigns .mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.mdg-campaigns .mc-error{color:#96251c;font-weight:600}.mdg-campaigns .mc-result{border-top:2px solid #d6b979;padding-top:16px}.mdg-campaigns :focus-visible{outline:3px solid #987023;outline-offset:3px}@media(max-width:540px){.mdg-campaigns .mc-grid{grid-template-columns:1fr}}
+            .mdg-campaigns{max-width:900px;margin:24px auto;color:#29221c;font-family:inherit}.mdg-campaigns *{box-sizing:border-box}.mdg-campaigns .mc-intro,.mdg-campaigns .mc-card{padding:clamp(20px,4vw,36px);border:1px solid #e3d2b9;border-radius:16px;background:#fff8ed;margin-bottom:22px}.mdg-campaigns h2{font-size:clamp(26px,5vw,42px);line-height:1.15;margin:8px 0 18px}.mdg-campaigns .mc-poster{margin:0 auto 24px;max-width:560px}.mdg-campaigns .mc-poster-image{display:block;width:100%;height:auto;border-radius:10px}.mdg-campaigns .mc-about{padding:16px;background:#fff;border-radius:10px;margin-bottom:20px}.mdg-campaigns .mc-about h4{margin:0 0 8px;font-size:1.1em}.mdg-campaigns h3{margin:0 0 12px;color:#8e291e}.mdg-campaigns p{line-height:1.6}.mdg-campaigns .mc-kicker{font-weight:700;color:#9b3027;letter-spacing:.07em}.mdg-campaigns label{display:block;font-weight:600}.mdg-campaigns input,.mdg-campaigns select{display:block;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #9a8870;border-radius:6px;background:#fff;color:#29221c;font:inherit;min-height:48px}.mdg-campaigns button{padding:14px 22px;border:0;border-radius:6px;background:#a93428;color:#fff;font:inherit;font-weight:700;cursor:pointer}.mdg-campaigns .mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.mdg-campaigns .mc-error{color:#96251c;font-weight:600}.mdg-campaigns .mc-result{border-top:2px solid #d6b979;padding-top:16px}.mdg-campaigns :focus-visible{outline:3px solid #987023;outline-offset:3px}@media(max-width:540px){.mdg-campaigns .mc-grid{grid-template-columns:1fr}}
             </style>
             <div class="mc-intro">
                 <p class="mc-kicker">MADAGASKAR SİRKİ · KURUMSAL KAMPANYALAR</p>
@@ -191,7 +201,12 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 <?php if(!$catalogue): ?><p class="mc-card">Bu kod için şu anda satışa açık uygun seans bulunmuyor. Yeni gösteriler satışa açıldığında burada otomatik görünecek.</p><?php endif; ?>
                 <?php foreach($catalogue as $row): $event=$row['event']; ?>
                 <article class="mc-card" data-event-id="<?php echo esc_attr($event->id); ?>">
+                    <?php $intro=self::event_intro($event); if($intro['hero']): ?>
+                    <figure class="mc-poster"><?php echo wp_get_attachment_image($intro['hero'],'large',false,array('class'=>'mc-poster-image','loading'=>'lazy','alt'=>(string)$event->title.' gösteri afişi')); ?></figure>
+                    <?php endif; ?>
                     <h3><?php echo esc_html($event->title); ?></h3>
+                    <?php if($intro['short']!==''): ?><p class="mc-event-intro"><?php echo esc_html($intro['short']); ?></p><?php endif; ?>
+                    <div class="mc-about"><h4>Gösteride sizi neler bekliyor?</h4><p><?php echo esc_html($intro['about']); ?></p></div>
                     <p><strong><?php echo esc_html($event->venue_name); ?></strong><br><?php echo esc_html($event->province_name.' / '.$event->district); ?></p>
                     <?php $first=reset($row['sessions']); $adult_price=$first['types']['adult']; if($adult_price['price']<$adult_price['regular_price']): ?>
                     <p><strong>Kurum kampanyası yetişkin bileti:</strong> <del><?php echo wp_kses_post(wc_price($adult_price['regular_price'])); ?></del> <strong><?php echo wp_kses_post(wc_price($adult_price['price'])); ?></strong>. Ücretsiz çocuk hakları devam eder.</p>
