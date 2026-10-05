@@ -486,6 +486,13 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
         }
 
         public static function no_cache() {
+            $path=trim((string)wp_parse_url($_SERVER['REQUEST_URI']??'',PHP_URL_PATH),'/');
+            if('kurumsal-davetiye-pilot'===$path){
+                $target=get_permalink(4520);
+                $code=self::input($_GET,'kod');
+                if($code!==''){$target=add_query_arg('kod',$code,$target);}
+                wp_safe_redirect($target,'POST'===($_SERVER['REQUEST_METHOD']??'')?307:301);exit;
+            }
             $p=get_post();
             if(is_singular('page') && $p && has_shortcode($p->post_content,self::SHORTCODE)) {
                 if(!defined('DONOTCACHEPAGE')){define('DONOTCACHEPAGE',true);}
