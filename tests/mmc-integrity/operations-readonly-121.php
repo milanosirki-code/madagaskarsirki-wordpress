@@ -21,6 +21,7 @@ function current_user_can($cap){ return true; }
 function add_action(...$args){ return true; }
 
 class MMC_Program_Service {
+    public static function all_programs(){return array(self::get_program(77));}
     public static function get_program($id){
         if ((int)$id !== 77) return null;
         return (object)[
@@ -28,7 +29,7 @@ class MMC_Program_Service {
             'program_code'=>'ISSUE121',
             'province_name'=>'Synthetic',
             'district_name'=>'Fixture',
-            'status'=>'preparation',
+            'status'=>$GLOBALS['fixture_program_status']??'preparation',
         ];
     }
     public static function add_log($program_id,$action,$entity_type,$entity_id,$old_value,$new_value,$note){
@@ -41,7 +42,12 @@ class MMC_Program_Service {
         ]);
         return true;
     }
-    public static function set_status(...$args){ throw new RuntimeException('UNEXPECTED_PROGRAM_STATUS_WRITE'); }
+    public static function set_status(...$args){
+        if(empty($GLOBALS['allow_fixture_status'])){throw new RuntimeException('UNEXPECTED_PROGRAM_STATUS_WRITE');}
+        $GLOBALS['fixture_program_status']=$args[1];
+        self::add_log($args[0],'program_status_changed','program',$args[0],null,$args[1],$args[2]??'');
+        return true;
+    }
 }
 
 class OpsDB {
@@ -116,6 +122,7 @@ class OpsDB {
 
     public function get_var($q){
         [$sql,$args]=$this->unpack($q);
+        if (str_contains($sql,'GET_LOCK') || str_contains($sql,'RELEASE_LOCK')) return 1;
         if (str_contains($sql,'mmc_operation_checklist') && str_contains($sql,'SELECT id')) {
             $key=$args[1]??null;
             foreach ($this->checklist as $row) if ($row->item_key===$key) return $row->id;

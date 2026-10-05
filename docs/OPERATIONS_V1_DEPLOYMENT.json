@@ -1,0 +1,95 @@
+{
+  "tested_commit": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+  "pr": 151,
+  "issue": 150,
+  "branch": "codex/operations-task-automation-v1",
+  "deployment": {
+    "deployed": true,
+    "hashes": {
+      "includes/class-mmc-operations-service.php": "bf266cacdcc5a5aa29aad87f64dd9c08dba57a202e93f9cde72cea98b7d0b07d",
+      "includes/class-mmc-operations-admin.php": "5f0d544afac7047d686c83f7205d888cbbfe18b6c48c0cee86316fb5eeedafd7"
+    },
+    "backups": {
+      "includes/class-mmc-operations-service.php": "mmc-ops150-original-dro0d4kv9bghfnIU3qo",
+      "includes/class-mmc-operations-admin.php": "mmc-ops150-original-nedq38tg33egdmQsAmb"
+    },
+    "db_version": "1.3.7",
+    "migration_triggered": false
+  },
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 125,
+    "active": 45,
+    "code_error": 0
+  },
+  "domain_tables_unchanged": true,
+  "get_domain_write": 0,
+  "php_warning": 0,
+  "php_fatal": 0,
+  "tests": 88,
+  "ci": [
+    {
+      "id": 37336177364,
+      "name": "MMC live reconciliation checks",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177493,
+      "name": "Madagaskar Plugins CI",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177396,
+      "name": "Operations automation contract",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177422,
+      "name": "Production Source Archive",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177397,
+      "name": "Raffle replacement contract",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177331,
+      "name": "Read-only integrity contract",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177349,
+      "name": "Kommo source HTTP contract",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37336177456,
+      "name": "Changed PHP Syntax",
+      "head_sha": "4345bf351c2f0a7a014fb09c344c52ef08f6e494",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "rollback": "Not required; exact before service/admin files backed up; restore both files with target-hash guard; DB rollback unnecessary",
+  "drive_report_id": "1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc"
+}

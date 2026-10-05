@@ -164,3 +164,19 @@ Issue129 deployment checkpoint:
 - Historical source archive preserved byte-exact; manifest archived path now uses capture rather than mutable production source. CI archive hash contract retained.
 - GitHub docs/RAFFLE_REPORTING_DASHBOARD.md and docs/RAFFLE_REPORTING_DEPLOYMENT_EVIDENCE.json; Drive report1CNEDc-_3LC5WnPWdz5fL5YToXwref_rP and source/evidence ZIP archived. No sensitive participant/comment/token values in evidence.
 - PR149 pending final review/merge. Browser visual test unavailable; actual WordPress renderer tested. Issue82 OPEN/PARKED; no Kommo browser/source activity. Next Operations/task automation.
+
+
+## 2026-10-05 — PR #149 closure / Operations Phase 1 (#150)
+- PR #149 merged `19825eb1f1fc0029c37065532c4104a6c11f1613`; live raffle MATCH; Issue #148 CLOSED/completed. Drive closure record verified.
+- Issue #150, branch `codex/operations-task-automation-v1`: existing schemas/service/admin preserved; 13 plans, 559 checks, 33 schedules, 141 open tasks; nine future programs.
+- 13 high-level templates gated operations/show_day; earlier phases keep planning task. Stable keys + locks, no dates/personnel/backfill.
+- Read-only readiness/upcoming view, manual schedule preservation, lodging rules, cancelled guard; Issue #121 contracts retained.
+- 88 assertions pass; deployment/PR/CI/final archives pending. See OPERATIONS_TASK_AUTOMATION_V1.md.
+
+### Operations #150 — production verification
+- PR #151, production source `4345bf351c2f0a7a014fb09c344c52ef08f6e494`; CI 8/8 GREEN; 88 synthetic assertions. Only service/admin includes deployed/read back MATCH. Main remains `19825eb1f1fc0029c37065532c4104a6c11f1613` until Operations PR review/merge; do not claim Operations LIVE↔MAIN match yet.
+- 18 domain table snapshots unchanged across deployment/guarded GET. Counts 13 programs/plans, 141 open tasks, 559 checks, 33 schedules; all 13 current-stage backfill preview create counts 0. No backfill, real program write, owner/deadline assignment or messages.
+- Three Operations abilities: future/historical/cancelled and safe SELECT-only missing-plan fixture pass, domain writes 0; Issue #121 semantics preserved.
+- Upcoming 9 programs; aggregate 1 query / 5.46ms; admin 17–18 queries / 10.82–13.45ms. No PHP warning/fatal; health16/16 warning0 critical0; snippets125/45 code_error0; temporary117 original/passive.
+- Rollback not required; exact before files retained. Remaining phase2 decisions: dates, owners, notifications and legacy cancelled tasks. GitHub evidence OPERATIONS_V1_BEFORE/AFTER/DEPLOYMENT JSON and schema reports; Drive lifecycle report `1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc` plus source/evidence ZIP, canonical project state updated/read back.
+- Final Drive Operations archive: `1gWzrQovHHM9JyQF6eT0x-3T2gIUlY9HI`; lifecycle report `1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc`; canonical state `1cCipf_lqxDSfMQs-0MjVPogkrD5bIKNH`.

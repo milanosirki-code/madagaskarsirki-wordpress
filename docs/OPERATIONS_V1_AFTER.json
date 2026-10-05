@@ -1,0 +1,961 @@
+{
+  "files": {
+    "service": {
+      "sha256": "bf266cacdcc5a5aa29aad87f64dd9c08dba57a202e93f9cde72cea98b7d0b07d"
+    },
+    "admin": {
+      "sha256": "5f0d544afac7047d686c83f7205d888cbbfe18b6c48c0cee86316fb5eeedafd7"
+    }
+  },
+  "db_version": "1.3.7",
+  "plugin_db_version": "1.3.7",
+  "before": {
+    "mmc_programs": {
+      "count": 13,
+      "sha256": "2123eaf3eb07842d598cb6129ae5272e5c4201f53ecae9de8c80f768146b0b18"
+    },
+    "mmc_operation_plans": {
+      "count": 13,
+      "sha256": "602892998d3af2f8268b567d9d859fc298d09248ab266ee6180ea009aaf2369e"
+    },
+    "mmc_operation_checklist": {
+      "count": 559,
+      "sha256": "579d02a8d160e435df1337fdcb69a6cabbf9769ef01ff6a5da3dfe3a808d25b6"
+    },
+    "mmc_operation_schedule": {
+      "count": 33,
+      "sha256": "c1e4377c4525aa85ede740dcc059c78fa73d7b1e5426a612d29b37687bac9dc6"
+    },
+    "mmc_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_program_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_tasks": {
+      "count": 141,
+      "sha256": "c74fe1382c31e6c2335e2c260d283f214d2b92261b53f5525c80eb283b1fd16e"
+    },
+    "mmc_logs": {
+      "count": 622,
+      "sha256": "502a41d417ba862fe76b3e80ab8dab87dd0c3b9bcab19cb9711178e06c3af7d8"
+    },
+    "mmc_events": {
+      "count": 13,
+      "sha256": "fde6bc66444fb8996bca251dfd319c8eadc1ea80338309e12e55b45ecec44ecc"
+    },
+    "mmc_sessions": {
+      "count": 33,
+      "sha256": "d429c50d6df51b66f65fa79586c7401b0fbe309f79e8afebf9711c3dd4522527"
+    },
+    "mmc_program_venues": {
+      "count": 13,
+      "sha256": "ab8c6eee43585dadd00af7365cfecc7c495896dd1e73e02eb6a48fdbd5f5ca2d"
+    },
+    "mmc_venues": {
+      "count": 188,
+      "sha256": "e772e2699c7793087551a0e41cde531a0646084ce2c25dcc6371b1c371ff07e7"
+    },
+    "mmc_finance_entries": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_kommo_profiles": {
+      "count": 13,
+      "sha256": "6c429d59c4274eba5f0a790e1caca06eca46d0fdb239ce90437475b6894d5ec4"
+    },
+    "mck_campaigns": {
+      "count": 7,
+      "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+    },
+    "mck_comments": {
+      "count": 2590,
+      "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+    },
+    "mck_draws": {
+      "count": 14,
+      "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+    },
+    "mck_redraw_audit": {
+      "count": 1,
+      "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+    }
+  },
+  "overview": [
+    {
+      "id": "10",
+      "program_code": "PRG-2026-DEN-PAMUKK-001",
+      "province_name": "Denizli",
+      "district_name": "Pamukkale",
+      "program_status": "sales_open",
+      "program_date": "2026-10-08",
+      "event_id": "10",
+      "venue_id": "134",
+      "venue_name": "Vali Muzaffer Ecemiş Spor Salonu",
+      "plan_id": "10",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-08 17:30:00",
+      "next_session": "2026-10-08 17:30:00",
+      "session_count": "2",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "9",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "11",
+      "program_code": "PRG-2026-ANK-MAMAK-001",
+      "province_name": "Ankara",
+      "district_name": "Mamak",
+      "program_status": "sales_open",
+      "program_date": "2026-10-10",
+      "event_id": "11",
+      "venue_id": "191",
+      "venue_name": null,
+      "plan_id": "11",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-10 12:00:00",
+      "next_session": "2026-10-10 12:00:00",
+      "session_count": "4",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "9",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "12",
+      "program_code": "PRG-2026-ESK-ODUNPA-001",
+      "province_name": "Eskişehir",
+      "district_name": "Odunpazarı",
+      "program_status": "sales_open",
+      "program_date": "2026-10-11",
+      "event_id": "12",
+      "venue_id": "50",
+      "venue_name": "Ahlat Kapalı Spor Salonu",
+      "plan_id": "12",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-11 12:00:00",
+      "next_session": "2026-10-11 12:00:00",
+      "session_count": "3",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "9",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "4",
+      "program_code": "PRG-2026-USA-MERKEZ-001",
+      "province_name": "Uşak",
+      "district_name": "Merkez",
+      "program_status": "sales_open",
+      "program_date": "2026-10-15",
+      "event_id": "4",
+      "venue_id": "195",
+      "venue_name": null,
+      "plan_id": "4",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-15 17:30:00",
+      "next_session": "2026-10-15 17:30:00",
+      "session_count": "2",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "12",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "1",
+      "program_code": "PRG-2026-AYD-EFELER-001",
+      "province_name": "Aydın",
+      "district_name": "Efeler",
+      "program_status": "venue_confirmed",
+      "program_date": "2026-10-16",
+      "event_id": "1",
+      "venue_id": "1",
+      "venue_name": "Mimar Sinan Kapalı Spor Salonu",
+      "plan_id": "1",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-16 12:00:00",
+      "next_session": "2026-10-16 12:00:00",
+      "session_count": "1",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "13",
+      "overdue_tasks": "0",
+      "high_tasks": "9",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "6",
+      "program_code": "PRG-2026-AYD-DIDIM-001",
+      "province_name": "Aydın",
+      "district_name": "Didim",
+      "program_status": "sales_prep",
+      "program_date": "2026-10-16",
+      "event_id": "6",
+      "venue_id": "118",
+      "venue_name": "Çumra Spor Salonu",
+      "plan_id": "6",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-16 17:30:00",
+      "next_session": "2026-10-16 17:30:00",
+      "session_count": "2",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "12",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "5",
+      "program_code": "PRG-2026-AYD-EFELER-002",
+      "province_name": "Aydın",
+      "district_name": "Efeler",
+      "program_status": "sales_prep",
+      "program_date": "2026-10-17",
+      "event_id": "5",
+      "venue_id": "192",
+      "venue_name": null,
+      "plan_id": "5",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-17 12:00:00",
+      "next_session": "2026-10-17 12:00:00",
+      "session_count": "3",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "12",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "7",
+      "program_code": "PRG-2026-MAN-SEHZAD-001",
+      "province_name": "Manisa",
+      "district_name": "Şehzadeler",
+      "program_status": "sales_prep",
+      "program_date": "2026-10-18",
+      "event_id": "7",
+      "venue_id": "161",
+      "venue_name": "Muhsin Yazıcıoğlu Kültür Merkezi",
+      "plan_id": "7",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-10-18 12:00:00",
+      "next_session": "2026-10-18 12:00:00",
+      "session_count": "3",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "12",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    },
+    {
+      "id": "13",
+      "program_code": "PRG-2026-IZM-KONAK-001",
+      "province_name": "İzmir",
+      "district_name": "Konak",
+      "program_status": "sales_open",
+      "program_date": "2026-11-08",
+      "event_id": "13",
+      "venue_id": "187",
+      "venue_name": "2500 Kişilik Kapalı Spor Salonu",
+      "plan_id": "13",
+      "plan_status": "draft",
+      "operation_mode": "undecided",
+      "accommodation_required": "0",
+      "lodging_name": "",
+      "doors_open_at": null,
+      "first_session": "2026-11-08 12:00:00",
+      "next_session": "2026-11-08 12:00:00",
+      "session_count": "3",
+      "template_check_count": "43",
+      "check_total": "43",
+      "check_done": "0",
+      "problems": "0",
+      "required_total": "21",
+      "required_done": "0",
+      "required_pending": "36",
+      "lodging_required": "0",
+      "vehicles_required": "1",
+      "artists_required": "1",
+      "people_required": "1",
+      "equipment_required": "1",
+      "vehicles": "0",
+      "artists": "0",
+      "people": "0",
+      "equipment": "0",
+      "open_tasks": "9",
+      "overdue_tasks": "0",
+      "high_tasks": "8",
+      "operation_tasks": "1",
+      "readiness_percent": 0,
+      "critical_missing": [
+        "Zorunlu kontroller tamamlanmadı",
+        "Araç ataması yok",
+        "Sanatçı ataması yok",
+        "Personel ataması yok",
+        "Ekipman ataması yok",
+        "Açık yüksek öncelikli görev var"
+      ],
+      "next_action": "Zorunlu kontroller tamamlanmadı",
+      "show_day": false
+    }
+  ],
+  "overview_queries": 1,
+  "overview_ms": 5.46,
+  "preview": [
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 3,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 2,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 8,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 9,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 10,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 11,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 12,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 4,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 1,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 6,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 5,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 7,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    },
+    {
+      "would_create": {
+        "plan": 0,
+        "checklist": 0,
+        "tasks": 0
+      },
+      "would_update": "Canonical schedule changes require explicit sync; preview does not run sync or edit manual state",
+      "program_id": 13,
+      "plan_exists": true,
+      "task_exists": true,
+      "checklist_count": 43,
+      "would_create_plan": false,
+      "would_review_tasks": false,
+      "would_review_checklist": false,
+      "would_leave_unchanged": true,
+      "policy": "PREVIEW_ONLY; no dates, owners or domain state changed"
+    }
+  ],
+  "counts": {
+    "programs": 13,
+    "plans": 13,
+    "open_tasks": 141,
+    "checklist": 559,
+    "schedule": 33
+  },
+  "abilities": {
+    "2": {
+      "operations-plan-get": {
+        "success": true,
+        "sha256": "27061ca98d28e0e3c6bba7cefe65cc7c15420a1546cffba86d54ea6e222121c7",
+        "error": null
+      },
+      "operations-summary": {
+        "success": true,
+        "sha256": "740322b86dfe2d83359408b74dd2db742e9b3ffb07b5a9d9c44b88842e810dc9",
+        "error": null
+      },
+      "operations-checklist-list": {
+        "success": true,
+        "sha256": "8480d6c07ff8d8f5640627803b7be9a3ea1d92f6b671f28abc7f5354b5397b21",
+        "error": null
+      }
+    },
+    "9": {
+      "operations-plan-get": {
+        "success": true,
+        "sha256": "de9ed48b22665a5ce85edbc3cdefa18f32d2414e0d6adef31ece99c0bb516bae",
+        "error": null
+      },
+      "operations-summary": {
+        "success": true,
+        "sha256": "ed7e9dcf4bb0990d22e59c7c6cbc4ed2283154e80f6fd00b8d5b2abb3a9d6288",
+        "error": null
+      },
+      "operations-checklist-list": {
+        "success": true,
+        "sha256": "ff0f0d569c780e03a2b348d2f05cb3a30772eb948460b6f3c7d1d5354e2478a5",
+        "error": null
+      }
+    },
+    "10": {
+      "operations-plan-get": {
+        "success": true,
+        "sha256": "aa8526c7f46381dbbb1dcc169f9efaa3ba7dd2135f5025fd880a7840ced49a2e",
+        "error": null
+      },
+      "operations-summary": {
+        "success": true,
+        "sha256": "2528877452529fc51c62649765b303523c19ef2d9dcf0b233f56cf411c2a84b7",
+        "error": null
+      },
+      "operations-checklist-list": {
+        "success": true,
+        "sha256": "c3241beba55dad52fe4c6a29f5ab5cb72c6a220726602c940206ddd43c4a410e",
+        "error": null
+      }
+    }
+  },
+  "renders": {
+    "upcoming": {
+      "bytes": 44039,
+      "sha256": "2a8d98c201c37122c0f29ff8f3c916ca4855400879eff28add637dda57ce8a1c",
+      "queries": 17,
+      "ms": 12.35,
+      "dashboard": true,
+      "archive": false
+    },
+    "program_10": {
+      "bytes": 44039,
+      "sha256": "2a8d98c201c37122c0f29ff8f3c916ca4855400879eff28add637dda57ce8a1c",
+      "queries": 17,
+      "ms": 12.54,
+      "dashboard": true,
+      "archive": false
+    },
+    "program_9": {
+      "bytes": 48524,
+      "sha256": "edbcf04e7d44e23a1fc47c6ae0c7f5682881776e0f7a949a2ca7292902f6c82f",
+      "queries": 18,
+      "ms": 13.45,
+      "dashboard": false,
+      "archive": true
+    },
+    "program_2": {
+      "bytes": 46911,
+      "sha256": "ba9a9d7cb43ff26b597454b2d4332738db561b017ff9f6b85b51fad14598cf17",
+      "queries": 17,
+      "ms": 10.82,
+      "dashboard": false,
+      "archive": true
+    }
+  },
+  "missing_plan_fixture": {
+    "operations-plan-get": {
+      "success": true,
+      "sha256": "f051ce8537264cdfb8fb9937d2a2df375b596f36399c24579a5a22849d29364b"
+    },
+    "operations-summary": {
+      "success": true,
+      "sha256": "0ef5b56ab1ed6c8e353796cb30686f4d5971fc8d55317a34f7a8f5ca4c2cc096"
+    },
+    "operations-checklist-list": {
+      "success": true,
+      "sha256": "6e528e62e1392290b9e6f5f801606eb1aba5806b8ed7a8fe7f7c1ab4a5211aa7"
+    },
+    "render": {
+      "bytes": 10451,
+      "explicit_initialize_visible": true
+    }
+  },
+  "warnings": [],
+  "blocked_writes": [],
+  "after": {
+    "mmc_programs": {
+      "count": 13,
+      "sha256": "2123eaf3eb07842d598cb6129ae5272e5c4201f53ecae9de8c80f768146b0b18"
+    },
+    "mmc_operation_plans": {
+      "count": 13,
+      "sha256": "602892998d3af2f8268b567d9d859fc298d09248ab266ee6180ea009aaf2369e"
+    },
+    "mmc_operation_checklist": {
+      "count": 559,
+      "sha256": "579d02a8d160e435df1337fdcb69a6cabbf9769ef01ff6a5da3dfe3a808d25b6"
+    },
+    "mmc_operation_schedule": {
+      "count": 33,
+      "sha256": "c1e4377c4525aa85ede740dcc059c78fa73d7b1e5426a612d29b37687bac9dc6"
+    },
+    "mmc_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_program_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_tasks": {
+      "count": 141,
+      "sha256": "c74fe1382c31e6c2335e2c260d283f214d2b92261b53f5525c80eb283b1fd16e"
+    },
+    "mmc_logs": {
+      "count": 622,
+      "sha256": "502a41d417ba862fe76b3e80ab8dab87dd0c3b9bcab19cb9711178e06c3af7d8"
+    },
+    "mmc_events": {
+      "count": 13,
+      "sha256": "fde6bc66444fb8996bca251dfd319c8eadc1ea80338309e12e55b45ecec44ecc"
+    },
+    "mmc_sessions": {
+      "count": 33,
+      "sha256": "d429c50d6df51b66f65fa79586c7401b0fbe309f79e8afebf9711c3dd4522527"
+    },
+    "mmc_program_venues": {
+      "count": 13,
+      "sha256": "ab8c6eee43585dadd00af7365cfecc7c495896dd1e73e02eb6a48fdbd5f5ca2d"
+    },
+    "mmc_venues": {
+      "count": 188,
+      "sha256": "e772e2699c7793087551a0e41cde531a0646084ce2c25dcc6371b1c371ff07e7"
+    },
+    "mmc_finance_entries": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_kommo_profiles": {
+      "count": 13,
+      "sha256": "6c429d59c4274eba5f0a790e1caca06eca46d0fdb239ce90437475b6894d5ec4"
+    },
+    "mck_campaigns": {
+      "count": 7,
+      "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+    },
+    "mck_comments": {
+      "count": 2590,
+      "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+    },
+    "mck_draws": {
+      "count": 14,
+      "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+    },
+    "mck_redraw_audit": {
+      "count": 1,
+      "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+    }
+  },
+  "domain_unchanged": true
+}
