@@ -133,9 +133,14 @@ check($c::quote($cat,'120','1',array())['total']===500.0,'adult-only allowed');
 foreach(array(array(''),array('-1'),array('3.5'),array('121'),array(array('5')),array('x'),array('00'),array('01'),array(5)) as $i=>$ages){check(isset($c::quote($cat,'120','1',$ages)['error']),'bad ages rejected '.$i);}
 check(isset($c::quote($cat,'120','1',array(1=>'5'))['error']),'sparse age array rejected');
 check(isset($c::quote($cat,'120','1',array_fill(0,21,'5'))['error']),'excess input count bounded');
-$_POST=array('mdg_campaign_action'=>'quote','mdg_campaign_code'=>'TEST-DENIZLI','mdg_campaign_nonce'=>'valid','mdg_campaign_event'=>'12','mdg_campaign_session'=>'120','mdg_campaign_adults'=>'1','mdg_campaign_children'=>'3','mdg_campaign_ages'=>array('5','7','12'));
+$_POST=array('mdg_campaign_action'=>'quote','mdg_campaign_code'=>'TEST-DENIZLI','mdg_campaign_nonce'=>'valid','mdg_campaign_event'=>'12','mdg_campaign_session'=>'120','mdg_campaign_adults'=>'1','mdg_campaign_children'=>'3','mdg_campaign_birthdates'=>array('2021-01-01','2019-01-01','2014-01-01'));
 $h=$c::render();
-check(strpos($h,'750.00 TL')!==false && strpos($h,'Normal çocuk bileti')!==false && strpos($h,'value="12" required data-child-age')!==false,'server result and ages preserved');
+check(strpos($h,'750.00 TL')!==false && strpos($h,'Normal çocuk bileti')!==false && strpos($h,'value="2014-01-01" required data-child-birthdate')!==false,'server result and ages preserved');
 $_POST['mdg_campaign_children']='4';
-check(strpos($c::render(),'çocuk sayısı kadar yaş bilgisi')!==false,'age count mismatch blocked');
+check(strpos($c::render(),'çocuk sayısı kadar doğum tarihi')!==false,'age count mismatch blocked');
+check($c::ages_from_birthdates(array('2013-10-08','2013-10-09','2023-10-09'),'2026-10-08','2026-10-05')===array('13','12','2'),'birthday and completed years at show date');
+check($c::ages_from_birthdates(array('2013-10-20'),'2026-11-08','2026-10-05')===array('13'),'birthday before later show becomes adult');
+check($c::ages_from_birthdates(array('2024-02-29'),'2026-10-08','2026-10-05')===array('2'),'valid leap-day birth');
+foreach(array(array('2023-02-29'),array('2026-10-06'),array('2013-13-01'),array(''),array(array('2013-01-01')),array('1900-01-01')) as $i=>$dates){check(isset($c::ages_from_birthdates($dates,'2026-10-08','2026-10-05')['error']),'invalid birthdates rejected '.$i);}
+check($c::quote_birthdates($cat,'120','1',array('2021-01-01','2019-01-01','2014-01-01'),'2026-10-05')['total']===750.0,'birthdate priced quote');
 echo "All $count dynamic catalogue checks passed.\n";
