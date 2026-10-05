@@ -213,7 +213,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         <label><?php echo esc_html($i+1); ?>. çocuğun doğum tarihi<input type="date" max="<?php echo esc_attr(current_time('Y-m-d')); ?>" name="mdg_campaign_birthdates[]" value="<?php echo esc_attr($age); ?>" required data-child-birthdate><span data-age-status></span></label>
                         <?php endfor; ?></div>
                         <p data-live-quote role="status" aria-live="polite">Doğum tarihlerini girdiğinizde yaşlar ve bilet tutarı otomatik hesaplanır.</p>
-                        <noscript><button type="submit" name="mdg_campaign_action" value="ages" formnovalidate>Çocuk sayısına göre doğum tarihi alanlarını güncelle</button></noscript>
+                        <button data-count-fallback type="submit" name="mdg_campaign_action" value="ages" formnovalidate>Çocuk sayısına göre doğum tarihi alanlarını güncelle</button>
                         <button name="mdg_campaign_action" value="quote" type="submit">Kampanya tutarını hesapla</button>
                     </form>
                     <?php if($quote && !isset($quote['error']) && (int)$quote['event']->id===(int)$event->id): ?>
@@ -238,6 +238,14 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 <?php endforeach; ?>
             <?php endif; ?>
             </section>
+            <?php return ob_get_clean();
+        }
+
+        // Footer scripts bypass the_content character conversion (e.g. && -> &#038;).
+        public static function script() {
+            $p=get_post();
+            if(!is_singular('page') || !$p || !has_shortcode($p->post_content,self::SHORTCODE)){return;}
+            ?>
             <script>
             (function(){
                 const money=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(n);
@@ -277,11 +285,12 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         while(box.children.length<n){const label=document.createElement('label');label.append(document.createTextNode((box.children.length+1)+'. çocuğun doğum tarihi'));const input=document.createElement('input');input.type='date';input.max=form.dataset.today;input.required=true;input.name='mdg_campaign_birthdates[]';input.dataset.childBirthdate='';label.append(input);const status=document.createElement('span');status.dataset.ageStatus='';label.append(status);box.append(label);}
                         update();
                     };
-                    count.addEventListener('change',resize);adults.addEventListener('change',update);session.addEventListener('change',update);box.addEventListener('input',update);resize();
+                    count.addEventListener('change',resize);count.addEventListener('input',resize);adults.addEventListener('change',update);session.addEventListener('change',update);box.addEventListener('input',update);window.addEventListener('pageshow',resize);resize();
+                    const fallback=form.querySelector('[data-count-fallback]');if(fallback)fallback.hidden=true;
                 });
             })();
             </script>
-            <?php return ob_get_clean();
+            <?php
         }
 
         public static function sign($manifest) {
@@ -504,6 +513,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
     add_filter('wp_robots',array('MDG_Corporate_Campaigns_20261005','robots'));
     add_action('template_redirect',array('MDG_Corporate_Campaigns_20261005','no_cache'),1);
     add_action('admin_menu',array('MDG_Corporate_Campaigns_20261005','admin_menu'));
+    add_action('wp_footer',array('MDG_Corporate_Campaigns_20261005','script'),30);
     add_action('admin_post_mdg_corporate_campaign_save',array('MDG_Corporate_Campaigns_20261005','save'));
     add_action('admin_post_mdg_corporate_campaign_toggle',array('MDG_Corporate_Campaigns_20261005','toggle'));
     add_action('admin_post_mdg_campaign_checkout',array('MDG_Corporate_Campaigns_20261005','checkout'));
