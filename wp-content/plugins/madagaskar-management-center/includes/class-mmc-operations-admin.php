@@ -3,6 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 class MMC_Operations_Admin {
     public function __construct() {
+        add_action('admin_post_mmc_ops_apply_task_automation',array($this,'apply_task_automation'));
         add_action( 'admin_menu', array($this,'menu') );
         add_action( 'admin_post_mmc_ops_ensure_plan', array($this,'ensure_plan') );
         add_action( 'admin_post_mmc_ops_save_plan', array($this,'save_plan') );
@@ -25,10 +26,10 @@ class MMC_Operations_Admin {
         ?>
         <div class="mmc-panel">
             <h2><?php echo $archive?'Operasyon Arşivi':'Yaklaşan Operasyonlar';?></h2>
-            <p><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&archive='.($archive?0:1)));?>"><?php echo $archive?'Yaklaşan programlar':'Arşivi göster';?></a> · Hazırlık yüzdesi: zorunlu hareket öncesi / salon checklist kontrolleri. Görev tarihleri ve sorumluları otomatik atanmaz.</p>
+            <p><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&archive='.($archive?0:1)));?>"><?php echo $archive?'Yaklaşan programlar':'Arşivi göster';?></a> · Hazırlık yüzdesi: zorunlu hareket öncesi / salon checklist kontrolleri. Tarih/sorumlu önerileri yalnız gerçek saatler ve program sahibinden türetilir; mevcut görevler açık POST olmadan değiştirilmez.</p>
             <table class="widefat striped"><thead><tr><th>Program / tarih</th><th>Şehir / salon</th><th>İlk / sıradaki seans</th><th>Plan / tip</th><th>Hazırlık</th><th>Ekip / araç</th><th>Görev</th><th>Kritik eksik / sonraki adım</th></tr></thead><tbody>
             <?php foreach($rows as $row):?>
-                <tr><td><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&program_id='.(int)$row['id'].'&archive='.($archive?1:0)));?>"><?php echo esc_html($row['program_code']);?></a><br><?php echo esc_html($row['program_date']);?><?php if($row['show_day']):?><br><strong>GÖSTERİ GÜNÜ</strong><?php endif;?></td>
+                <tr><td><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&program_id='.(int)$row['id'].'&archive='.($archive?1:0)));?>"><?php echo esc_html($row['program_code']);?></a><br><?php echo esc_html($row['program_date']);?><?php if($row['show_day']):?><br><strong>GÖSTERİ GÜNÜ</strong><?php if($row['seconds_to_next_session']!==null):?><br><?php echo esc_html((int)ceil($row['seconds_to_next_session']/60));?> dakika kaldı<?php endif;?><?php endif;?></td>
                 <td><?php echo esc_html($row['province_name'].' / '.$row['district_name']);?><br><?php echo esc_html($row['venue_name']?:'Salon yok');?></td>
                 <td><?php echo esc_html($row['first_session']?:'Seans yok');?><br><?php echo esc_html($row['next_session']?:'Gelecek seans yok');?><br>Kapı: <?php echo esc_html($row['doors_open_at']?:'Belirlenmedi');?></td>
                 <td><?php echo esc_html(self::label(MMC_Operations_Service::plan_statuses(),$row['plan_status'],'Plan yok'));?><br><?php echo esc_html(self::label(MMC_Operations_Service::operation_modes(),$row['operation_mode'],'Belirlenmedi'));?></td>
@@ -47,6 +48,56 @@ class MMC_Operations_Admin {
         return isset($labels[$key??''])?$labels[$key]:$fallback;
     }
 
+    private function task_alert_dashboard( $alerts, $filter, $program_id, $archive ) {
+        $labels=array('all'=>'Tümü','overdue'=>'Geciken','today'=>'Bugün','48h'=>'48 saat','mine'=>'Bana atanan','high'=>'Yüksek öncelik','no_deadline'=>'Tarihsiz');
+        ?>
+        <div class="mmc-panel"><h2>MMC İçi Görev Uyarıları</h2>
+            <p>Yalnız aktif/gelecek programların açık Operations görevleri. Bugün ve 48 saat sayaçları örtüşebilir; geçmiş/iptal ve finance görevleri kapsam dışıdır. Harici mesaj veya bildirim logu üretilmez.</p>
+            <div class="mmc-cards mmc-cards-5">
+                <?php foreach(array('overdue'=>'Geciken','due_today'=>'Bugün yapılacak','upcoming_48h'=>'Önümüzdeki 48 saat','no_deadline'=>'Tarihsiz','mine'=>'Bana atanan açık görev') as $key=>$label):?>
+                <div class="mmc-card"><span><?php echo esc_html($label);?></span><strong><?php echo esc_html($alerts['counts'][$key]);?></strong></div><?php endforeach;?>
+            </div>
+            <p><?php echo esc_html($alerts['counts']['high']);?> yüksek/ kritik öncelikli açık görev.</p>
+            <form method="get"><input type="hidden" name="page" value="mmc-operations"><input type="hidden" name="program_id" value="<?php echo esc_attr($program_id);?>"><input type="hidden" name="archive" value="<?php echo $archive?1:0;?>">
+                <label>Görev filtresi <select name="task_filter" onchange="this.form.submit()">
+                <?php foreach($labels as$key=>$label):?><option value="<?php echo esc_attr($key);?>" <?php selected($filter,$key);?>><?php echo esc_html($label);?></option><?php endforeach;?></select></label>
+            </form>
+            <table class="widefat striped"><thead><tr><th>Program / şehir / tarih</th><th>Görev / phase</th><th>Öncelik</th><th>Son tarih</th><th>Sorumlu</th><th>Hesaplanan durum</th></tr></thead><tbody>
+            <?php foreach($alerts['items'] as$task):?><tr>
+                <td><?php echo esc_html(($task['program_code']??'').' / '.($task['province_name']??'').' / '.($task['district_name']??''));?><br><?php echo esc_html($task['program_date']??'');?></td>
+                <td><?php echo esc_html($task['title']);?><br><?php echo esc_html($task['phase']);?></td><td><?php echo esc_html($task['priority']);?></td>
+                <td><?php echo esc_html($task['due_at']??'Belirlenmedi');?></td><td><?php echo esc_html($task['assigned_user_id']??'Atanmadı');?></td><td><?php echo esc_html($task['computed_state']);?></td>
+            </tr><?php endforeach;?><?php if(!$alerts['items']):?><tr><td colspan="6">Bu filtrede açık Operations görevi yok.</td></tr><?php endif;?></tbody></table>
+        </div>
+        <?php
+    }
+
+    private function task_automation_preview_panel( $preview ) {
+        ?>
+        <div class="mmc-panel"><h2>Operations Faz 2 Preview</h2>
+            <p>GET yalnız okur. Manuel alanlar, işaretlenmemiş görevler, tamamlanmış/iptal görevler ve geçmiş/kapalı programlar korunur. Öneri: <?php echo esc_html($preview['would_update_due']);?> tarih / <?php echo esc_html($preview['would_update_owner']);?> sorumlu.</p>
+            <table class="widefat striped"><thead><tr><th>Görev / system-generated</th><th>Mevcut → önerilen tarih</th><th>Kaynak</th><th>Mevcut → önerilen sorumlu</th><th>Değişiklik / neden</th></tr></thead><tbody>
+            <?php foreach($preview['items'] as$item):?><tr><td><?php echo esc_html($item['task']);?><br><?php echo $item['system_generated']?'Evet':'Hayır / işaretlenmemiş';?></td>
+                <td><?php echo esc_html(($item['current_due']?:'NULL').' → '.($item['proposed_due']?:'NULL'));?></td><td><?php echo esc_html($item['due_source']??'Doğrulanmış anchor yok');?></td>
+                <td><?php echo esc_html(($item['current_owner']?:'NULL').' → '.($item['proposed_owner']?:'NULL'));?></td>
+                <td><?php echo esc_html(($item['would_leave_unchanged']?'Korunur':'Tarih: '.(int)$item['would_update_due'].' / sorumlu: '.(int)$item['would_update_owner']).' · '.implode(', ',$item['reason']));?></td></tr>
+            <?php endforeach;?><?php if(!$preview['items']):?><tr><td colspan="5">Programda görev yok.</td></tr><?php endif;?></tbody></table>
+            <?php if($preview['eligible'] && ($preview['would_update_due'] || $preview['would_update_owner'])):?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>"><input type="hidden" name="action" value="mmc_ops_apply_task_automation"><input type="hidden" name="program_id" value="<?php echo esc_attr($preview['program_id']);?>">
+                <?php wp_nonce_field('mmc_ops_automation_apply_'.$preview['program_id']);submit_button('Otomasyon Eksiklerini Uygula','secondary');?>
+            </form><p>Yalnız bu programdaki boş veya doğrulanmış otomasyon yönetimli alanlar uygulanır. Manuel değerler korunur.</p>
+            <?php else:?><p>Bu programda uygulanabilir değişiklik yok; canlı backfill çalıştırılmaz.</p><?php endif;?>
+        </div>
+        <?php
+    }
+
+    public function apply_task_automation() {
+        if('POST'!==($_SERVER['REQUEST_METHOD']??'')){wp_die('Bu işlem POST gerektirir.','',array('response'=>405));}
+        $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_automation_apply_'.$pid);
+        $result=MMC_Operations_Service::apply_task_automation($pid);
+        $this->redirect($pid,$result,'Program bazlı otomasyon eksikleri uygulandı.');
+    }
+
     public function page() {
         $this->guard();
         $archive=!empty($_GET['archive']);
@@ -55,7 +106,11 @@ class MMC_Operations_Admin {
         $visible_ids=array_column($overview,'id');
         if(!$archive){$programs=array_values(array_filter($programs,static function($p)use($visible_ids){return in_array($p->id,$visible_ids); }));}
         $pid=absint($_GET['program_id']??0); if(!$pid&&$overview){$pid=(int)$overview[0]['id'];}
+        $filter=is_string($_GET['task_filter']??'all')?sanitize_key($_GET['task_filter']??'all'):'all';
+        if(!in_array($filter,array('all','overdue','today','48h','mine','high','no_deadline'),true)){$filter='all';}
+        $alerts=MMC_Operations_Service::task_alerts(0,$filter);
         $program=$pid?MMC_Program_Service::get_program($pid):null;
+        $automation_preview=$program?MMC_Operations_Service::task_automation_preview($pid):null;
         $plan=$program?MMC_Operations_Service::get_plan($pid):null;
         $summary=$program?MMC_Operations_Service::summary($pid):array();
         $resources=MMC_Operations_Service::resources();
@@ -69,9 +124,10 @@ class MMC_Operations_Admin {
         <div class="wrap mmc-wrap">
             <h1>Operasyon & Lojistik Modülü</h1>
             <p class="mmc-lead">Programın hareket öncesinden salon teslimine kadar araç, ekip, sanatçı, ekipman, konaklama, yemek, teknik kurulum, gişe/check-in ve gösteri sonrası kapanışını tek dosyada yönetir.</p>
-            <?php $this->notice(); $this->readiness_dashboard($overview,$archive); ?>
+            <?php $this->notice();$this->task_alert_dashboard($alerts,$filter,$pid,$archive);$this->readiness_dashboard($overview,$archive); ?>
             <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-operations"><input type="hidden" name="archive" value="<?php echo $archive?1:0;?>"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name);?></option><?php endforeach;?></select></label></form></div>
             <?php if(!$program):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
+            <?php if($automation_preview){$this->task_automation_preview_panel($automation_preview);}?>
             <?php if(!$plan):?>
                 <div class="notice notice-info"><p>Bu program için operasyon planı henüz oluşturulmamış. Bu ekran mevcut veriyi yalnızca okur; plan ve varsayılan kontrol listesi ancak aşağıdaki açık işlemle oluşturulur.</p></div>
                 <div class="mmc-panel">

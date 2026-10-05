@@ -11,6 +11,7 @@ class MMC_Operations_Service {
     public static function on_program_logged( $program_id, $action, $entity_type, $entity_id, $old_value, $new_value, $note ) {
         if ( self::$handling_log || ! $program_id ) { return; }
         $action = sanitize_key( $action );
+        if('task_updated'===$action && 'task'===$entity_type){self::mark_manual_task_fields($program_id,$entity_id,$new_value);return;}
         $seed_actions = array( 'venue_confirmed','event_draft_created','event_updated','session_created','session_deleted','sales_readiness_passed','sales_integration_updated' );
         $should_seed = in_array( $action, $seed_actions, true );
         if ( 'program_status_changed' === $action && in_array( (string) $new_value, array( 'operations','show_day' ), true ) ) { $should_seed = true; }
@@ -391,7 +392,10 @@ class MMC_Operations_Service {
         $pre=$wpdb->get_row($wpdb->prepare("SELECT COUNT(*) total, SUM(status='done') done_count, SUM(status='problem') problems FROM $check WHERE program_id=%d AND phase IN ('pre_departure','venue_setup') AND is_required=1 AND status<>'not_applicable'",$program_id),ARRAY_A);
         $counts=$wpdb->get_results($wpdb->prepare("SELECT resource_type,COUNT(*) total FROM $res WHERE program_id=%d AND status<>'cancelled' GROUP BY resource_type",$program_id),OBJECT_K);
         $pre_total=(int)($pre['total']??0); $pre_done=(int)($pre['done_count']??0);
+        $alerts=self::task_alerts($program_id);
         return array(
+            'overdue_count'=>$alerts['counts']['overdue'],'due_today_count'=>$alerts['counts']['due_today'],
+            'upcoming_count'=>$alerts['counts']['upcoming_48h'],'unassigned_count'=>$alerts['counts']['unassigned'],'next_due_task'=>$alerts['next_due_task'],
             'plan_exists'=>$plan_exists,
             'check_total'=>(int)($all['total']??0),'check_done'=>(int)($all['done_count']??0),'problems'=>(int)($all['problems']??0),
             'pre_total'=>$pre_total,'pre_done'=>$pre_done,'pre_percent'=>$pre_total?round(100*$pre_done/$pre_total,1):0,
@@ -466,6 +470,8 @@ class MMC_Operations_Service {
         $row['readiness_percent']=$total?round(100*(int)($row['required_done']??0)/$total,1):0;
         $row['critical_missing']=$issues;
         $row['next_action']=$issues?reset($issues):'Mevcut plan ve görevleri takip edin';
+        $next=self::canonical_timestamp($row['next_session']??null);
+        $row['seconds_to_next_session']=$next?max(0,(new DateTimeImmutable($next,wp_timezone()))->getTimestamp()-(new DateTimeImmutable(current_time('mysql'),wp_timezone()))->getTimestamp()):null;
         $row['show_day']=($row['program_status']??'')==='show_day' || ($row['program_date']??'')===substr(current_time('mysql'),0,10);
         return $row;
     }
@@ -498,6 +504,218 @@ class MMC_Operations_Service {
                 'policy'=>'PREVIEW_ONLY; no dates, owners or domain state changed');
         }
         return $preview;
+    }
+
+    /** Actual local timestamps only: no T-minus or invented program-date clock. */
+    private static function canonical_timestamp( $value ) {
+        if(!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?$/',$value)){return null;}
+        if(strlen($value)===16){$value.=':00';}
+        $date=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$value,wp_timezone());
+        return $date && $date->format('Y-m-d H:i:s')===$value?$value:null;
+    }
+
+    /** One canonical context per program, reused for every task in preview/apply. */
+    public static function task_automation_context( $program_id ) {
+        $program=MMC_Program_Service::get_program(absint($program_id));
+        $plan=self::get_plan($program_id);
+        $event=class_exists('MMC_Event_Service')?MMC_Event_Service::event_for_program($program_id):null;
+        $first=null;$last_start=null;$last_end=null;
+        if($event){foreach((array)MMC_Event_Service::sessions($event->id) as $session){
+            if(($session->status??'active')==='cancelled'){continue;}
+            $start=self::canonical_timestamp($session->session_time??null);if(!$start){continue;}
+            if(!$first || $start<$first){$first=$start;}
+            if(!$last_start || $start>$last_start){
+                $last_start=$start;
+                // Current schema has no end_at. Never treat generated schedule +60m as proof.
+                $end=self::canonical_timestamp($session->end_at??null);
+                $last_end=$end && $end>=$start?$end:null;
+            }
+        }}
+        $date=$event->event_date??($first?substr($first,0,10):($program->planned_date??null));
+        $valid_date=is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/',$date);
+        if($valid_date){$d=DateTimeImmutable::createFromFormat('!Y-m-d',$date,wp_timezone());$valid_date=$d && $d->format('Y-m-d')===$date;}
+        $eligible=$program && in_array($program->status,array('operations','show_day'),true)
+            && ($event->status??'draft')!=='cancelled' && $valid_date && $date>=substr(current_time('mysql'),0,10);
+        $owner=absint($program->owner_user_id??0);
+        $valid_owner=$owner && get_user_by('id',$owner)?$owner:null;
+        return array('program'=>$program,'plan'=>$plan,'event'=>$event,'first_session'=>$first,'last_session_end'=>$last_end,
+            'program_date'=>$valid_date?$date:null,'eligible'=>(bool)$eligible,'owner_user_id'=>$valid_owner);
+    }
+
+    public static function resolve_task_deadline( $key, $context ) {
+        $plan=$context['plan']??null;
+        $map=array(
+            'plan'=>array('departure_at','venue_entry_at','@first'),
+            'transport'=>array('departure_at'),
+            'crew'=>array('departure_at','venue_entry_at'),
+            'equipment'=>array('departure_at','venue_entry_at'),
+            'venue_entry'=>array('venue_entry_at'),'handover_in'=>array('venue_entry_at'),
+            'technical'=>array('rehearsal_at','setup_start_at','@first'),
+            'box_office'=>array('doors_open_at','@doors'),
+            'briefing'=>array('doors_open_at','rehearsal_at'),
+            'inventory'=>array('teardown_end_at','@last_end'),'handover_out'=>array('teardown_end_at'),
+            'reconcile'=>array('teardown_end_at','@last_end'),'return'=>array('return_at'),
+        );
+        foreach($map[$key]??array() as $anchor){
+            $due=null;$source=null;
+            if($anchor==='@first'){$due=$context['first_session']??null;$source='event.first_session';}
+            elseif($anchor==='@last_end'){$due=$context['last_session_end']??null;$source='event.last_session.end_at';}
+            elseif($anchor==='@doors'){
+                $minutes=$context['event']->door_open_minutes??null;
+                $first=self::canonical_timestamp($context['first_session']??null);
+                if($first && (is_int($minutes) || (is_string($minutes) && preg_match('/^\d+$/',$minutes))) && (int)$minutes>=0){
+                    $due=(new DateTimeImmutable($first,wp_timezone()))->modify('-'.(int)$minutes.' minutes')->format('Y-m-d H:i:s');
+                    $source='event.first_session_minus_door_open_minutes';
+                }
+            }else{$due=$plan->$anchor??null;$source='plan.'.$anchor;}
+            $due=self::canonical_timestamp($due);
+            if($due){return array('due_at'=>$due,'due_source'=>$source,'due_policy_version'=>2);}
+        }
+        return array('due_at'=>null,'due_source'=>null,'due_policy_version'=>2);
+    }
+
+    /** Pure proposal. Only explicit apply/new INSERT uses its payload. */
+    public static function task_automation_proposal( $task, $context ) {
+        $meta=json_decode((string)($task->metadata??''),true);if(!is_array($meta)){$meta=array();}
+        $source=$meta['source_key']??'';$key=is_string($source) && strpos($source,'operations_v1.')===0?substr($source,14):'';
+        $system=isset($meta['system_generated']) && true===$meta['system_generated'];
+        $current_due=$task->due_at??null;$current_owner=absint($task->assigned_user_id??0)?:null;
+        $result=array('task_id'=>(int)($task->id??0),'program_id'=>(int)($task->program_id??0),'task'=>$task->title??'',
+            'system_generated'=>$system,'current_due'=>$current_due,'proposed_due'=>$current_due,'due_source'=>$meta['due_source']??null,
+            'current_owner'=>$current_owner,'proposed_owner'=>$current_owner,'would_update_due'=>false,'would_update_owner'=>false,
+            'would_leave_unchanged'=>true,'reason'=>array(),'update_payload'=>array());
+        if(($task->module??'')!=='operations'){$result['reason'][]='MODULE_OUT_OF_SCOPE';return $result;}
+        if(!$system){$result['reason'][]='UNMARKED_OR_MANUAL_TASK';return $result;}
+        if(!isset(self::task_templates()[$key])){$result['reason'][]='UNKNOWN_TEMPLATE';return $result;}
+        if(($task->status??'')!=='open' || !empty($task->completed_at)){$result['reason'][]='TASK_CLOSED';return $result;}
+        if(empty($context['eligible'])){$result['reason'][]='PROGRAM_NOT_ACTIVE_FUTURE_OPERATIONS';return $result;}
+        $resolved=self::resolve_task_deadline($key,$context);$result['due_source']=$resolved['due_source'];
+        $due_managed=($meta['due_managed']??'')==='operations_v2' && array_key_exists('due_last_value',$meta)
+            && (string)$current_due===(string)$meta['due_last_value'];
+        $due_diverged=($meta['due_managed']??'')==='operations_v2' && array_key_exists('due_last_value',$meta) && (string)$current_due!==(string)$meta['due_last_value'];
+        $due_allowed=empty($meta['due_manual_override']) && !$due_diverged && (empty($current_due) || $due_managed);
+        if($due_allowed && $resolved['due_at']){
+            $result['proposed_due']=$resolved['due_at'];
+            if((string)$current_due!==(string)$resolved['due_at']){
+                $result['would_update_due']=true;$result['update_payload']['due_at']=$resolved['due_at'];
+                $meta['due_source']=$resolved['due_source'];$meta['due_policy_version']=2;
+                $meta['due_managed']='operations_v2';$meta['due_last_value']=$resolved['due_at'];
+            }
+        }else{$result['reason'][]=$due_allowed?'NO_CONFIRMED_DEADLINE_ANCHOR':'MANUAL_DUE_PRESERVED';}
+        $owner_managed=($meta['assignment_source']??'')==='program_owner' && array_key_exists('assignment_last_user_id',$meta)
+            && $current_owner===(absint($meta['assignment_last_user_id'])?:null);
+        $owner_diverged=($meta['assignment_source']??'')==='program_owner' && array_key_exists('assignment_last_user_id',$meta) && $current_owner!==(absint($meta['assignment_last_user_id'])?:null);
+        $owner_allowed=empty($meta['assignment_manual_override']) && !$owner_diverged && (!$current_owner || $owner_managed);
+        $owner=$context['owner_user_id']??null;
+        if($owner_allowed && $owner){
+            $result['proposed_owner']=$owner;
+            if($current_owner!==$owner){$result['would_update_owner']=true;$result['update_payload']['assigned_user_id']=$owner;
+                $meta['assignment_source']='program_owner';$meta['assignment_last_user_id']=$owner;}
+        }else{$result['reason'][]=$owner_allowed?'NO_VALID_PROGRAM_OWNER':'MANUAL_OWNER_PRESERVED';}
+        $result['would_leave_unchanged']=!$result['would_update_due'] && !$result['would_update_owner'];
+        if(!$result['would_leave_unchanged']){$result['update_payload']['metadata']=wp_json_encode($meta);$result['reason'][]='CANONICAL_PROPOSAL';}
+        elseif(!$result['reason']){$result['reason'][]='UP_TO_DATE';}
+        return $result;
+    }
+
+    public static function task_automation_preview( $program_id ) {
+        global $wpdb;
+        $context=self::task_automation_context($program_id);
+        $rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d ORDER BY id",absint($program_id)));
+        $out=array('program_id'=>absint($program_id),'eligible'=>$context['eligible'],'items'=>array(),'would_update_due'=>0,'would_update_owner'=>0);
+        foreach((array)$rows as $task){$item=self::task_automation_proposal($task,$context);unset($item['update_payload']);
+            $out['would_update_due']+=(int)$item['would_update_due'];$out['would_update_owner']+=(int)$item['would_update_owner'];$out['items'][]=$item;}
+        return $out;
+    }
+
+    /** Explicit program-scoped write; never called by dashboard/preview or on deployment. */
+    public static function apply_task_automation( $program_id ) {
+        global $wpdb;
+        if(!current_user_can('mmc_manage_operations')){return new WP_Error('mmc_ops_forbidden','Operasyon yetkisi gerekir.');}
+        $program_id=absint($program_id);$lock='mmc_ops_'.substr(hash('sha256',$wpdb->prefix.$program_id),0,40);
+        if(1!==(int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)',$lock))){return new WP_Error('mmc_ops_busy','Başka bir hazırlık işlemi var.');}
+        try{
+            $context=self::task_automation_context($program_id);
+            if(!$context['eligible']){return new WP_Error('mmc_ops_automation_scope','Yalnız aktif/gelecek operations/show_day programında uygulanabilir.');}
+            $rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d AND module='operations' AND status='open' ORDER BY id",$program_id));
+            $result=array('tasks_updated'=>0,'due_updated'=>0,'owner_updated'=>0,'stale_skipped'=>0);
+            foreach((array)$rows as $task){$proposal=self::task_automation_proposal($task,$context);if($proposal['would_leave_unchanged']){continue;}
+                $payload=$proposal['update_payload'];$payload['updated_at']=current_time('mysql');
+                // Compare-and-swap protects concurrent manual edits even outside this advisory lock.
+                $where=array('id'=>(int)$task->id,'program_id'=>$program_id,'status'=>'open','completed_at'=>$task->completed_at??null,
+                    'due_at'=>$task->due_at??null,'assigned_user_id'=>$task->assigned_user_id??null,'metadata'=>$task->metadata??null);
+                $changed=self::apply_task_fields_if_current($payload,$where,$context);
+                if(false===$changed){return new WP_Error('mmc_ops_automation_update','Güncelleme başarısız; başarılı kayıtlar korunur, tekrar işlem idempotenttir.');}
+                if(!$changed){$result['stale_skipped']++;continue;}
+                $result['tasks_updated']++;$result['due_updated']+=(int)$proposal['would_update_due'];$result['owner_updated']+=(int)$proposal['would_update_owner'];
+            }
+            if($result['tasks_updated']){MMC_Program_Service::add_log($program_id,'operations_task_automation_applied','operations',$program_id,null,$result,'Açık görev otomasyonu program bazında uygulandı.');}
+            return $result;
+        }finally{$wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));}
+    }
+
+    /** Atomic scope guard: cancellation or owner deletion/change during apply fails closed. */
+    private static function apply_task_fields_if_current( $payload, $where, $context ) {
+        global $wpdb;$p=$wpdb->prefix;$sets=array();$clauses=array();$params=array();
+        foreach($payload as$key=>$value){$sets[]=$key.'=%s';$params[]=$value;}
+        foreach($where as$key=>$value){if(null===$value){$clauses[]=$key.' IS NULL';}else{$clauses[]=('metadata'===$key?'CAST(metadata AS BINARY)':$key).'=%s';$params[]=$value;}}
+        $params[]=(int)$where['program_id'];$params[]=substr(current_time('mysql'),0,10);
+        $owner_guard='';
+        if(isset($payload['assigned_user_id'])){
+            $owner_guard=" AND p.owner_user_id=%d AND EXISTS(SELECT 1 FROM {$p}users u WHERE u.ID=p.owner_user_id)";
+            $params[]=(int)$payload['assigned_user_id'];
+        }
+        $sql="UPDATE {$p}mmc_tasks SET ".implode(',',$sets).' WHERE '.implode(' AND ',$clauses).
+            " AND EXISTS(SELECT 1 FROM {$p}mmc_programs p
+                LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
+                WHERE p.id=%d AND p.status IN ('operations','show_day') AND COALESCE(e.status,'draft')<>'cancelled'
+                AND COALESCE(e.event_date,(SELECT MIN(DATE(s.session_time)) FROM {$p}mmc_sessions s WHERE s.event_id=e.id AND s.status<>'cancelled'),p.planned_date)>=%s $owner_guard)";
+        return $wpdb->query($wpdb->prepare($sql,...$params));
+    }
+
+    /** Existing manual task-update actions publish this log; clearing/same-value edits also win. */
+    private static function mark_manual_task_fields( $program_id, $task_id, $new_value ) {
+        global $wpdb;
+        if(!is_array($new_value) || (!array_key_exists('due_at',$new_value) && !array_key_exists('assigned_user_id',$new_value))){return;}
+        $row=$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE id=%d AND program_id=%d AND module='operations'",absint($task_id),absint($program_id)));
+        if(!$row){return;}$meta=json_decode((string)($row->metadata??''),true);
+        if(!is_array($meta) || ($meta['system_generated']??false)!==true){return;}
+        if(array_key_exists('due_at',$new_value)){$meta['due_manual_override']=true;unset($meta['due_managed'],$meta['due_last_value']);}
+        if(array_key_exists('assigned_user_id',$new_value)){$meta['assignment_manual_override']=true;unset($meta['assignment_source'],$meta['assignment_last_user_id']);}
+        $encoded=wp_json_encode($meta);
+        if($encoded!==(string)$row->metadata){$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}mmc_tasks SET metadata=%s WHERE id=%d AND program_id=%d AND module='operations' AND CAST(metadata AS BINARY)=%s",$encoded,(int)$row->id,absint($program_id),$row->metadata));}
+    }
+
+    public static function task_due_state( $task, $now = null ) {
+        $now=$now?:current_time('mysql');$due=self::canonical_timestamp($task->due_at??null);$open=($task->status??'')==='open';
+        $overdue=$open && $due && $due<$now;$today=$open && $due && substr($due,0,10)===substr($now,0,10);
+        $end=(new DateTimeImmutable($now,wp_timezone()))->modify('+48 hours')->format('Y-m-d H:i:s');
+        return array('state'=>!$open?strtoupper($task->status??'closed'):(!$due?'NO_DEADLINE':($overdue?'OVERDUE':($today?'DUE_TODAY':'UPCOMING'))),
+            'overdue'=>(bool)$overdue,'due_today'=>(bool)$today,'upcoming_48h'=>(bool)($open && $due && $due>=$now && $due<=$end));
+    }
+
+    /** One query for in-app cards and all filters; no provider calls or notification log. */
+    public static function task_alerts( $program_id = 0, $filter = 'all' ) {
+        global $wpdb;$p=$wpdb->prefix;$today=substr(current_time('mysql'),0,10);$params=array($today);
+        $scope='';if($program_id){$scope=' AND t.program_id=%d';$params[]=absint($program_id);}
+        $rows=$wpdb->get_results($wpdb->prepare("SELECT t.*,p.program_code,p.province_name,p.district_name,COALESCE(e.event_date,p.planned_date) program_date
+            FROM {$p}mmc_tasks t INNER JOIN {$p}mmc_programs p ON p.id=t.program_id
+            LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
+            WHERE t.module='operations' AND t.status='open' AND COALESCE(e.event_date,p.planned_date)>=%s
+            AND p.status NOT IN ('cancelled','completed','financial_close','deposit_refund') AND COALESCE(e.status,'draft')<>'cancelled' $scope
+            ORDER BY t.due_at IS NULL,t.due_at,t.id",...$params));
+        $counts=array('open'=>0,'overdue'=>0,'due_today'=>0,'upcoming_48h'=>0,'no_deadline'=>0,'mine'=>0,'high'=>0,'unassigned'=>0);
+        $items=array();$next=null;$uid=get_current_user_id();
+        foreach((array)$rows as $row){$state=self::task_due_state($row);$mine=$uid && (int)($row->assigned_user_id??0)===$uid;$high=in_array($row->priority??'',array('high','critical'),true);
+            $counts['open']++;$counts['overdue']+=(int)$state['overdue'];$counts['due_today']+=(int)$state['due_today'];$counts['upcoming_48h']+=(int)$state['upcoming_48h'];
+            $counts['no_deadline']+=(int)($state['state']==='NO_DEADLINE');$counts['mine']+=(int)$mine;$counts['high']+=(int)$high;$counts['unassigned']+=(int)empty($row->assigned_user_id);
+            if(!empty($row->due_at) && (!$next || $row->due_at<$next['due_at'])){$next=array('task_id'=>(int)$row->id,'due_at'=>$row->due_at);}
+            $matches=array('all'=>true,'overdue'=>$state['overdue'],'today'=>$state['due_today'],'48h'=>$state['upcoming_48h'],'mine'=>$mine,'high'=>$high,'no_deadline'=>$state['state']==='NO_DEADLINE');
+            if(empty($matches[$filter]) && $filter!=='all'){continue;}
+            $meta=json_decode((string)($row->metadata??''),true);$item=(array)$row;unset($item['metadata']);$item['phase']=is_array($meta)?($meta['phase']??''):'';$item['computed_state']=$state['state'];$items[]=$item;
+        }
+        return array('counts'=>$counts,'items'=>$items,'next_due_task'=>$next,
+            'notification_policy_preview'=>array('provider_calls'=>0,'notification_log_writes'=>0,'candidates'=>array('overdue'=>$counts['overdue'],'due_today'=>$counts['due_today'],'high_priority'=>$counts['high']),'mode'=>'IN_APP_ONLY'));
     }
 
     public static function operation_tasks( $program_id ) {
@@ -649,6 +867,7 @@ class MMC_Operations_Service {
             $meta = json_decode( (string)($task->metadata ?? ''), true );
             if ( is_array($meta) && isset($meta['source_key']) ) { $keys[$meta['source_key']] = true; }
         }
+        $automation_context=self::task_automation_context($program_id);
         // Preserve completed/cancelled/manual matching tasks; never reset owner or deadline.
         foreach ( $templates as $key=>$template ) {
             $source_key = 'operations_v1.' . $key;
@@ -656,9 +875,12 @@ class MMC_Operations_Service {
             // Also supports older integrations that only expose the existing title lookup.
             if ( $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND module='operations' AND title=%s LIMIT 1",absint($program_id),$template[1])) ) { continue; }
             $now=current_time('mysql');
-            $inserted=$wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
+            $new_task=array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
                 'status'=>'open','priority'=>('plan'===$key?'high':'normal'),'metadata'=>wp_json_encode(array('source_key'=>$source_key,'system_generated'=>true,'phase'=>$template[0],'template_version'=>1)),
-                'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
+                'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now);
+            $proposal=self::task_automation_proposal((object)$new_task,$automation_context);
+            $new_task=array_merge($new_task,$proposal['update_payload']);
+            $inserted=$wpdb->insert($table,$new_task);
             if(false===$inserted){return new WP_Error('mmc_ops_task_insert','Operasyon görevi oluşturulamadı; mevcut kayıtlar korunarak yeniden denenebilir.');}
             // Initialization is already recorded by the plan/program audit; task metadata identifies its origin.
         }
