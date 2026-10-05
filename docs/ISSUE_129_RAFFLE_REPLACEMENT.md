@@ -31,7 +31,7 @@ One campaign gets an N-person button plus individual buttons when N>1. Valid/ver
 
 - Before: 7 campaigns, 2590 comments, 14 result slots, 1 replacement audit row. Only counts and hashes are captured; no participant names/comments published.
 - All four live raffle tables are InnoDB.
-- PHP 8.4 syntax PASS; actual-service fixture test has 34 assertions: 3/1 and 5/2 replacements; old and verified usernames excluded even with multiple comments; history excluded on later replacements; insufficient pool and audit failure rollback; stale/double/incomplete snapshots; persisted reload; unauthorized/GET/bad nonce rejection; read-only render and visible manual POST/history.
+- PHP 8.4 syntax PASS; actual-service fixture test has 35 assertions: 3/1 and 5/2 replacements; old and verified usernames excluded even with multiple comments; history excluded on later replacements; insufficient pool and audit failure rollback; stale/double/incomplete snapshots; persisted reload; unauthorized/GET/bad nonce rejection; read-only render and visible manual POST/history.
 - No live draw or verification action is used for testing. Synthetic fixture DB is isolated and performs no Meta calls.
 - Deploy after branch CI, exact backup/hash and PR review; restore old #106 body on any regression. Read-back, actual admin rendering under a pre-SQL write guard, full raffle-table fingerprints, health and code_error must pass.
 
