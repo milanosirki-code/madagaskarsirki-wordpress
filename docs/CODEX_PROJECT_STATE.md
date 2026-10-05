@@ -123,3 +123,9 @@ Issue129 deployment checkpoint:
 - Guarded actual admin render success;0warning/fatal/SQLwrite attempts. All7campaign/2590comment/14draw/1audit fingerprints unchanged; no live disqualified fixture/action created.
 - Final health16/16;snippets122total/43active/code_error0.117original/passive restored exact. Evidence docs/ISSUE_129_RAFFLE_DEPLOYMENT_EVIDENCE.json. PR130 awaits review/merge; Issue129 tracks this final source review.
 - Issue82 remains parked OPEN; no Kommo source operations.
+# Issue116 — current-main session-start cutoff (in progress)
+
+- PR130 merged; Issue129 completed. Main base `51f899faebe9ae92778770a659a34c1f43b14043`; live raffle106/main match. Real replacement POST not run (no disqualified slot); synthetic fixture evidence retained.
+- Branch `codex/fix-session-sales-cutoff-current-main`. Five ticket-plugin live sources exactly matched main; reviewed old PR117 diff transferred with native WooCommerce product/cart guards added.
+- Rule: valid UTC `start_at <= now` closes sales; all four layers covered, including active list snippet30. Existing holds/payment completion and family/sales semantics preserved.
+- Local cutoff83 assertions, ticket-datetime suite and PHP syntax pass. New PR/CI/live deployment pending; Issue116 remains open until verification. See `docs/ISSUE_116_CURRENT_MAIN_CUTOFF.md`.

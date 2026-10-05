@@ -40,6 +40,50 @@ final class MDG_Sessions {
         }
     }
 
+    /**
+     * Seansın satışı saat nedeniyle kapandı mı?
+     *
+     * Kural (işletme sahibi kararı, 4 Ekim 2026): satış seans BAŞLADIĞINDA kapanır.
+     *  - başlangıç saati geldiyse veya geçtiyse (start_at <= şimdi) kapalıdır,
+     *  - başlangıç okunabiliyor ve gelecekteyse, end_at ne olursa olsun açıktır,
+     *  - başlangıç okunamıyorsa bitişe bakılır: seans bittiyse (end_at < şimdi) kapalıdır.
+     * İkisi de okunamıyorsa satış kapanmaz; mevcut davranış korunur.
+     * Herkese açık listeler de aynı kuralı kullanır (start_at > şimdi).
+     *
+     * @param object|array $session start_at / end_at alanları UTC MySQL biçiminde.
+     * @param int|null     $now_ts  Test için; boşsa time().
+     */
+    public static function sales_closed_by_time( $session, $now_ts = null ) {
+        $session  = (object) $session;
+        $now_ts   = null === $now_ts ? time() : (int) $now_ts;
+        $start_ts = self::utc_timestamp( isset( $session->start_at ) ? $session->start_at : '' );
+        $end_ts   = self::utc_timestamp( isset( $session->end_at ) ? $session->end_at : '' );
+
+        if ( $start_ts > 0 ) {
+            $closed = $start_ts <= $now_ts;
+        } else {
+            // Başlangıç okunamıyorsa bitiş saatine bakılır; o da okunamıyorsa satış açık kalır.
+            $closed = $end_ts > 0 && $end_ts < $now_ts;
+        }
+
+        return (bool) apply_filters( 'mdg_session_sales_closed_by_time', $closed, $session, $now_ts );
+    }
+
+    /**
+     * UTC MySQL DATETIME -> Unix zaman damgası; okunamazsa 0.
+     * Bilerek istisna üretmeyen bir ayrıştırma kullanır: bozuk bir tarih
+     * değeri ödeme akışında hiçbir koşulda hata fırlatmamalıdır.
+     */
+    private static function utc_timestamp( $utc_mysql ) {
+        $utc_mysql = trim( (string) $utc_mysql );
+        if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/', $utc_mysql, $m ) ) { return 0; }
+        $second = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+        if ( ! checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ) { return 0; }
+        if ( (int) $m[4] > 23 || (int) $m[5] > 59 || $second > 59 ) { return 0; }
+        $ts = gmmktime( (int) $m[4], (int) $m[5], $second, (int) $m[2], (int) $m[3], (int) $m[1] );
+        return $ts > 0 ? (int) $ts : 0;
+    }
+
     public static function normalize_from_request( $duration_minutes ) {
         $dates = isset( $_POST['session_date'] ) && is_array( $_POST['session_date'] ) ? wp_unslash( $_POST['session_date'] ) : array();
         $times = isset( $_POST['session_time'] ) && is_array( $_POST['session_time'] ) ? wp_unslash( $_POST['session_time'] ) : array();
