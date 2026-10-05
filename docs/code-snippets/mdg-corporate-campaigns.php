@@ -80,17 +80,34 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             return $result;
         }
 
-        public static function quote( $catalogue, $session, $adults, $children ) {
-            foreach ( array($session,$adults,$children) as $v ) {
+        public static function quote( $catalogue, $session, $adults, $ages ) {
+            foreach ( array($session,$adults) as $v ) {
                 if ( ! is_string($v) || ! preg_match('/^[1-9][0-9]*$/D',$v) ) { return array('error'=>'Seans ve kişi sayılarını geçerli tam sayılar olarak seçin.'); }
             }
-            $a=(int)$adults; $c=(int)$children;
-            if ( $a>2 || $c>4 || $c>2*$a ) { return array('error'=>'Her ücretli yetişkin için en fazla 2 çocuk ücretsizdir. Pilot aile başına en fazla 2 yetişkin içindir.'); }
+            $a=(int)$adults;
+            if ( $a>10 || !is_array($ages) || count($ages)>20 || array_keys($ages)!==array_keys(array_values($ages)) ) { return array('error'=>'Kişi sayısı veya çocuk yaşları geçersiz.'); }
+            $infants=0; $eligible=0; $older=0; $clean=array();
+            foreach($ages as $age) {
+                if(!is_string($age) || !preg_match('/^(?:0|[1-9][0-9]{0,2})$/D',$age) || (int)$age>120) { return array('error'=>'Her çocuğun yaşını 0 ile 120 arasında tam sayı olarak girin.'); }
+                $age=(int)$age; $clean[]=$age;
+                if($age<=2){$infants++;}elseif($age<=12){$eligible++;}else{$older++;}
+            }
+            $adult_tickets=$a+$older;
+            $free=min($eligible,2*$adult_tickets);
+            $paid=$eligible-$free;
             foreach ( $catalogue as $row ) {
                 if ( ! isset($row['sessions'][(int)$session]) ) { continue; }
                 $s=$row['sessions'][(int)$session];
-                if ( null!==$s['available'] && $a+$c>$s['available'] ) { return array('error'=>'Seçtiğiniz seansın kalan kapasitesi bu kişi sayısı için yeterli değil.'); }
-                return array('adults'=>$a,'children'=>$c,'total'=>round($a*$s['types']['adult']['price'],2),'session'=>$s,'event'=>$row['event']);
+                if ( null!==$s['available'] && $a+count($ages)>$s['available'] ) { return array('error'=>'Seçtiğiniz seansın kalan kapasitesi bu kişi sayısı için yeterli değil.'); }
+                $details=array(); $remaining=$free;
+                foreach($clean as $age){
+                    if($age<=2){$kind='infant';$price=0;}
+                    elseif($age>=13){$kind='adult';$price=$s['types']['adult']['price'];}
+                    elseif($remaining>0){$kind='free_child';$price=0;$remaining--;}
+                    else{$kind='paid_child';$price=$s['types']['child']['price'];}
+                    $details[]=array('age'=>$age,'kind'=>$kind,'price'=>$price);
+                }
+                return array('adults'=>$a,'adult_tickets'=>$adult_tickets,'older'=>$older,'children'=>count($ages),'infants'=>$infants,'free_children'=>$free,'paid_children'=>$paid,'free_allowance'=>2*$adult_tickets,'details'=>$details,'total'=>round($adult_tickets*$s['types']['adult']['price']+$paid*$s['types']['child']['price'],2),'session'=>$s,'event'=>$row['event']);
             }
             return array('error'=>'Seçilen seans kampanyanıza ait değil veya artık satışa açık değil.');
         }
@@ -115,7 +132,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             if ( $raw!=='' && !$campaign ) { $error='Kampanya kodu geçersiz, süresi dolmuş veya kullanıma kapatılmış. Lütfen size iletilen kodu kontrol edin.'; }
             $catalogue=self::catalogue($campaign,$events);
             if ($post && $campaign && 'quote'===self::input($_POST,'mdg_campaign_action')) {
-                $quote=self::quote($catalogue,self::input($_POST,'mdg_campaign_session'),self::input($_POST,'mdg_campaign_adults'),self::input($_POST,'mdg_campaign_children'));
+                $count=self::input($_POST,'mdg_campaign_children');
+                $ages=$_POST['mdg_campaign_ages']??array();
+                if(!preg_match('/^(?:0|[1-9][0-9]*)$/D',$count) || !is_array($ages) || count($ages)!==(int)$count) { $quote=array('error'=>'Seçtiğiniz çocuk sayısı kadar yaş bilgisi girin.'); }
+                else { $quote=self::quote($catalogue,self::input($_POST,'mdg_campaign_session'),self::input($_POST,'mdg_campaign_adults'),$ages); }
             }
             ob_start(); ?>
             <section class="mdg-campaigns" aria-label="Kurumsal kampanyalar">
@@ -136,33 +156,83 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             </div>
             <?php if($campaign): ?>
                 <h2><?php echo esc_html($campaign['province']); ?> gösterileri</h2>
-                <p><?php echo esc_html($campaign['name']); ?> · Her ücretli yetişkinin yanında 3–12 yaş dahil en fazla 2 çocuk ücretsiz. 0–2 yaş zaten ücretsizdir; 13+ yetişkin bileti seçmelidir.</p>
+                <p><?php echo esc_html($campaign['name']); ?> · Her ücretli yetişkin bileti için 3–12 yaş dahil iki ücretsiz çocuk hakkı vardır. Bu sayıyı aşan çocuklar normal çocuk fiyatıyla hesaplanır. 0–2 yaş ücretsizdir ve kampanya hakkını kullanmaz; 13 yaş ve üzeri yetişkin fiyatıyla hesaplanır.</p>
+                <?php if(isset($quote['error'])): ?><p class="mc-error" role="alert"><?php echo esc_html($quote['error']); ?></p><?php endif; ?>
                 <?php if(!$catalogue): ?><p class="mc-card">Bu kod için şu anda satışa açık uygun seans bulunmuyor. Yeni gösteriler satışa açıldığında burada otomatik görünecek.</p><?php endif; ?>
                 <?php foreach($catalogue as $row): $event=$row['event']; ?>
                 <article class="mc-card" data-event-id="<?php echo esc_attr($event->id); ?>">
                     <h3><?php echo esc_html($event->title); ?></h3>
                     <p><strong><?php echo esc_html($event->venue_name); ?></strong><br><?php echo esc_html($event->province_name.' / '.$event->district); ?></p>
-                    <form method="post" action="<?php echo esc_url(get_permalink($page)); ?>">
+                    <?php
+                    $chosen=$post && self::input($_POST,'mdg_campaign_event')===(string)$event->id;
+                    $adult_input=$chosen?self::input($_POST,'mdg_campaign_adults'):'1';
+                    $child_input=$chosen?self::input($_POST,'mdg_campaign_children'):'2';
+                    $child_count=preg_match('/^(?:0|[1-9][0-9]*)$/D',$child_input)?min(20,(int)$child_input):2;
+                    $age_inputs=$chosen && isset($_POST['mdg_campaign_ages']) && is_array($_POST['mdg_campaign_ages'])?array_values($_POST['mdg_campaign_ages']):array();
+                    ?>
+                    <form method="post" data-age-quote action="<?php echo esc_url(get_permalink($page)); ?>">
                         <?php wp_nonce_field(self::SHORTCODE,'mdg_campaign_nonce',false); ?>
                         <input type="hidden" name="mdg_campaign_code" value="<?php echo esc_attr($campaign['key']); ?>">
+                        <input type="hidden" name="mdg_campaign_event" value="<?php echo esc_attr($event->id); ?>">
                         <label>Gösteri tarihi ve seans<select name="mdg_campaign_session" required>
                         <?php foreach($row['sessions'] as $s): ?>
-                            <option value="<?php echo esc_attr($s['id']); ?>"><?php echo esc_html($s['date'].' · '.$s['time'].' · Yetişkin '.number_format_i18n($s['types']['adult']['price'],2).' TL'); ?></option>
+                            <option value="<?php echo esc_attr($s['id']); ?>" data-adult-price="<?php echo esc_attr($s['types']['adult']['price']); ?>" data-child-price="<?php echo esc_attr($s['types']['child']['price']); ?>" <?php echo $chosen && self::input($_POST,'mdg_campaign_session')===(string)$s['id']?'selected':''; ?>><?php echo esc_html($s['date'].' · '.$s['time'].' · Yetişkin '.number_format_i18n($s['types']['adult']['price'],2).' TL · Çocuk '.number_format_i18n($s['types']['child']['price'],2).' TL'); ?></option>
                         <?php endforeach; ?></select></label>
-                        <div class="mc-grid"><label>Ücretli yetişkin<select name="mdg_campaign_adults"><option value="1">1 yetişkin</option><option value="2">2 yetişkin</option></select></label>
-                        <label>Ücretsiz çocuk (3–12 yaş)<select name="mdg_campaign_children"><option value="1">1 çocuk</option><option value="2" selected>2 çocuk</option><option value="3">3 çocuk</option><option value="4">4 çocuk</option></select></label></div>
+                        <div class="mc-grid"><label>Yetişkin sayısı (13 yaş ve üzeri)<select name="mdg_campaign_adults"><?php for($i=1;$i<=10;$i++): ?><option value="<?php echo esc_attr($i); ?>" <?php echo $adult_input===(string)$i?'selected':''; ?>><?php echo esc_html($i); ?> yetişkin</option><?php endfor; ?></select></label>
+                        <label>Birlikte gelen çocuk sayısı<select name="mdg_campaign_children"><?php for($i=0;$i<=20;$i++): ?><option value="<?php echo esc_attr($i); ?>" <?php echo $child_count===$i?'selected':''; ?>><?php echo esc_html($i); ?> çocuk</option><?php endfor; ?></select></label></div>
+                        <p>13 yaş ve üzerini yetişkin sayısına ekleyebilirsiniz. Çocuklar arasında yaşını girerseniz sistem yetişkin bileti olarak sayar; aynı kişiyi iki kez eklemeyin.</p>
+                        <div class="mc-grid" data-child-ages>
+                        <?php for($i=0;$i<$child_count;$i++): $age=isset($age_inputs[$i]) && is_string($age_inputs[$i])?$age_inputs[$i]:''; ?>
+                        <label><?php echo esc_html($i+1); ?>. çocuğun yaşı<input type="number" min="0" max="120" step="1" name="mdg_campaign_ages[]" value="<?php echo esc_attr($age); ?>" required data-child-age><span data-age-status></span></label>
+                        <?php endfor; ?></div>
+                        <p data-live-quote role="status" aria-live="polite">Yaşları girdiğinizde ücretsiz ve ücretli biletler otomatik hesaplanır.</p>
+                        <noscript><button type="submit" name="mdg_campaign_action" value="ages" formnovalidate>Çocuk sayısına göre yaş alanlarını güncelle</button></noscript>
                         <button name="mdg_campaign_action" value="quote" type="submit">Kampanya tutarını hesapla</button>
                     </form>
-                    <?php if($quote && (isset($quote['error']) || (int)$quote['event']->id===(int)$event->id)): ?>
+                    <?php if($quote && !isset($quote['error']) && (int)$quote['event']->id===(int)$event->id): ?>
                         <div class="mc-result" role="status">
-                        <?php if(isset($quote['error'])): ?><p class="mc-error"><?php echo esc_html($quote['error']); ?></p>
-                        <?php else: ?><p><?php echo esc_html($quote['session']['date'].' · '.$quote['session']['time']); ?><br><?php echo esc_html($quote['adults']); ?> yetişkin + <?php echo esc_html($quote['children']); ?> ücretsiz çocuk.<br><strong>Toplam: <?php echo wp_kses_post(wc_price($quote['total'])); ?></strong></p><p>Bu deneme özeti bilet veya rezervasyon değildir.</p><?php endif; ?>
+                        <p><?php echo esc_html($quote['session']['date'].' · '.$quote['session']['time']); ?><br><?php echo esc_html($quote['adult_tickets']); ?> ücretli yetişkin bileti<?php echo $quote['older']?' (yaşı 13 ve üzeri olan '.esc_html($quote['older']).' kişi dahil)':''; ?><br><?php echo esc_html($quote['free_children']); ?> ücretsiz çocuk bileti · <?php echo esc_html($quote['paid_children']); ?> ücretli çocuk bileti · <?php echo esc_html($quote['infants']); ?> kişi 0–2 yaş ücretsiz.<br><strong>Toplam: <?php echo wp_kses_post(wc_price($quote['total'])); ?></strong></p>
+                        <?php foreach($quote['details'] as $i=>$detail): ?><p><?php echo esc_html(($i+1).'. çocuk · '.$detail['age'].' yaş · '.array('infant'=>'0–2 yaş ücretsiz','adult'=>'Yetişkin bileti','free_child'=>'Kampanyadan ücretsiz','paid_child'=>'Normal çocuk bileti')[$detail['kind']]); ?> · <?php echo wp_kses_post(wc_price($detail['price'])); ?></p><?php endforeach; ?>
+                        <p>Bu deneme özeti bilet veya rezervasyon değildir.</p>
                         </div>
                     <?php endif; ?>
                 </article>
                 <?php endforeach; ?>
             <?php endif; ?>
             </section>
+            <script>
+            (function(){
+                const money=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(n);
+                document.querySelectorAll('.mdg-campaigns form[data-age-quote]').forEach(form=>{
+                    if(form.dataset.ageEnhanced)return;form.dataset.ageEnhanced='1';
+                    const adults=form.querySelector('[name="mdg_campaign_adults"]'),count=form.querySelector('[name="mdg_campaign_children"]'),session=form.querySelector('[name="mdg_campaign_session"]'),box=form.querySelector('[data-child-ages]'),summary=form.querySelector('[data-live-quote]');
+                    const update=()=>{
+                        const option=session.selectedOptions[0],ap=Number(option.dataset.adultPrice),cp=Number(option.dataset.childPrice);
+                        const inputs=Array.from(box.querySelectorAll('[data-child-age]'));
+                        const valid=inputs.every(i=>/^(0|[1-9][0-9]{0,2})$/.test(i.value)&&Number(i.value)<=120);
+                        const older=inputs.filter(i=>/^(0|[1-9][0-9]{0,2})$/.test(i.value)&&Number(i.value)>=13&&Number(i.value)<=120).length;
+                        const paidAdults=Number(adults.value)+older,allowance=paidAdults*2;let left=allowance,free=0,paid=0,infant=0;
+                        inputs.forEach(input=>{
+                            const status=input.parentElement.querySelector('[data-age-status]');
+                            if(!/^(0|[1-9][0-9]{0,2})$/.test(input.value)||Number(input.value)>120){status.textContent='Yaşı girin';return;}
+                            const age=Number(input.value);
+                            if(age<=2){infant++;status.textContent='0–2 yaş ücretsiz';}
+                            else if(age>=13){status.textContent='Yetişkin bileti · '+money(ap);}
+                            else if(left>0){left--;free++;status.textContent='Kampanyadan ücretsiz';}
+                            else{paid++;status.textContent='Ücretli çocuk bileti · '+money(cp);}
+                        });
+                        summary.textContent=valid?paidAdults+' ücretli yetişkin bileti · '+free+' ücretsiz çocuk · '+paid+' ücretli çocuk · '+infant+' kişi 0–2 yaş ücretsiz. Toplam: '+money(paidAdults*ap+paid*cp):'Ücretsiz çocuk hakkı: '+allowance+'. Tam tutar için bütün çocukların yaşını girin.';
+                    };
+                    const resize=()=>{
+                        const n=Number(count.value);
+                        while(box.children.length>n)box.lastElementChild.remove();
+                        while(box.children.length<n){const label=document.createElement('label');label.append(document.createTextNode((box.children.length+1)+'. çocuğun yaşı'));const input=document.createElement('input');input.type='number';input.min='0';input.max='120';input.step='1';input.required=true;input.name='mdg_campaign_ages[]';input.dataset.childAge='';label.append(input);const status=document.createElement('span');status.dataset.ageStatus='';label.append(status);box.append(label);}
+                        update();
+                    };
+                    count.addEventListener('change',resize);adults.addEventListener('change',update);session.addEventListener('change',update);box.addEventListener('input',update);resize();
+                });
+            })();
+            </script>
             <?php return ob_get_clean();
         }
 
