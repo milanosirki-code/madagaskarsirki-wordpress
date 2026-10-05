@@ -23,12 +23,12 @@ cases = [
     ('izmir_extra', 'TEST-IZMIR', '88', '1', ['5','7','12'], '900,00'),
 ]
 for label, code, session, adults, ages, expected in cases:
-    pairs = [('mdg_campaign_nonce',nonce), ('mdg_campaign_code',code), ('mdg_campaign_action','quote'), ('mdg_campaign_event','10' if code=='TEST-IZMIR' else '12'), ('mdg_campaign_session',session), ('mdg_campaign_adults',adults), ('mdg_campaign_children',str(len(ages)))] + [('mdg_campaign_ages[]',age) for age in ages]
+    pairs = [('mdg_campaign_nonce',nonce), ('mdg_campaign_code',code), ('mdg_campaign_action','quote'), ('mdg_campaign_event','10' if code=='TEST-IZMIR' else '12'), ('mdg_campaign_session',session), ('mdg_campaign_adults',adults), ('mdg_campaign_children',str(len(ages)))] + [('mdg_campaign_birthdates[]',str(2026-int(age))+'-01-01') for age in ages]
     status, body = request(pairs)
     result = re.search(r'<div class="mc-result".*?</div>',body,re.S)
     text = html.unescape(re.sub(r'<[^>]+>',' ',result.group(0))) if result else 'MISSING'
     assert status == 200 and expected in text, (label,status,text)
     print('PASS',label,expected,flush=True)
-status, body = request([('mdg_campaign_nonce',nonce),('mdg_campaign_code','TEST-DENIZLI'),('mdg_campaign_action','quote'),('mdg_campaign_session','99'),('mdg_campaign_adults','1'),('mdg_campaign_children','3'),('mdg_campaign_ages[]','5')])
-assert status == 200 and 'çocuk sayısı kadar yaş bilgisi' in body
+status, body = request([('mdg_campaign_nonce',nonce),('mdg_campaign_code','TEST-DENIZLI'),('mdg_campaign_action','quote'),('mdg_campaign_session','99'),('mdg_campaign_adults','1'),('mdg_campaign_children','3'),('mdg_campaign_birthdates[]','2021-01-01')])
+assert status == 200 and 'çocuk sayısı kadar doğum tarihi' in body
 print('PASS missing_age_count',flush=True)
