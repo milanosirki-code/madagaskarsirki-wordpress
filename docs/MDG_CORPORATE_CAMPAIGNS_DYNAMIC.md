@@ -6,7 +6,7 @@ Kullanıcı Denizli'ye özel sabit ekran yerine kodla ilinin güncel gösteriler
 
 `MDG_Public_Tickets::active_events()` doğrudan kullanılır; bu, normal `/bilet-al/` sayfasının da kaynağıdır. Ayrı etkinlik listesi, sabit Woo ürün kimlikleri veya haftalık kopyalama yoktur. Kod province_name ile bağlanır; aynı ilde satışa açılan yeni etkinlikler ve seanslar bir sonraki istekte otomatik gelir. Geçmiş/kapalı seans, dolu kapasite, eksik mapping ve satışa uygun olmayan varyasyonlar gösterilmez. ADULT/CHILD ve YETISKIN/COCUK türleri desteklenir; aile paketi ücretsiz çocuk hesabına karıştırılmaz.
 
-Yalnız kampanya shortcode'unun bulunduğu sayfa için `template_redirect` aşamasında DONOTCACHEPAGE ve nocache_headers uygulanır; kod bazlı sonuç ve yeni seanslar sayfa önbelleğine takılmaz. Diğer sayfaların önbellek davranışı değiştirilmez.
+Yalnız kampanya shortcode'unun bulunduğu sayfa için `template_redirect` aşamasında DONOTCACHEPAGE ve nocache_headers istenir. Ancak canlı WordPress.com GET yanıtında platform `public, max-age=300, s-maxage=600` başlığı gönderdi; host önbelleğinin tamamen devre dışı kaldığı iddia edilmez. Ana kullanıcı akışı kod girme ve hesaplama POST'larıyla her istekte kaynakları yeniden okur. GET ile paylaşılan kodlu bağlantılar host önbelleği süresince gecikebilir. Diğer sayfaların önbellek davranışı değiştirilmez.
 
 ## Kodlar
 
