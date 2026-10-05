@@ -94,3 +94,15 @@ Stage7 quota checkpoint:
 - Current source total/agent attachment classifications remain UNKNOWN; historic15-source count is not treated as current. URL reindex unconfirmed, manual-update limitation preserved.
 - Temporary117 restored original/passive with exact read-back. Final122snippets/43active/code_error0; fresh health16/16.
 - Issue82 OPEN. Evidence and remaining closure gates: `docs/ISSUE_82_KOMMO_SOURCE_CHECKPOINT.md`. Issue121 remains completed; no unrelated module/domain changes.
+
+## Issue #82 — HTTP status fix deployed (2026-10-05, Europe/Istanbul)
+
+- Explicit Stage2 request authorizes the isolated HTTP fix without waiting for remote retrieval; Issue82 must remain OPEN.
+- PR127 reviewed, ready and MERGED; code merge main `d074e115abc546a74a2955a6017ca4e20aaa2d00`. Three head CI checks succeeded.
+- Active snippet110 canonical V2 changed only by status_header(200) after authorization. Before SHA256 `292e0c542a3f185119d28ba5639e1786d5bdf0fecaac8fdba3c4fc86e47956dd`; after `787ba5a41c6ff1b07dff3048cbe9230a06612725910cc92717bfbe74e795f73b`; live/readback/main candidate body MATCH. Exact pre-deploy metadata/code backup retained privately. Historical production archive remains immutable.
+- Actual hidden-URL HTTP: valid404→200; invalid404→404; missing404→404. Unrelated /bilet-al/200→200 with identical body hash.
+- Authenticated admin GET invokes real serve callback with invalid token and hidden URI: HTTP200, admin true,8articles,0capturedwarnings; no session creation/capability stub. A separate authenticated browser request was not available.
+- Events, program text and location text unchanged byte/logically;8events,1578/1950 and1394/5000characters. Past Yenimahalle absent. Dynamic rendered minute is normalized for HTML hash comparison; normalized SHA256 `b85c70b42d43a6fb9f7c99858ce35ee70de5814e1d3f51e8d66ce3bf8c0d1d03` unchanged.
+- Final health16/16; snippets122total/43active/code_error0. Snippet70 remains passive; temporary117 restored original/passive, verified exact. No targeted PHP warning/fatal; global PHP logs were not audited.
+- Kommo browser unavailable. Inventory, attachments, source limit and stale-source classification remain unknown; reindex UNCONFIRMED; real AI preview/context tests NOT RUN. No source writes/creation/deletion, no customer messages.
+- Issue82 remains OPEN. Evidence: `docs/ISSUE_82_HTTP_DEPLOYMENT_EVIDENCE.json`. Result: HTTP PATCH DEPLOYED / KOMMO REMOTE VERIFICATION PENDING AUTHORIZED BROWSER. Rollback not needed.
