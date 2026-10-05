@@ -472,19 +472,37 @@ class MMC_Operations_Service {
 
     /** Preview only: does not invoke ensure/backfill or infer deadlines/owners. */
     public static function backfill_preview() {
+        global $wpdb;
+        $existing=array();
+        foreach((array)$wpdb->get_results("SELECT program_id,title,metadata FROM {$wpdb->prefix}mmc_tasks WHERE module='operations'") as $task){
+            $existing[(int)$task->program_id]['titles'][$task->title]=true;
+            $meta=json_decode((string)($task->metadata??''),true);
+            if(is_array($meta) && isset($meta['source_key'])){$existing[(int)$task->program_id]['keys'][$meta['source_key']]=true;}
+        }
         $preview=array();
         foreach(self::readiness_overview(true) as $row){
             $closed=in_array($row['program_status'],array('cancelled','completed','financial_close','deposit_refund'),true);
             $templates_due=in_array($row['program_status'],array('operations','show_day'),true);
-            $preview[]=array('program_id'=>(int)$row['id'],'plan_exists'=>!empty($row['plan_id']),
+            $templates=self::task_templates();if(!$templates_due){$templates=array('plan'=>$templates['plan']);}
+            $missing_tasks=0;
+            if(!$closed){foreach($templates as$key=>$template){if(empty($existing[(int)$row['id']]['titles'][$template[1]]) && empty($existing[(int)$row['id']]['keys']['operations_v1.'.$key])){$missing_tasks++;}}}
+            $missing_checks=$closed?0:max(0,count(self::checklist_template())-(int)($row['template_check_count']??$row['check_total']));
+            $preview[]=array('would_create'=>array('plan'=>(int)(!$closed && empty($row['plan_id'])),'checklist'=>$missing_checks,'tasks'=>$missing_tasks),
+                'would_update'=>'Canonical schedule changes require explicit sync; preview does not run sync or edit manual state',
+                'program_id'=>(int)$row['id'],'plan_exists'=>!empty($row['plan_id']),
                 'task_exists'=>(int)$row['operation_tasks']>0,'checklist_count'=>(int)$row['check_total'],
                 'would_create_plan'=>!$closed && empty($row['plan_id']),
                 'would_review_tasks'=>!$closed && ($templates_due || empty($row['operation_tasks'])),
                 'would_review_checklist'=>!$closed && (int)$row['check_total']<count(self::checklist_template()),
-                'would_leave_unchanged'=>$closed,
+                'would_leave_unchanged'=>$closed || (!empty($row['plan_id']) && !$missing_tasks && !$missing_checks),
                 'policy'=>'PREVIEW_ONLY; no dates, owners or domain state changed');
         }
         return $preview;
+    }
+
+    public static function operation_tasks( $program_id ) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare("SELECT id,module,title,status,priority,due_at,assigned_user_id,completed_at,metadata FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d AND module IN ('operations','finance') ORDER BY status='open' DESC,due_at IS NULL,due_at,id",absint($program_id)));
     }
 
     public static function schedule( $program_id ) {
@@ -639,7 +657,7 @@ class MMC_Operations_Service {
             if ( $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND module='operations' AND title=%s LIMIT 1",absint($program_id),$template[1])) ) { continue; }
             $now=current_time('mysql');
             $inserted=$wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
-                'status'=>'open','priority'=>'high','metadata'=>wp_json_encode(array('source_key'=>$source_key,'system_generated'=>true,'phase'=>$template[0],'template_version'=>1)),
+                'status'=>'open','priority'=>('plan'===$key?'high':'normal'),'metadata'=>wp_json_encode(array('source_key'=>$source_key,'system_generated'=>true,'phase'=>$template[0],'template_version'=>1)),
                 'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
             if(false===$inserted){return new WP_Error('mmc_ops_task_insert','Operasyon görevi oluşturulamadı; mevcut kayıtlar korunarak yeniden denenebilir.');}
             // Initialization is already recorded by the plan/program audit; task metadata identifies its origin.

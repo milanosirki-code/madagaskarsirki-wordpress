@@ -62,6 +62,7 @@ class MMC_Operations_Admin {
         $assigned=$program?MMC_Operations_Service::program_resources($pid):array();
         $checklist=$program?MMC_Operations_Service::checklist($pid):array();
         $schedule=$program?MMC_Operations_Service::schedule($pid):array();
+        $tasks=$program?MMC_Operations_Service::operation_tasks($pid):array();
         $event=$program&&class_exists('MMC_Event_Service')?MMC_Event_Service::event_for_program($pid):null;
         $session_sales=$event&&class_exists('MMC_Sales_Service')?MMC_Sales_Service::session_summary($event->id):array();
         ?>
@@ -99,6 +100,12 @@ class MMC_Operations_Admin {
                 <div class="mmc-card"><span>Lojistik</span><strong><?php echo esc_html($summary['vehicles']);?> araç</strong><small><?php echo esc_html($summary['equipment']);?> ekipman kaydı</small></div>
             </div>
 
+            <div class="mmc-panel"><h2>Operasyon / Mali Kapanış Görevleri</h2>
+                <p>Görevler mevcut MMC görev sisteminden okunur. Sorumlu ve tarih ataması yapılmamışsa açıkça belirtilir.</p>
+                <table class="widefat striped"><thead><tr><th>Görev</th><th>Durum / öncelik</th><th>Son tarih</th><th>Sorumlu kullanıcı</th><th>Tamamlanma</th></tr></thead><tbody>
+                <?php foreach($tasks as $task):?><tr><td><?php echo esc_html($task->title);?></td><td><?php echo esc_html($task->status.' / '.$task->priority);?></td><td><?php echo esc_html($task->due_at??'Belirlenmedi');?></td><td><?php echo esc_html($task->assigned_user_id??'Atanmadı');?></td><td><?php echo esc_html($task->completed_at??'—');?></td></tr><?php endforeach;?>
+                <?php if(!$tasks):?><tr><td colspan="5">Bu kapsamda görev yok.</td></tr><?php endif;?></tbody></table>
+            </div>
             <div class="mmc-panel">
                 <h2>1. Operasyon Planı</h2>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>"><input type="hidden" name="action" value="mmc_ops_save_plan"><input type="hidden" name="program_id" value="<?php echo esc_attr($pid);?>"><?php wp_nonce_field('mmc_ops_plan_'.$pid);?>

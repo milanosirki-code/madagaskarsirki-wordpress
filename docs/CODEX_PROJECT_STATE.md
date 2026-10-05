@@ -171,4 +171,4 @@ Issue129 deployment checkpoint:
 - Issue #150, branch `codex/operations-task-automation-v1`: existing schemas/service/admin preserved; 13 plans, 559 checks, 33 schedules, 141 open tasks; nine future programs.
 - 13 high-level templates gated operations/show_day; earlier phases keep planning task. Stable keys + locks, no dates/personnel/backfill.
 - Read-only readiness/upcoming view, manual schedule preservation, lodging rules, cancelled guard; Issue #121 contracts retained.
-- 87 assertions pass; deployment/PR/CI/final archives pending. See OPERATIONS_TASK_AUTOMATION_V1.md.
+- 88 assertions pass; deployment/PR/CI/final archives pending. See OPERATIONS_TASK_AUTOMATION_V1.md.

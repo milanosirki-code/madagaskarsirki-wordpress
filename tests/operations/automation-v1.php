@@ -44,7 +44,7 @@ class AutomationDB extends OpsDB {
     }
     public function insert($table,$data){
         parent::insert($table,$data);
-        if(str_ends_with($table,'mmc_tasks')){$this->tasks[]=(object)array_merge(['id'=>$this->insert_id],$data);}
+        if(str_ends_with($table,'mmc_tasks')){$this->tasks[]=(object)array_merge(['id'=>$this->insert_id,'due_at'=>null,'assigned_user_id'=>null,'completed_at'=>null],$data);}
         if(str_ends_with($table,'mmc_operation_schedule')){$this->schedule_rows[$this->insert_id]=(object)array_merge(['id'=>$this->insert_id,'assigned_user_id'=>null],$data);}
         return true;
     }
@@ -142,5 +142,6 @@ check(str_contains($html,'Yaklaşan Operasyonlar') && str_contains($html,'Plan O
 MMC_Operations_Service::ensure_plan(77);
 foreach(['next_destination','departure_at','venue_entry_at','setup_start_at','rehearsal_at','doors_open_at','teardown_end_at','return_at','lodging_name','lodging_address','lodging_rooms','lodging_cost','meal_plan','meal_cost','transport_cost','other_cost','notes'] as $key){$db->plan->$key=null;}
 $before=$db->snapshot();ob_start();(new MMC_Operations_Admin)->page();$html=ob_get_clean();
+check(str_contains($html,'Operasyon / Mali Kapanış Görevleri'),'Task read view missing');
 check(str_contains($html,'Operasyon Planını Kaydet') && str_contains($html,'Kontrol Listesini Kaydet'),'Existing-plan admin render missing data');check($before===$db->snapshot(),'Existing-plan admin GET wrote');
 echo "PASS {$assertions} assertions: initialization, tasks, modes, schedule, cancellation, readiness, finance, read-only contracts.\n";

@@ -8,7 +8,7 @@ Existing MMC_Operations_Service and MMC_Operations_Admin extended; existing task
 
 ## Schema/current state
 See OPERATIONS_V1_SCHEMA.json and OPERATIONS_V1_BEFORE.json. Thirteen programs/plans; 559 checklist rows; 33 schedules; 141 open tasks. Nine future programs; four historical, including one cancelled. No program currently operations/show_day.
-Task schema supports module, priority, assigned_user_id, due_at, completed_at, JSON metadata and timestamps. Status open/completed/cancelled. Existing tasks UI and CRUD/read abilities retained. No source_key column or unique task identity index: metadata source_key plus per-program MySQL advisory lock protects initialization. Completion audit uses task_status_changed in mmc_logs.
+Task schema supports module, priority, assigned_user_id, due_at, completed_at, JSON metadata and timestamps. Status open/completed/cancelled. Existing dashboard task counters and CRUD/read abilities retained; no standalone task CRUD admin screen was found. Operations now lists existing operation/finance tasks read-only; task writes remain in existing task abilities. No source_key column or unique task identity index: metadata source_key plus per-program MySQL advisory lock protects initialization. Completion audit uses task_status_changed in mmc_logs.
 Actual program lifecycle: preparation, region_analysis, venue_research, allocation_request, allocation_pending, venue_confirmed, venue_payment, event_setup, sales_prep, sales_open, promotion, operations, show_day, financial_close, deposit_refund, completed, cancelled. Status setter validates names but has no strict transition matrix. Plan draft is not a program status.
 
 ## Existing automations preserved
@@ -19,6 +19,7 @@ Explicit ensure; venue/event/session/readiness log hooks; checklist initializati
 - Stable operations_v1.* identities; completed/cancelled/manual matching tasks retained; no reset of dates, owners or completion.
 - Serialized initialization/schedule sync; lock failure fails closed. Hook flag released in finally. Cancelled/completed programs do not initialize/generate tasks; terminal log hooks skip.
 - One aggregate readiness query: canonical event, first/next session, venue, plan/mode, checklist percentage/problems, evidence-based resource/lodging gaps, open/high/overdue tasks, next action. No per-program query loop.
+- Existing operation/finance task read table with status, priority, owner ID, due/completion time; no extra task CRUD system.
 - Upcoming default/archive filter, show-day marker/next session/doors; existing detailed sales/occupancy read unchanged.
 - Explicit capability/nonce/POST-only preparation button; GET read-only.
 - System schedule changes preserve manual notes, owners, status and rows. Deleted sessions/cleared system milestones removed; manual rows retained. Unchanged sync avoids timestamp churn.
@@ -26,7 +27,7 @@ Explicit ensure; venue/event/session/readiness log hooks; checklist initializati
 - Before render exposed existing null textarea PHP deprecations; safe string rendering fixes only Operations admin.
 
 ## Tests
-87 assertions in isolated database fixture using actual service/admin, including Issue #121's 29. Missing/existing reads/render, initialize twice, stable keys, no owner/deadline assignment, cancelled-task preservation, modes, session add/change/delete, manual state, unchanged sync, lock failure/release, one-query readiness, no-write preview, ready/post-show/finance.
+88 assertions in isolated database fixture using actual service/admin, including Issue #121's 29. Missing/existing reads/render, initialize twice, stable keys, no owner/deadline assignment, cancelled-task preservation, modes, session add/change/delete, manual state, unchanged sync, lock failure/release, one-query readiness, no-write preview, ready/post-show/finance.
 PHP syntax and repo CI required before deploy. No real order/payment/message test.
 
 ## Backfill preview / decisions
