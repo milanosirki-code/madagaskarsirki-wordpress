@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'docs/code-snippets/staged-2026-10-04/**'
+      - 'docs/code-snippets/staged-2026-10-05/**'
+      - 'tests/list-cache/**'
       - 'tests/past-session-snippets/**'
       - '.github/workflows/past-session-snippets.yml'
   workflow_dispatch:
@@ -16,14 +18,16 @@ jobs:
       - name: Lint staged snippet bodies and tests
         run: |
           set -e
-          for f in docs/code-snippets/staged-2026-10-04/*.php.txt; do
+          for f in docs/code-snippets/staged-2026-10-04/*.php.txt docs/code-snippets/staged-2026-10-05/*.php.txt; do
             tmp="$(mktemp --suffix=.php)"
             { echo '<?php'; cat "$f"; } > "$tmp"
             php -l "$tmp"
             rm -f "$tmp"
           done
           php -l tests/past-session-snippets/regression.php
+          php -l tests/list-cache/regression.php
       - name: Run isolated regressions
         run: |
           php tests/past-session-snippets/regression.php
           MS_TEST_DELEGATE=1 php tests/past-session-snippets/regression.php
+          php tests/list-cache/regression.php

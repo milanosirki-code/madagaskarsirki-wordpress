@@ -1,0 +1,84 @@
+/**
+ * Madagaskar Sirki – Liste Sayfaları Önbellek Ayarı V1
+ *
+ * Sorun (5 Ekim 2026): ana sayfa, /sehirler/ ve /bilet-al/ saate bağlı içerik
+ * gösterir, ama sayfa önbelleği bu sayfaların eski kopyalarını günlerce
+ * sunabiliyor. 5 Ekim 14:25'te /sehirler/ yaklaşık 1 Ekim'den kalma bir
+ * kopyadan geliyordu (biten ve iptal edilen gösteriler "SATIŞTA").
+ *
+ * Bu snippet yalnızca şu üç sayfada:
+ * - sayfanın önbelleğe alınmamasını ister (DONOTCACHEPAGE + nocache_headers),
+ * - <head> içine sayfanın üretildiği anı yazar:
+ *   <meta name="ms-sayfa-uretim" content="2026-10-05T14:50:03+03:00">
+ *   Böylece bir kopyanın ne kadar eski olduğu dışarıdan görülebilir.
+ *
+ * Bu snippet:
+ * - Veri yazmaz; ürün, sipariş, bilet, etkinlik, ödeme akışına dokunmaz.
+ * - Etkinlik sayfalarını (/etkinlik/...) değiştirmez; onlar zaten önbelleğe
+ *   alınmıyor.
+ * - Yönetim ekranlarında çalışmaz.
+ *
+ * Doğrulanması gereken: platformun kenar (edge) önbelleği bu başlıklara
+ * uyuyor mu? Uymuyorsa bu snippet tek başına yetmez; meta etiketi yine de
+ * eski kopyayı görünür kılar. Bkz. docs/CODEX_TALIMAT_2026-10-05.md, T2.
+ *
+ * Hook'lar: template_redirect (1), wp_head (1).
+ * Bağımlılık: yok. Sayfa kısa adları: sehirler, bilet-al.
+ * Geri alma: bu snippet'i devre dışı bırakmak yeterlidir.
+ * Code Snippets kullanırken <?php etiketi eklemeyin.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+
+/**
+ * Saate bağlı liste gösteren üç sayfadan biri mi?
+ */
+if ( ! function_exists( 'ms_lo_liste_sayfasi_mi' ) ) {
+    function ms_lo_liste_sayfasi_mi() {
+        if ( function_exists( 'is_admin' ) && is_admin() ) {
+            return false;
+        }
+
+        if ( function_exists( 'is_front_page' ) && is_front_page() ) {
+            return true;
+        }
+
+        return function_exists( 'is_page' ) && is_page( array( 'sehirler', 'bilet-al' ) );
+    }
+}
+
+
+if ( ! function_exists( 'ms_lo_onbellek_kapat' ) ) {
+    function ms_lo_onbellek_kapat() {
+        if ( ! ms_lo_liste_sayfasi_mi() ) {
+            return;
+        }
+
+        if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+            define( 'DONOTCACHEPAGE', true );
+        }
+
+        if ( function_exists( 'nocache_headers' ) && ! headers_sent() ) {
+            nocache_headers();
+        }
+    }
+}
+
+
+if ( ! function_exists( 'ms_lo_uretim_etiketi' ) ) {
+    function ms_lo_uretim_etiketi() {
+        if ( ! ms_lo_liste_sayfasi_mi() ) {
+            return;
+        }
+
+        $an = function_exists( 'wp_date' ) ? wp_date( 'c' ) : gmdate( 'c' );
+
+        echo '<meta name="ms-sayfa-uretim" content="' . esc_attr( $an ) . '">' . "\n";
+    }
+}
+
+add_action( 'template_redirect', 'ms_lo_onbellek_kapat', 1 );
+add_action( 'wp_head', 'ms_lo_uretim_etiketi', 1 );
