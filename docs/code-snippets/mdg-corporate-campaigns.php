@@ -1,5 +1,5 @@
 <?php
-/** Shared city-scoped campaign catalogue. Preview only: no checkout/ticket writes. */
+/** Shared city-scoped campaigns; scoped Woo cart pricing, existing paid ticket pipeline. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
     final class MDG_Corporate_Campaigns_20261005 {
@@ -27,7 +27,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 $row = $registry[ $key ];
                 if ( ! is_array( $row ) || empty( $row['active'] ) || empty( $row['province'] ) ||
                     ( ! empty( $row['end_date'] ) && $row['end_date'] < $today ) ) { return null; }
-                return array( 'key'=>$key, 'name'=>(string) ( $row['name'] ?? '' ), 'province'=>(string)$row['province'], 'test_only'=>true );
+                return array( 'key'=>$key, 'name'=>(string) ( $row['name'] ?? '' ), 'province'=>(string)$row['province'], 'test_only'=>false );
             }
             // TEST codes are demonstration codes, never real discount authority.
             foreach ( $events as $event ) {
@@ -67,7 +67,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                             (int)$v->get_meta('_mdg_event_id') !== (int)$event->id || (int)$v->get_meta('_mdg_session_id') !== (int)$s->id ) { continue; }
                         $price = $v->get_price();
                         if ( ! is_numeric($price) || ! is_finite((float)$price) || (float)$price <= 0 ) { continue; }
-                        $types[$role] = array('variation'=>(int)$t->wc_variation_id,'price'=>(float)$price);
+                        $types[$role] = array('variation'=>(int)$t->wc_variation_id,'price'=>(float)$price,'parent'=>(int)$s->wc_product_id,'type_id'=>(int)($t->id??0));
                     }
                     if ( ! isset($types['adult'],$types['child']) ) { continue; }
                     $available = class_exists('MDG_Capacity') ? MDG_Capacity::available((int)$s->id) : null;
@@ -179,7 +179,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                     <button name="mdg_campaign_action" value="open" type="submit">Gösterileri görüntüle</button>
                 </form>
                 <?php if($error): ?><p class="mc-error" role="alert"><?php echo esc_html($error); ?></p><?php endif; ?>
-                <p><strong>Deneme aşaması:</strong> Kampanya hesabını inceleyebilirsiniz. Henüz ödeme alınmaz ve QR bilet oluşturulmaz.</p>
+                <p>Biletler başarılı ödeme sonrasında oluşturulur. TEST- kodları yalnız hesaplama içindir.</p>
             </div>
             <?php if($campaign): ?>
                 <h2><?php echo esc_html($campaign['province']); ?> gösterileri</h2>
@@ -220,7 +220,18 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         <div class="mc-result" role="status">
                         <p><?php echo esc_html($quote['session']['date'].' · '.$quote['session']['time']); ?><br><?php echo esc_html($quote['adult_tickets']); ?> ücretli yetişkin bileti<?php echo $quote['older']?' (yaşı 13 ve üzeri olan '.esc_html($quote['older']).' kişi dahil)':''; ?><br><?php echo esc_html($quote['free_children']); ?> ücretsiz çocuk bileti · <?php echo esc_html($quote['paid_children']); ?> ücretli çocuk bileti · <?php echo esc_html($quote['infants']); ?> kişi 0–2 yaş ücretsiz.<br><strong>Toplam: <?php echo wp_kses_post(wc_price($quote['total'])); ?></strong></p>
                         <?php foreach($quote['details'] as $i=>$detail): ?><p><?php echo esc_html(($i+1).'. çocuk · '.$detail['age'].' yaş · '.array('infant'=>'0–2 yaş ücretsiz','adult'=>'Yetişkin bileti','free_child'=>'Kampanyadan ücretsiz','paid_child'=>'Normal çocuk bileti')[$detail['kind']]); ?> · <?php echo wp_kses_post(wc_price($detail['price'])); ?></p><?php endforeach; ?>
-                        <p>Bu deneme özeti bilet veya rezervasyon değildir.</p>
+                        <p>Bu özet rezervasyon değildir. Ücretsiz çocuklar yetişkinleriyle birlikte giriş yapar.</p>
+                        <?php if(!$campaign['test_only']): ?>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <input type="hidden" name="action" value="mdg_campaign_checkout">
+                        <?php wp_nonce_field(self::SHORTCODE,'mdg_campaign_nonce',false); ?>
+                        <?php foreach(array('mdg_campaign_code','mdg_campaign_session','mdg_campaign_adults','mdg_campaign_children') as $field): ?>
+                        <input type="hidden" name="<?php echo esc_attr($field); ?>" value="<?php echo esc_attr(self::input($_POST,$field)); ?>">
+                        <?php endforeach; foreach((array)($_POST['mdg_campaign_birthdates']??array()) as $birth): ?>
+                        <input type="hidden" name="mdg_campaign_birthdates[]" value="<?php echo esc_attr($birth); ?>">
+                        <?php endforeach; ?>
+                        <button type="submit">Ödemeye devam et</button></form>
+                        <?php else: ?><p>Test koduyla ödeme veya bilet oluşturulmaz.</p><?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </article>
@@ -273,6 +284,147 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             <?php return ob_get_clean();
         }
 
+        public static function sign($manifest) {
+            return hash_hmac('sha256',wp_json_encode($manifest),wp_salt('auth'));
+        }
+
+        public static function signed($item) {
+            $m=$item['mdg_campaign_manifest']??null;
+            return is_array($m) && is_string($item['mdg_campaign_signature']??null) && hash_equals(self::sign($m),$item['mdg_campaign_signature']);
+        }
+
+        public static function plan($quote) {
+            if(isset($quote['error'])){return array();}
+            $s=$quote['session'];
+            return array(
+                'adult'=>array('qty'=>$quote['adult_tickets'],'type'=>$s['types']['adult'],'free'=>false),
+                'paid_child'=>array('qty'=>$quote['paid_children'],'type'=>$s['types']['child'],'free'=>false),
+                'free_child'=>array('qty'=>$quote['free_children'],'type'=>$s['types']['child'],'free'=>true),
+                'infant'=>array('qty'=>$quote['infants'],'type'=>$s['types']['child'],'free'=>true)
+            );
+        }
+
+        public static function manifest_quote($m) {
+            if(!is_array($m) || !isset($m['code'],$m['session'],$m['adults'],$m['births'])){return array('error'=>'Kampanya seçimi doğrulanamadı.');}
+            $events=self::source_events();
+            $campaign=self::resolve($m['code'],$events,self::registry(),current_time('Y-m-d'));
+            if(!$campaign || $campaign['test_only']){return array('error'=>'Kampanya kodu satış için geçerli değil.');}
+            return self::quote_birthdates(self::catalogue($campaign,$events),$m['session'],$m['adults'],$m['births'],current_time('Y-m-d'));
+        }
+
+        public static function checkout() {
+            check_admin_referer(self::SHORTCODE,'mdg_campaign_nonce');
+            if(!function_exists('WC') || !class_exists('MDG_Live_Sales')){wp_die('Bilet satış sistemi hazır değil.');}
+            $births=$_POST['mdg_campaign_birthdates']??array();
+            $count=self::input($_POST,'mdg_campaign_children');
+            if(!is_array($births) || !preg_match('/^(?:0|[1-9][0-9]*)$/D',$count) || (int)$count!==count($births)){wp_die('Çocuk sayısı ve doğum tarihleri uyuşmuyor.');}
+            $m=array('code'=>self::normalize(self::input($_POST,'mdg_campaign_code')),'session'=>self::input($_POST,'mdg_campaign_session'),'adults'=>self::input($_POST,'mdg_campaign_adults'),'births'=>$births);
+            $q=self::manifest_quote($m);
+            if(isset($q['error'])){wp_die(esc_html($q['error']));}
+            $plan=self::plan($q);
+            // Verify existing Tickera mapping; never invent a product or ticket event.
+            $parent=wc_get_product($q['session']['types']['adult']['parent']);
+            $event_id=(int)$parent->get_meta('_event_name');
+            if('yes'!==$parent->get_meta('_tc_is_ticket') || !$event_id || 'tc_events'!==get_post_type($event_id) || (int)get_post_meta($event_id,'_mdg_event_id',true)!==(int)$q['event']->id){wp_die('QR bilet bağlantısı doğrulanamadı.');}
+            if(function_exists('wc_load_cart') && (!WC()->cart || !WC()->session)){wc_load_cart();}
+            if(!WC()->cart){wp_die('Sepet başlatılamadı.');}
+            $cart=WC()->cart; $old=array(); $added=array();
+            // Replace only this flow's previous selection. Preserve ordinary tickets.
+            foreach($cart->get_cart() as $key=>$item){if(isset($item['mdg_campaign_manifest'])){$old[$key]=$item;$cart->remove_cart_item($key);}}
+            try {
+                foreach($plan as $role=>$row){
+                    if(!$row['qty'])continue;
+                    $t=$row['type'];
+                    $attrs=wc_get_product_variation_attributes($t['variation']);
+                    if(!$attrs){throw new Exception('Bilet seçeneği okunamadı.');}
+                    $key=$cart->add_to_cart($t['parent'],$row['qty'],$t['variation'],$attrs,array(
+                        'mdg_campaign_manifest'=>$m,'mdg_campaign_signature'=>self::sign($m),'mdg_campaign_role'=>$role,
+                        MDG_Live_Sales::CART_FLAG=>1,'mdg_event_id'=>(int)$q['event']->id,'mdg_session_id'=>(int)$m['session'],
+                        'mdg_ticket_type_id'=>$t['type_id'],'mdg_capacity_units'=>1
+                    ));
+                    if(!$key){throw new Exception('Biletler sepete eklenemedi.');}
+                    $added[]=$key;
+                }
+                $cart->calculate_totals(); $cart->set_session();
+            } catch(Throwable $e) {
+                foreach($added as $key){$cart->remove_cart_item($key);}
+                foreach($old as $key=>$item){$cart->restore_cart_item($key);}
+                $cart->calculate_totals(); $cart->set_session();
+                wp_die(esc_html($e->getMessage()));
+            }
+            wp_safe_redirect(wc_get_checkout_url()); exit;
+        }
+
+        public static function cart_state($cart) {
+            $groups=array();
+            foreach($cart->get_cart() as $key=>$item){
+                if(!isset($item['mdg_campaign_manifest']))continue;
+                if(!self::signed($item)){return array('error'=>'Kampanya seçimi doğrulanamadı. Yeniden seçin.');}
+                $signature=$item['mdg_campaign_signature'];
+                if(!isset($groups[$signature])){$groups[$signature]=array('manifest'=>$item['mdg_campaign_manifest'],'items'=>array());}
+                $groups[$signature]['items'][$key]=$item;
+            }
+            if(count($groups)>1){return array('error'=>'Kampanya seçimini kampanya sayfasından yeniden yapın.');}
+            $prices=array();
+            foreach($groups as $group){
+                $q=self::manifest_quote($group['manifest']);
+                if(isset($q['error']))return $q;
+                $plan=self::plan($q); $counts=array_fill_keys(array_keys($plan),0);
+                foreach($group['items'] as $key=>$item){
+                    $role=$item['mdg_campaign_role']??'';
+                    if(!isset($plan[$role]) || (int)$item['variation_id']!==$plan[$role]['type']['variation'] || (int)$item['product_id']!==$plan[$role]['type']['parent'] || (int)$item['quantity']<1){return array('error'=>'Kampanya biletleri değişmiş. Kampanya sayfasından yeniden seçin.');}
+                    $counts[$role]+=(int)$item['quantity'];
+                    $prices[$key]=$plan[$role]['free']?0:$plan[$role]['type']['price'];
+                }
+                foreach($plan as $role=>$row){if($counts[$role]!==$row['qty'])return array('error'=>'Kişi sayısı değişmiş. Ücretsiz çocuk haklarını kampanya sayfasından yeniden hesaplayın.');}
+            }
+            return array('prices'=>$prices);
+        }
+
+        public static function prices($cart) {
+            // Restore catalog price first, so an invalid zero-price selection never remains free.
+            foreach($cart->get_cart() as $key=>$item){if(isset($item['mdg_campaign_manifest'])){$p=wc_get_product($item['variation_id']);if($p){$cart->cart_contents[$key]['data']=clone $p;}}}
+            $state=self::cart_state($cart);
+            if(isset($state['error']))return;
+            foreach($state['prices'] as $key=>$price){$cart->cart_contents[$key]['data']->set_price($price);}
+        }
+
+        public static function validate_cart() {
+            if(!function_exists('WC') || !WC()->cart)return;
+            $state=self::cart_state(WC()->cart);
+            if(isset($state['error'])){wc_add_notice($state['error'],'error');}
+        }
+
+        public static function validate_order($order) {
+            if(!function_exists('WC') || !WC()->cart)return;
+            $state=self::cart_state(WC()->cart);
+            if(isset($state['error']))throw new Exception($state['error']);
+        }
+
+        public static function item_meta($item,$cart_key,$values,$order) {
+            if(!isset($values['mdg_campaign_manifest']) || !self::signed($values))return;
+            $m=$values['mdg_campaign_manifest'];
+            $item->add_meta_data('_mdg_campaign_code',$m['code'],true);
+            $item->add_meta_data('_mdg_campaign_group',$values['mdg_campaign_signature'],true);
+            $item->add_meta_data('_mdg_campaign_role',$values['mdg_campaign_role'],true);
+            $item->add_meta_data('Kampanya',self::role_label($values['mdg_campaign_role']),true);
+            if(in_array($values['mdg_campaign_role'],array('free_child','infant'),true)){$item->add_meta_data('Giriş koşulu','Aynı siparişteki ücretli yetişkin ile birlikte giriş',true);}
+            // Raw birthdates remain in the Woo session only, never in order or ticket metadata.
+        }
+
+        public static function role_label($role) {
+            return array('adult'=>'Ücretli yetişkin','paid_child'=>'Ücretli çocuk','free_child'=>'Ücretsiz çocuk davetiyesi','infant'=>'0–2 yaş ücretsiz')[$role]??'';
+        }
+
+        public static function item_display($data,$item) {
+            if(isset($item['mdg_campaign_manifest'])){$data[]=array('key'=>'Kampanya','value'=>self::role_label($item['mdg_campaign_role']??''));}
+            return $data;
+        }
+
+        public static function coupon_product($valid,$product,$coupon,$item) {
+            return isset($item['mdg_campaign_manifest'])?false:$valid;
+        }
+
         public static function admin_menu() {
             add_submenu_page('woocommerce','Kurumsal Kampanyalar','Kurumsal Kampanyalar','manage_woocommerce',self::ADMIN,array(__CLASS__,'admin_page'));
         }
@@ -283,7 +435,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $registry=self::registry();
             ?>
             <div class="wrap"><h1>Kurumsal Kampanyalar</h1>
-            <p>Bir kodu bir ile bağlayın. Bilet Al sayfasında bu il için satışa açılan yeni gösteriler kampanya sayfasına otomatik gelir. Bu sürüm yalnız deneme hesabı yapar; gerçek kupon ve QR üretmez.</p>
+            <p>Bir kodu bir ile bağlayın. Bu ilde satışa açılan gösteriler otomatik gelir. Kurum kodlarıyla mevcut ödeme sistemi üzerinden bilet alınabilir; TEST- kodları yalnız hesaplama yapar.</p>
             <?php if(isset($_GET['saved'])): ?><div class="notice notice-success"><p>Kampanya kodu kaydedildi.</p></div><?php endif; ?>
             <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
             <input type="hidden" name="action" value="mdg_corporate_campaign_save"><?php wp_nonce_field(self::ADMIN); ?>
@@ -347,4 +499,13 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
     add_action('admin_menu',array('MDG_Corporate_Campaigns_20261005','admin_menu'));
     add_action('admin_post_mdg_corporate_campaign_save',array('MDG_Corporate_Campaigns_20261005','save'));
     add_action('admin_post_mdg_corporate_campaign_toggle',array('MDG_Corporate_Campaigns_20261005','toggle'));
+    add_action('admin_post_mdg_campaign_checkout',array('MDG_Corporate_Campaigns_20261005','checkout'));
+    add_action('admin_post_nopriv_mdg_campaign_checkout',array('MDG_Corporate_Campaigns_20261005','checkout'));
+    add_action('woocommerce_before_calculate_totals',array('MDG_Corporate_Campaigns_20261005','prices'),1000);
+    add_action('woocommerce_check_cart_items',array('MDG_Corporate_Campaigns_20261005','validate_cart'));
+    add_action('woocommerce_checkout_create_order',array('MDG_Corporate_Campaigns_20261005','validate_order'),1);
+    add_action('woocommerce_store_api_checkout_order_processed',array('MDG_Corporate_Campaigns_20261005','validate_order'),1);
+    add_action('woocommerce_checkout_create_order_line_item',array('MDG_Corporate_Campaigns_20261005','item_meta'),10,4);
+    add_filter('woocommerce_get_item_data',array('MDG_Corporate_Campaigns_20261005','item_display'),10,2);
+    add_filter('woocommerce_coupon_is_valid_for_product',array('MDG_Corporate_Campaigns_20261005','coupon_product'),10,4);
 }
