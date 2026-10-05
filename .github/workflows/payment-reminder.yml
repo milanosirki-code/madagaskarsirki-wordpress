@@ -1,0 +1,22 @@
+name: Payment reminder dry-run safety
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/ms-incomplete-payment-dryrun.php'
+      - 'tests/payment-reminder/**'
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php'
+      - '.github/workflows/payment-reminder.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dryrun-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: |
+          php -l docs/code-snippets/ms-incomplete-payment-dryrun.php
+          php -l tests/payment-reminder/regression.php
+      - name: Eligibility and no-send regressions
+        run: php tests/payment-reminder/regression.php

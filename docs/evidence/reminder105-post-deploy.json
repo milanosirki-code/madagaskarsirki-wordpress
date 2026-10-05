@@ -1,0 +1,824 @@
+{
+  "before": {
+    "posts": {
+      "count": 2545,
+      "sha256": "99bedd637e270e6cc53e910db3b3079e3088bd17731543853234a89fffc35cab"
+    },
+    "postmeta": {
+      "count": 13751,
+      "sha256": "c53c935eb3819e0258a254b816c18bd094ed4afc6dbca66399694fce867941c6"
+    },
+    "wc_orders": {
+      "count": 328,
+      "sha256": "94e4dd4e3d4a4c14a4aabee9914ced772cdf5f4a8f899469fd3db5a313d128af"
+    },
+    "wc_orders_meta": {
+      "count": 15055,
+      "sha256": "cab8a7510cb2ef46c5b0f7680df34a852897ffbf18d4074bcd270ef18e6bb67a"
+    },
+    "woocommerce_order_items": {
+      "count": 642,
+      "sha256": "38a2f7d876412ad69c2044eec330d201256faa8ff0f6057015b55d04babfd2b4"
+    },
+    "woocommerce_order_itemmeta": {
+      "count": 7271,
+      "sha256": "8bb51ba8f72e09268626558efa7d3507c689cec2c6d64cebbe0ce8d48cb697c8"
+    },
+    "mmc_kommo_profiles": {
+      "count": 13,
+      "sha256": "9c7fcbc365f096c9b4b59e466eb4cfa102984d41b5272ee20093971f05354c35"
+    },
+    "mmc_sales_ledger": {
+      "count": 335,
+      "sha256": "e27e52a6195894629f06e713b0bdff716978d05a0e7a5218a7b47942a6301af4"
+    }
+  },
+  "after": {
+    "posts": {
+      "count": 2545,
+      "sha256": "99bedd637e270e6cc53e910db3b3079e3088bd17731543853234a89fffc35cab"
+    },
+    "postmeta": {
+      "count": 13751,
+      "sha256": "c53c935eb3819e0258a254b816c18bd094ed4afc6dbca66399694fce867941c6"
+    },
+    "wc_orders": {
+      "count": 328,
+      "sha256": "94e4dd4e3d4a4c14a4aabee9914ced772cdf5f4a8f899469fd3db5a313d128af"
+    },
+    "wc_orders_meta": {
+      "count": 15055,
+      "sha256": "cab8a7510cb2ef46c5b0f7680df34a852897ffbf18d4074bcd270ef18e6bb67a"
+    },
+    "woocommerce_order_items": {
+      "count": 642,
+      "sha256": "38a2f7d876412ad69c2044eec330d201256faa8ff0f6057015b55d04babfd2b4"
+    },
+    "woocommerce_order_itemmeta": {
+      "count": 7271,
+      "sha256": "8bb51ba8f72e09268626558efa7d3507c689cec2c6d64cebbe0ce8d48cb697c8"
+    },
+    "mmc_kommo_profiles": {
+      "count": 13,
+      "sha256": "9c7fcbc365f096c9b4b59e466eb4cfa102984d41b5272ee20093971f05354c35"
+    },
+    "mmc_sales_ledger": {
+      "count": 335,
+      "sha256": "e27e52a6195894629f06e713b0bdff716978d05a0e7a5218a7b47942a6301af4"
+    }
+  },
+  "domain_unchanged": true,
+  "warnings": [],
+  "sales": {
+    "orders_count": "43",
+    "ticket_count": "107",
+    "sold_capacity": "107",
+    "gross_revenue": "42000.00",
+    "nominal_order_value": "47000.00",
+    "refunded_amount": "0.00",
+    "net_revenue": "42000.00",
+    "failed_orders": 4
+  },
+  "family": [
+    {
+      "code": "AILE_2_2",
+      "capacity_units": "4"
+    }
+  ],
+  "reports": [
+    {
+      "order_id": 3934,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        109
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 11
+    },
+    {
+      "order_id": 3924,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        109
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3907,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        108
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3836,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        109
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3820,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        109
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3467,
+      "event_ids": [
+        15
+      ],
+      "session_ids": [
+        108
+      ],
+      "program_ids": [
+        2
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "EVENT_CANCELLED",
+      "reason": "iptal/kapalı MMC programı #2",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 4533,
+      "event_ids": [
+        12
+      ],
+      "session_ids": [
+        99
+      ],
+      "program_ids": [
+        10
+      ],
+      "payment_status": "failed",
+      "eligibility": "DEFERRED",
+      "exclusion_reason": "WAITING",
+      "reason": "Ödeme bekleme süresi henüz dolmadı.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 4517,
+      "event_ids": [
+        22
+      ],
+      "session_ids": [
+        139
+      ],
+      "program_ids": [],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "REPLACEMENT_PAID",
+      "reason": "Aynı telefon ve etkinlik için daha sonra ödenmiş sipariş var.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": true,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 9
+    },
+    {
+      "order_id": 4508,
+      "event_ids": [
+        13
+      ],
+      "session_ids": [
+        105
+      ],
+      "program_ids": [
+        12
+      ],
+      "payment_status": "failed",
+      "eligibility": "ELIGIBLE",
+      "exclusion_reason": "",
+      "reason": "Ödenmemiş, gelecekte ve satın alınabilir seans; yalnız dry-run.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4480,
+      "event_ids": [
+        13
+      ],
+      "session_ids": [
+        105
+      ],
+      "program_ids": [
+        12
+      ],
+      "payment_status": "failed",
+      "eligibility": "ELIGIBLE",
+      "exclusion_reason": "",
+      "reason": "Ödenmemiş, gelecekte ve satın alınabilir seans; yalnız dry-run.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4396,
+      "event_ids": [
+        12
+      ],
+      "session_ids": [
+        99
+      ],
+      "program_ids": [
+        10
+      ],
+      "payment_status": "failed",
+      "eligibility": "DEFERRED",
+      "exclusion_reason": "WAITING",
+      "reason": "Ödeme bekleme süresi henüz dolmadı.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 4375,
+      "event_ids": [
+        22
+      ],
+      "session_ids": [
+        140
+      ],
+      "program_ids": [],
+      "payment_status": "failed",
+      "eligibility": "DEFERRED",
+      "exclusion_reason": "WAITING",
+      "reason": "Ödeme bekleme süresi henüz dolmadı.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 4370,
+      "event_ids": [
+        7
+      ],
+      "session_ids": [
+        60
+      ],
+      "program_ids": [
+        9
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4321,
+      "event_ids": [
+        7
+      ],
+      "session_ids": [
+        61
+      ],
+      "program_ids": [
+        9
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4304,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        96
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4279,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        94
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 4229,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        95
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 9
+    },
+    {
+      "order_id": 4084,
+      "event_ids": [
+        13
+      ],
+      "session_ids": [
+        105
+      ],
+      "program_ids": [
+        12
+      ],
+      "payment_status": "failed",
+      "eligibility": "DEFERRED",
+      "exclusion_reason": "WAITING",
+      "reason": "Ödeme bekleme süresi henüz dolmadı.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 10
+    },
+    {
+      "order_id": 4077,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        96
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 11
+    },
+    {
+      "order_id": 4070,
+      "event_ids": [
+        13
+      ],
+      "session_ids": [
+        104
+      ],
+      "program_ids": [
+        12
+      ],
+      "payment_status": "failed",
+      "eligibility": "DEFERRED",
+      "exclusion_reason": "WAITING",
+      "reason": "Ödeme bekleme süresi henüz dolmadı.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": false,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 11
+    },
+    {
+      "order_id": 4051,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        96
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3988,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        95
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 11
+    },
+    {
+      "order_id": 3897,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        94
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3845,
+      "event_ids": [
+        7
+      ],
+      "session_ids": [
+        62
+      ],
+      "program_ids": [
+        9
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3705,
+      "event_ids": [
+        7
+      ],
+      "session_ids": [
+        60
+      ],
+      "program_ids": [
+        9
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3569,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        94
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3566,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        95
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 68
+    },
+    {
+      "order_id": 3494,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        96
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 3472,
+      "event_ids": [
+        11
+      ],
+      "session_ids": [
+        94
+      ],
+      "program_ids": [
+        8
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    },
+    {
+      "order_id": 3464,
+      "event_ids": [
+        16
+      ],
+      "session_ids": [
+        112
+      ],
+      "program_ids": [
+        3
+      ],
+      "payment_status": "failed",
+      "eligibility": "EXCLUDED",
+      "exclusion_reason": "SESSION_STARTED",
+      "reason": "Seans başladı; bilet satışı sona erdi.",
+      "phone_available": true,
+      "phone_masked": "[masked]",
+      "replacement_paid": null,
+      "already_reminded": false,
+      "already_evaluated": false,
+      "mode": "DRY_RUN",
+      "real_send_count": 0,
+      "wait_minutes": 8
+    }
+  ],
+  "errors": [],
+  "write_attempts": [],
+  "real_send_count": 0,
+  "mode": "POST_DEPLOY_READ_ONLY",
+  "snippet_total": 125,
+  "snippet_active": 45,
+  "code_error": 0,
+  "health": {
+    "ok": 16,
+    "warning": 0,
+    "critical": 0
+  },
+  "ci": {
+    "commit": "f8fb1777e117a8340b882d339b39539238409220",
+    "passed": 5
+  },
+  "snippet103_source_sha256": "6ee31cf21bd35bb5764a1e168d5376a143868ea79eac9f56cddb27276819dad1",
+  "snippet103_original_sha256": "8cd9a896fddf714bb240a15cb9d508347da24b668bb02441d7c8f1a19c7f9496"
+}
