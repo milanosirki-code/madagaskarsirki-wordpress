@@ -38,7 +38,7 @@ class Phase2DB extends AutomationDB {
         $main=explode(' AND EXISTS(',$sql,2)[0];[$set,$condition]=explode(' WHERE ',substr($main,strlen('UPDATE wp_mmc_tasks SET ')),2);
         $data=[];$where=[];$offset=0;
         foreach(explode(',',$set)as$expr){$key=explode('=',$expr,2)[0];$data[$key]=$args[$offset++];}
-        foreach(explode(' AND ',$condition)as$expr){if(str_ends_with($expr,' IS NULL')){$where[substr($expr,0,-8)]=null;}else{$key=explode('=',$expr,2)[0];$where[$key]=$args[$offset++];}}
+        foreach(explode(' AND ',$condition)as$expr){$expr=str_replace('CAST(metadata AS BINARY)','metadata',$expr);if($expr==="module='operations'"){$where['module']='operations';continue;}if(str_ends_with($expr,' IS NULL')){$where[substr($expr,0,-8)]=null;}else{$key=explode('=',$expr,2)[0];$where[$key]=$args[$offset++];}}
         if(isset($data['assigned_user_id']) && $data['assigned_user_id']!==($program->owner_user_id??null)){return 0;}
         return $this->update('wp_mmc_tasks',$data,$where);
     }

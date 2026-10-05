@@ -658,7 +658,7 @@ class MMC_Operations_Service {
     private static function apply_task_fields_if_current( $payload, $where, $context ) {
         global $wpdb;$p=$wpdb->prefix;$sets=array();$clauses=array();$params=array();
         foreach($payload as$key=>$value){$sets[]=$key.'=%s';$params[]=$value;}
-        foreach($where as$key=>$value){if(null===$value){$clauses[]=$key.' IS NULL';}else{$clauses[]=$key.'=%s';$params[]=$value;}}
+        foreach($where as$key=>$value){if(null===$value){$clauses[]=$key.' IS NULL';}else{$clauses[]=('metadata'===$key?'CAST(metadata AS BINARY)':$key).'=%s';$params[]=$value;}}
         $params[]=(int)$where['program_id'];$params[]=substr(current_time('mysql'),0,10);
         $owner_guard='';
         if(isset($payload['assigned_user_id'])){
@@ -683,7 +683,7 @@ class MMC_Operations_Service {
         if(array_key_exists('due_at',$new_value)){$meta['due_manual_override']=true;unset($meta['due_managed'],$meta['due_last_value']);}
         if(array_key_exists('assigned_user_id',$new_value)){$meta['assignment_manual_override']=true;unset($meta['assignment_source'],$meta['assignment_last_user_id']);}
         $encoded=wp_json_encode($meta);
-        if($encoded!==(string)$row->metadata){$wpdb->update($wpdb->prefix.'mmc_tasks',array('metadata'=>$encoded),array('id'=>(int)$row->id,'program_id'=>absint($program_id),'metadata'=>$row->metadata));}
+        if($encoded!==(string)$row->metadata){$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}mmc_tasks SET metadata=%s WHERE id=%d AND program_id=%d AND module='operations' AND CAST(metadata AS BINARY)=%s",$encoded,(int)$row->id,absint($program_id),$row->metadata));}
     }
 
     public static function task_due_state( $task, $now = null ) {

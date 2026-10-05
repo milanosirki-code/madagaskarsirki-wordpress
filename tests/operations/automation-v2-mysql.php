@@ -12,7 +12,7 @@ function get_current_user_id(){return 501;}
 function wp_json_encode($v){return json_encode($v);}
 function get_user_by($field,$id){return $GLOBALS['wpdb']->get_row('SELECT ID FROM wp_users WHERE ID='.(int)$id);}
 class FixtureDB{
-    public string $prefix='wp_';public bool $cancel_race=false;public bool $manual_race=false;
+    public string $prefix='wp_';public bool $cancel_race=false;public bool $manual_race=false;public bool $metadata_race=false;public bool $owner_race=false;
     public mysqli $db;
     public function __construct(){$this->db=new mysqli('127.0.0.1','root','',getenv('OPS_FIXTURE_DB'),3306);$this->db->set_charset('utf8mb4');}
     public function prepare($sql,...$args){$i=0;return preg_replace_callback('/%[sd]/',function($m)use(&$i,$args){$v=$args[$i++];return $m[0]==='%d'?(string)(int)$v:"'".$this->db->real_escape_string((string)$v)."'";},$sql);}
@@ -22,6 +22,8 @@ class FixtureDB{
     public function query($sql){
         if(str_starts_with($sql,'UPDATE wp_mmc_tasks SET')){
             if($this->cancel_race){$this->cancel_race=false;$this->db->query("UPDATE wp_mmc_programs SET status='cancelled' WHERE id=77");}
+            if($this->metadata_race){$this->metadata_race=false;$this->db->query("UPDATE wp_mmc_tasks SET metadata=REPLACE(metadata,'operations_v1.plan','operations_v1.PLAN') WHERE id=1");}
+            if($this->owner_race){$this->owner_race=false;$this->db->query('UPDATE wp_mmc_programs SET owner_user_id=502 WHERE id=77');}
             if($this->manual_race){$this->manual_race=false;$this->db->query("UPDATE wp_mmc_tasks SET due_at='2026-10-07 15:00:00' WHERE id=1");}
         }
         $r=$this->db->query($sql);return $r===false?false:$this->db->affected_rows;
@@ -62,4 +64,6 @@ $db->query("UPDATE wp_mmc_tasks SET due_at='2026-10-07 10:00:00',assigned_user_i
 reset_task();$db->manual_race=true;$r=MMC_Operations_Service::apply_task_automation(77);test($r['stale_skipped']===1 && $db->get_var('SELECT due_at FROM wp_mmc_tasks')==='2026-10-07 15:00:00','Real CAS race');
 reset_task();$db->cancel_race=true;$r=MMC_Operations_Service::apply_task_automation(77);test($r['stale_skipped']===1 && $db->get_var('SELECT due_at FROM wp_mmc_tasks')===null,'Real cancellation scope guard');
 test((int)$db->get_var('SELECT COUNT(*) FROM wp_mmc_logs')===0,'No stale-apply log');
+reset_task();$db->metadata_race=true;$r=MMC_Operations_Service::apply_task_automation(77);test($r['stale_skipped']===1 && str_contains($db->get_var('SELECT metadata FROM wp_mmc_tasks'),'operations_v1.PLAN'),'Case-only metadata race overwritten');
+reset_task();$db->owner_race=true;$r=MMC_Operations_Service::apply_task_automation(77);test($r['stale_skipped']===1 && $db->get_var('SELECT assigned_user_id FROM wp_mmc_tasks')===null,'Stale program owner assigned');
 echo "PASS {$assertions} real MySQL assertions; ephemeral fixture only.\n";
