@@ -154,16 +154,27 @@ class CartFixture{public $cart_contents=array();function get_cart(){return $this
 $cart=new CartFixture();
 foreach($plan as $role=>$row){if(!$row['qty'])continue;$cart->cart_contents[$role]=array('mdg_campaign_manifest'=>$m,'mdg_campaign_signature'=>$c::sign($m),'mdg_campaign_role'=>$role,'variation_id'=>$row['type']['variation'],'product_id'=>$row['type']['parent'],'quantity'=>$row['qty']);}
 $state=$c::cart_state($cart);
-check($state['prices']===array('adult'=>500.0,'paid_child'=>250.0,'free_child'=>0),'server-approved cart prices');
+check($state['prices']===array('adult'=>475.0,'paid_child'=>250.0,'free_child'=>0),'server-approved cart prices');
 $old=$cart->cart_contents;
 unset($cart->cart_contents['adult']);check(isset($c::cart_state($cart)['error']),'removing adult blocks free children');
 $cart->cart_contents=$old;$cart->cart_contents['free_child']['quantity']=3;check(isset($c::cart_state($cart)['error']),'increasing free quantity blocked');
 $cart->cart_contents=$old;$cart->cart_contents['free_child']['variation_id']=1001;check(isset($c::cart_state($cart)['error']),'cross-city variation blocked');
 $cart->cart_contents=$old;$cart->cart_contents['free_child']['mdg_campaign_manifest']['adults']='10';check(isset($c::cart_state($cart)['error']),'modified unsigned manifest blocked');
 $cart->cart_contents=$old;$registry['kurum-denizli']['active']=false;check(isset($c::cart_state($cart)['error']),'disabled code blocks checkout');
-$registry=$custom;$products[1202]->price='550';$state=$c::cart_state($cart);check($state['prices']['adult']===550.0,'current price recomputed at checkout');$products[1202]->price='500';
+$registry=$custom;$products[1202]->price='550';$state=$c::cart_state($cart);check($state['prices']['adult']===475.0,'Denizli fixed campaign rate recomputed at checkout');$products[1202]->price='500';
 check(isset($c::manifest_quote(array_merge($m,array('code'=>'test-denizli')))['error']),'public test code cannot checkout');
 $cart->cart_contents=array('ordinary'=>array('variation_id'=>1201,'quantity'=>1));check($c::cart_state($cart)===array('prices'=>array()),'ordinary cart untouched');
 check($c::coupon_product(true,null,null,array('mdg_campaign_manifest'=>$m))===false,'campaign coupon stacking blocked');
 check($c::coupon_product(true,null,null,array())===true,'ordinary coupon preserved');
 echo "All $count dynamic catalogue checks passed.\n";
+
+$real=$c::resolve('kurum-denizli',$event_rows,$custom,'2026-10-05');$realcat=$c::catalogue($real,$event_rows);
+check($realcat[12]['sessions'][120]['types']['adult']['regular_price']===500.0 && $realcat[12]['sessions'][120]['types']['adult']['price']===475.0,'Denizli institution rate and normal price retained');
+check($c::quote($realcat,'120','1',array('5','7'))['total']===475.0,'one adult two free children 475');
+check($c::quote($realcat,'120','2',array('5','7','8','9'))['total']===950.0,'two adults four free children 950');
+check($c::quote($realcat,'120','1',array('5','7','8'))['total']===725.0,'third child regular 250');
+check($c::quote($realcat,'120','1',array('13','5','7'))['total']===950.0,'13+ uses campaign adult rate');
+check($realcat[30]['sessions'][300]['types']['adult']['price']===500.0,'another Denizli program not discounted');
+$iz=array('key'=>'iz','province'=>'İzmir','test_only'=>false);check($c::catalogue($iz,$event_rows)[10]['sessions'][100]['types']['adult']['price']===600.0,'Izmir campaign remains 600');
+$products[1202]->price='450';check($c::catalogue($real,$event_rows)[12]['sessions'][120]['types']['adult']['price']===450.0,'campaign never exceeds lower current price');$products[1202]->price='500';
+echo "All $count campaign checks passed.\n";
