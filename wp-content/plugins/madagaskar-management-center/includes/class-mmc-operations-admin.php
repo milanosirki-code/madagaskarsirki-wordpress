@@ -33,7 +33,7 @@ class MMC_Operations_Admin {
                 <tr><td><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&program_id='.(int)$row['id'].'&archive='.($archive?1:0)));?>"><?php echo esc_html($row['program_code']);?></a><br><?php echo esc_html($row['program_date']);?><?php if($row['show_day']):?><br><strong>GÖSTERİ GÜNÜ</strong><?php if($row['seconds_to_next_session']!==null):?><br><?php echo esc_html((int)ceil($row['seconds_to_next_session']/60));?> dakika kaldı<?php endif;?><?php endif;?></td>
                 <td><?php echo esc_html($row['province_name'].' / '.$row['district_name']);?><br><?php echo esc_html($row['venue_name']?:'Salon yok');?></td>
                 <td><?php echo esc_html($row['first_session']?:'Seans yok');?><br><?php echo esc_html($row['next_session']?:'Gelecek seans yok');?><br>Kapı: <?php echo esc_html($row['doors_open_at']?:'Belirlenmedi');?></td>
-                <td><?php echo esc_html(self::label(MMC_Operations_Service::plan_statuses(),$row['plan_status'],'Plan yok'));?><br><?php echo esc_html(self::label(MMC_Operations_Service::operation_modes(),$row['operation_mode'],'Belirlenmedi'));?></td>
+                <td><?php echo esc_html(self::label(MMC_Operations_Service::plan_statuses(),$row['plan_status'],'Plan yok'));?><br><?php echo esc_html(self::label(MMC_Operations_Service::operation_modes(),$row['operation_mode'],'Belirlenmedi'));?><br><?php echo esc_html(self::label(MMC_Program_Service::statuses(),$row['program_status'],'Bilinmeyen lifecycle'));?><?php if($row['operationally_eligible']):?><br><strong>OPERASYON KAPSAMINDA</strong><?php endif;?><?php if($row['date_drift']):?><br>Event / planlanan tarih farkı<?php endif;?></td>
                 <td>%<?php echo esc_html($row['readiness_percent']);?><br><?php echo esc_html($row['problems']);?> sorun</td>
                 <td><?php echo esc_html($row['artists'].' sanatçı / '.$row['people'].' personel / '.$row['vehicles'].' araç / '.$row['equipment'].' ekipman');?></td>
                 <td><?php echo esc_html($row['open_tasks']);?> açık<br><?php echo esc_html($row['overdue_tasks']);?> gecikmiş</td>
@@ -76,7 +76,7 @@ class MMC_Operations_Admin {
     private function task_adoption_preview_panel( $preview ) {
         ?>
         <div class="mmc-panel"><h2>Operations Faz 3 — Legacy Görev Preview</h2>
-        <p>Adım A yalnız köken metadata’sını ekler; tarih/sorumlu değişmez. Adım B aşağıdaki Faz 2 preview ve ayrı POST Apply işlemidir. GET yazmaz. Programın geçmiş/iptal veya operasyon dışı olması Apply’ı engeller.</p>
+        <p>Adım A yalnız köken metadata’sını ekler; tarih/sorumlu değişmez. Adım B aşağıdaki Faz 2 preview ve ayrı POST Apply işlemidir. GET yazmaz. Gerçek plan/event/seans ve geçerli gelecek tarih gerekir; satış lifecycle’ı değiştirilmez.</p>
         <div class="mmc-cards mmc-cards-5"><?php foreach(array('managed'=>'Otomasyona dahil görev','legacy'=>'Legacy görev','would_update_due'=>'Adoption sonrası tarih atanabilir','would_update_owner'=>'Adoption sonrası sorumlu atanabilir') as$k=>$label):?><div class="mmc-card"><span><?php echo esc_html($label);?></span><strong><?php echo esc_html($preview[$k]);?></strong></div><?php endforeach;?><div class="mmc-card"><span>Review gereken duplicate</span><strong><?php echo esc_html($preview['counts']['DUPLICATE']);?></strong></div></div>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>">
         <input type="hidden" name="action" value="mmc_ops_adopt_legacy_tasks"><input type="hidden" name="program_id" value="<?php echo esc_attr($preview['program_id']);?>"><input type="hidden" name="snapshot" value="<?php echo esc_attr($preview['snapshot']);?>">
@@ -89,7 +89,7 @@ class MMC_Operations_Admin {
         <td><?php echo esc_html($i['classification'].' / '.($i['reject_reason']??'Uygun'));?><?php if($i['classification']==='CUSTOM'):?><br>Manuel Görev<?php endif;?></td>
         <td><?php echo esc_html(($b['proposed_due']??'NULL').' / '.($b['due_source']??'Anchor yok').' / sorumlu '.($b['proposed_owner']??'NULL'));?></td></tr>
         <?php endforeach;?></tbody></table>
-        <?php if($preview['would_adopt']):submit_button('Seçili Legacy Görevleri Otomasyona Dahil Et','secondary');else:?><p>Bu programda uygulanabilir adoption yok. Sınıflandırma teknik uygunluktur; aktif/gelecek operations/show_day kapsamı ayrıca zorunludur.</p><?php endif;?>
+        <?php if($preview['would_adopt']):submit_button('Seçili Legacy Görevleri Otomasyona Dahil Et','secondary');else:?><p>Bu programda uygulanabilir adoption yok. Sınıflandırma teknik uygunluktur; operational eligibility ayrıca zorunludur.</p><?php endif;?>
         </form><p>Harici bildirim 0. Duplicate/custom görevler silinmez veya birleştirilmez.</p></div>
         <?php
     }

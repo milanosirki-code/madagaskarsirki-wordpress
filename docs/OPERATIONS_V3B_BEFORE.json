@@ -1,0 +1,141 @@
+{
+  "files": {
+    "service": {
+      "sha256": "4c4f608c7f889a8ddb5a5fc1723931da435f3f7ddef09daed607426e67476e1c"
+    },
+    "admin": {
+      "sha256": "e7563f392caeb2a150a792c2ee4b2adc764727d0296a889ea72c99cd57e69619"
+    }
+  },
+  "before": {
+    "mmc_programs": {
+      "count": 13,
+      "sha256": "2123eaf3eb07842d598cb6129ae5272e5c4201f53ecae9de8c80f768146b0b18"
+    },
+    "mmc_operation_plans": {
+      "count": 13,
+      "sha256": "602892998d3af2f8268b567d9d859fc298d09248ab266ee6180ea009aaf2369e"
+    },
+    "mmc_operation_checklist": {
+      "count": 559,
+      "sha256": "579d02a8d160e435df1337fdcb69a6cabbf9769ef01ff6a5da3dfe3a808d25b6"
+    },
+    "mmc_operation_schedule": {
+      "count": 33,
+      "sha256": "c1e4377c4525aa85ede740dcc059c78fa73d7b1e5426a612d29b37687bac9dc6"
+    },
+    "mmc_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_program_resources": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_tasks": {
+      "count": 141,
+      "sha256": "c74fe1382c31e6c2335e2c260d283f214d2b92261b53f5525c80eb283b1fd16e"
+    },
+    "mmc_logs": {
+      "count": 622,
+      "sha256": "502a41d417ba862fe76b3e80ab8dab87dd0c3b9bcab19cb9711178e06c3af7d8"
+    },
+    "mmc_events": {
+      "count": 13,
+      "sha256": "21b9e7cf4c4d08e1ad4680f30cb86356b3e37a7afd7b138a96439154b8b3ff77"
+    },
+    "mmc_sessions": {
+      "count": 33,
+      "sha256": "d429c50d6df51b66f65fa79586c7401b0fbe309f79e8afebf9711c3dd4522527"
+    },
+    "mmc_program_venues": {
+      "count": 13,
+      "sha256": "ab8c6eee43585dadd00af7365cfecc7c495896dd1e73e02eb6a48fdbd5f5ca2d"
+    },
+    "mmc_venues": {
+      "count": 188,
+      "sha256": "e772e2699c7793087551a0e41cde531a0646084ce2c25dcc6371b1c371ff07e7"
+    },
+    "mmc_finance_entries": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "mmc_sales_ledger": {
+      "count": 343,
+      "sha256": "7657812549889e91e855181ad3e8b596c936e7e9952d6d0f9423f8fa00db7e67"
+    },
+    "mmc_sales_mappings": {
+      "count": 56,
+      "sha256": "13eba20592586d8eef169367d2f4d3ba40637af9af2c51773c8134d58e7de033"
+    },
+    "users": {
+      "count": 3,
+      "sha256": "5ac2250cda15b0cfc0655ccb83e3dca0ad00c0faf38ff99deb0e24687d78af55"
+    },
+    "usermeta": {
+      "count": 118,
+      "sha256": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2"
+    },
+    "mmc_kommo_profiles": {
+      "count": 13,
+      "sha256": "6c429d59c4274eba5f0a790e1caca06eca46d0fdb239ce90437475b6894d5ec4"
+    },
+    "mck_campaigns": {
+      "count": 7,
+      "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+    },
+    "mck_comments": {
+      "count": 2590,
+      "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+    },
+    "mck_draws": {
+      "count": 14,
+      "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+    },
+    "mck_redraw_audit": {
+      "count": 1,
+      "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+    }
+  },
+  "task_inventory": {
+    "total": 141,
+    "open": 141,
+    "system_generated": 0,
+    "unmarked_or_manual": 141,
+    "with_due": 0,
+    "without_due": 141,
+    "assigned": 0,
+    "unassigned": 141,
+    "overdue": 0,
+    "due_today": 0,
+    "upcoming_48h": 0
+  },
+  "counts": {
+    "programs": 13,
+    "plans": 13,
+    "open_tasks": 141,
+    "checklist": 559,
+    "schedule": 33
+  },
+  "legacy_classification": {
+    "ADOPTABLE": 12,
+    "DUPLICATE": 0,
+    "CUSTOM": 0,
+    "CLOSED": 0,
+    "WRONG_MODULE": 128,
+    "AMBIGUOUS": 1
+  },
+  "engines": [
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "ENGINE": "InnoDB"
+    }
+  ],
+  "domain_unchanged": true,
+  "blocked_writes": [],
+  "warnings": []
+}

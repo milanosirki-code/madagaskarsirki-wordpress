@@ -413,7 +413,7 @@ class MMC_Operations_Service {
         $where=$include_archive ? '1=1' : $wpdb->prepare("COALESCE(e.event_date,p.planned_date)>=%s AND p.status NOT IN ('cancelled','completed','financial_close','deposit_refund') AND COALESCE(e.status,'draft')<>'cancelled'",$today);
         $template_keys=implode(',',array_map(static function($item){return "'".$item[1]."'";},self::checklist_template()));
         $sql=$wpdb->prepare("SELECT p.id,p.program_code,p.province_name,p.district_name,p.status program_status,
-            COALESCE(e.event_date,p.planned_date) program_date,e.id event_id,pv.venue_id,v.venue_name,
+            COALESCE(e.event_date,p.planned_date) program_date,p.planned_date,e.event_date,e.status event_status,e.id event_id,pv.venue_id,v.venue_name,
             o.id plan_id,o.status plan_status,o.operation_mode,o.accommodation_required,o.lodging_name,o.doors_open_at,
             ss.first_session,ss.next_session,COALESCE(ss.session_count,0) session_count,
             COALESCE(c.template_check_count,0) template_check_count,COALESCE(c.check_total,0) check_total,COALESCE(c.check_done,0) check_done,COALESCE(c.problems,0) problems,
@@ -453,6 +453,11 @@ class MMC_Operations_Service {
 
     /** Deterministic, read-only interpretation of proven database fields. */
     public static function readiness_state( $row ) {
+        $eligibility=self::operational_eligibility_state((object)array('status'=>$row['program_status']??null,'planned_date'=>$row['planned_date']??null),
+            empty($row['plan_id'])?null:(object)array('id'=>$row['plan_id']),
+            empty($row['event_id'])?null:(object)array('id'=>$row['event_id'],'status'=>$row['event_status']??null,'event_date'=>$row['event_date']??($row['program_date']??null)),
+            self::canonical_timestamp($row['first_session']??null)!==null);
+        $row['operationally_eligible']=$eligibility['eligible'];$row['date_drift']=$eligibility['date_drift'];$row['eligibility_reasons']=$eligibility['reasons'];
         $issues=array();
         if(empty($row['plan_id'])){$issues[]='Operasyon planı yok';}
         if(empty($row['venue_id'])){$issues[]='Salon bağlantısı yok';}
@@ -514,6 +519,38 @@ class MMC_Operations_Service {
         return $date && $date->format('Y-m-d H:i:s')===$value?$value:null;
     }
 
+    /** Existing lifecycle values only; Operations readiness can coexist with sales. */
+    public static function operational_statuses() {
+        return array('venue_confirmed','event_setup','sales_prep','sales_open','promotion','operations','show_day');
+    }
+
+    public static function operational_eligibility_state( $program, $plan, $event, $has_session ) {
+        $date=$event->event_date??($program->planned_date??null);$source=isset($event->event_date)?'event.event_date':'program.planned_date';
+        $valid=is_string($date)&&preg_match('/^\d{4}-\d{2}-\d{2}$/',$date);
+        if($valid){$d=DateTimeImmutable::createFromFormat('!Y-m-d',$date,wp_timezone());$valid=$d&&$d->format('Y-m-d')===$date;}
+        $reasons=array();
+        if(!$program||!in_array($program->status??'',self::operational_statuses(),true)){$reasons[]='LIFECYCLE_OUTSIDE_OPERATIONAL_SCOPE';}
+        if(!$valid||$date<substr(current_time('mysql'),0,10)){$reasons[]='INVALID_OR_PAST_CANONICAL_DATE';}
+        if(!$plan||empty($plan->id)){$reasons[]='MISSING_OPERATION_PLAN';}
+        if(!$event||empty($event->id)||($event->status??'')==='cancelled'){$reasons[]='MISSING_OR_CANCELLED_EVENT';}
+        if(!$has_session){$reasons[]='MISSING_VALID_ACTIVE_SESSION';}
+        return array('eligible'=>!$reasons,'date'=>$valid?$date:null,'date_source'=>$source,
+            'date_drift'=>isset($event->event_date,$program->planned_date)&&$event->event_date!==$program->planned_date,'reasons'=>$reasons);
+    }
+
+    public static function is_operationally_eligible( $program_id ) {
+        return self::task_automation_context($program_id)['eligible'];
+    }
+
+    /** Same policy in atomic writes; aliases are fixed internal SQL identifiers. */
+    private static function operational_scope_sql() {
+        global $wpdb;$p=$wpdb->prefix;$statuses=implode("','",self::operational_statuses());
+        return "p.status IN ('$statuses') AND e.id IS NOT NULL AND e.status<>'cancelled'
+            AND EXISTS(SELECT 1 FROM {$p}mmc_operation_plans op WHERE op.program_id=p.id)
+            AND EXISTS(SELECT 1 FROM {$p}mmc_sessions os WHERE os.event_id=e.id AND os.status<>'cancelled' AND os.session_time>'1000-01-01 00:00:00')
+            AND COALESCE(e.event_date,p.planned_date)>=%s";
+    }
+
     /** One canonical context per program, reused for every task in preview/apply. */
     public static function task_automation_context( $program_id ) {
         $program=MMC_Program_Service::get_program(absint($program_id));
@@ -531,21 +568,17 @@ class MMC_Operations_Service {
                 $last_end=$end && $end>=$start?$end:null;
             }
         }}
-        $date=$event->event_date??($first?substr($first,0,10):($program->planned_date??null));
-        $valid_date=is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/',$date);
-        if($valid_date){$d=DateTimeImmutable::createFromFormat('!Y-m-d',$date,wp_timezone());$valid_date=$d && $d->format('Y-m-d')===$date;}
-        $eligible=$program && in_array($program->status,array('operations','show_day'),true)
-            && ($event->status??'draft')!=='cancelled' && $valid_date && $date>=substr(current_time('mysql'),0,10);
+        $eligibility=self::operational_eligibility_state($program,$plan,$event,$first!==null);
         $owner=absint($program->owner_user_id??0);
         $valid_owner=$owner && get_user_by('id',$owner)?$owner:null;
         return array('program'=>$program,'plan'=>$plan,'event'=>$event,'first_session'=>$first,'last_session_end'=>$last_end,
-            'program_date'=>$valid_date?$date:null,'eligible'=>(bool)$eligible,'owner_user_id'=>$valid_owner);
+            'program_date'=>$eligibility['date'],'eligible'=>$eligibility['eligible'],'eligibility'=>$eligibility,'owner_user_id'=>$valid_owner);
     }
 
     public static function resolve_task_deadline( $key, $context ) {
         $plan=$context['plan']??null;
         $map=array(
-            'plan'=>array('departure_at','venue_entry_at','@first'),
+            'plan'=>array('departure_at','venue_entry_at'),
             'transport'=>array('departure_at'),
             'crew'=>array('departure_at','venue_entry_at'),
             'equipment'=>array('departure_at','venue_entry_at'),
@@ -569,9 +602,9 @@ class MMC_Operations_Service {
                 }
             }else{$due=$plan->$anchor??null;$source='plan.'.$anchor;}
             $due=self::canonical_timestamp($due);
-            if($due){return array('due_at'=>$due,'due_source'=>$source,'due_policy_version'=>2);}
+            if($due){return array('due_at'=>$due,'due_source'=>$source,'due_policy_version'=>3);}
         }
-        return array('due_at'=>null,'due_source'=>null,'due_policy_version'=>2);
+        return array('due_at'=>null,'due_source'=>null,'due_policy_version'=>3);
     }
 
     /** Pure proposal. Only explicit apply/new INSERT uses its payload. */
@@ -598,10 +631,10 @@ class MMC_Operations_Service {
             $result['proposed_due']=$resolved['due_at'];
             if((string)$current_due!==(string)$resolved['due_at']){
                 $result['would_update_due']=true;$result['update_payload']['due_at']=$resolved['due_at'];
-                $meta['due_source']=$resolved['due_source'];$meta['due_policy_version']=2;
+                $meta['due_source']=$resolved['due_source'];$meta['due_policy_version']=$resolved['due_policy_version'];
                 $meta['due_managed']='operations_v2';$meta['due_last_value']=$resolved['due_at'];
             }
-        }else{$result['reason'][]=$due_allowed?'NO_CONFIRMED_DEADLINE_ANCHOR':'MANUAL_DUE_PRESERVED';}
+        }else{$result['reason'][]=$due_allowed?('plan'===$key?'DUE_ANCHOR_INSUFFICIENT':'NO_CONFIRMED_DEADLINE_ANCHOR'):'MANUAL_DUE_PRESERVED';}
         $owner_managed=($meta['assignment_source']??'')==='program_owner' && array_key_exists('assignment_last_user_id',$meta)
             && $current_owner===(absint($meta['assignment_last_user_id'])?:null);
         $owner_diverged=($meta['assignment_source']??'')==='program_owner' && array_key_exists('assignment_last_user_id',$meta) && $current_owner!==(absint($meta['assignment_last_user_id'])?:null);
@@ -683,7 +716,7 @@ class MMC_Operations_Service {
             $wpdb->get_results($wpdb->prepare("SELECT id FROM {$wpdb->prefix}mmc_programs WHERE id=%d FOR UPDATE",$pid));
             $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d ORDER BY id FOR UPDATE",$pid));
             $preview=self::task_adoption_preview($pid);
-            if(!$preview['eligible']){throw new RuntimeException('Program is outside active/future operations/show_day scope');}
+            if(!$preview['eligible']){throw new RuntimeException('Program is not operationally eligible');}
             $selected=array_filter($preview['items'],static function($i)use($ids){return in_array($i['task_id'],$ids,true);});
             if(count($selected)!==count($ids)){throw new RuntimeException('Selected task is not in this program');}
             $all_managed=true;foreach($selected as$i){if($i['reject_reason']!=='ALREADY_MANAGED'){$all_managed=false;}}
@@ -701,10 +734,9 @@ class MMC_Operations_Service {
                 foreach(array('title','metadata','due_at','assigned_user_id','completed_at','priority','created_at','updated_at','notes') as$column){
                     if(!property_exists($row,$column)){continue;}$v=$row->$column;
                     if(null===$v){$sql.=" AND t.$column IS NULL";}else{$sql.=" AND CAST(t.$column AS BINARY)=%s";$args[]=$v;}}
-                $p=$wpdb->prefix;
+                $p=$wpdb->prefix;$scope=self::operational_scope_sql();
                 $sql.=" AND EXISTS(SELECT 1 FROM {$p}mmc_programs p LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
-                    WHERE p.id=t.program_id AND p.status IN ('operations','show_day') AND COALESCE(e.status,'draft')<>'cancelled'
-                    AND COALESCE(e.event_date,(SELECT MIN(DATE(s.session_time)) FROM {$p}mmc_sessions s WHERE s.event_id=e.id AND s.status<>'cancelled'),p.planned_date)>=%s)";
+                    WHERE p.id=t.program_id AND $scope)";
                 $args[]=substr(current_time('mysql'),0,10);
                 $context=self::task_automation_context($pid);
                 if(!$context['eligible']){throw new RuntimeException('Program scope changed');}
@@ -734,7 +766,7 @@ class MMC_Operations_Service {
         if(1!==(int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)',$lock))){return new WP_Error('mmc_ops_busy','Başka bir hazırlık işlemi var.');}
         try{
             $context=self::task_automation_context($program_id);
-            if(!$context['eligible']){return new WP_Error('mmc_ops_automation_scope','Yalnız aktif/gelecek operations/show_day programında uygulanabilir.');}
+            if(!$context['eligible']){return new WP_Error('mmc_ops_automation_scope','Yalnız gerçek plan/event/seans bağlı aktif/gelecek operasyon kapsamındaki programda uygulanabilir.');}
             $rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d AND module='operations' AND status='open' ORDER BY id",$program_id));
             $result=array('tasks_updated'=>0,'due_updated'=>0,'owner_updated'=>0,'stale_skipped'=>0);
             foreach((array)$rows as $task){$proposal=self::task_automation_proposal($task,$context);if($proposal['would_leave_unchanged']){continue;}
@@ -763,11 +795,11 @@ class MMC_Operations_Service {
             $owner_guard=" AND p.owner_user_id=%d AND EXISTS(SELECT 1 FROM {$p}users u WHERE u.ID=p.owner_user_id)";
             $params[]=(int)$payload['assigned_user_id'];
         }
+        $scope=self::operational_scope_sql();
         $sql="UPDATE {$p}mmc_tasks SET ".implode(',',$sets).' WHERE '.implode(' AND ',$clauses).
             " AND EXISTS(SELECT 1 FROM {$p}mmc_programs p
                 LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
-                WHERE p.id=%d AND p.status IN ('operations','show_day') AND COALESCE(e.status,'draft')<>'cancelled'
-                AND COALESCE(e.event_date,(SELECT MIN(DATE(s.session_time)) FROM {$p}mmc_sessions s WHERE s.event_id=e.id AND s.status<>'cancelled'),p.planned_date)>=%s $owner_guard)";
+                WHERE p.id=%d AND $scope $owner_guard)";
         return $wpdb->query($wpdb->prepare($sql,...$params));
     }
 
