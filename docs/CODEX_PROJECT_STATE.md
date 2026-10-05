@@ -149,3 +149,18 @@ Issue129 deployment checkpoint:
 - Sales gross42,000/nominal47,000/net42,000/capacity107; family_2_2 capacity4 preserved. Temporary117 exact original/passive restored.
 - Dry-run scope complete. Issue105 remains OPEN; actual SEND disabled and requires separate administrator decision plus durable atomic idempotency. No real payment/order test or automation enable. PR147 remains separate review PR.
 - Evidence docs/ISSUE_105_DRYRUN_SAFETY.md and docs/evidence/reminder105-post-deploy.json; Drive checkpoint1lD4yJP_Fbb5rGAeWH6nYH-PjEYdTuFSw updated.
+
+## PR147 merged / Issue148 raffle reporting — 2026-10-05
+
+- PR147 merged after final5/5 CI,42tests and live103 exact-source review. Main0b57e305ad8578ead24cbab60c9d9e546dc783f2; merged source/live103 MATCH. Issue105 remains OPEN: DRY-RUN SAFETY COMPLETE / SEND DECISION PENDING. No customer messages/order/payment write/automation enable.
+- New Issue148, branch codex/raffle-reporting-dashboard, PR149, production tested commit3fbac3f58df2a676c1abad96bae57c48a336e8b7, CI6/6 green. New reporting fixture44assertions and existing replacement35assertions pass.
+- Controlled deployment only raffle plugin bootstrap and includes/class-mck-reporting.php. Plugin3.3.0 version preserved to avoid admin rewrite migration; reporting1.0.0. Snippet106 replacement1.1.0 exact source unchanged. No schema/data migration.
+- Campaign cards/filters, manager summary, detailed winner provenance, full local audit history and capability+nonce protected five-field result CSV with spreadsheet-formula escaping. Missing verification timestamp/initial actor explicitly shown as unavailable. Existing draw/replacement/verification POST guards preserved.
+- Local counts7campaigns/2590comments/228global unique usernames/14primary winners/12verified/2pending/0current disqualified/1historical disqualified/1replacement audit. Original valid entries are distinct from remaining replacement pool.
+- Before/after full fingerprints identical for campaigns/comments/draws/redraw_audit. Five list filters,7campaign details and7CSV datasets successful; remoteMeta calls0/domain writes0/captured PHP warnings-errors0. No real campaign data changed.
+- Aggregate3queries/5.69ms and list audit1query; no per-campaign/per-winner N+1. Existing detail5boundedqueries after summary,3.34–10.41ms in authenticated server-render harness (not full browser latency).
+- Final independent health16/16, warning/critical0; global125snippets/45active/code_error0. Temporary117 restored byte-exact/passive.
+- Deployment exact read-back SHA256 bootstrap2f9d2baa6f242c784f0e24c58fdfbfe6b7a7640fc9f029eb1b34f12d022b702e, reportingf47cb324e45c2512f4b58b338f6d30e51f7dd13b30243db6a7e48f07197f907e. Rollback restores exact historical bootstrapcc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d before removing only added include; private backup retained, no rollback needed.
+- Historical source archive preserved byte-exact; manifest archived path now uses capture rather than mutable production source. CI archive hash contract retained.
+- GitHub docs/RAFFLE_REPORTING_DASHBOARD.md and docs/RAFFLE_REPORTING_DEPLOYMENT_EVIDENCE.json; Drive report1CNEDc-_3LC5WnPWdz5fL5YToXwref_rP and source/evidence ZIP archived. No sensitive participant/comment/token values in evidence.
+- PR149 pending final review/merge. Browser visual test unavailable; actual WordPress renderer tested. Issue82 OPEN/PARKED; no Kommo browser/source activity. Next Operations/task automation.

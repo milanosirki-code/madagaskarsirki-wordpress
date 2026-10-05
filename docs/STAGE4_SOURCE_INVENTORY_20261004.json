@@ -3958,9 +3958,10 @@
       "kind": "plugin_source"
     },
     {
-      "path": "wp-content/plugins/madagaskar-cekilis/madagaskar-cekilis.php",
+      "path": "docs/live-captures/2026-10-04/plugin-versions/madagaskar-cekilis/madagaskar-cekilis.php",
       "sha256": "cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d",
-      "kind": "plugin_source"
+      "kind": "plugin_source",
+      "original_source_path": "wp-content/plugins/madagaskar-cekilis/madagaskar-cekilis.php"
     },
     {
       "path": "wp-content/plugins/madagaskar-cekilis/README.txt",

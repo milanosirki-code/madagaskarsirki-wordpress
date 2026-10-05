@@ -1,0 +1,485 @@
+{
+  "issue": 148,
+  "pr": 149,
+  "branch": "codex/raffle-reporting-dashboard",
+  "tested_commit": "3fbac3f58df2a676c1abad96bae57c48a336e8b7",
+  "pr147_merge": "0b57e305ad8578ead24cbab60c9d9e546dc783f2",
+  "deployment": {
+    "deployed": true,
+    "original_sha256": "cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d",
+    "main_sha256": "2f9d2baa6f242c784f0e24c58fdfbfe6b7a7640fc9f029eb1b34f12d022b702e",
+    "reporting_sha256": "f47cb324e45c2512f4b58b338f6d30e51f7dd13b30243db6a7e48f07197f907e",
+    "backup_basename": "mck-report-original-n5jddr3nv146dopHVMF"
+  },
+  "before": {
+    "before": {
+      "campaigns": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "plugin_sha256": "cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d",
+    "base_version": "3.3.0",
+    "replacement_version": "1.1.0",
+    "renders": {
+      "list_all": {
+        "sha256": "ccb7205e40324a3e2d4cd9d7c02ab5a8bfda7b3c1da3ab971f3ab6b76a11070c",
+        "bytes": 3006,
+        "queries": 1,
+        "ms": 0.82
+      },
+      "list_pending": {
+        "sha256": "ccb7205e40324a3e2d4cd9d7c02ab5a8bfda7b3c1da3ab971f3ab6b76a11070c",
+        "bytes": 3006,
+        "queries": 1,
+        "ms": 0.64
+      },
+      "list_complete": {
+        "sha256": "ccb7205e40324a3e2d4cd9d7c02ab5a8bfda7b3c1da3ab971f3ab6b76a11070c",
+        "bytes": 3006,
+        "queries": 1,
+        "ms": 0.58
+      },
+      "list_replacement": {
+        "sha256": "ccb7205e40324a3e2d4cd9d7c02ab5a8bfda7b3c1da3ab971f3ab6b76a11070c",
+        "bytes": 3006,
+        "queries": 1,
+        "ms": 0.55
+      },
+      "list_missing": {
+        "sha256": "ccb7205e40324a3e2d4cd9d7c02ab5a8bfda7b3c1da3ab971f3ab6b76a11070c",
+        "bytes": 3006,
+        "queries": 1,
+        "ms": 0.55
+      },
+      "campaign_5": {
+        "sha256": "778bf245ab6c855d2b74e6dd34512d62246ae129dc8e9e30094f40366c090f79",
+        "bytes": 19520,
+        "queries": 5,
+        "ms": 5.51
+      },
+      "campaign_6": {
+        "sha256": "205603d2a6e6c0109f68a32e01b8d19caaf2f8fe2f9840f81afb645cdadb7768",
+        "bytes": 112688,
+        "queries": 4,
+        "ms": 12.58
+      },
+      "campaign_7": {
+        "sha256": "a05d743ca2215e1c517a4b85027b3bafcfe1c4f75a9209f79b5c909ef027f88a",
+        "bytes": 28778,
+        "queries": 4,
+        "ms": 4.14
+      },
+      "campaign_9": {
+        "sha256": "631e648e1d48f61e8535e6d46b51a96d235b3a4645c2094a6a1e5ae95421b1f8",
+        "bytes": 26855,
+        "queries": 4,
+        "ms": 3.67
+      },
+      "campaign_10": {
+        "sha256": "1a4c0f4cd790e6ba9ef7762d72c36e47807327658025cc11c258b3a982f331f0",
+        "bytes": 80009,
+        "queries": 4,
+        "ms": 7.38
+      },
+      "campaign_11": {
+        "sha256": "b32315ab7dcdd20ccd37731242423da04d4289b732285775db9e6f3c833268e8",
+        "bytes": 39916,
+        "queries": 4,
+        "ms": 4.4
+      },
+      "campaign_12": {
+        "sha256": "6e48d00993b91f84d7dedfde0a82964d21cc08c2d5d77a0a29024d0b83133a02",
+        "bytes": 17261,
+        "queries": 4,
+        "ms": 2.71
+      }
+    },
+    "warnings": [],
+    "blocked_writes": [],
+    "remote_requests": [],
+    "after": {
+      "campaigns": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "domain_unchanged": true
+  },
+  "after": {
+    "before": {
+      "campaigns": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "plugin_sha256": "2f9d2baa6f242c784f0e24c58fdfbfe6b7a7640fc9f029eb1b34f12d022b702e",
+    "base_version": "3.3.0",
+    "replacement_version": "1.1.0",
+    "totals": {
+      "campaigns": 7,
+      "comments": 2590,
+      "winners": 14,
+      "reserves": 0,
+      "results": 14,
+      "verified": 12,
+      "pending": 2,
+      "disqualified": 0,
+      "replacements": 1,
+      "historical_disqualified": 1,
+      "unique_participants": 228
+    },
+    "campaigns": [
+      {
+        "id": "12",
+        "title": "Yenimahalle 4 Ekim",
+        "status": "drawn",
+        "comments": "101",
+        "participants": "22",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 90,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "11",
+        "title": "Sincan 3 Ekim",
+        "status": "drawn",
+        "comments": "310",
+        "participants": "48",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "1",
+        "historical_disqualified": "1",
+        "eligible_entries": 265,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "10",
+        "title": "Kırıkkale 2 Ekim",
+        "status": "drawn",
+        "comments": "677",
+        "participants": "54",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 324,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "9",
+        "title": "Pursaklar 1 Ekim",
+        "status": "drawn",
+        "comments": "186",
+        "participants": "18",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 147,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "7",
+        "title": "Bolu 27 eylül",
+        "status": "drawn",
+        "comments": "206",
+        "participants": "24",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 200,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "6",
+        "title": "Çubuk 26 Eylül",
+        "status": "drawn",
+        "comments": "990",
+        "participants": "60",
+        "results": "2",
+        "winners": "2",
+        "verified": "2",
+        "pending": "0",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 395,
+        "missing_slots": 0,
+        "display_state": "Tamamlandı"
+      },
+      {
+        "id": "5",
+        "title": "Bartın 25 Eylül",
+        "status": "drawn",
+        "comments": "120",
+        "participants": "12",
+        "results": "2",
+        "winners": "2",
+        "verified": "0",
+        "pending": "2",
+        "disqualified": "0",
+        "replacements": "0",
+        "historical_disqualified": "0",
+        "eligible_entries": 114,
+        "missing_slots": 0,
+        "display_state": "Doğrulama Bekliyor"
+      }
+    ],
+    "reporting_queries": 3,
+    "aggregate_ms": 5.69,
+    "reporting_sha256": "f47cb324e45c2512f4b58b338f6d30e51f7dd13b30243db6a7e48f07197f907e",
+    "renders": {
+      "list_all": {
+        "sha256": "d297fcb9303b4da21f2e83f4bd7a7fd078737cf8c268e7a163c61571d6f7b172",
+        "bytes": 22223,
+        "queries": 1,
+        "ms": 1.42
+      },
+      "list_pending": {
+        "sha256": "d4870ce6aa0a0a1643e6bc9c2979f3bb160147371b116e05899203e5e0252aa7",
+        "bytes": 6068,
+        "queries": 0,
+        "ms": 0.42
+      },
+      "list_complete": {
+        "sha256": "11bce149a373e62cd70b3103882c3022601819ae9403afdcc7108b2a19768d0a",
+        "bytes": 19530,
+        "queries": 0,
+        "ms": 0.73
+      },
+      "list_replacement": {
+        "sha256": "aabb93124f6f9b0365ed90c6d25079ab6e1fac96adaa26b579e39ed0f76d1d0a",
+        "bytes": 6059,
+        "queries": 0,
+        "ms": 0.33
+      },
+      "list_missing": {
+        "sha256": "2150c0e300f8fd22d95f439b33038a9eec5fb93369b14ed197d04eedaa119635",
+        "bytes": 3407,
+        "queries": 0,
+        "ms": 0.24
+      },
+      "campaign_5": {
+        "sha256": "e01e5b4c7010b566b30235dbca5012e1404ca4cc91d2c4c52048b8debf57e075",
+        "bytes": 21950,
+        "queries": 5,
+        "ms": 3.34
+      },
+      "campaign_6": {
+        "sha256": "7fe0b1fcd5267480b3855b834270a325edcc3916f8806cce3e82a4da82366daf",
+        "bytes": 115114,
+        "queries": 5,
+        "ms": 10.41
+      },
+      "campaign_7": {
+        "sha256": "5bdbd96e3594895f75cdcbd4c9c8991d45786cf023c973c2d7562d011e8bb499",
+        "bytes": 31206,
+        "queries": 5,
+        "ms": 4.78
+      },
+      "campaign_9": {
+        "sha256": "eca54d5b0b6e642baf3c465cccca36f17581539586fc86833d88bdc3aec21226",
+        "bytes": 29277,
+        "queries": 5,
+        "ms": 4.95
+      },
+      "campaign_10": {
+        "sha256": "f248c64d7aff332da7a6ab21e2603cc41b1c02f78e2963a56967c7de043a7b79",
+        "bytes": 82438,
+        "queries": 5,
+        "ms": 8.58
+      },
+      "campaign_11": {
+        "sha256": "0f755616bc5f28b5af5644adaf3677d99549f40cbaad473e00f58fb3ca7fce1e",
+        "bytes": 42729,
+        "queries": 5,
+        "ms": 5.26
+      },
+      "campaign_12": {
+        "sha256": "8b530922b5136b3ee30e5ed5550d5272e22577c16deeec8a94d64b37a89b4c47",
+        "bytes": 19685,
+        "queries": 5,
+        "ms": 3.37
+      }
+    },
+    "csv": {
+      "5": {
+        "fields": 5,
+        "rows": 2
+      },
+      "6": {
+        "fields": 5,
+        "rows": 2
+      },
+      "7": {
+        "fields": 5,
+        "rows": 2
+      },
+      "9": {
+        "fields": 5,
+        "rows": 2
+      },
+      "10": {
+        "fields": 5,
+        "rows": 2
+      },
+      "11": {
+        "fields": 5,
+        "rows": 2
+      },
+      "12": {
+        "fields": 5,
+        "rows": 2
+      }
+    },
+    "warnings": [],
+    "blocked_writes": [],
+    "remote_requests": [],
+    "after": {
+      "campaigns": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "domain_unchanged": true
+  },
+  "ci": [
+    {
+      "id": 37329960842,
+      "name": "Raffle replacement contract",
+      "conclusion": "success"
+    },
+    {
+      "id": 37329960873,
+      "name": "Kommo source HTTP contract",
+      "conclusion": "success"
+    },
+    {
+      "id": 37329961049,
+      "name": "Read-only integrity contract",
+      "conclusion": "success"
+    },
+    {
+      "id": 37329960957,
+      "name": "Production Source Archive",
+      "conclusion": "success"
+    },
+    {
+      "id": 37329960865,
+      "name": "Changed PHP Syntax",
+      "conclusion": "success"
+    },
+    {
+      "id": 37329960871,
+      "name": "Raffle reporting contract",
+      "conclusion": "success"
+    }
+  ],
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 125,
+    "active": 45,
+    "code_error": 0
+  },
+  "snippet106": {
+    "unchanged": true,
+    "version": "1.1.0",
+    "active": true,
+    "source_match": true
+  },
+  "tests": {
+    "reporting_assertions": 44,
+    "replacement_assertions": 35,
+    "actual_campaign_mutation": false,
+    "actual_messages": 0
+  },
+  "temporary117": {
+    "restored_exact": true,
+    "active": false,
+    "code_error": null
+  },
+  "limitations": {
+    "browser_visual_test": false,
+    "verification_timestamp": "not stored; UI explicitly unavailable",
+    "initial_selection_actor": "not stored; no fabricated identity",
+    "public_archives_contain_customer_values": false
+  }
+}
