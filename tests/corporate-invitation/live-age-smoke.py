@@ -5,7 +5,7 @@ import re
 import urllib.parse
 import urllib.request
 
-PAGE = 'https://madagaskarsirki.com/kurumsal-davetiye-pilot/'
+PAGE = 'https://madagaskarsirki.com/kampanya/'
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
 def request(data=None):
