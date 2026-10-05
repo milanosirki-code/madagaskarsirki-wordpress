@@ -83,3 +83,14 @@ Stage7 quota checkpoint:
 - Evidence: `docs/ISSUE_121_READONLY_OPERATIONS.md`, `docs/ISSUE_121_READONLY_SCAN.json`, `docs/ISSUE_121_DEPLOYMENT_EVIDENCE.json`.
 - Next requested stage after Issue #121 closure: Kommo dynamic program source system.
 
+
+## Issue #82 — Kommo unified sources checkpoint (2026-10-05)
+
+- Branch `codex/kommo-unified-source-82`, based on main `f37d2ec9b2079eccd1f53884a15230a381754032`.
+- Canonical live source is active snippet110/V2, historical snippet70/v1.2.0 passive; hourly HTML sync still comes from automation plugin0.1.1.
+- Eight canonical active events; program1578/1950 and location1394/5000 characters. Past Yenimahalle excluded.
+- Reproduced hidden-source defect: valid configured URL responds404 with canonical body/8articles. Proposed minimum fix sets200 only after authorization. Original endpoint test fails, patched four-case contract and PHP syntax pass.
+- Production patch NOT deployed: current Kommo source backups/attachments and real retrieval tests require an attached authorized Kommo browser, unavailable in this session. Remote inventory GET returned404; no speculative update requests/source writes/deletion.
+- Current source total/agent attachment classifications remain UNKNOWN; historic15-source count is not treated as current. URL reindex unconfirmed, manual-update limitation preserved.
+- Temporary117 restored original/passive with exact read-back. Final122snippets/43active/code_error0; fresh health16/16.
+- Issue82 OPEN. Evidence and remaining closure gates: `docs/ISSUE_82_KOMMO_SOURCE_CHECKPOINT.md`. Issue121 remains completed; no unrelated module/domain changes.
