@@ -15,3 +15,6 @@ Pilot only program10 PRG-2026-DEN-PAMUKK-001 and program11 PRG-2026-ANK-MAMAK-00
 
 ## Rollback / records
 Keep exact Phase3A service/admin sources and source-hash snapshots. Atomic code restore and opcache invalidation on failed verification. If pilot metadata differs beyond allowance, transaction rollback/CAS restore exact pilot metadata only; do not alter other domains. GitHub/Drive source/tests/policy/pilots/preview/before-after/deploy/rollback/project state, raw-byte/hash read-back required. Manager next decision: pilot owner Apply and actual operation timestamps. Final deployment/pilot evidence appended after verification; no blind adoption of nine future programs.
+
+## Verified pre-write preview
+Live SELECT-only candidate policy preview:9 eligible future programs (1,4,5,6,7,10,11,12,13), no date drift; all7 plan timestampsNULL, valid owner13/13. Pilot10 task109 and pilot11 task118 exact planning title, empty metadata, dueNULL/ownerNULL. Simulated adoption proposes owner281776200 but dueNULL/DUE_ANCHOR_INSUFFICIENT for both. No production adoption/backfill yet. Full safe preview and task fingerprints in OPERATIONS_V3B_PILOT_PREVIEW.json; nonces not archived.
