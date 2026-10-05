@@ -111,10 +111,11 @@ class MMC_Snippet_Inventory_Service {
     private static function analyze_row( $row ) {
         $name = trim( (string) ( $row->name ?? '' ) );
         $code = (string) ( $row->code ?? '' );
-        $active = ! empty( $row->active );
+        // Code Snippets uses -1 for trash; only 1 means active.
+        $active = isset( $row->active ) && 1 === (int) $row->active;
 
         $hooks = self::matches( $code, '/add_(?:action|filter)\s*\(\s*[\'\"]([^\'\"]+)[\'\"]/i' );
-        $functions = self::matches( $code, '/(?:^|[^a-z0-9_])function\s+([a-z_][a-z0-9_]*)\s*\(/im' );
+        $functions = self::global_functions( $code );
         $shortcodes = self::matches( $code, '/add_shortcode\s*\(\s*[\'\"]([^\'\"]+)[\'\"]/i' );
 
         $class = self::classify( $name, $code, $active );
@@ -311,6 +312,51 @@ class MMC_Snippet_Inventory_Service {
             '/update_post_meta|delete_post_meta|wp_update_post|wp_delete_post|set_status\s*\(|update_status\s*\(|woocommerce_is_purchasable|woocommerce_variation_is_purchasable|\$wpdb->(?:update|delete|insert)|wp_remote_(?:post|request)/i',
             $code
         );
+    }
+
+    /** Class methods do not share the global function namespace. */
+    private static function global_functions( $code ) {
+        if ( ! function_exists( 'token_get_all' ) ) {
+            return self::matches( $code, '/(?:^|[^a-z0-9_])function\s+([a-z_][a-z0-9_]*)\s*\(/im' );
+        }
+        $tokens = token_get_all( '<?php ' . $code );
+        $class_tokens = array( T_CLASS, T_INTERFACE, T_TRAIT );
+        if ( defined( 'T_ENUM' ) ) { $class_tokens[] = T_ENUM; }
+        $functions = array();
+        $depth = 0;
+        $classes = array();
+        $pending_class = false;
+        $previous = null;
+        foreach ( $tokens as $i => $token ) {
+            if ( is_array( $token ) ) {
+                $id = $token[0];
+                if ( in_array( $id, array( T_WHITESPACE, T_COMMENT, T_DOC_COMMENT ), true ) ) { continue; }
+                if ( in_array( $id, $class_tokens, true ) && T_DOUBLE_COLON !== $previous ) {
+                    $pending_class = true;
+                }
+                if ( T_CURLY_OPEN === $id || T_DOLLAR_OPEN_CURLY_BRACES === $id ) { $depth++; }
+                if ( T_FUNCTION === $id && ( ! $classes || $depth !== end( $classes ) ) ) {
+                    for ( $j = $i + 1; isset( $tokens[$j] ); $j++ ) {
+                        $next = $tokens[$j];
+                        if ( is_array( $next ) && in_array( $next[0], array( T_WHITESPACE, T_COMMENT, T_DOC_COMMENT ), true ) ) { continue; }
+                        if ( '&' === $next || ( is_array( $next ) && '&' === $next[1] ) ) { continue; }
+                        if ( is_array( $next ) && T_STRING === $next[0] ) { $functions[] = $next[1]; }
+                        break;
+                    }
+                }
+                $previous = $id;
+            } else {
+                if ( '{' === $token ) {
+                    $depth++;
+                    if ( $pending_class ) { $classes[] = $depth; $pending_class = false; }
+                } elseif ( '}' === $token ) {
+                    if ( $classes && $depth === end( $classes ) ) { array_pop( $classes ); }
+                    $depth--;
+                }
+                $previous = $token;
+            }
+        }
+        return $functions;
     }
 
     private static function matches( $text, $pattern ) {

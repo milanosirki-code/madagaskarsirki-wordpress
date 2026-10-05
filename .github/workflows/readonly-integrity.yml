@@ -21,3 +21,4 @@ jobs:
       - run: php -l wp-content/plugins/madagaskar-ai-abilities/modules/mmc-operations.php
       - run: php tests/mmc-integrity/readonly-preview.php
       - run: php tests/mmc-integrity/operations-readonly-121.php
+      - run: php tests/mmc-integrity/snippet-inventory.php
