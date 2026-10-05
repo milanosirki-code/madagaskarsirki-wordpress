@@ -1,0 +1,149 @@
+{
+  "issue": 129,
+  "pr": 130,
+  "branch": "codex/fix-raffle-replacement-draw",
+  "tested_commit": "67d224811c9236e4b7cd4e4d2f33f9a2c75c1d8d",
+  "pr128": {
+    "merged": true,
+    "main_sha": "dd466cf475ee09ed2289037ceaa1d0560462fbe2"
+  },
+  "deployment": {
+    "snippet": 106,
+    "version": "1.1.0",
+    "active": true,
+    "before_sha256": "df2afbfff4bafc8279e907d2935c5bad8d655e459b9697f6d36e5bc33cb7610c",
+    "after_sha256": "a1425dbdae1077c18214111eba17dac179f7ac20fe818c0ed74317515ca1d26e",
+    "readback_match": true,
+    "base_plugin_unchanged": true,
+    "source": "docs/code-snippets/madagaskar-raffle-replacement.php",
+    "native_activation_required": true,
+    "initial_attempts": "Read-back caught deactivation during code update. Old body/active state restored; final staged save plus native /activate succeeded.",
+    "rollback_backup": "Exact original snippet source and metadata retained privately."
+  },
+  "before": {
+    "plugin_sha256": "cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d",
+    "base_version": "3.3.0",
+    "replacement_version": "1.0.0",
+    "snapshot": {
+      "campaigns": {
+        "count": 7,
+        "hash": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "hash": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "hash": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "hash": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "manual_renderer": false,
+    "after_snapshot": {
+      "campaigns": {
+        "count": 7,
+        "hash": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "hash": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "hash": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "hash": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "domain_unchanged": true
+  },
+  "after": {
+    "plugin_sha256": "cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d",
+    "base_version": "3.3.0",
+    "replacement_version": "1.1.0",
+    "snapshot": {
+      "campaigns": {
+        "count": 7,
+        "hash": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "hash": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "hash": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "hash": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "manual_renderer": true,
+    "render": {
+      "ok": true,
+      "manual_post": false,
+      "manual_notice": true,
+      "warnings": 0,
+      "blocked_writes": 0,
+      "html_hash": "4299c08734d93d473a13557a3c7f92051003667b73b9fcaef6fc5594025a5471"
+    },
+    "after_snapshot": {
+      "campaigns": {
+        "count": 7,
+        "hash": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "comments": {
+        "count": 2590,
+        "hash": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "draws": {
+        "count": 14,
+        "hash": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "redraw_audit": {
+        "count": 1,
+        "hash": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      }
+    },
+    "domain_unchanged": true
+  },
+  "real_campaign_test_write": false,
+  "synthetic_tests": {
+    "assertions": 35,
+    "positive": true,
+    "negative_history_control_detected": true,
+    "php_syntax": true,
+    "ci_workflows": 4,
+    "ci_success": true
+  },
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 122,
+    "active": 43,
+    "code_error": 0
+  },
+  "helper117": {
+    "restored_exact": true,
+    "active": false,
+    "code_error": null
+  },
+  "limitations": {
+    "browser_ui": false,
+    "live_replacement_post_not_executed": "No disqualified live slot; actual service and POST guard tested using isolated fixtures.",
+    "username_identity": "Existing model has username/comment ID, no immutable Instagram user ID.",
+    "global_php_logs_audited": false
+  },
+  "kommo_issue82": "OPEN; parked; no source actions"
+}

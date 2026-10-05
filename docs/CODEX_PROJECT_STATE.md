@@ -116,3 +116,10 @@ Stage7 quota checkpoint:
 - Existing Meta import/frozen eligibility pool/comment weighting and original secure seed/ranking unchanged. No new JS needed. Base plugin unchanged; existing audit schema retained.
 - Branch `codex/fix-raffle-replacement-draw`; issue129. PHP syntax/35 actual-service fixture assertions PASS, including reload/double/stale, shortage rollback, permissions and read-only render. Live initial snapshot:7campaigns/2590comments/14draws/1audit; four InnoDB tables. No real campaign test write.
 - Production deployment pending CI/review; planned target snippet106 only, exact backup/read-back and guarded UI/hash/health verification. Evidence: `docs/ISSUE_129_RAFFLE_REPLACEMENT.md`.
+
+Issue129 deployment checkpoint:
+- Production patch verified active106/version1.1.0 with exact body hash `a1425dbdae1077c18214111eba17dac179f7ac20fe818c0ed74317515ca1d26e` and candidate read-back MATCH. Source updates required explicit native activation; initial deactivation detected and original state restored before final successful staged deployment.
+- PR130/code CI head67d2248:4/4green;35actual-service synthetic assertions plus negative history-exclusion control. Original plugin3.3.0 unchanged.
+- Guarded actual admin render success;0warning/fatal/SQLwrite attempts. All7campaign/2590comment/14draw/1audit fingerprints unchanged; no live disqualified fixture/action created.
+- Final health16/16;snippets122total/43active/code_error0.117original/passive restored exact. Evidence docs/ISSUE_129_RAFFLE_DEPLOYMENT_EVIDENCE.json. PR130 awaits review/merge; Issue129 tracks this final source review.
+- Issue82 remains parked OPEN; no Kommo source operations.

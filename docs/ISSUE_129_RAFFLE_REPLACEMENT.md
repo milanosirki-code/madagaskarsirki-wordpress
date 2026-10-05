@@ -38,3 +38,13 @@ One campaign gets an N-person button plus individual buttons when N>1. Valid/ver
 ## Scope
 
 PR #128 documentation merged; main at start `dd466cf475ee09ed2289037ceaa1d0560462fbe2`. Issue #82 parked OPEN. No Kommo source, sale, order, school field or real raffle result changes authorized for tests.
+
+## Verified production deployment
+
+- Branch CI: all four workflows succeeded at `67d224811c9236e4b7cd4e4d2f33f9a2c75c1d8d`. PR130 contains the isolated snippet candidate, tests and documentation; no base plugin change.
+- Snippet106 version1.1.0 is deployed/active, full independent read-back matches the reviewed candidate. Body SHA256 `a1425dbdae1077c18214111eba17dac179f7ac20fe818c0ed74317515ca1d26e`; original `df2afbfff4bafc8279e907d2935c5bad8d655e459b9697f6d36e5bc33cb7610c`.
+- REST code updates deactivated106 despite active=true. Read-back caught this; original body/active state was restored before retry. Final code save followed by native POST `/code-snippets/v1/snippets/106/activate` succeeded. No draw action was called.
+- Native base admin render plus new controls/history executed under a pre-SQL write guard: success,0warnings,0blockedwrites. No live disqualified slots exist, so no replacement form is displayed; positive N/single-slot forms are covered by isolated fixtures.
+- All record fingerprints in7campaigns/2590comments/14draws/1audit unchanged across deploy and read-only render. Base plugin SHA256 `cc6496308870c2217b2ccc42bf7191e04987c856afb787504798e60dfa41cf5d` remains unchanged and matches repository.
+- Final health16/16;122total/43active snippets;code_error0. Temporary117 restored original/passive/read-back exact. No browser UI or global PHP-log audit is claimed; targeted render warnings/fatal0.
+- No real campaign winner/status/Meta content modified for testing. Evidence: `docs/ISSUE_129_RAFFLE_DEPLOYMENT_EVIDENCE.json`. PR review/merge remains separate from successful live deployment.
