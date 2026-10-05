@@ -117,7 +117,8 @@ class MMC_Operations_Service {
         $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE program_id=%d LIMIT 1", $program_id ) );
         if ( $row ) {
             self::seed_checklist( $program_id );
-            self::ensure_operation_task( $program_id );
+            $task_result=self::ensure_operation_task( $program_id );
+            if(is_wp_error($task_result)){return $task_result;}
             return $row;
         }
 
@@ -134,7 +135,8 @@ class MMC_Operations_Service {
         if ( ! $wpdb->insert_id ) { return new WP_Error( 'mmc_ops_plan_insert', 'Operasyon planı oluşturulamadı.' ); }
         $plan_id = (int) $wpdb->insert_id;
         self::seed_checklist( $program_id );
-        self::ensure_operation_task( $program_id );
+        $task_result=self::ensure_operation_task( $program_id );
+        if(is_wp_error($task_result)){return $task_result;}
         MMC_Program_Service::add_log( $program_id, 'operations_plan_created', 'operations', $plan_id, null, array( 'origin_city'=>'Ankara' ), 'Operasyon planı otomatik oluşturuldu.' );
         return self::get_plan( $program_id );
     }
@@ -576,6 +578,8 @@ class MMC_Operations_Service {
 
     private static function recalculate_plan_status( $program_id ) {
         global $wpdb; $table=$wpdb->prefix.'mmc_operation_checklist'; $plan=self::get_plan($program_id); if(!$plan)return;
+        $program=MMC_Program_Service::get_program($program_id);
+        if(!$program || in_array($program->status,array('cancelled','completed'),true)){return;}
         $row=$wpdb->get_row($wpdb->prepare("SELECT COUNT(*) total,SUM(status='done') done_count,SUM(status='problem') problems FROM $table WHERE program_id=%d AND phase IN ('pre_departure','venue_setup') AND is_required=1 AND status<>'not_applicable'",absint($program_id)),ARRAY_A);
         $total=(int)($row['total']??0);$done=(int)($row['done_count']??0);$problems=(int)($row['problems']??0);
         if($total>0 && $done===$total && 0===$problems && in_array($plan->status,array('draft','planned'),true)){
@@ -634,9 +638,10 @@ class MMC_Operations_Service {
             // Also supports older integrations that only expose the existing title lookup.
             if ( $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND module='operations' AND title=%s LIMIT 1",absint($program_id),$template[1])) ) { continue; }
             $now=current_time('mysql');
-            $wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
+            $inserted=$wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
                 'status'=>'open','priority'=>'high','metadata'=>wp_json_encode(array('source_key'=>$source_key,'system_generated'=>true,'phase'=>$template[0],'template_version'=>1)),
                 'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
+            if(false===$inserted){return new WP_Error('mmc_ops_task_insert','Operasyon görevi oluşturulamadı; mevcut kayıtlar korunarak yeniden denenebilir.');}
             // Initialization is already recorded by the plan/program audit; task metadata identifies its origin.
         }
     }
