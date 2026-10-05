@@ -1,0 +1,118 @@
+{
+  "issue": 155,
+  "pr": 156,
+  "branch": "codex/operations-task-adoption-v3",
+  "phase": "3A",
+  "source_commit": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928",
+  "phase2_merge": "41bf2fa59d56c400e20435f5df0d56ad45ff9e27",
+  "deployment": {
+    "deployed": true,
+    "hashes": {
+      "includes/class-mmc-operations-service.php": "4c4f608c7f889a8ddb5a5fc1723931da435f3f7ddef09daed607426e67476e1c",
+      "includes/class-mmc-operations-admin.php": "e7563f392caeb2a150a792c2ee4b2adc764727d0296a889ea72c99cd57e69619"
+    },
+    "backups": {
+      "includes/class-mmc-operations-service.php": "mmc-ops155-original-3dfuv88l6u7v2zfhzn0",
+      "includes/class-mmc-operations-admin.php": "mmc-ops155-original-m9rf4uenok8b6Bo5pNe"
+    },
+    "db_version": "1.3.7",
+    "migration_triggered": false
+  },
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 126,
+    "active": 46,
+    "code_error": 0
+  },
+  "domain_tables": 22,
+  "domain_unchanged": true,
+  "get_domain_write": 0,
+  "actual_adoption": 0,
+  "actual_backfill": 0,
+  "provider_calls": 0,
+  "php_warning": 0,
+  "php_fatal": 0,
+  "legacy_ability_contract_match": true,
+  "classification": {
+    "ADOPTABLE": 12,
+    "DUPLICATE": 0,
+    "CUSTOM": 0,
+    "CLOSED": 0,
+    "WRONG_MODULE": 128,
+    "AMBIGUOUS": 1
+  },
+  "legacy_tasks": 141,
+  "cancelled_program_open_tasks": 18,
+  "tests": {
+    "isolated": 209,
+    "real_mysql": 36,
+    "fixture_database": "operations_fixture"
+  },
+  "ci": [
+    {
+      "id": 37358352483,
+      "name": "MMC live reconciliation checks",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352211,
+      "name": "Madagaskar Plugins CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352139,
+      "name": "Changed PHP Syntax",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352204,
+      "name": "Kommo source HTTP contract",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352118,
+      "name": "Read-only integrity contract",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352347,
+      "name": "Raffle replacement contract",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352165,
+      "name": "Production Source Archive",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    },
+    {
+      "id": 37358352157,
+      "name": "Operations automation contract",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "f2b16e1ba9e7d4228a5bda952c36b72d2589f928"
+    }
+  ],
+  "drive_report": "1S06R1zQZ2kd7VRVqjigvwQ9sYtgVBr4k",
+  "drive_archive": "18Mn-YUwt8wQJLZEka3wtTM-bdv3cWri6",
+  "rollback": "Not needed; exact Phase2 originals retained locally/host/Drive; hash-gated atomic restoration of both files and opcache invalidation, no DB rollback",
+  "remaining_decision": "Manager-selected eligible programs for Phase3B adoption then separate backfill; external notification policy/provider remains disabled."
+}

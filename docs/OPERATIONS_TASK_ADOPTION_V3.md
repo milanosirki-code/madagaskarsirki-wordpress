@@ -22,4 +22,18 @@ Production task inventory baseline141/open141/system_generated0/due0/owner0; liv
 ## Rollback
 Keep exact Phase2 service/admin sources (main41bf2fa) and current before hashes: service47ab9f4e80792c0eb2d0228c778a7e93494622aaaa0744541141535d4099c853; adminc12273c74baf68dd5b84e4eb3fdc6f7984a4449713a1f5c07bed90d3d34f87fe. Atomic restore both files if post-deploy checks fail; invalidate opcache and recheck fingerprints/health. No domain rollback required in3A. Rollback originals included in Drive ZIP; no secrets/customer data archived.
 
-GitHub source/tests/policy/preview/before-after/deployment/project state and existing Drive project folder archive must be read-back/hash verified before completion. Pending final deployment evidence; Phase3B and external provider policy not enabled.
+GitHub source/tests/policy/preview/before-after/deployment/project state and existing Drive project folder archive must be read-back/hash verified before completion. Phase3A final verification below; Phase3B and external provider policy not enabled.
+
+## Final live verification — 2026-10-05
+- PR156/source f2b16e1ba9e7d4228a5bda952c36b72d2589f928; CI8/8 PASS;209 isolated and36 real MySQL fixture assertions including prior13. MySQL races/transactions run only in ephemeral CI.
+- Live service4c4f608c7f889a8ddb5a5fc1723931da435f3f7ddef09daed607426e67476e1c / admin e7563f392caeb2a150a792c2ee4b2adc764727d0296a889ea72c99cd57e69619: byte/read-back MATCH source. Only2 files deployed; DB1.3.7 unchanged.
+-141 total/open/unmanaged legacy tasks:13 Operations,128 other modules (including4 finance).12 structurally ADOPTABLE Operations planning tasks;1 AMBIGUOUS closed/cancelled program; DUPLICATE0/CUSTOM0/CLOSED0/WRONG_MODULE128. Structural eligibility does not override program/date/stage scope: all13 program contexts currently apply-ineligible. WOULD_ADOPT0; adoption-simulated WOULD_SET_DUE0 / OWNER0. No program lifecycle promoted.
+- Cancelled program open tasks18:1 Operations template,17 other-module tasks; read-only inventory with IDs/due/owner/created_at in AFTER evidence. No cancel/delete/merge.
+- Actual adoption0 / backfill0;22 domain table fingerprints exact BEFORE=AFTER; SQL write attempts0, provider/messages0, PHP warning/fatal0. Existing three native read abilities and legacy response hashes MATCH.
+- My Tasks remains0 in production (assigned0); synthetic actual adopt then separate apply makes My Tasks1 and manual override remains protected.
+- Authenticated server-render smoke succeeded (not browser visual review):29–30 queries,21.52–39.94ms across future/history/cancelled; alert aggregate1 query. No N+1 added per task.
+- Final health16/16 critical0 warning0; current global snippets126 total/46 active/code_error0; temporary117 restored exact original/passive, separate GET verified. Current API count recorded rather than cached45-active health narrative. Snippets not toggled to reconcile counts.
+- External notification policy preview only: HIGH priority overdue, due today, show-day unresolved problem, unassigned high-priority tasks; no provider/message/notification-log action. Current overdue/today0; active/future high-priority unassigned9.
+- Rollback not needed. Exact main41bf2fa Phase2 originals and host backups preserved; no domain rollback.
+- GitHub Issue155 remainsOPEN pending PR156 review/merge; Phase3A production complete, Phase3B not run.
+- Drive report https://drive.google.com/file/d/1S06R1zQZ2kd7VRVqjigvwQ9sYtgVBr4k/view ; source/tests/policy/preview/before-after/deploy/rollback ZIP https://drive.google.com/file/d/18Mn-YUwt8wQJLZEka3wtTM-bdv3cWri6/view ; canonical project state updated. Final raw-byte/hash read-back required.
