@@ -1,0 +1,147 @@
+{
+  "issue": 82,
+  "status": "OPEN",
+  "result": "HTTP PATCH DEPLOYED / KOMMO REMOTE VERIFICATION PENDING AUTHORIZED BROWSER",
+  "pr": 127,
+  "pr_merged": true,
+  "merge_main_sha": "d074e115abc546a74a2955a6017ca4e20aaa2d00",
+  "code_commit": "ec1223e05e827254ade045918703e534635727b6",
+  "snippet": {
+    "id": 110,
+    "version": "canonical V2",
+    "active": true,
+    "before_sha256": "292e0c542a3f185119d28ba5639e1786d5bdf0fecaac8fdba3c4fc86e47956dd",
+    "after_sha256": "787ba5a41c6ff1b07dff3048cbe9230a06612725910cc92717bfbe74e795f73b",
+    "live_main_match": true,
+    "backup": "Exact original code and metadata retained privately; tokenized URLs excluded."
+  },
+  "http_before": {
+    "valid": {
+      "http": 404,
+      "raw_hash": "9a710f74ef5c9aaa89c194da6140285f902134e617220d5d2eaa0918125b4a9d",
+      "normalized_hash": "b85c70b42d43a6fb9f7c99858ce35ee70de5814e1d3f51e8d66ce3bf8c0d1d03",
+      "canonical": true,
+      "articles": 8,
+      "yenimahalle": false
+    },
+    "invalid": {
+      "http": 404,
+      "raw_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    },
+    "missing": {
+      "http": 404,
+      "raw_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    },
+    "unrelated": {
+      "http": 200,
+      "raw_hash": "05a785e5ce18952d08513d8e29990cd26f92800755a2247c208350321ab79e94",
+      "normalized_hash": "05a785e5ce18952d08513d8e29990cd26f92800755a2247c208350321ab79e94",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    }
+  },
+  "http_after": {
+    "valid": {
+      "http": 200,
+      "raw_hash": "32533e3a9d584c177af7c9461aa3fa4b490b50baddb235a4f36dca65cb787745",
+      "normalized_hash": "b85c70b42d43a6fb9f7c99858ce35ee70de5814e1d3f51e8d66ce3bf8c0d1d03",
+      "canonical": true,
+      "articles": 8,
+      "yenimahalle": false
+    },
+    "invalid": {
+      "http": 404,
+      "raw_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    },
+    "missing": {
+      "http": 404,
+      "raw_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    },
+    "unrelated": {
+      "http": 200,
+      "raw_hash": "05a785e5ce18952d08513d8e29990cd26f92800755a2247c208350321ab79e94",
+      "normalized_hash": "05a785e5ce18952d08513d8e29990cd26f92800755a2247c208350321ab79e94",
+      "canonical": false,
+      "articles": 0,
+      "yenimahalle": false
+    }
+  },
+  "authorized_admin": {
+    "http": 200,
+    "admin": true,
+    "canonical": true,
+    "articles": 8,
+    "normalized_hash": "b85c70b42d43a6fb9f7c99858ce35ee70de5814e1d3f51e8d66ce3bf8c0d1d03",
+    "warnings": 0
+  },
+  "authorized_admin_method": "Authenticated GET diagnostic request invokes the real production serve callback with invalid token, administrator capability and the hidden URI; no capability stub or session creation. It captures the real PHP HTTP status. This is not a separately authenticated browser request to the hidden URL.",
+  "content": {
+    "events": 8,
+    "program_length": 1578,
+    "location_length": 1394,
+    "events_equal": true,
+    "program_text_equal": true,
+    "locations_text_equal": true,
+    "dynamic_timestamp": "Raw HTML hash changes with rendered minute; normalized HTML hash is unchanged.",
+    "normalized_html_sha256": "b85c70b42d43a6fb9f7c99858ce35ee70de5814e1d3f51e8d66ce3bf8c0d1d03",
+    "past_yenimahalle": false
+  },
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 122,
+    "active": 43,
+    "code_error": 0,
+    "old70": {
+      "id": 70,
+      "active": false,
+      "code_error": null
+    }
+  },
+  "temporary_inspector": {
+    "id": 117,
+    "restored_exact": true,
+    "active": false,
+    "code_error": null
+  },
+  "php": {
+    "targeted_admin_warning_count": 0,
+    "targeted_fatal": 0,
+    "global_php_log_audit": false
+  },
+  "kommo": {
+    "browser_access": false,
+    "source_total": null,
+    "classifications": null,
+    "active_agent_sources": null,
+    "source_limit": null,
+    "url_reindex": "UNCONFIRMED",
+    "ai_preview": "NOT RUN",
+    "context_test": "NOT RUN",
+    "sources_created": [],
+    "sources_deleted": [],
+    "sources_modified": []
+  },
+  "rollback": "Restore exact pre-deploy snippet110 code only if needed; not used."
+}
