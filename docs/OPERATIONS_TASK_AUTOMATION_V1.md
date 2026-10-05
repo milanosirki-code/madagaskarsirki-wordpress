@@ -34,7 +34,26 @@ PHP syntax and repo CI required before deploy. No real order/payment/message tes
 Preview only; no production task writes. T-7/T-3/T-1 are PROPOSED_DEFAULT requiring later manager decision; no dates/staff auto-assigned. Cancelled #2 has pre-existing open tasks: preserve, review separately; never bulk cancel manual work.
 
 ## Deployment / rollback
-Pending CI and guarded live verification. Only service/admin: old-hash gate, exact target hashes, backups, atomic replacement, read-back, opcache invalidation, restore on failure. MMC_DB_VERSION unchanged (live/current 1.3.7), so upgrade backfill not triggered. Restore both before files if smoke/health fails. Temporary #117 restored original/passive in finally.
+Controlled deploy verified below. Only service/admin: old-hash gate, exact target hashes, backups, atomic replacement, read-back, opcache invalidation, restore on failure. MMC_DB_VERSION unchanged (live/current 1.3.7), so upgrade backfill not triggered. Restore both before files if smoke/health fails. Temporary #117 restored original/passive in finally.
 
 ## Status
-Implementation/synthetic tests complete; production and final GitHub/Drive evidence pending. Issue #105 OPEN/SEND pending; #82 OPEN/PARKED.
+Implementation, CI, production verification complete; final archive publication recorded below. Issue #105 OPEN/SEND pending; #82 OPEN/PARKED.
+
+## Final production verification — 2026-10-05
+- PR #151: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/151 . Production source commit `4345bf351c2f0a7a014fb09c344c52ef08f6e494`; all 8 applicable CI workflows PASS. Ready-for-review transition follows final evidence commit; merge is a later review step.
+- Exactly two MMC include files deployed; service SHA256 `bf266cacdcc5a5aa29aad87f64dd9c08dba57a202e93f9cde72cea98b7d0b07d`; admin `5f0d544afac7047d686c83f7205d888cbbfe18b6c48c0cee86316fb5eeedafd7`. Both read back MATCH candidate/GitHub source. Plugin/database versions untouched; migration/backfill not triggered.
+- 18 domain table fingerprints BEFORE=AFTER, including programs, plans, tasks, checklist, schedule, resources, logs, events, sessions, venue/finance data, Kommo profiles and all raffle tables. No production domain data changed.
+- Three native Operations abilities successful for future #10, historical #9, cancelled #2. Their response hashes match before. Missing-plan fixture masks only SELECT results (no real record alteration); all three reads and explicit-create-only render pass. SQL write guard recorded zero domain-write attempts.
+- Readiness: 9 upcoming programs, one query, 5.46ms. Full authenticated server-side render: 17–18 queries, 10.82–13.45ms across current/history/cancelled scope; no PHP warning/fatal. This is render verification, not a browser visual review.
+- Preview: all 13 plans/checklists/legacy planning tasks already present; current-stage would-create counts all zero. Thirteen-task expansion occurs on a future explicit/logged operations/show_day transition, never a GET or this rollout. Canonical schedule updates remain explicit; preview does not claim to mutate/synchronize them.
+- Final health 16 OK / 0 warning / 0 critical. Global snippets 125 total / 45 active / code_error 0. Temporary #117 byte-exact original, passive, separate GET read-back verified.
+- Rollback not needed. Host before-file backups retained; local original source files included in the Drive evidence archive. To roll back: verify current target hashes, restore admin then service using atomic replace, invalidate opcache, check exact before hashes (`b40a95f8...` service / `2b5a8b09...` admin), rerun guarded smoke/health. No database rollback.
+- Drive lifecycle report: https://drive.google.com/file/d/1-DLRn11SFIaOqhGMlohKZuWzK4mQcDMc/view . Final ZIP/source/tests/schema/evidence and canonical project state are updated/read back before task completion.
+
+## ensure_plan call inventory
+VALID_WRITE: explicit admin POST prepare/save plan/resource assignment/manual schedule/sync; AI plan-ensure/plan-update; lifecycle venue/event/session/readiness hooks and operations/show_day transition. Existing bootstrap backfill is behind schema upgrade; schema remains 1.3.7 and it was not invoked. Readiness/preview/summary/three read abilities/admin GET: no ensure call (INVALID_READ 0).
+
+## Remaining decisions
+Operations phase 2: manager-approved deadlines (T-7/T-3/T-1 remain PROPOSED_DEFAULT), responsible users, any notification policy, and review of old cancelled-program tasks. No WhatsApp/Kommo/SMS, payments, school-field changes, automatic assignment or retroactive operational records. Issue #150 remains open pending PR #151 review/merge; #105 SEND decision pending and #82 PARKED remain untouched.
+
+Final source/test/schema/evidence/rollback Drive archive: https://drive.google.com/file/d/1gWzrQovHHM9JyQF6eT0x-3T2gIUlY9HI/view . No secrets, customer phone/email or raw domain rows are included.
