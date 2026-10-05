@@ -106,3 +106,13 @@ Stage7 quota checkpoint:
 - Final health16/16; snippets122total/43active/code_error0. Snippet70 remains passive; temporary117 restored original/passive, verified exact. No targeted PHP warning/fatal; global PHP logs were not audited.
 - Kommo browser unavailable. Inventory, attachments, source limit and stale-source classification remain unknown; reindex UNCONFIRMED; real AI preview/context tests NOT RUN. No source writes/creation/deletion, no customer messages.
 - Issue82 remains OPEN. Evidence: `docs/ISSUE_82_HTTP_DEPLOYMENT_EVIDENCE.json`. Result: HTTP PATCH DEPLOYED / KOMMO REMOTE VERIFICATION PENDING AUTHORIZED BROWSER. Rollback not needed.
+
+## Issue #129 — Sirk Çekilişi replacement slots (2026-10-05)
+
+- PR128 documentation-only review/CI completed and merged; main `dd466cf475ee09ed2289037ceaa1d0560462fbe2`. Issue82 parked OPEN; no Kommo source action.
+- Located live base plugin Madagaskar_Cekilis_V2 v3.3.0 (`madagaskar-cekilis`, native POST forms/Meta Instagram v26), and active snippet106 replacement1.0.0. Both live owners match repository source hashes.
+- Root cause: snippet106 current_screen GET auto-redraw plus GET manual action, conditional current-winner exclusion and no historical audit exclusion.
+- Candidate1.1.0 (`docs/code-snippets/madagaskar-raffle-replacement.php`) replaces automatic GET with manual POST/capability/nonce + slot occupant snapshots. Atomic campaign lock/transaction replaces only disqualified slots; all prior/current usernames/comment IDs excluded. Verified slots preserved; shortages/errors fully roll back.
+- Existing Meta import/frozen eligibility pool/comment weighting and original secure seed/ranking unchanged. No new JS needed. Base plugin unchanged; existing audit schema retained.
+- Branch `codex/fix-raffle-replacement-draw`; issue129. PHP syntax/34 actual-service fixture assertions PASS, including reload/double/stale, shortage rollback, permissions and read-only render. Live initial snapshot:7campaigns/2590comments/14draws/1audit; four InnoDB tables. No real campaign test write.
+- Production deployment pending CI/review; planned target snippet106 only, exact backup/read-back and guarded UI/hash/health verification. Evidence: `docs/ISSUE_129_RAFFLE_REPLACEMENT.md`.
