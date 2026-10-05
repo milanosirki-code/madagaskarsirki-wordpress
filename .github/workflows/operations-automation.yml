@@ -32,7 +32,12 @@ jobs:
       - run: php tests/mmc-integrity/operations-readonly-121.php
       - run: php tests/operations/automation-v1.php
       - run: php tests/operations/automation-v2.php
+      - run: php tests/operations/adoption-v3.php
       - name: Real SQL in ephemeral database only
         run: php tests/operations/automation-v2-mysql.php
+        env:
+          OPS_FIXTURE_DB: operations_fixture
+      - name: Real adoption SQL in ephemeral database only
+        run: php tests/operations/adoption-v3-mysql.php
         env:
           OPS_FIXTURE_DB: operations_fixture
