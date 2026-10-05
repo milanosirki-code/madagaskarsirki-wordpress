@@ -1,0 +1,16 @@
+name: Raffle reporting contract
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-cekilis/**'
+      - 'tests/raffle/**'
+      - '.github/workflows/raffle-reporting.yml'
+jobs:
+  reporting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: php -l wp-content/plugins/madagaskar-cekilis/madagaskar-cekilis.php
+      - run: php -l wp-content/plugins/madagaskar-cekilis/includes/class-mck-reporting.php
+      - run: php tests/raffle/reporting.php
+      - run: php tests/raffle/replacement.php

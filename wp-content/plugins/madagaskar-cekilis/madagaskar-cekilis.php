@@ -10,6 +10,8 @@
 
 if (!defined('ABSPATH')) { exit; }
 
+require_once __DIR__ . '/includes/class-mck-reporting.php';
+
 final class Madagaskar_Cekilis_V2 {
     const VERSION = '3.3.0';
     const API_VERSION = 'v26.0';
@@ -48,6 +50,7 @@ final class Madagaskar_Cekilis_V2 {
         add_action('admin_post_mck2_sync_campaign', [$this, 'sync_campaign_action']);
         add_action('admin_post_mck2_draw_campaign', [$this, 'draw_campaign']);
         add_action('admin_post_mck2_export_campaign', [$this, 'export_campaign']);
+        add_action('admin_post_mck_report_export', ['MCK_Reporting', 'export']);
         add_action('admin_post_mck2_verify_result', [$this, 'verify_result']);
         add_action('admin_post_mck2_delete_campaign', [$this, 'delete_campaign']);
         add_action('admin_post_mck2_diagnose_campaign', [$this, 'diagnose_campaign']);
@@ -992,16 +995,16 @@ final class Madagaskar_Cekilis_V2 {
         header('Content-Disposition: attachment; filename="madagaskar-cekilis-' . $id . '-' . gmdate('Ymd-His') . '.csv"');
         echo "\xEF\xBB\xBF";
         $out=fopen('php://output','w');
-        fputcsv($out,['Çekiliş','Gönderi','Durum','Kullanıcı','Yorum','Etiket Sayısı','Etiketler','Geçersiz Nedeni','Sonuç','Sıra','Doğrulama','Yorum Tarihi','Yorum ID','Eligible Hash'], ';');
+        fputcsv($out,['Çekiliş','Gönderi','Durum','Kullanıcı','Yorum','Etiket Sayısı','Etiketler','Geçersiz Nedeni','Sonuç','Sıra','Doğrulama','Yorum Tarihi','Yorum ID','Eligible Hash'], ';','"','');
         foreach ($rows as $r) {
             $d=$draw_map[$r->comment_id] ?? null;
             $mentions=json_decode($r->mentions,true); if(!is_array($mentions))$mentions=[];
-            fputcsv($out,[
+            fputcsv($out,array_map(['MCK_Reporting','csv_cell'],[
                 $campaign->title,$campaign->post_url,$r->is_valid?'Geçerli':'Geçersiz','@'.$r->username,$r->comment_text,
                 $r->mention_count,implode(', ',array_map(function($x){return '@'.$x;},$mentions)),$r->invalid_reason,
                 $d ? ($d->result_type==='winner'?'Asil':'Yedek') : '',$d ? $d->position_no : '',$d ? $d->verification_status : '',
                 $r->comment_timestamp,$r->comment_id,$campaign->eligible_hash
-            ],';');
+            ]),';','"','');
         }
         fclose($out); exit;
     }
@@ -1214,17 +1217,7 @@ final class Madagaskar_Cekilis_V2 {
     private function card_end() { echo '</div>'; }
 
     private function render_campaigns() {
-        global $wpdb;
-        $rows=$wpdb->get_results("SELECT * FROM {$this->campaigns_table} ORDER BY id DESC LIMIT 200");
-        $this->card_start();
-        echo '<h2>Çekiliş Geçmişi</h2><p>Her çekiliş kendi yorum listesi, kuralları, asil/yedek sonucu ve denetim iziyle saklanır.</p>';
-        if (!$rows) { echo '<p>Henüz çekiliş yok. <a class="button button-primary" href="'.esc_url(add_query_arg(['page'=>'madagaskar-cekilis','tab'=>'new'],admin_url('admin.php'))).'">İlk çekilişi oluştur</a></p>'; $this->card_end(); return; }
-        echo '<table class="widefat striped"><thead><tr><th>ID</th><th>Çekiliş</th><th>Durum</th><th>Yorum</th><th>Geçerli hak</th><th>Asil / Yedek</th><th>Tarih</th><th></th></tr></thead><tbody>';
-        foreach($rows as $r){
-            $url=add_query_arg(['page'=>'madagaskar-cekilis','view'=>'campaign','campaign_id'=>$r->id],admin_url('admin.php'));
-            echo '<tr><td>'.intval($r->id).'</td><td><strong>'.esc_html($r->title).'</strong></td><td>'.esc_html($r->status).'</td><td>'.intval($r->total_comments).'</td><td>'.intval($r->valid_entries).'</td><td>'.intval($r->winner_count).' / '.intval($r->reserve_count).'</td><td>'.esc_html($r->created_at).'</td><td><a class="button" href="'.esc_url($url).'">Aç</a></td></tr>';
-        }
-        echo '</tbody></table>'; $this->card_end();
+        MCK_Reporting::render_list();
     }
 
     private function render_new_campaign() {
@@ -1281,6 +1274,8 @@ final class Madagaskar_Cekilis_V2 {
         if(!$c){echo '<p>Çekiliş bulunamadı.</p>';return;}
         echo '<p><a href="'.esc_url(add_query_arg(['page'=>'madagaskar-cekilis'],admin_url('admin.php'))).'">← Çekiliş listesine dön</a></p>';
         $this->card_start();
+        $report=MCK_Reporting::campaign($id);
+        if ($report) MCK_Reporting::render_campaign_metrics($report);
         echo '<h2>'.esc_html($c->title).'</h2><p><a href="'.esc_url($c->post_url).'" target="_blank" rel="noopener">Instagram gönderisini aç ↗</a></p>';
         echo '<p><strong>Toplam yorum:</strong> '.intval($c->total_comments).' &nbsp; | &nbsp; <strong>Geçerli hak:</strong> '.intval($c->valid_entries).' &nbsp; | &nbsp; <strong>Geçersiz:</strong> '.intval($c->invalid_comments).' &nbsp; | &nbsp; <strong>Durum:</strong> '.esc_html($c->status).'</p>';
         echo '<p><strong>Kural:</strong> En az '.intval($c->min_mentions).' farklı arkadaş etiketi. '.(intval($c->one_user_one_entry)?'Her kullanıcı 1 hak.':'Her farklı geçerli yorum 1 hak.').' '.(intval($c->dedupe_same_text)?'Birebir aynı yorum tekrarı sayılmaz.':'Aynı metin tekrarları da sayılır.').'</p>';
@@ -1288,8 +1283,7 @@ final class Madagaskar_Cekilis_V2 {
             echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" style="display:inline-block;margin-right:8px"><input type="hidden" name="action" value="mck2_sync_campaign"><input type="hidden" name="campaign_id" value="'.intval($id).'">'; wp_nonce_field('mck2_sync_campaign_'.$id); submit_button('Yorumları Yenile','secondary','submit',false); echo '</form>';
             echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" style="display:inline-block"><input type="hidden" name="action" value="mck2_draw_campaign"><input type="hidden" name="campaign_id" value="'.intval($id).'">'; wp_nonce_field('mck2_draw_campaign_'.$id); submit_button('🎲 Çekilişi Yap','primary','submit',false); echo '</form>';
         }
-        $export=wp_nonce_url(add_query_arg(['action'=>'mck2_export_campaign','campaign_id'=>$id],admin_url('admin-post.php')),'mck2_export_campaign_'.$id);
-        echo ' <a class="button" href="'.esc_url($export).'">CSV / Excel Listesini İndir</a>';
+        echo ' '.MCK_Reporting::export_link($id);
         echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" style="display:inline-block;margin-left:8px"><input type="hidden" name="action" value="mck2_diagnose_campaign"><input type="hidden" name="campaign_id" value="'.intval($id).'">'; wp_nonce_field('mck2_diagnose_campaign_'.$id); submit_button('🧪 API Teşhis Testi','secondary','submit',false); echo '</form>';
         echo '<p style="margin-top:14px"><em>Beğeni ve @'.esc_html(get_option(self::OPTION_USERNAME,'madagaskarsirkiturkiye')).' hesabını takip şartı, seçilen adaylarda Instagram uygulamasından son kontrolde doğrulanmalıdır.</em></p>';
         $diag = get_transient('mck2_diag_'.get_current_user_id().'_'.$id);
@@ -1310,6 +1304,7 @@ final class Madagaskar_Cekilis_V2 {
         $this->card_end();
 
         if($c->status==='drawn') $this->render_results($c);
+        MCK_Reporting::render_audit($id);
         $this->render_comment_tables($c);
 
         $this->card_start();
@@ -1321,11 +1316,15 @@ final class Madagaskar_Cekilis_V2 {
         global $wpdb;
         $rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE campaign_id=%d ORDER BY CASE WHEN result_type='winner' THEN 0 ELSE 1 END, position_no ASC",$c->id));
         $this->card_start();
-        echo '<h2>🏆 Çekiliş Sonucu</h2>';
+        echo '<h2>🏆 Çekiliş Sonucu</h2><p>Doğrulama zamanı ve ilk seçimi yapan admin mevcut şemada kayıtlı değildir. Replacement admin/nedeni audit kaydından okunur.</p>';
+        $replacement_meta=MCK_Reporting::result_metadata($c->id);
         foreach(['winner'=>'Asil','reserve'=>'Yedek'] as $type=>$label){
-            echo '<h3>'.$label.'</h3><table class="widefat striped"><thead><tr><th>Sıra</th><th>Kullanıcı</th><th>Kazandıran yorum</th><th>Takip / Beğeni Kontrolü</th></tr></thead><tbody>';
+            echo '<h3>'.$label.'</h3><table class="widefat striped"><thead><tr><th>Sıra</th><th>Kullanıcı</th><th>Yorum referansı</th><th>Seçim / seçilme zamanı</th><th>Doğrulama zamanı</th><th>Replacement nedeni / admin</th><th>Takip / Beğeni Kontrolü</th></tr></thead><tbody>';
             foreach($rows as $r){if($r->result_type!==$type)continue;
-                echo '<tr><td>'.intval($r->position_no).'</td><td><strong>@'.esc_html($r->username).'</strong></td><td>'.esc_html($r->comment_text).'</td><td>';
+                $replacement=$replacement_meta[(int)$r->id] ?? null;
+                $reason=$replacement ? MCK_Reporting::verification_label($replacement['old_verification_status']).($replacement['old_verification_note']!=='' ? ' · '.$replacement['old_verification_note'] : '') : '—';
+                $actor=$replacement ? ($replacement['actor_name'] ?: 'Admin #'.(int)$replacement['actor_user_id']) : 'Kayıt yok';
+                echo '<tr><td>'.intval($r->position_no).'</td><td><strong>@'.esc_html($r->username).'</strong></td><td><code>'.esc_html($r->comment_id).'</code></td><td>'.($replacement?'Replacement':'İlk seçim').'<br>'.esc_html($r->drawn_at).'</td><td>Kayıt yok</td><td>'.esc_html($reason).'<br>'.esc_html($actor).'</td><td>';
                 echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mck2_verify_result"><input type="hidden" name="draw_id" value="'.intval($r->id).'"><input type="hidden" name="campaign_id" value="'.intval($c->id).'">'; wp_nonce_field('mck2_verify_result_'.$r->id);
                 echo '<select name="verification_status"><option value="pending" '.selected($r->verification_status,'pending',false).'>Bekliyor</option><option value="verified" '.selected($r->verification_status,'verified',false).'>Doğrulandı</option><option value="disqualified" '.selected($r->verification_status,'disqualified',false).'>Şartı sağlamadı</option></select> ';
                 echo '<input name="verification_note" value="'.esc_attr($r->verification_note).'" placeholder="Not" style="width:180px"> <button class="button">Kaydet</button></form>';
