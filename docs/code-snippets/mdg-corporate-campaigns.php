@@ -67,7 +67,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                             (int)$v->get_meta('_mdg_event_id') !== (int)$event->id || (int)$v->get_meta('_mdg_session_id') !== (int)$s->id ) { continue; }
                         $price = $v->get_price();
                         if ( ! is_numeric($price) || ! is_finite((float)$price) || (float)$price <= 0 ) { continue; }
-                        $types[$role] = array('variation'=>(int)$t->wc_variation_id,'price'=>(float)$price,'parent'=>(int)$s->wc_product_id,'type_id'=>(int)($t->id??0));
+                        $effective=(float)$price;
+                        // Denizli program10 / canonical ticket event12 only; institution campaign carts.
+                        if($role==='adult' && (int)$event->id===12 && self::normalize((string)$event->province_name)==='denizli' && empty($campaign['test_only'])){$effective=min($effective,475.0);}
+                        $types[$role] = array('variation'=>(int)$t->wc_variation_id,'price'=>$effective,'regular_price'=>(float)$price,'parent'=>(int)$s->wc_product_id,'type_id'=>(int)($t->id??0));
                     }
                     if ( ! isset($types['adult'],$types['child']) ) { continue; }
                     $available = class_exists('MDG_Capacity') ? MDG_Capacity::available((int)$s->id) : null;
@@ -190,6 +193,9 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 <article class="mc-card" data-event-id="<?php echo esc_attr($event->id); ?>">
                     <h3><?php echo esc_html($event->title); ?></h3>
                     <p><strong><?php echo esc_html($event->venue_name); ?></strong><br><?php echo esc_html($event->province_name.' / '.$event->district); ?></p>
+                    <?php $first=reset($row['sessions']); $adult_price=$first['types']['adult']; if($adult_price['price']<$adult_price['regular_price']): ?>
+                    <p><strong>Kurum kampanyası yetişkin bileti:</strong> <del><?php echo wp_kses_post(wc_price($adult_price['regular_price'])); ?></del> <strong><?php echo wp_kses_post(wc_price($adult_price['price'])); ?></strong>. Ücretsiz çocuk hakları devam eder.</p>
+                    <?php endif; ?>
                     <?php
                     $chosen=$post && self::input($_POST,'mdg_campaign_event')===(string)$event->id;
                     $adult_input=$chosen?self::input($_POST,'mdg_campaign_adults'):'1';
