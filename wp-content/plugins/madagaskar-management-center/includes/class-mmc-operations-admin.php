@@ -21,9 +21,40 @@ class MMC_Operations_Admin {
 
     private function guard(){if(!current_user_can('mmc_manage_operations')){wp_die('Bu alan için yetkiniz yok.');}}
 
+    private function readiness_dashboard( $rows, $archive ) {
+        ?>
+        <div class="mmc-panel">
+            <h2><?php echo $archive?'Operasyon Arşivi':'Yaklaşan Operasyonlar';?></h2>
+            <p><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&archive='.($archive?0:1)));?>"><?php echo $archive?'Yaklaşan programlar':'Arşivi göster';?></a> · Hazırlık yüzdesi: zorunlu hareket öncesi / salon checklist kontrolleri. Görev tarihleri ve sorumluları otomatik atanmaz.</p>
+            <table class="widefat striped"><thead><tr><th>Program / tarih</th><th>Şehir / salon</th><th>İlk / sıradaki seans</th><th>Plan / tip</th><th>Hazırlık</th><th>Ekip / araç</th><th>Görev</th><th>Kritik eksik / sonraki adım</th></tr></thead><tbody>
+            <?php foreach($rows as $row):?>
+                <tr><td><a href="<?php echo esc_url(admin_url('admin.php?page=mmc-operations&program_id='.(int)$row['id'].'&archive='.($archive?1:0)));?>"><?php echo esc_html($row['program_code']);?></a><br><?php echo esc_html($row['program_date']);?><?php if($row['show_day']):?><br><strong>GÖSTERİ GÜNÜ</strong><?php endif;?></td>
+                <td><?php echo esc_html($row['province_name'].' / '.$row['district_name']);?><br><?php echo esc_html($row['venue_name']?:'Salon yok');?></td>
+                <td><?php echo esc_html($row['first_session']?:'Seans yok');?><br><?php echo esc_html($row['next_session']?:'Gelecek seans yok');?><br>Kapı: <?php echo esc_html($row['doors_open_at']?:'Belirlenmedi');?></td>
+                <td><?php echo esc_html(self::label(MMC_Operations_Service::plan_statuses(),$row['plan_status'],'Plan yok'));?><br><?php echo esc_html(self::label(MMC_Operations_Service::operation_modes(),$row['operation_mode'],'Belirlenmedi'));?></td>
+                <td>%<?php echo esc_html($row['readiness_percent']);?><br><?php echo esc_html($row['problems']);?> sorun</td>
+                <td><?php echo esc_html($row['artists'].' sanatçı / '.$row['people'].' personel / '.$row['vehicles'].' araç / '.$row['equipment'].' ekipman');?></td>
+                <td><?php echo esc_html($row['open_tasks']);?> açık<br><?php echo esc_html($row['overdue_tasks']);?> gecikmiş</td>
+                <td><?php echo esc_html(implode(' · ',$row['critical_missing']));?><br><strong><?php echo esc_html($row['next_action']);?></strong></td></tr>
+            <?php endforeach;?>
+            <?php if(!$rows):?><tr><td colspan="8">Bu kapsamda program yok.</td></tr><?php endif;?>
+            </tbody></table>
+        </div>
+        <?php
+    }
+
+    private static function label( $labels, $key, $fallback ) {
+        return isset($labels[$key??''])?$labels[$key]:$fallback;
+    }
+
     public function page() {
         $this->guard();
-        $programs=MMC_Program_Service::all_programs(); $pid=absint($_GET['program_id']??0); if(!$pid&&$programs){$pid=(int)$programs[0]->id;}
+        $archive=!empty($_GET['archive']);
+        $overview=MMC_Operations_Service::readiness_overview($archive);
+        $programs=MMC_Program_Service::all_programs();
+        $visible_ids=array_column($overview,'id');
+        if(!$archive){$programs=array_values(array_filter($programs,static function($p)use($visible_ids){return in_array($p->id,$visible_ids); }));}
+        $pid=absint($_GET['program_id']??0); if(!$pid&&$overview){$pid=(int)$overview[0]['id'];}
         $program=$pid?MMC_Program_Service::get_program($pid):null;
         $plan=$program?MMC_Operations_Service::get_plan($pid):null;
         $summary=$program?MMC_Operations_Service::summary($pid):array();
@@ -37,8 +68,8 @@ class MMC_Operations_Admin {
         <div class="wrap mmc-wrap">
             <h1>Operasyon & Lojistik Modülü</h1>
             <p class="mmc-lead">Programın hareket öncesinden salon teslimine kadar araç, ekip, sanatçı, ekipman, konaklama, yemek, teknik kurulum, gişe/check-in ve gösteri sonrası kapanışını tek dosyada yönetir.</p>
-            <?php $this->notice(); ?>
-            <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-operations"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name);?></option><?php endforeach;?></select></label></form></div>
+            <?php $this->notice(); $this->readiness_dashboard($overview,$archive); ?>
+            <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-operations"><input type="hidden" name="archive" value="<?php echo $archive?1:0;?>"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name);?></option><?php endforeach;?></select></label></form></div>
             <?php if(!$program):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
             <?php if(!$plan):?>
                 <div class="notice notice-info"><p>Bu program için operasyon planı henüz oluşturulmamış. Bu ekran mevcut veriyi yalnızca okur; plan ve varsayılan kontrol listesi ancak aşağıdaki açık işlemle oluşturulur.</p></div>
@@ -53,6 +84,13 @@ class MMC_Operations_Admin {
             </div>
             <?php return;endif;?>
 
+            <?php if(!in_array($program->status,array('cancelled','completed','financial_close','deposit_refund'),true)):?>
+            <div class="mmc-panel"><form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>">
+                <input type="hidden" name="action" value="mmc_ops_ensure_plan"><input type="hidden" name="program_id" value="<?php echo esc_attr($pid);?>">
+                <?php wp_nonce_field('mmc_ops_ensure_'.$pid);submit_button('Eksik Operasyon Hazırlığını Tamamla','secondary');?>
+                <p>Mevcut notlar, görev sorumluları ve tarihler korunur. Geniş görev seti yalnız operasyon / gösteri günü aşamasında hazırlanır.</p>
+            </form></div>
+            <?php endif;?>
             <div class="mmc-cards mmc-cards-5">
                 <div class="mmc-card"><span>Operasyon Tipi</span><strong style="font-size:20px"><?php echo esc_html(MMC_Operations_Service::operation_modes()[$plan->operation_mode]??$plan->operation_mode);?></strong><small><?php echo esc_html(MMC_Operations_Service::plan_statuses()[$plan->status]??$plan->status);?></small></div>
                 <div class="mmc-card"><span>Hareket Öncesi Hazırlık</span><strong>%<?php echo esc_html($summary['pre_percent']);?></strong><small><?php echo esc_html($summary['pre_done'].' / '.$summary['pre_total']);?> zorunlu kontrol</small></div>
@@ -72,14 +110,14 @@ class MMC_Operations_Admin {
                         <?php foreach(array('departure_at'=>'Hareket','venue_entry_at'=>'Salon Giriş','setup_start_at'=>'Kurulum Başlangıç','rehearsal_at'=>'Prova','doors_open_at'=>'Kapı Açılış','teardown_end_at'=>'Söküm Bitiş','return_at'=>'Dönüş / Hareket') as $f=>$lab):?><label><?php echo esc_html($lab);?><input type="datetime-local" name="<?php echo esc_attr($f);?>" value="<?php echo esc_attr($this->dt_local($plan->$f));?>"></label><?php endforeach;?>
                         <label><input type="checkbox" name="accommodation_required" value="1" <?php checked($plan->accommodation_required,1);?>> Konaklama gerekli</label>
                         <label>Otel / konaklama<input name="lodging_name" value="<?php echo esc_attr($plan->lodging_name);?>"></label>
-                        <label class="mmc-span-2">Konaklama adresi<textarea name="lodging_address"><?php echo esc_textarea($plan->lodging_address);?></textarea></label>
+                        <label class="mmc-span-2">Konaklama adresi<textarea name="lodging_address"><?php echo esc_textarea((string)($plan->lodging_address??''));?></textarea></label>
                         <label>Oda sayısı<input type="number" min="0" name="lodging_rooms" value="<?php echo esc_attr($plan->lodging_rooms);?>"></label>
                         <label>Konaklama bütçesi<input type="number" step="0.01" min="0" name="lodging_cost" value="<?php echo esc_attr($plan->lodging_cost);?>"></label>
-                        <label class="mmc-span-2">Yemek planı<textarea name="meal_plan" placeholder="Öğle / akşam, kişi sayısı, tedarikçi..."><?php echo esc_textarea($plan->meal_plan);?></textarea></label>
+                        <label class="mmc-span-2">Yemek planı<textarea name="meal_plan" placeholder="Öğle / akşam, kişi sayısı, tedarikçi..."><?php echo esc_textarea((string)($plan->meal_plan??''));?></textarea></label>
                         <label>Yemek bütçesi<input type="number" step="0.01" min="0" name="meal_cost" value="<?php echo esc_attr($plan->meal_cost);?>"></label>
                         <label>Ulaşım / yakıt bütçesi<input type="number" step="0.01" min="0" name="transport_cost" value="<?php echo esc_attr($plan->transport_cost);?>"></label>
                         <label>Diğer operasyon gideri<input type="number" step="0.01" min="0" name="other_cost" value="<?php echo esc_attr($plan->other_cost);?>"></label>
-                        <label class="mmc-span-2">Notlar<textarea name="notes"><?php echo esc_textarea($plan->notes);?></textarea></label>
+                        <label class="mmc-span-2">Notlar<textarea name="notes"><?php echo esc_textarea((string)($plan->notes??''));?></textarea></label>
                     </div>
                     <?php submit_button('Operasyon Planını Kaydet');?>
                 </form>
@@ -104,7 +142,7 @@ class MMC_Operations_Admin {
         <?php
     }
 
-    public function ensure_plan(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_ensure_'.$pid);$r=MMC_Operations_Service::ensure_plan($pid);$this->redirect($pid,$r,'Operasyon planı oluşturuldu / hazırlandı.'); }
+    public function ensure_plan(){ if('POST'!==($_SERVER['REQUEST_METHOD']??'')){wp_die('Bu işlem POST gerektirir.', '', array('response'=>405));}$this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_ensure_'.$pid);$r=MMC_Operations_Service::ensure_plan($pid);$this->redirect($pid,$r,'Operasyon planı oluşturuldu / hazırlandı.'); }
     public function save_plan(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_plan_'.$pid);$r=MMC_Operations_Service::save_plan($pid,wp_unslash($_POST));$this->redirect($pid,$r,'Operasyon planı kaydedildi.'); }
     public function add_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_resource_'.$pid);$r=MMC_Operations_Service::add_resource(wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak ana kaydı eklendi.'); }
     public function assign_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_assign_'.$pid);$r=MMC_Operations_Service::assign_resource($pid,absint($_POST['resource_id']??0),wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak programa atandı.'); }

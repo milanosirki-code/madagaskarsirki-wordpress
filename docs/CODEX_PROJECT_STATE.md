@@ -164,3 +164,11 @@ Issue129 deployment checkpoint:
 - Historical source archive preserved byte-exact; manifest archived path now uses capture rather than mutable production source. CI archive hash contract retained.
 - GitHub docs/RAFFLE_REPORTING_DASHBOARD.md and docs/RAFFLE_REPORTING_DEPLOYMENT_EVIDENCE.json; Drive report1CNEDc-_3LC5WnPWdz5fL5YToXwref_rP and source/evidence ZIP archived. No sensitive participant/comment/token values in evidence.
 - PR149 pending final review/merge. Browser visual test unavailable; actual WordPress renderer tested. Issue82 OPEN/PARKED; no Kommo browser/source activity. Next Operations/task automation.
+
+
+## 2026-10-05 — PR #149 closure / Operations Phase 1 (#150)
+- PR #149 merged `19825eb1f1fc0029c37065532c4104a6c11f1613`; live raffle MATCH; Issue #148 CLOSED/completed. Drive closure record verified.
+- Issue #150, branch `codex/operations-task-automation-v1`: existing schemas/service/admin preserved; 13 plans, 559 checks, 33 schedules, 141 open tasks; nine future programs.
+- 13 high-level templates gated operations/show_day; earlier phases keep planning task. Stable keys + locks, no dates/personnel/backfill.
+- Read-only readiness/upcoming view, manual schedule preservation, lodging rules, cancelled guard; Issue #121 contracts retained.
+- 87 assertions pass; deployment/PR/CI/final archives pending. See OPERATIONS_TASK_AUTOMATION_V1.md.

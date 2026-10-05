@@ -1,0 +1,930 @@
+{
+  "table_prefix": "wp_",
+  "rows_returned": 132,
+  "results": [
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "program_venue_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_code",
+      "COLUMN_TYPE": "varchar(80)",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_title",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_date",
+      "COLUMN_TYPE": "date",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "seating_mode",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "'free'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "door_open_minutes",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "30"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'draft'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_event_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_sync_hash",
+      "COLUMN_TYPE": "char(64)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_synced_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "phase",
+      "COLUMN_TYPE": "varchar(40)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "item_key",
+      "COLUMN_TYPE": "varchar(100)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "title",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "is_required",
+      "COLUMN_TYPE": "tinyint(1)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "sort_order",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "10"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'pending'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "assigned_user_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "assigned_name",
+      "COLUMN_TYPE": "varchar(190)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "due_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "completed_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "evidence_attachment_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_checklist",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "operation_mode",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'undecided'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "origin_city",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "'Ankara'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "next_destination",
+      "COLUMN_TYPE": "varchar(190)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "departure_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "venue_entry_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "setup_start_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "rehearsal_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "doors_open_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "teardown_end_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "return_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "accommodation_required",
+      "COLUMN_TYPE": "tinyint(1)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "lodging_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "lodging_address",
+      "COLUMN_TYPE": "text",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "lodging_rooms",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "lodging_cost",
+      "COLUMN_TYPE": "decimal(18,2)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "meal_plan",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "meal_cost",
+      "COLUMN_TYPE": "decimal(18,2)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "transport_cost",
+      "COLUMN_TYPE": "decimal(18,2)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "other_cost",
+      "COLUMN_TYPE": "decimal(18,2)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'draft'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_plans",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "session_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "source_key",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "item_type",
+      "COLUMN_TYPE": "varchar(50)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "'other'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "title",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "start_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "end_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "assigned_user_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "assigned_name",
+      "COLUMN_TYPE": "varchar(190)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'planned'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "sort_order",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "10"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "is_system",
+      "COLUMN_TYPE": "tinyint(1)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_operation_schedule",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "program_code",
+      "COLUMN_TYPE": "varchar(64)",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "brand",
+      "COLUMN_TYPE": "varchar(64)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "'Madagaskar Sirki'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "province_name",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "district_name",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "plan_year",
+      "COLUMN_TYPE": "smallint(4) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "planned_date",
+      "COLUMN_TYPE": "date",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(50)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'preparation'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "owner_user_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_programs",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "resource_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "resource_type",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "resource_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "role_name",
+      "COLUMN_TYPE": "varchar(190)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "quantity",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'planned'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "check_in_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "check_out_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_program_resources",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "resource_type",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "resource_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "subtype",
+      "COLUMN_TYPE": "varchar(160)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "identifier",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "country",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "''"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "is_active",
+      "COLUMN_TYPE": "tinyint(1)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "1"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_resources",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "event_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "session_time",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "capacity",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'active'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "text",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_sessions",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "module",
+      "COLUMN_TYPE": "varchar(50)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'system'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "title",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "'open'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "priority",
+      "COLUMN_TYPE": "varchar(20)",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "'normal'"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "assigned_user_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "due_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "completed_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "metadata",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "wp_mmc_tasks",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null
+    }
+  ]
+}

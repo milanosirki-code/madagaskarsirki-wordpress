@@ -16,10 +16,11 @@ class MMC_Operations_Service {
         if ( 'program_status_changed' === $action && in_array( (string) $new_value, array( 'operations','show_day' ), true ) ) { $should_seed = true; }
         if ( ! $should_seed ) { return; }
 
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program || in_array( $program->status, array( 'cancelled', 'completed', 'financial_close', 'deposit_refund' ), true ) ) { return; }
         self::$handling_log = true;
-        self::ensure_plan( $program_id );
-        self::sync_schedule_from_event( $program_id );
-        self::$handling_log = false;
+        try { self::sync_schedule_from_event( $program_id ); }
+        finally { self::$handling_log = false; }
     }
 
     public static function backfill_existing_programs() {
@@ -90,7 +91,24 @@ class MMC_Operations_Service {
         );
     }
 
+    /** Explicit write path only. Serialize plan/checklist/task initialization per program. */
     public static function ensure_plan( $program_id ) {
+        global $wpdb;
+        $program_id = absint( $program_id );
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program ) { return new WP_Error( 'mmc_ops_program_missing', 'Program bulunamadı.' ); }
+        if ( in_array( $program->status, array( 'cancelled', 'completed' ), true ) ) {
+            return new WP_Error( 'mmc_ops_program_closed', 'Kapalı program için operasyon hazırlığı yapılamaz.' );
+        }
+        $lock = 'mmc_ops_' . substr( hash( 'sha256', $wpdb->prefix . $program_id ), 0, 40 );
+        if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+            return new WP_Error( 'mmc_ops_busy', 'Operasyon hazırlığı başka bir işlemde; yeniden deneyin.' );
+        }
+        try { return self::initialize_plan( $program_id ); }
+        finally { $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); }
+    }
+
+    private static function initialize_plan( $program_id ) {
         global $wpdb;
         $program_id = absint( $program_id );
         $program = MMC_Program_Service::get_program( $program_id );
@@ -114,9 +132,10 @@ class MMC_Operations_Service {
             'updated_at' => $now,
         ) );
         if ( ! $wpdb->insert_id ) { return new WP_Error( 'mmc_ops_plan_insert', 'Operasyon planı oluşturulamadı.' ); }
+        $plan_id = (int) $wpdb->insert_id;
         self::seed_checklist( $program_id );
         self::ensure_operation_task( $program_id );
-        MMC_Program_Service::add_log( $program_id, 'operations_plan_created', 'operations', (int) $wpdb->insert_id, null, array( 'origin_city'=>'Ankara' ), 'Operasyon planı otomatik oluşturuldu.' );
+        MMC_Program_Service::add_log( $program_id, 'operations_plan_created', 'operations', $plan_id, null, array( 'origin_city'=>'Ankara' ), 'Operasyon planı otomatik oluşturuldu.' );
         return self::get_plan( $program_id );
     }
 
@@ -381,12 +400,106 @@ class MMC_Operations_Service {
         );
     }
 
+    /** One bounded aggregate read for all programs, without initialization or per-row queries. */
+    public static function readiness_overview( $include_archive = false ) {
+        global $wpdb;
+        $p=$wpdb->prefix; $now=current_time('mysql'); $today=substr($now,0,10);
+        $where=$include_archive ? '1=1' : $wpdb->prepare("COALESCE(e.event_date,p.planned_date)>=%s AND p.status NOT IN ('cancelled','completed','financial_close','deposit_refund') AND COALESCE(e.status,'draft')<>'cancelled'",$today);
+        $template_keys=implode(',',array_map(static function($item){return "'".$item[1]."'";},self::checklist_template()));
+        $sql=$wpdb->prepare("SELECT p.id,p.program_code,p.province_name,p.district_name,p.status program_status,
+            COALESCE(e.event_date,p.planned_date) program_date,e.id event_id,pv.venue_id,v.venue_name,
+            o.id plan_id,o.status plan_status,o.operation_mode,o.accommodation_required,o.lodging_name,o.doors_open_at,
+            ss.first_session,ss.next_session,COALESCE(ss.session_count,0) session_count,
+            COALESCE(c.template_check_count,0) template_check_count,COALESCE(c.check_total,0) check_total,COALESCE(c.check_done,0) check_done,COALESCE(c.problems,0) problems,
+            COALESCE(c.required_total,0) required_total,COALESCE(c.required_done,0) required_done,
+            COALESCE(c.required_pending,0) required_pending,COALESCE(c.lodging_required,0) lodging_required,
+            COALESCE(c.vehicles_required,0) vehicles_required,COALESCE(c.artists_required,0) artists_required,
+            COALESCE(c.people_required,0) people_required,COALESCE(c.equipment_required,0) equipment_required,
+            COALESCE(r.vehicles,0) vehicles,COALESCE(r.artists,0) artists,COALESCE(r.people,0) people,COALESCE(r.equipment,0) equipment,
+            COALESCE(t.open_tasks,0) open_tasks,COALESCE(t.overdue_tasks,0) overdue_tasks,COALESCE(t.high_tasks,0) high_tasks,
+            COALESCE(t.operation_tasks,0) operation_tasks
+            FROM {$p}mmc_programs p
+            LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
+            LEFT JOIN {$p}mmc_program_venues pv ON pv.id=e.program_venue_id AND pv.program_id=p.id
+            LEFT JOIN {$p}mmc_venues v ON v.id=pv.venue_id
+            LEFT JOIN {$p}mmc_operation_plans o ON o.program_id=p.id
+            LEFT JOIN (SELECT event_id,MIN(session_time) first_session,MIN(CASE WHEN session_time>=%s THEN session_time END) next_session,COUNT(*) session_count FROM {$p}mmc_sessions WHERE status<>'cancelled' GROUP BY event_id) ss ON ss.event_id=e.id
+            LEFT JOIN (SELECT program_id,COUNT(DISTINCT CASE WHEN item_key IN ($template_keys) THEN item_key END) template_check_count,COUNT(*) check_total,SUM(status='done') check_done,SUM(status='problem') problems,
+                SUM(is_required=1 AND phase IN ('pre_departure','venue_setup') AND status<>'not_applicable') required_total,
+                SUM(is_required=1 AND phase IN ('pre_departure','venue_setup') AND status='done') required_done,
+                SUM(is_required=1 AND status NOT IN ('done','not_applicable')) required_pending,
+                SUM(item_key='lodging_confirmed' AND status<>'not_applicable') lodging_required,
+                SUM(item_key='vehicles_ready' AND is_required=1) vehicles_required,
+                SUM(item_key='artists_complete' AND is_required=1) artists_required,
+                SUM(item_key='crew_complete' AND is_required=1) people_required,
+                SUM(item_key='equipment_loaded' AND is_required=1) equipment_required
+                FROM {$p}mmc_operation_checklist GROUP BY program_id) c ON c.program_id=p.id
+            LEFT JOIN (SELECT program_id,SUM(resource_type='vehicle') vehicles,SUM(resource_type='artist') artists,SUM(resource_type='person') people,SUM(resource_type='equipment') equipment FROM {$p}mmc_program_resources WHERE status<>'cancelled' GROUP BY program_id) r ON r.program_id=p.id
+            LEFT JOIN (SELECT program_id,SUM(status='open') open_tasks,SUM(status='open' AND due_at<%s) overdue_tasks,
+                SUM(status='open' AND priority IN ('high','critical')) high_tasks,SUM(module='operations') operation_tasks
+                FROM {$p}mmc_tasks GROUP BY program_id) t ON t.program_id=p.id
+            WHERE $where ORDER BY program_date,ss.first_session,p.id",$now,$now);
+        $rows=(array)$wpdb->get_results($sql,ARRAY_A);
+        foreach($rows as &$row){ $row=self::readiness_state($row); }
+        unset($row);
+        return $rows;
+    }
+
+    /** Deterministic, read-only interpretation of proven database fields. */
+    public static function readiness_state( $row ) {
+        $issues=array();
+        if(empty($row['plan_id'])){$issues[]='Operasyon planı yok';}
+        if(empty($row['venue_id'])){$issues[]='Salon bağlantısı yok';}
+        if(empty($row['session_count'])){$issues[]='Aktif seans yok';}
+        if(!empty($row['plan_id']) && empty($row['check_total'])){$issues[]='Kontrol listesi yok';}
+        elseif(!empty($row['plan_id']) && (int)($row['template_check_count']??$row['check_total'])<count(self::checklist_template())){$issues[]='Standart kontrol listesinde eksik madde var';}
+        if(!empty($row['problems'])){$issues[]='Kontrol listesinde sorun var';}
+        if(!empty($row['required_pending'])){$issues[]='Zorunlu kontroller tamamlanmadı';}
+        foreach(array('vehicles'=>'Araç','artists'=>'Sanatçı','people'=>'Personel','equipment'=>'Ekipman') as $key=>$label){
+            if(!empty($row[$key.'_required']) && empty($row[$key])){$issues[]=$label.' ataması yok';}
+        }
+        if(!empty($row['accommodation_required']) && empty($row['lodging_name'])){$issues[]='Gerekli konaklama bilgisi yok';}
+        if(!empty($row['high_tasks'])){$issues[]='Açık yüksek öncelikli görev var';}
+        $total=(int)($row['required_total']??0);
+        $row['readiness_percent']=$total?round(100*(int)($row['required_done']??0)/$total,1):0;
+        $row['critical_missing']=$issues;
+        $row['next_action']=$issues?reset($issues):'Mevcut plan ve görevleri takip edin';
+        $row['show_day']=($row['program_status']??'')==='show_day' || ($row['program_date']??'')===substr(current_time('mysql'),0,10);
+        return $row;
+    }
+
+    /** Preview only: does not invoke ensure/backfill or infer deadlines/owners. */
+    public static function backfill_preview() {
+        $preview=array();
+        foreach(self::readiness_overview(true) as $row){
+            $closed=in_array($row['program_status'],array('cancelled','completed','financial_close','deposit_refund'),true);
+            $templates_due=in_array($row['program_status'],array('operations','show_day'),true);
+            $preview[]=array('program_id'=>(int)$row['id'],'plan_exists'=>!empty($row['plan_id']),
+                'task_exists'=>(int)$row['operation_tasks']>0,'checklist_count'=>(int)$row['check_total'],
+                'would_create_plan'=>!$closed && empty($row['plan_id']),
+                'would_review_tasks'=>!$closed && ($templates_due || empty($row['operation_tasks'])),
+                'would_review_checklist'=>!$closed && (int)$row['check_total']<count(self::checklist_template()),
+                'would_leave_unchanged'=>$closed,
+                'policy'=>'PREVIEW_ONLY; no dates, owners or domain state changed');
+        }
+        return $preview;
+    }
+
     public static function schedule( $program_id ) {
         global $wpdb;
         return $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_operation_schedule WHERE program_id=%d ORDER BY start_at IS NULL,start_at,sort_order,id",absint($program_id)));
     }
 
     public static function sync_schedule_from_event( $program_id ) {
+        global $wpdb;
+        $program_id=absint($program_id);
+        $lock='mmc_schedule_'.substr(hash('sha256',$wpdb->prefix.$program_id),0,40);
+        if(1!==(int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)',$lock))){return new WP_Error('mmc_ops_busy','Akış başka bir işlemde; yeniden deneyin.');}
+        try{return self::synchronize_schedule($program_id);}
+        finally{$wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));}
+    }
+
+    private static function synchronize_schedule( $program_id ) {
         global $wpdb;
         $program_id=absint($program_id); $plan=self::ensure_plan($program_id); if(is_wp_error($plan))return $plan;
         $table=$wpdb->prefix.'mmc_operation_schedule'; $now=current_time('mysql');
@@ -400,7 +513,10 @@ class MMC_Operations_Service {
             'return'=>array('return','Dönüş / Sonraki Şehre Hareket',$plan->return_at,910),
         );
         foreach($system as $key=>$v){
-            if(!$v[2])continue;
+            if(!$v[2]) {
+                $wpdb->delete($table,array('program_id'=>$program_id,'source_key'=>'plan_'.$key,'is_system'=>1));
+                continue;
+            }
             self::upsert_schedule($program_id,'plan_'.$key,0,$v[0],$v[1],$v[2],null,$v[3],1);
         }
         $event=class_exists('MMC_Event_Service')?MMC_Event_Service::event_for_program($program_id):null;
@@ -438,7 +554,14 @@ class MMC_Operations_Service {
         global $wpdb; $table=$wpdb->prefix.'mmc_operation_schedule'; $now=current_time('mysql');
         $id=$wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND source_key=%s LIMIT 1",$program_id,$source_key));
         $payload=array('session_id'=>$session_id?:null,'item_type'=>$item_type,'title'=>$title,'start_at'=>$start_at,'end_at'=>$end_at,'sort_order'=>$sort_order,'is_system'=>$is_system,'assigned_name'=>$assigned_name,'notes'=>$notes,'updated_at'=>$now);
-        if($id){$wpdb->update($table,$payload,array('id'=>(int)$id));return (int)$id;}
+        if($id){
+            $current=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d",(int)$id));
+            if($is_system){unset($payload['assigned_name'],$payload['notes']);}
+            $changed=false;
+            foreach($payload as $key=>$value){if('updated_at'!==$key && (string)($current->$key??'')!==(string)$value){$changed=true;break;}}
+            if($changed){$wpdb->update($table,$payload,array('id'=>(int)$id));}
+            return (int)$id;
+        }
         $payload['program_id']=$program_id;$payload['source_key']=$source_key;$payload['status']='planned';$payload['created_at']=$now;$wpdb->insert($table,$payload);return (int)$wpdb->insert_id;
     }
 
@@ -446,6 +569,7 @@ class MMC_Operations_Service {
         global $wpdb; $table=$wpdb->prefix.'mmc_operation_checklist';
         $row=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE program_id=%d AND item_key='lodging_confirmed' LIMIT 1",absint($program_id)));
         if(!$row)return;
+        if((int)$row->is_required !== (int)(bool)$required){$wpdb->update($table,array('is_required'=>(int)(bool)$required,'updated_at'=>current_time('mysql')),array('id'=>(int)$row->id));}
         if(!$required && in_array($row->status,array('pending','ready','problem'),true)){$wpdb->update($table,array('status'=>'not_applicable','updated_at'=>current_time('mysql')),array('id'=>(int)$row->id));}
         if($required && 'not_applicable'===$row->status){$wpdb->update($table,array('status'=>'pending','updated_at'=>current_time('mysql')),array('id'=>(int)$row->id));}
     }
@@ -469,15 +593,58 @@ class MMC_Operations_Service {
         }
     }
 
+    /** High-level follow-up work; detailed controls remain in the checklist. */
+    public static function task_templates() {
+        return array(
+            'plan' => array('pre_departure','Operasyon ve lojistik planını tamamla'),
+            'transport' => array('pre_departure','Araç / ulaşım planını kesinleştir'),
+            'crew' => array('pre_departure','Sanatçı ve ekip kadrosunu kesinleştir'),
+            'equipment' => array('pre_departure','Gösteri ekipmanlarını kontrol et'),
+            'venue_entry' => array('pre_departure','Salon giriş / kurulum saatini teyit et'),
+            'handover_in' => array('show_day','Salon giriş ve alan teslimini kontrol et'),
+            'technical' => array('show_day','Ses / ışık / bilgisayar testini tamamla'),
+            'box_office' => array('show_day','Gişe / POS / QR kontrolünü tamamla'),
+            'briefing' => array('show_day','Personel görev dağılımını tamamla'),
+            'inventory' => array('post_show','Ekipman ve kostüm sayımını tamamla'),
+            'handover_out' => array('post_show','Salon çıkış teslimini tamamla'),
+            'reconcile' => array('post_show','Satış / gişe mutabakatını tamamla'),
+            'return' => array('post_show','Dönüş / sonraki şehir hareketini tamamla'),
+        );
+    }
+
     private static function ensure_operation_task( $program_id ) {
-        global $wpdb; $table=$wpdb->prefix.'mmc_tasks';
-        $exists=$wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND module='operations' AND title=%s AND status<>'cancelled' LIMIT 1",absint($program_id),'Operasyon ve lojistik planını tamamla'));
-        if($exists)return;
-        $now=current_time('mysql');$wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>'Operasyon ve lojistik planını tamamla','status'=>'open','priority'=>'high','created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
+        global $wpdb;
+        $program = MMC_Program_Service::get_program( $program_id );
+        if ( ! $program || in_array( $program->status, array('cancelled','completed','financial_close','deposit_refund'), true ) ) { return; }
+        $templates = self::task_templates();
+        // Earlier preparation keeps the existing single planning task. No mass backfill.
+        if ( ! in_array( $program->status, array('operations','show_day'), true ) ) { $templates = array('plan'=>$templates['plan']); }
+        $table = $wpdb->prefix . 'mmc_tasks';
+        $existing = $wpdb->get_results( $wpdb->prepare( "SELECT title,metadata FROM $table WHERE program_id=%d AND module='operations'", absint($program_id) ) );
+        $titles = array(); $keys = array();
+        foreach ( (array)$existing as $task ) {
+            $titles[$task->title] = true;
+            $meta = json_decode( (string)($task->metadata ?? ''), true );
+            if ( is_array($meta) && isset($meta['source_key']) ) { $keys[$meta['source_key']] = true; }
+        }
+        // Preserve completed/cancelled/manual matching tasks; never reset owner or deadline.
+        foreach ( $templates as $key=>$template ) {
+            $source_key = 'operations_v1.' . $key;
+            if ( isset($titles[$template[1]]) || isset($keys[$source_key]) ) { continue; }
+            // Also supports older integrations that only expose the existing title lookup.
+            if ( $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE program_id=%d AND module='operations' AND title=%s LIMIT 1",absint($program_id),$template[1])) ) { continue; }
+            $now=current_time('mysql');
+            $wpdb->insert($table,array('program_id'=>absint($program_id),'module'=>'operations','title'=>$template[1],
+                'status'=>'open','priority'=>'high','metadata'=>wp_json_encode(array('source_key'=>$source_key,'system_generated'=>true,'phase'=>$template[0],'template_version'=>1)),
+                'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
+            // Initialization is already recorded by the plan/program audit; task metadata identifies its origin.
+        }
     }
 
     private static function ensure_close_tasks( $program_id ) {
         global $wpdb; $table=$wpdb->prefix.'mmc_tasks'; $now=current_time('mysql');
+        $program=MMC_Program_Service::get_program($program_id);
+        if(!$program || in_array($program->status,array('cancelled','completed'),true)){return;}
         $tasks=array(
             array('finance','Gelir-gider ve günlük satış mutabakatını tamamla','high'),
             array('finance','Salon teminat iade dilekçesi ve iade takibini başlat','high'),

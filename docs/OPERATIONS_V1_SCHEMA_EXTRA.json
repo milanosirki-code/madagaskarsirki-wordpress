@@ -1,0 +1,258 @@
+{
+  "table_prefix": "wp_",
+  "rows_returned": 42,
+  "results": [
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "program_venue_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_code",
+      "COLUMN_TYPE": "varchar(80)",
+      "COLUMN_KEY": "UNI"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_title",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "event_date",
+      "COLUMN_TYPE": "date",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "seating_mode",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "door_open_minutes",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "varchar(30)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_event_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_sync_hash",
+      "COLUMN_TYPE": "char(64)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_events",
+      "COLUMN_NAME": "mdg_synced_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "program_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "action",
+      "COLUMN_TYPE": "varchar(80)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "entity_type",
+      "COLUMN_TYPE": "varchar(80)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "entity_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "old_value",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "new_value",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "note",
+      "COLUMN_TYPE": "text",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_logs",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": "PRI"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "venue_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "province_name",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "district_name",
+      "COLUMN_TYPE": "varchar(120)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "institution_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "address",
+      "COLUMN_TYPE": "text",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "maps_url",
+      "COLUMN_TYPE": "text",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "default_capacity",
+      "COLUMN_TYPE": "int(11) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "contact_name",
+      "COLUMN_TYPE": "varchar(160)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "contact_phone",
+      "COLUMN_TYPE": "varchar(80)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "email",
+      "COLUMN_TYPE": "varchar(190)",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "operation_notes",
+      "COLUMN_TYPE": "longtext",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "is_active",
+      "COLUMN_TYPE": "tinyint(1)",
+      "COLUMN_KEY": "MUL"
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "created_by",
+      "COLUMN_TYPE": "bigint(20) unsigned",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": ""
+    },
+    {
+      "TABLE_NAME": "wp_mmc_venues",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "COLUMN_KEY": ""
+    }
+  ]
+}
