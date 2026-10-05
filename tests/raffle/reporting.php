@@ -47,5 +47,5 @@ check(MCK_Reporting::derive(row(8,array('status'=>'ready','drawn_at'=>null,'resu
 $undrawn=MCK_Reporting::derive(row(8,array('status'=>'draft','drawn_at'=>null,'results'=>0,'winners'=>0,'pending'=>0)));
 check($undrawn['display_state']==='Açık'&&$undrawn['eligible_entries']===8,'Imported but not drawn');
 $stream=fopen('php://temp','w+');foreach($csv as$r)fputcsv($stream,$r,';','"','');rewind($stream);$bytes=stream_get_contents($stream);fclose($stream);check(str_contains($bytes,"'=SUM(A1)")&&!str_contains($bytes,'email'),'CSV bytes and privacy');
-$property=new ReflectionProperty(MCK_Reporting::class,'overview');$property->setValue(null,null);$wpdb->rows=array();$none=MCK_Reporting::overview();check($none['totals']['campaigns']===0&&$none['campaigns']===array(),'Zero campaigns');
+$property=new ReflectionProperty(MCK_Reporting::class,'overview');$expected=MCK_Reporting::overview();$property->setValue(null,null);check(MCK_Reporting::overview()===$expected,'Fresh-request reload preserves response without writes');$property->setValue(null,null);$wpdb->rows=array();$none=MCK_Reporting::overview();check($none['totals']['campaigns']===0&&$none['campaigns']===array(),'Zero campaigns');
 echo "PASS: {$checks} raffle reporting assertions; domain writes0.\n";
