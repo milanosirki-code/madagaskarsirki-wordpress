@@ -46,3 +46,14 @@ change('session','88');assert.match(inputs()[0].parentElement.textContent,/13 ya
 inputs()[0].value='2026-10-06';inputs()[0].dispatchEvent(new d.window.Event('input',{bubbles:true}));assert.match(summary(),/doğum tarihini girin/);
 change('children','0');assert.equal(inputs().length,0);assert.match(summary(),/600/);
 console.log('PASS DOM: age field count, preserved values, paid/free conversion, adult scaling, age boundaries, live session prices, missing age, zero children');
+
+change('session','99');select('session').selectedOptions[0].dataset.adultPrice='475';
+const previous=()=>doc.querySelector('[data-live-quote] del')?.textContent;
+select('session').selectedOptions[0].dataset.normalAdultPrice='500';
+select('session').selectedOptions[0].dataset.normalChildPrice='250';
+change('children','2');ages([5,7]);assert.match(previous(),/1.000/);assert.match(doc.querySelector('[data-live-quote] strong').textContent,/475/);
+change('children','1');ages([5]);assert.match(previous(),/750/);
+change('children','0');assert.match(previous(),/500/);
+change('children','3');ages([0,2,5]);assert.match(previous(),/750/);
+ages([13,5,7]);assert.match(previous(),/1.500/);assert.match(doc.querySelector('[data-live-quote] strong').textContent,/950/);
+console.log('PASS DOM: dynamic crossed-out normal totals, infant exclusions, 13+ adult prices, campaign charge unchanged');
