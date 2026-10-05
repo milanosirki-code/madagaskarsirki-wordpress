@@ -41,3 +41,7 @@ Kontroller: normalize Türkçe/büyük/küçük kodlar; kodsuz ekran; şehir kap
 `php tests/corporate-invitation/dynamic-catalogue.php`
 
 Rollback: yeni snippet'i pasifleştir, snippet 123'ü eski koduyla tekrar etkinleştir, sayfa 4520 shortcode'unu eski hale getir. Kurum kodu option'ını körlemesine silme. Normal bilet sistemine dokunma.
+
+## Denizli kurum fiyatı — 5 Ekim 2026
+
+Denizli program 10 / MDG etkinlik 12 için gerçek kurum kodlarıyla ücretli yetişkin 475 TL (normal Woo varyasyon 500 TL korunur). Kartta normal fiyat üstü çizili ve kampanya fiyatı görünür. Çocuk 250 TL, ücretsiz haklar aynı kalır. TEST kodları normal fiyat önizler. Başka Denizli etkinliğine veya İzmir'e indirim uygulanmaz. Sunucu hesabı, canlı JS veri alanları ve imzalı sepet aynı etkin fiyatı kullanır. Önceden oluşmuş siparişler değişmez. Normal fiyat 475 altına düşerse kampanya daha pahalı olmaz. 1 yetişkin + 2 çocuk 475; 2 yetişkin + 4 çocuk 950; 1 yetişkin + 3 çocuk 725 TL. Rollback snippet 124 PR137 kaynağına döner.
