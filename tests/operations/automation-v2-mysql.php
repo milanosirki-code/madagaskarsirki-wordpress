@@ -20,7 +20,7 @@ class FixtureDB{
     public function get_row($sql,$type=null){return $this->get_results($sql,$type)[0]??null;}
     public function get_var($sql){$r=$this->db->query($sql)->fetch_row();return $r[0]??null;}
     public function query($sql){
-        if(str_starts_with($sql,'UPDATE wp_mmc_tasks SET')){
+        if(str_starts_with($sql,'UPDATE wp_mmc_tasks ')){
             if($this->cancel_race){$this->cancel_race=false;$this->db->query("UPDATE wp_mmc_programs SET status='cancelled' WHERE id=77");}
             if($this->metadata_race){$this->metadata_race=false;$this->db->query("UPDATE wp_mmc_tasks SET metadata=REPLACE(metadata,'operations_v1.plan','operations_v1.PLAN') WHERE id=1");}
             if($this->owner_race){$this->owner_race=false;$this->db->query('UPDATE wp_mmc_programs SET owner_user_id=502 WHERE id=77');}

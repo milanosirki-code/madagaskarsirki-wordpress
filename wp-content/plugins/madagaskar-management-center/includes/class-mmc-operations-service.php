@@ -618,6 +618,104 @@ class MMC_Operations_Service {
         return $result;
     }
 
+    /** Exact title only. Unknown metadata/notes fail closed; no fuzzy or SQL collation match. */
+    public static function legacy_task_classification( $task, $program, $duplicate_count ) {
+        $raw=$task->metadata??null;$meta=($raw===null || $raw==='')?array():json_decode((string)$raw,true);
+        $key=null;foreach(self::task_templates() as$k=>$template){if(($task->title??null)===$template[1]){$key=$k;break;}}
+        $out=array('task_id'=>(int)$task->id,'program_id'=>(int)($task->program_id??0),'program'=>$program->program_code??null,
+            'title'=>$task->title??'','module'=>$task->module??'','status'=>$task->status??'','metadata'=>$meta,
+            'exact_template_match'=>$key!==null,'template_key'=>$key,'duplicate_count'=>(int)$duplicate_count,
+            'current_due'=>$task->due_at??null,'current_owner'=>$task->assigned_user_id??null,'adoptable'=>false,'classification'=>'AMBIGUOUS','reject_reason'=>null);
+        if(($task->module??'')!=='operations'){$out['classification']='WRONG_MODULE';$out['reject_reason']='OPERATIONS_SCOPE_ONLY';}
+        elseif(($task->status??'')!=='open' || !empty($task->completed_at)){$out['classification']='CLOSED';$out['reject_reason']='TASK_NOT_OPEN';}
+        elseif(!$program || (int)$program->id!==(int)($task->program_id??0)){$out['reject_reason']='MISSING_PROGRAM';}
+        elseif(in_array($program->status,array('cancelled','completed','financial_close','deposit_refund'),true)){$out['reject_reason']='PROGRAM_CLOSED_OR_FINANCE';}
+        elseif($key===null){$out['classification']='CUSTOM';$out['reject_reason']='EXACT_TEMPLATE_REQUIRED';}
+        elseif(!is_array($meta) || (array_is_list($meta) && $meta)){$out['reject_reason']='INVALID_METADATA';}
+        elseif(($meta['system_generated']??false)===true){$out['reject_reason']='ALREADY_MANAGED';}
+        elseif($duplicate_count!==1){$out['classification']='DUPLICATE';$out['reject_reason']='DUPLICATE_REVIEW_REQUIRED';}
+        else{
+            $allowed=array('source_key'=>'operations_v1.'.$key,'system_generated'=>false,'template_version'=>1,'phase'=>self::task_templates()[$key][0]);
+            $custom=!empty($task->notes);foreach($meta as$k=>$v){if(!array_key_exists($k,$allowed) || $allowed[$k]!==$v){$custom=true;break;}}
+            if($custom){$out['classification']='CUSTOM';$out['reject_reason']='CUSTOM_METADATA_OR_NOTES';}
+            else{$out['classification']='ADOPTABLE';$out['adoptable']=true;}
+        }
+        return $out;
+    }
+
+    private static function legacy_adoption_metadata( $key ) {
+        return array('source_key'=>'operations_v1.'.$key,'system_generated'=>true,'phase'=>self::task_templates()[$key][0],
+            'template_version'=>1,'adopted_from_legacy'=>true,'adopted_at'=>current_time('mysql'),'adoption_policy'=>'operations_v3_exact_title');
+    }
+
+    /** SELECT only; proposed post-adoption backfill is simulated on clones, not persisted. */
+    public static function task_adoption_preview( $program_id ) {
+        global $wpdb;$pid=absint($program_id);$context=self::task_automation_context($pid);
+        $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d ORDER BY id",$pid));
+        $duplicates=array();foreach($rows as$r){if(($r->module??'')==='operations'){$duplicates[$r->title]=($duplicates[$r->title]??0)+1;}}
+        $out=array('program_id'=>$pid,'eligible'=>$context['eligible'],'snapshot'=>hash('sha256',wp_json_encode($rows)),
+            'items'=>array(),'counts'=>array_fill_keys(array('ADOPTABLE','DUPLICATE','CUSTOM','CLOSED','WRONG_MODULE','AMBIGUOUS'),0),
+            'managed'=>0,'legacy'=>0,'would_adopt'=>0,'would_update_due'=>0,'would_update_owner'=>0);
+        foreach($rows as$r){$item=self::legacy_task_classification($r,$context['program'],$duplicates[$r->title]??0);
+            if(($item['metadata']['system_generated']??false)===true){$out['managed']++;}else{$out['legacy']++;}
+            $out['counts'][$item['classification']]++;
+            $clone=clone $r;if($item['adoptable']){$clone->metadata=wp_json_encode(array_merge($item['metadata'],self::legacy_adoption_metadata($item['template_key'])));}
+            $proposal=self::task_automation_proposal($clone,$context);unset($proposal['update_payload']);$item['backfill_preview']=$proposal;
+            $item['scope_eligible']=$context['eligible'];$out['would_adopt']+=(int)($item['adoptable']&&$context['eligible']);
+            $out['would_update_due']+=(int)$proposal['would_update_due'];$out['would_update_owner']+=(int)$proposal['would_update_owner'];$out['items'][]=$item;
+        }return $out;
+    }
+
+    /** Metadata-only adoption; separate from Phase2 apply. Program lock + transaction + byte CAS. */
+    public static function adopt_legacy_tasks( $program_id, $task_ids, $snapshot ) {
+        global $wpdb;
+        if(!current_user_can('mmc_manage_operations')){return new WP_Error('mmc_ops_forbidden','Operasyon yetkisi gerekir.');}
+        $pid=absint($program_id);$ids=array_values(array_unique(array_filter(array_map('absint',(array)$task_ids))));
+        if(!$ids || count($ids)>100){return new WP_Error('mmc_ops_selection','Bu programdan görev seçin (en çok 100).');}
+        $lock='mmc_ops_'.substr(hash('sha256',$wpdb->prefix.$pid),0,40);$transaction=false;
+        if(1!==(int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)',$lock))){return new WP_Error('mmc_ops_busy','Program başka işlemde.');}
+        try{
+            foreach(array('mmc_tasks','mmc_programs') as$table){
+                $engine=$wpdb->get_var($wpdb->prepare('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s',$wpdb->prefix.$table));
+                if(strtoupper((string)$engine)!=='INNODB'){throw new RuntimeException('Transactional tables required for atomic adoption');}
+            }
+            if(false===$wpdb->query('START TRANSACTION')){throw new RuntimeException('Transaction unavailable');}$transaction=true;
+            $wpdb->get_results($wpdb->prepare("SELECT id FROM {$wpdb->prefix}mmc_programs WHERE id=%d FOR UPDATE",$pid));
+            $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d ORDER BY id FOR UPDATE",$pid));
+            $preview=self::task_adoption_preview($pid);
+            if(!$preview['eligible']){throw new RuntimeException('Program is outside active/future operations/show_day scope');}
+            $selected=array_filter($preview['items'],static function($i)use($ids){return in_array($i['task_id'],$ids,true);});
+            if(count($selected)!==count($ids)){throw new RuntimeException('Selected task is not in this program');}
+            $all_managed=true;foreach($selected as$i){if($i['reject_reason']!=='ALREADY_MANAGED'){$all_managed=false;}}
+            if($all_managed){$wpdb->query('COMMIT');$transaction=false;return array('adopted'=>0,'due_updated'=>0,'owner_updated'=>0);}
+            if(!is_string($snapshot) || !hash_equals($preview['snapshot'],$snapshot)){throw new RuntimeException('Stale adoption snapshot; reload preview');}
+            $by_id=array();foreach($rows as$r){$by_id[(int)$r->id]=$r;}$changed=0;
+            foreach($selected as$item){if(!$item['adoptable']){throw new RuntimeException('Selected task requires review');}
+                $row=$by_id[$item['task_id']];$meta=array_merge($item['metadata'],self::legacy_adoption_metadata($item['template_key']));
+                // GROUP BY materializes the same-table duplicate guard; binary title bypasses CI collation.
+                $sql="UPDATE {$wpdb->prefix}mmc_tasks t JOIN
+                    (SELECT program_id,CAST(title AS BINARY) exact_title,COUNT(*) n FROM {$wpdb->prefix}mmc_tasks WHERE module='operations' GROUP BY program_id,CAST(title AS BINARY)) d
+                    ON d.program_id=t.program_id AND d.exact_title=CAST(t.title AS BINARY) AND d.n=1
+                    SET t.metadata=%s WHERE t.id=%d AND t.program_id=%d AND t.module='operations' AND t.status='open'";
+                $args=array(wp_json_encode($meta),(int)$row->id,$pid);
+                foreach(array('title','metadata','due_at','assigned_user_id','completed_at','priority','created_at','updated_at','notes') as$column){
+                    if(!property_exists($row,$column)){continue;}$v=$row->$column;
+                    if(null===$v){$sql.=" AND t.$column IS NULL";}else{$sql.=" AND CAST(t.$column AS BINARY)=%s";$args[]=$v;}}
+                $p=$wpdb->prefix;
+                $sql.=" AND EXISTS(SELECT 1 FROM {$p}mmc_programs p LEFT JOIN {$p}mmc_events e ON e.id=(SELECT MIN(ee.id) FROM {$p}mmc_events ee WHERE ee.program_id=p.id)
+                    WHERE p.id=t.program_id AND p.status IN ('operations','show_day') AND COALESCE(e.status,'draft')<>'cancelled'
+                    AND COALESCE(e.event_date,(SELECT MIN(DATE(s.session_time)) FROM {$p}mmc_sessions s WHERE s.event_id=e.id AND s.status<>'cancelled'),p.planned_date)>=%s)";
+                $args[]=substr(current_time('mysql'),0,10);
+                $context=self::task_automation_context($pid);
+                if(!$context['eligible']){throw new RuntimeException('Program scope changed');}
+                if(1!==(int)$wpdb->query($wpdb->prepare($sql,...$args))){throw new RuntimeException('Task changed or duplicate detected; adoption rolled back');}$changed++;
+            }
+            if(false===$wpdb->query('COMMIT')){throw new RuntimeException('Commit failed');}$transaction=false;
+            return array('adopted'=>$changed,'due_updated'=>0,'owner_updated'=>0);
+        }catch(Throwable$e){return new WP_Error('mmc_ops_adoption_guard',$e->getMessage());}
+        finally{if($transaction){$wpdb->query('ROLLBACK');}$wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));}
+    }
+
     public static function task_automation_preview( $program_id ) {
         global $wpdb;
         $context=self::task_automation_context($program_id);

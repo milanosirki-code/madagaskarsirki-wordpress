@@ -3,6 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 class MMC_Operations_Admin {
     public function __construct() {
+        add_action('admin_post_mmc_ops_adopt_legacy_tasks',array($this,'adopt_legacy_tasks'));
         add_action('admin_post_mmc_ops_apply_task_automation',array($this,'apply_task_automation'));
         add_action( 'admin_menu', array($this,'menu') );
         add_action( 'admin_post_mmc_ops_ensure_plan', array($this,'ensure_plan') );
@@ -72,6 +73,36 @@ class MMC_Operations_Admin {
         <?php
     }
 
+    private function task_adoption_preview_panel( $preview ) {
+        ?>
+        <div class="mmc-panel"><h2>Operations Faz 3 — Legacy Görev Preview</h2>
+        <p>Adım A yalnız köken metadata’sını ekler; tarih/sorumlu değişmez. Adım B aşağıdaki Faz 2 preview ve ayrı POST Apply işlemidir. GET yazmaz. Programın geçmiş/iptal veya operasyon dışı olması Apply’ı engeller.</p>
+        <div class="mmc-cards mmc-cards-5"><?php foreach(array('managed'=>'Otomasyona dahil görev','legacy'=>'Legacy görev','would_update_due'=>'Adoption sonrası tarih atanabilir','would_update_owner'=>'Adoption sonrası sorumlu atanabilir') as$k=>$label):?><div class="mmc-card"><span><?php echo esc_html($label);?></span><strong><?php echo esc_html($preview[$k]);?></strong></div><?php endforeach;?><div class="mmc-card"><span>Review gereken duplicate</span><strong><?php echo esc_html($preview['counts']['DUPLICATE']);?></strong></div></div>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>">
+        <input type="hidden" name="action" value="mmc_ops_adopt_legacy_tasks"><input type="hidden" name="program_id" value="<?php echo esc_attr($preview['program_id']);?>"><input type="hidden" name="snapshot" value="<?php echo esc_attr($preview['snapshot']);?>">
+        <?php wp_nonce_field('mmc_ops_adopt_'.$preview['program_id']);?>
+        <table class="widefat striped"><thead><tr><th>Seç / görev</th><th>Program / module / status</th><th>Exact template / duplicate</th><th>Metadata</th><th>Mevcut tarih / sorumlu</th><th>Sınıf / neden</th><th>Adoption sonrası backfill önerisi</th></tr></thead><tbody>
+        <?php foreach($preview['items'] as$i):$b=$i['backfill_preview'];?>
+        <tr><td><?php if($i['adoptable']&&$preview['eligible']):?><input type="checkbox" name="task_ids[]" value="<?php echo esc_attr($i['task_id']);?>" aria-label="<?php echo esc_attr('Görev '.$i['task_id']);?>"><?php endif;?>#<?php echo esc_html($i['task_id'].' '.$i['title']);?></td>
+        <td><?php echo esc_html(($i['program']??'Program yok').' / '.$i['module'].' / '.$i['status']);?></td><td><?php echo esc_html(($i['template_key']??'Exact eşleşme yok').' / '.$i['duplicate_count']);?></td>
+        <td><code><?php echo esc_html(wp_json_encode($i['metadata']));?></code></td><td><?php echo esc_html(($i['current_due']??'NULL').' / '.($i['current_owner']??'NULL'));?></td>
+        <td><?php echo esc_html($i['classification'].' / '.($i['reject_reason']??'Uygun'));?><?php if($i['classification']==='CUSTOM'):?><br>Manuel Görev<?php endif;?></td>
+        <td><?php echo esc_html(($b['proposed_due']??'NULL').' / '.($b['due_source']??'Anchor yok').' / sorumlu '.($b['proposed_owner']??'NULL'));?></td></tr>
+        <?php endforeach;?></tbody></table>
+        <?php if($preview['would_adopt']):submit_button('Seçili Legacy Görevleri Otomasyona Dahil Et','secondary');else:?><p>Bu programda uygulanabilir adoption yok. Sınıflandırma teknik uygunluktur; aktif/gelecek operations/show_day kapsamı ayrıca zorunludur.</p><?php endif;?>
+        </form><p>Harici bildirim 0. Duplicate/custom görevler silinmez veya birleştirilmez.</p></div>
+        <?php
+    }
+
+    public function adopt_legacy_tasks() {
+        if('POST'!==($_SERVER['REQUEST_METHOD']??'')){wp_die('Bu işlem POST gerektirir.','',array('response'=>405));}
+        $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_adopt_'.$pid);
+        $ids=$_POST['task_ids']??array();$snapshot=$_POST['snapshot']??'';
+        if(!is_array($ids)||!is_string($snapshot)){wp_die('Geçersiz seçim.');}
+        $result=MMC_Operations_Service::adopt_legacy_tasks($pid,$ids,wp_unslash($snapshot));
+        $this->redirect($pid,$result,'Seçili görevlerin yalnız otomasyon metadata’sı tamamlandı. Tarih/sorumlu için ayrı preview ve Apply gerekir.');
+    }
+
     private function task_automation_preview_panel( $preview ) {
         ?>
         <div class="mmc-panel"><h2>Operations Faz 2 Preview</h2>
@@ -84,7 +115,7 @@ class MMC_Operations_Admin {
             <?php endforeach;?><?php if(!$preview['items']):?><tr><td colspan="5">Programda görev yok.</td></tr><?php endif;?></tbody></table>
             <?php if($preview['eligible'] && ($preview['would_update_due'] || $preview['would_update_owner'])):?>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>"><input type="hidden" name="action" value="mmc_ops_apply_task_automation"><input type="hidden" name="program_id" value="<?php echo esc_attr($preview['program_id']);?>">
-                <?php wp_nonce_field('mmc_ops_automation_apply_'.$preview['program_id']);submit_button('Otomasyon Eksiklerini Uygula','secondary');?>
+                <?php wp_nonce_field('mmc_ops_automation_apply_'.$preview['program_id']);submit_button('Seçili Program İçin Tarih/Sorumlu Otomasyonunu Uygula','secondary');?>
             </form><p>Yalnız bu programdaki boş veya doğrulanmış otomasyon yönetimli alanlar uygulanır. Manuel değerler korunur.</p>
             <?php else:?><p>Bu programda uygulanabilir değişiklik yok; canlı backfill çalıştırılmaz.</p><?php endif;?>
         </div>
@@ -111,6 +142,7 @@ class MMC_Operations_Admin {
         $alerts=MMC_Operations_Service::task_alerts(0,$filter);
         $program=$pid?MMC_Program_Service::get_program($pid):null;
         $automation_preview=$program?MMC_Operations_Service::task_automation_preview($pid):null;
+        $adoption_preview=$program?MMC_Operations_Service::task_adoption_preview($pid):null;
         $plan=$program?MMC_Operations_Service::get_plan($pid):null;
         $summary=$program?MMC_Operations_Service::summary($pid):array();
         $resources=MMC_Operations_Service::resources();
@@ -127,7 +159,7 @@ class MMC_Operations_Admin {
             <?php $this->notice();$this->task_alert_dashboard($alerts,$filter,$pid,$archive);$this->readiness_dashboard($overview,$archive); ?>
             <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-operations"><input type="hidden" name="archive" value="<?php echo $archive?1:0;?>"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.$p->district_name);?></option><?php endforeach;?></select></label></form></div>
             <?php if(!$program):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
-            <?php if($automation_preview){$this->task_automation_preview_panel($automation_preview);}?>
+            <?php if($adoption_preview){$this->task_adoption_preview_panel($adoption_preview);}if($automation_preview){$this->task_automation_preview_panel($automation_preview);}?>
             <?php if(!$plan):?>
                 <div class="notice notice-info"><p>Bu program için operasyon planı henüz oluşturulmamış. Bu ekran mevcut veriyi yalnızca okur; plan ve varsayılan kontrol listesi ancak aşağıdaki açık işlemle oluşturulur.</p></div>
                 <div class="mmc-panel">
