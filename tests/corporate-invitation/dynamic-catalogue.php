@@ -189,3 +189,11 @@ check(strpos($h,'image-2409.jpg')!==false && strpos($h,'Denizli tanıtımı')!==
 check(strpos($h,'475.00 TL')!==false,'poster addition preserves discounted price');
 check($c::event_intro((object)array('hero_attachment_id'=>0))['about']==='Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.','missing description safe generic fallback');
 echo "All $count campaign checks passed.\n";
+
+check($c::quote($realcat,'120','1',array('5','7'))['normal_total']===1000.0,'normal adult plus two child tickets 1000');
+check($c::quote($realcat,'120','1',array())['normal_total']===500.0,'adult-only comparison 500');
+check($c::quote($realcat,'120','1',array('0','2','5'))['normal_total']===750.0,'infants excluded from normal total');
+check($c::quote($realcat,'120','1',array('13','5','7'))['normal_total']===1500.0,'13+ normal adult comparison');
+check($c::quote($realcat,'120','1',array('5','7','8'))['normal_total']===1250.0,'third child included in normal comparison');
+check(strpos($h,'1 yetişkin + 2 çocuk (3–12 yaş):')!==false && strpos($h,'1,000.00 TL')!==false,'family marketing headline shows normal total');
+echo "All $count campaign checks passed.\n";
