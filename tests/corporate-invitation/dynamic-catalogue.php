@@ -4,6 +4,8 @@ $hooks=array(); $products=array(); $event_rows=array(); $session_rows=array(); $
 function add_shortcode($k,$v){global $hooks;$hooks['shortcode'][]=$k;}
 function add_filter($k,$v){global $hooks;$hooks['filter'][]=$k;}
 function add_action($k,$v){global $hooks;$hooks['action'][]=$k;}
+function wp_json_encode($v){return json_encode($v);}
+function wp_salt($v){return 'test-secret';}
 function get_option($k,$default){global $registry;return $registry;}
 function current_time($f,$utc=false){return $f==='Y-m-d'?'2026-10-05':'2026-10-05 07:40:00';}
 function wc_get_product($id){global $products;return $products[$id]??null;}
@@ -45,13 +47,13 @@ function event_fixture($id,$city,$time,$adult=500,$english=false){
  $products[$p]=new Product();$ticket_rows[$s]=array();
  foreach(array('child','adult') as $i=>$role){
   $v=new Product();$v->parent=$p;$v->price=$role==='adult'?(string)$adult:'250';$v->meta=array('_mdg_event_id'=>$id,'_mdg_session_id'=>$s);$products[$p+$i+1]=$v;
-  $ticket_rows[$s][]=(object)array('code'=>$english?strtoupper($role):($role==='adult'?'YETISKIN':'COCUK'),'wc_variation_id'=>$p+$i+1,'is_active'=>1,'capacity_units'=>1);
+  $ticket_rows[$s][]=(object)array('code'=>$english?strtoupper($role):($role==='adult'?'YETISKIN':'COCUK'),'wc_variation_id'=>$p+$i+1,'is_active'=>1,'capacity_units'=>1,'id'=>$p+$i+1);
  }
 }
 require __DIR__.'/../../docs/code-snippets/mdg-corporate-campaigns.php';
 $c='MDG_Corporate_Campaigns_20261005';$count=0;
 function check($pass,$name){global $count;if(!$pass)throw new Exception($name);$count++;echo "PASS $name\n";}
-check($hooks===array('shortcode'=>array($c::SHORTCODE),'filter'=>array('wp_robots'),'action'=>array('template_redirect','admin_menu','admin_post_mdg_corporate_campaign_save','admin_post_mdg_corporate_campaign_toggle')),'no payment scanner cart hooks');
+check(!in_array('woocommerce_payment_complete',$hooks['action'],true),'existing payment and ticket generation hooks preserved');
 foreach(array('TEST-DENIZLI','test-denizli','TeSt-DeNiZlI','TEST-DENİZLİ','test-denızlı',' TEST Denizli ','TEST_DENIZLI') as $code)check($c::normalize($code)==='test-denizli','case/Turkish/separator normalization '.$code);
 check($c::normalize('TEST-İZMİR')==='test-izmir','Turkish uppercase dotted I');
 check($c::normalize('test-us\'ak')==='','invalid punctuation rejected');
@@ -143,4 +145,25 @@ check($c::ages_from_birthdates(array('2013-10-20'),'2026-11-08','2026-10-05')===
 check($c::ages_from_birthdates(array('2024-02-29'),'2026-10-08','2026-10-05')===array('2'),'valid leap-day birth');
 foreach(array(array('2023-02-29'),array('2026-10-06'),array('2013-13-01'),array(''),array(array('2013-01-01')),array('1900-01-01')) as $i=>$dates){check(isset($c::ages_from_birthdates($dates,'2026-10-08','2026-10-05')['error']),'invalid birthdates rejected '.$i);}
 check($c::quote_birthdates($cat,'120','1',array('2021-01-01','2019-01-01','2014-01-01'),'2026-10-05')['total']===750.0,'birthdate priced quote');
+// Campaign cart: quantities and signatures cannot be used to preserve free lines alone.
+$registry=$custom;
+$m=array('code'=>'kurum-denizli','session'=>'120','adults'=>'1','births'=>array('2021-01-01','2019-01-01','2014-01-01'));
+$q=$c::manifest_quote($m);$plan=$c::plan($q);
+check($plan['adult']['qty']===1 && $plan['free_child']['qty']===2 && $plan['paid_child']['qty']===1,'cart plan includes free and paid child tickets');
+class CartFixture{public $cart_contents=array();function get_cart(){return $this->cart_contents;}}
+$cart=new CartFixture();
+foreach($plan as $role=>$row){if(!$row['qty'])continue;$cart->cart_contents[$role]=array('mdg_campaign_manifest'=>$m,'mdg_campaign_signature'=>$c::sign($m),'mdg_campaign_role'=>$role,'variation_id'=>$row['type']['variation'],'product_id'=>$row['type']['parent'],'quantity'=>$row['qty']);}
+$state=$c::cart_state($cart);
+check($state['prices']===array('adult'=>500.0,'paid_child'=>250.0,'free_child'=>0),'server-approved cart prices');
+$old=$cart->cart_contents;
+unset($cart->cart_contents['adult']);check(isset($c::cart_state($cart)['error']),'removing adult blocks free children');
+$cart->cart_contents=$old;$cart->cart_contents['free_child']['quantity']=3;check(isset($c::cart_state($cart)['error']),'increasing free quantity blocked');
+$cart->cart_contents=$old;$cart->cart_contents['free_child']['variation_id']=1001;check(isset($c::cart_state($cart)['error']),'cross-city variation blocked');
+$cart->cart_contents=$old;$cart->cart_contents['free_child']['mdg_campaign_manifest']['adults']='10';check(isset($c::cart_state($cart)['error']),'modified unsigned manifest blocked');
+$cart->cart_contents=$old;$registry['kurum-denizli']['active']=false;check(isset($c::cart_state($cart)['error']),'disabled code blocks checkout');
+$registry=$custom;$products[1202]->price='550';$state=$c::cart_state($cart);check($state['prices']['adult']===550.0,'current price recomputed at checkout');$products[1202]->price='500';
+check(isset($c::manifest_quote(array_merge($m,array('code'=>'test-denizli')))['error']),'public test code cannot checkout');
+$cart->cart_contents=array('ordinary'=>array('variation_id'=>1201,'quantity'=>1));check($c::cart_state($cart)===array('prices'=>array()),'ordinary cart untouched');
+check($c::coupon_product(true,null,null,array('mdg_campaign_manifest'=>$m))===false,'campaign coupon stacking blocked');
+check($c::coupon_product(true,null,null,array())===true,'ordinary coupon preserved');
 echo "All $count dynamic catalogue checks passed.\n";
