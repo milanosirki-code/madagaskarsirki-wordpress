@@ -1,0 +1,206 @@
+{
+  "issue": 116,
+  "pr": 131,
+  "branch": "codex/fix-session-sales-cutoff-current-main",
+  "production_commit": "75cbc888a1cd0e01a7f7c96a9a8ef11ff8b29725",
+  "base_main": "51f899faebe9ae92778770a659a34c1f43b14043",
+  "latest_main_observed": "51126fdae33fde209542960b67c33c9b5d93a526",
+  "before": {
+    "utc": "2026-10-05T06:31:35+00:00",
+    "hashes": {
+      "class-mdg-sessions.php": "67c1d25366b9f86fff709514a0576060ce265154bf730534a1e374710a6c00e2",
+      "class-mdg-public-event.php": "6c884499ffa9a5ca6fa22254c494af38e01df9dea638a1236ccf35bd75456cc0",
+      "class-mdg-live-sales.php": "54d376a1b76c9106557adf1061821f71dd551eba7f582cf63645b44b332c0eb4",
+      "class-mdg-public-cities.php": "9a1459fbd2c039b3f56981c5550c11788df1ea5364f679a114c468552c8e59cc",
+      "class-mdg-public-tickets.php": "9c7794e0ffe0e1bb1b3a1fd5f7ed98d91d9d641992b65fecb3578fe9775fc767"
+    },
+    "domain": {
+      "mdg_events": {
+        "count": 23,
+        "sha256": "7c8ef352545ec290a679cace672d096a43937cce524f7943d8f5908afc38c42e"
+      },
+      "mdg_sessions": {
+        "count": 61,
+        "sha256": "3ea326cbdfaf77596115afcf4eebb546702d3b96d085edfb9f48298d12392ca5"
+      },
+      "mdg_ticket_types": {
+        "count": 127,
+        "sha256": "e8059f1a9da78169f596be9f6259931ae47f70033f1901a547c2690c405155b7"
+      },
+      "mdg_holds": {
+        "count": 273,
+        "sha256": "b0dd772e79fa92c28c685727235b47210c85ab9061138fd5e299df04fa415e37"
+      },
+      "mdg_order_map": {
+        "count": 476,
+        "sha256": "371a2bbc44ddd5ccadaa3a1b981deaf9241c9742afc3de9c19c70f00408e84b4"
+      },
+      "mmc_sales_ledger": {
+        "count": 327,
+        "sha256": "f0eac6ddcb54285c257395cfaa0052c4c585eea5d4e4f5a5a26f67fa4e51a90a"
+      },
+      "mmc_kommo_profiles": {
+        "count": 13,
+        "sha256": "bd7a3ee2bc56aeb01e002b14f99cfde8b3b9a1fc4ca580ac87a695841f387e0c"
+      }
+    },
+    "sales": {
+      "orders_count": "43",
+      "ticket_count": "107",
+      "sold_capacity": "107",
+      "gross_revenue": "42000.00",
+      "nominal_order_value": "47000.00",
+      "refunded_amount": "0.00",
+      "net_revenue": "42000.00",
+      "failed_orders": 4
+    }
+  },
+  "deployment": {
+    "deployed": true,
+    "files": [
+      "class-mdg-sessions.php",
+      "class-mdg-public-event.php",
+      "class-mdg-live-sales.php",
+      "class-mdg-public-cities.php",
+      "class-mdg-public-tickets.php"
+    ],
+    "backup": "mdg-cutoff-116-OHVzoIfUI2fNBZ8V"
+  },
+  "after": {
+    "utc": "2026-10-05T06:32:32+00:00",
+    "hashes": {
+      "class-mdg-sessions.php": "6f0dc43f57737f993ba1fe42719db90878f3c76301d177f59d7372db54d09865",
+      "class-mdg-public-event.php": "044ec1143d49220f7e47fe6307196ec94021956fddee9bd727883d08e6b48016",
+      "class-mdg-live-sales.php": "e7b6f312c64d2019d6cb9129dbf3debf2632aad083e1abb8ea3f8cadacd43895",
+      "class-mdg-public-cities.php": "8ad0fa056910b3cf562425b3da14355e1875466207b3f7804f6e479694b66568",
+      "class-mdg-public-tickets.php": "afbad4c149f1d5058c37188d874ad82fd1bfba627fcd2beefa5baa13ce17b2c3"
+    },
+    "domain": {
+      "mdg_events": {
+        "count": 23,
+        "sha256": "7c8ef352545ec290a679cace672d096a43937cce524f7943d8f5908afc38c42e"
+      },
+      "mdg_sessions": {
+        "count": 61,
+        "sha256": "3ea326cbdfaf77596115afcf4eebb546702d3b96d085edfb9f48298d12392ca5"
+      },
+      "mdg_ticket_types": {
+        "count": 127,
+        "sha256": "e8059f1a9da78169f596be9f6259931ae47f70033f1901a547c2690c405155b7"
+      },
+      "mdg_holds": {
+        "count": 273,
+        "sha256": "b0dd772e79fa92c28c685727235b47210c85ab9061138fd5e299df04fa415e37"
+      },
+      "mdg_order_map": {
+        "count": 476,
+        "sha256": "371a2bbc44ddd5ccadaa3a1b981deaf9241c9742afc3de9c19c70f00408e84b4"
+      },
+      "mmc_sales_ledger": {
+        "count": 327,
+        "sha256": "f0eac6ddcb54285c257395cfaa0052c4c585eea5d4e4f5a5a26f67fa4e51a90a"
+      },
+      "mmc_kommo_profiles": {
+        "count": 13,
+        "sha256": "bd7a3ee2bc56aeb01e002b14f99cfde8b3b9a1fc4ca580ac87a695841f387e0c"
+      }
+    }
+  },
+  "live_smoke": {
+    "results": {
+      "expired_session": 60,
+      "future_session": 75,
+      "expired_native_cart": false,
+      "future_native_cart": true,
+      "expired_direct_product": false,
+      "classic_cart_errors": 1,
+      "store_api_expired": "Seçtiğiniz seansın bilet satışı sona erdi. Lütfen başka bir seans seçin.",
+      "prepayment_expired": "Seçtiğiniz seansın bilet satışı sona erdi. Lütfen sepetinizi güncelleyip başka bir seans seçin.",
+      "unsaved_order_id": 0,
+      "expired_page": {
+        "enabled": false,
+        "sessions": [],
+        "ended_notice": true
+      },
+      "future_page": {
+        "enabled": true,
+        "sessions": [
+          "75",
+          "76",
+          "77",
+          "78"
+        ],
+        "ended_notice": false
+      },
+      "expired_public_list": [],
+      "future_public_list": [
+        {
+          "id": 75,
+          "date": "2026-10-10",
+          "time": "12:00"
+        },
+        {
+          "id": 76,
+          "date": "2026-10-10",
+          "time": "14:00"
+        },
+        {
+          "id": 77,
+          "date": "2026-10-10",
+          "time": "16:00"
+        },
+        {
+          "id": 78,
+          "date": "2026-10-10",
+          "time": "18:00"
+        }
+      ],
+      "utc_boundary_closed": true
+    },
+    "sql_write_attempts": [],
+    "warnings": [],
+    "domain_unchanged": true,
+    "sales": {
+      "orders_count": "43",
+      "ticket_count": "107",
+      "sold_capacity": "107",
+      "gross_revenue": "42000.00",
+      "nominal_order_value": "47000.00",
+      "refunded_amount": "0.00",
+      "net_revenue": "42000.00",
+      "failed_orders": 4
+    }
+  },
+  "global_snippets": {
+    "total": 125,
+    "active": 45,
+    "code_error": 0
+  },
+  "health": {
+    "summary": {
+      "critical": 0,
+      "warning": 1,
+      "ok": 15,
+      "info": 0
+    },
+    "warning": "Code Snippets review candidates #125, #124 and #61; no change to these unrelated sources.",
+    "cached_inventory_active_count": 47,
+    "current_snippet_api_active_count": 45
+  },
+  "temporary117": {
+    "original_code_match": true,
+    "active": false,
+    "code_error": null
+  },
+  "snippet30": {
+    "active": true,
+    "exact_candidate_match": true,
+    "code_error": null
+  },
+  "limits": [
+    "Guarded installed-code render, not a browser interaction.",
+    "No real order or payment; expired pre-payment check used an unsaved WC_Order (ID0).",
+    "No global host PHP error-log audit; targeted smoke warnings/fatals absent.",
+    "Helper initially failed activation validation; request-local session fixture corrected; original117 restored and error-free."
+  ]
+}

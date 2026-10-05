@@ -15,6 +15,9 @@ final class MDG_Live_Sales {
     public static function hooks() {
         add_action( 'wp_ajax_mdg_live_add_to_cart', array( __CLASS__, 'add_to_cart' ) );
         add_action( 'wp_ajax_nopriv_mdg_live_add_to_cart', array( __CLASS__, 'add_to_cart' ) );
+        add_filter( 'woocommerce_add_to_cart_validation', array( __CLASS__, 'validate_session_add_to_cart' ), 10, 6 );
+        add_action( 'woocommerce_check_cart_items', array( __CLASS__, 'check_cart_session_times' ) );
+        add_action( 'woocommerce_store_api_validate_cart_item', array( __CLASS__, 'validate_store_api_cart_item' ), 10, 2 );
 
         // Classic checkout: order exists, payment has not been processed yet.
         add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'classic_order_processed' ), 5, 3 );
@@ -26,6 +29,46 @@ final class MDG_Live_Sales {
         add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'payment_complete' ), 5, 1 );
         add_action( 'woocommerce_order_status_failed', array( __CLASS__, 'release_order' ), 5, 1 );
         add_action( 'woocommerce_order_status_cancelled', array( __CLASS__, 'release_order' ), 5, 1 );
+    }
+
+    /** Resolve the canonical product mapping, never client-supplied session metadata. */
+    private static function product_session( $product_id, $variation_id = 0 ) {
+        global $wpdb;
+        $type = $wpdb->get_row( $wpdb->prepare(
+            'SELECT * FROM ' . MDG_DB::table( 'ticket_types' ) . ' WHERE wc_variation_id=%d LIMIT 1',
+            (int) ( $variation_id ?: $product_id )
+        ) );
+        if ( $type ) {
+            return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . MDG_DB::table( 'sessions' ) . ' WHERE id=%d LIMIT 1', (int) $type->session_id ) );
+        }
+        return $wpdb->get_row( $wpdb->prepare(
+            'SELECT * FROM ' . MDG_DB::table( 'sessions' ) . ' WHERE wc_product_id=%d LIMIT 1',
+            (int) $product_id
+        ) );
+    }
+
+    public static function validate_session_add_to_cart( $passed, $product_id, $quantity, $variation_id = 0, $variations = array(), $cart_item_data = array() ) {
+        if ( ! $passed ) { return false; }
+        $session = self::product_session( $product_id, $variation_id );
+        if ( $session && MDG_Sessions::sales_closed_by_time( $session ) ) {
+            wc_add_notice( 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen başka bir seans seçin.', 'error' );
+            return false;
+        }
+        return $passed;
+    }
+
+    public static function check_cart_session_times() {
+        if ( ! WC()->cart ) { return; }
+        foreach ( WC()->cart->get_cart() as $item ) {
+            self::validate_session_add_to_cart( true, (int) $item['product_id'], (int) $item['quantity'], (int) ( $item['variation_id'] ?? 0 ) );
+        }
+    }
+
+    public static function validate_store_api_cart_item( $product, $cart_item ) {
+        $session = self::product_session( (int) $cart_item['product_id'], (int) ( $cart_item['variation_id'] ?? 0 ) );
+        if ( $session && MDG_Sessions::sales_closed_by_time( $session ) ) {
+            self::throw_capacity_error( 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen başka bir seans seçin.' );
+        }
     }
 
     public static function add_to_cart() {
@@ -54,6 +97,9 @@ final class MDG_Live_Sales {
         ) );
         if ( ! $session || MDG_Status::ONSALE !== (string) $session->status ) {
             wp_send_json_error( array( 'message' => 'Seçtiğiniz seans şu anda satışa açık değil.' ), 409 );
+        }
+        if ( class_exists( 'MDG_Sessions' ) && MDG_Sessions::sales_closed_by_time( $session ) ) {
+            wp_send_json_error( array( 'message' => 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen sayfayı yenileyip başka bir seans seçin.' ), 409 );
         }
         if ( ! (int) $session->wc_product_id || ! (int) $session->tickera_event_id ) {
             wp_send_json_error( array( 'message' => 'Seans satış bağlantısı hazır değil.' ), 409 );
@@ -187,6 +233,10 @@ final class MDG_Live_Sales {
             if ( ! $session || MDG_Status::ONSALE !== (string) $session->status ) {
                 self::release_created( $created );
                 self::throw_capacity_error( 'Seçtiğiniz seans artık satışa açık değil.' );
+            }
+            if ( class_exists( 'MDG_Sessions' ) && MDG_Sessions::sales_closed_by_time( $session ) ) {
+                self::release_created( $created );
+                self::throw_capacity_error( 'Seçtiğiniz seansın bilet satışı sona erdi. Lütfen sepetinizi güncelleyip başka bir seans seçin.' );
             }
             $hold = MDG_Capacity::hold(
                 (int) $session_id,
