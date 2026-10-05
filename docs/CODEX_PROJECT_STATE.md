@@ -188,3 +188,10 @@ Issue129 deployment checkpoint:
 - Baseline141 open/total, all unmarked/protected as manual, due0/owner0; program owners13/13 valid; current operations/show_day0.
 - Canonical-only deadline resolver, managed-value provenance/manual overrides, owner fallback, program-scoped POST apply with cap/nonce/lock/CAS; new task INSERT enrichment; one-query in-app cards/filters/my tasks; additive read-only AI fields.
 - 171 isolated assertions pass. Production deploy/CI/final archives pending; see OPERATIONS_TASK_AUTOMATION_V2.md.
+
+### Phase2 #152 — production verification / PR153
+- Source `80fe831782bbda5c96beeb185983dc055f959bb7`; CI8/8 GREEN;171 isolated +13 actual MySQL fixture assertions. Only Operations service/admin deployed/read back MATCH branch. Main remains Phase1 merge `a7883d8e4643a884f26dd33c15451646041cee7e` until PR153 review/merge.
+-22 domain fingerprints BEFORE=AFTER; GET write0, provider0, notification log0, real Apply/backfill0.141 tasks remain unmarked/protected, due/owner0. Preview13 programs/all141 tasks would update due0/owner0.
+- Active/future Operations alerts9 open/tarihsiz/high; overdue/today/48h/mine0.1 query/0.97ms; filter render24 queries/10.42–13.67ms. Native3 read ability legacy contract MATCH and missing-plan fixture safe. PHP warning/fatal0; health16/16; snippets125/45 code_error0; temporary117 original/passive.
+- Rollback originals retained, not needed; no DB rollback. GitHub evidence OPERATIONS_V2_BEFORE/AFTER/DEPLOYMENT and policy/tests. Drive report `1TqVQeZRsLx4cppISadJ_rtKPg7dHjw6U`, ZIP `1jeCWvyAiDK5zNhXknKKia4lt7B8HHy82`, canonical project state updated/read back.
+- PR153 ready transition after evidence CI; Issue152 OPEN pending review/merge. Remaining manager decision: actual backfill and external channel/policy. Phase3 next; no SEND enabled.
