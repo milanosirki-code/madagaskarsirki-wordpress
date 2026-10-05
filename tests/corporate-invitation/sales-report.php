@@ -36,3 +36,11 @@ $o->items[6]=new Item('bms','infant',1,0);check($c::summarize($o,'bms')[0]['role
 $o->items[7]=new Item('bms','adult',1,500);$o->items[7]->m['_mdg_session_id']=100;
 check(count($c::summarize($o,'bms'))===2,'different sessions separated');
 echo "All 8 campaign sales report checks passed.\n";
+check(count($c::summarize($o,'bms',array(99)))===1,'program session filter excludes other session');
+check($c::summarize($o,'bms',array(200))===array(),'unrelated program cannot reveal campaign rows');
+class MMC_MDG_Bridge_Service{static function bridge_for_program($id){return $id===10?(object)array('mdg_event_id'=>12):null;}}
+class MDG_Sessions{static function by_event($id){return array((object)array('id'=>99),(object)array('id'=>100));}}
+check($c::scope(10)===array('program'=>10,'event'=>12,'sessions'=>array(99,100)),'read-only canonical bridge resolves program sessions');
+check(isset($c::scope(999)['error']),'missing mapping fails closed');
+check($c::scope(0)['program']===0,'all-programs overview retained');
+echo "All 13 campaign report checks passed.\n";
