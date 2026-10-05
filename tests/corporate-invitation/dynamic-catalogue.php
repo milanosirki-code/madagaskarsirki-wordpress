@@ -21,6 +21,10 @@ function wp_kses_post($s){return $s;}
 function get_permalink($p){return 'https://example.test/campaign/';}
 function wp_nonce_field($a,$n,$r=false){echo '<input name="'.$n.'" value="valid">';}
 function number_format_i18n($n,$d){return number_format($n,$d);}
+function strip_shortcodes($s){return preg_replace('/\[[^]]*\]/','',$s);}
+function wp_strip_all_tags($s){return strip_tags($s);}
+function wp_trim_words($s,$n,$more){$a=preg_split('/\s+/',trim($s));return count($a)>$n?implode(' ',array_slice($a,0,$n)).$more:$s;}
+function wp_get_attachment_image($id,$size,$icon,$attrs){return '<img src="image-'.$id.'.jpg" alt="'.esc_attr($attrs['alt']).'">';}
 function wc_price($p){return number_format($p,2).' TL';}
 class MDG_Public_Tickets{static function active_events(){global $event_rows;return $event_rows;}}
 class MDG_Sessions {
@@ -177,4 +181,11 @@ check($c::quote($realcat,'120','1',array('13','5','7'))['total']===950.0,'13+ us
 check($realcat[30]['sessions'][300]['types']['adult']['price']===500.0,'another Denizli program not discounted');
 $iz=array('key'=>'iz','province'=>'İzmir','test_only'=>false);check($c::catalogue($iz,$event_rows)[10]['sessions'][100]['types']['adult']['price']===600.0,'Izmir campaign remains 600');
 $products[1202]->price='450';check($c::catalogue($real,$event_rows)[12]['sessions'][120]['types']['adult']['price']===450.0,'campaign never exceeds lower current price');$products[1202]->price='500';
+echo "All $count campaign checks passed.\n";
+
+$event_rows[0]->hero_attachment_id=2409;$event_rows[0]->short_description='Denizli tanıtımı';$event_rows[0]->long_description='<p>Akrobasi ve palyaço gösterisi.</p>';
+$_POST=array();$_GET=array('kod'=>'kurum-denizli');$_SERVER['REQUEST_METHOD']='GET';$registry=$custom;$h=$c::render();
+check(strpos($h,'image-2409.jpg')!==false && strpos($h,'Denizli tanıtımı')!==false && strpos($h,'Akrobasi ve palyaço gösterisi.')!==false,'campaign card uses selected event poster and description');
+check(strpos($h,'475.00 TL')!==false,'poster addition preserves discounted price');
+check($c::event_intro((object)array('hero_attachment_id'=>0))['about']==='Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.','missing description safe generic fallback');
 echo "All $count campaign checks passed.\n";
