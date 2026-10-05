@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'docs/code-snippets/production/snippet-110.php.txt'
+SOURCE = ROOT / 'docs/code-snippets/mdg-kommo-unified-source-v2.php'
 PHP = shlex.split(os.environ.get('TEST_PHP_COMMAND', 'php'))
 STUBS = r'''<?php
 define('ABSPATH', '/fixture/');
@@ -31,7 +31,7 @@ function esc_html($value) { return htmlspecialchars($value); }
 $_SERVER['REQUEST_URI'] = '/kommo-ai-bilgi-merkezi/';
 $_GET = array('token'=>$argv[2]);
 if ('other' === $argv[3]) { $_SERVER['REQUEST_URI']='/ordinary-page/'; }
-eval(file_get_contents($argv[1]));
+require $argv[1];
 mdg_kommo_unified_v2_serve();
 '''
 

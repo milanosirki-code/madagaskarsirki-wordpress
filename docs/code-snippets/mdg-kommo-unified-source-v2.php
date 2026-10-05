@@ -1,3 +1,4 @@
+<?php
 /**
  * Madagaskar Kommo Unified Source V2 — MMC Canonical
  *
@@ -176,6 +177,9 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_serve' ) ) {
 
         $rows = mdg_kommo_unified_v2_collect();
 
+        // The hidden URL has no WordPress page, so its main query can be 404.
+        // Authentication has succeeded; serve the source as a successful resource.
+        status_header( 200 );
         nocache_headers();
         header( 'Content-Type: text/html; charset=utf-8' );
         header( 'X-Robots-Tag: noindex, nofollow', true );

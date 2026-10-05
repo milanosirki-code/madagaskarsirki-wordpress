@@ -11,6 +11,8 @@ Status: OPEN. Current Kommo inventory, active agent attachments, reindex evidenc
 
 ## Minimal proposed patch
 
+Candidate source: `docs/code-snippets/mdg-kommo-unified-source-v2.php`, deploy target snippet #110 after stripping the PHP opening tag. The dated production snapshot remains byte-exact; it is not overwritten by this undeployed candidate.
+
 After the existing token/administrator gate succeeds, `mdg_kommo_unified_v2_serve()` explicitly calls `status_header(200)` before output. WordPress can otherwise carry a 404 from its main query because this virtual URL is not a page. Authorization, collection, prices and source management remain unchanged.
 
 Actual endpoint contract: original source fails the authorized-response test with status 404; patched source passes four cases (valid token, invalid token, absent token, unrelated path). PHP 8.4 syntax passes. **Not deployed**: user requires real retrieval tests and source backup before production deployment.
