@@ -82,6 +82,10 @@ Normal akış:
 
 WPVibe/WordPress üzerinde canlı değişiklik gerekiyorsa GitHub koduyla fark bırakma. Canlı hotfix yapılmışsa aynı değişiklik repository'ye geri işlenmelidir.
 
+## GitHub ve Drive kayıtları
+
+Kullanıcı talimatı: her çalışmanın değişikliklerini, doğrulama kanıtlarını ve proje durumunu GitHub ile mevcut Drive proje arşivine ekle/güncelle. Hassas müşteri değerleri veya tokenları arşivleme. Bir kanala yazılamazsa başarı iddia etme; eksik arşiv adımını açıkça kaydet.
+
 ## İlgili dokümanlar
 
 - `docs/CODEX_MASTER_WORKFLOW.md`

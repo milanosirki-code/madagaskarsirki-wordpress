@@ -131,3 +131,9 @@ Issue129 deployment checkpoint:
 - PR131 / production commit `75cbc888a1cd0e01a7f7c96a9a8ef11ff8b29725`:six CI checks pass. Five plugin sources and snippet30 deployed/read-back exact. Guarded expired/future/cart/pre-payment/render/list smoke passes with no SQL writes; temporary117 restored original/passive.
 - Sales gross42,000 / nominal47,000 / net42,000 / capacity107 unchanged; family capacity4. Global snippets125/45active/code_error0. Health15 OK/1 unrelated Code Snippets review warning (125/124/61), critical0; do not claim16/16. See `docs/ISSUE_116_DEPLOYMENT_EVIDENCE.json`.
 - Latest main observed after concurrent PRs: `51126fdae33fde209542960b67c33c9b5d93a526`. Old PR117 superseded by131 after equivalent and native-product behavior verified; Issue116 production acceptance complete. Kommo82 remains OPEN/PARKED.
+# PR131 merge / health inventory reconciliation — 2026-10-05
+
+- PR131 merged to `7c95b0cab1fa8b682aa1d8eb0c7a5f288e3c3a43`; five live ticket-plugin files match merged source hashes. Snippet30 source body matches with PHP-tag/trailing-line-ending normalization. Sales42,000/47,000/42,000/capacity107/family4 retained; no real payment/order test.
+- Health15OK/1warning: references125/124/61 are Code Snippets IDs and all KEEP_ACTIVE production sources. False global-function collisions are separate class render/plan methods. Inventory47vsAPI45 is trash active=-1 for121/122, not cache. Scope-aware analysis/active===1 patch underway; no business snippet changes.
+- Dedicated branch `codex/fix-snippet-inventory-health`; Issue105 DRY-RUN safety follows health completion; real send0. GitHub/Drive archiving preference persisted in AGENTS.md.
+- Drive checkpoint: https://drive.google.com/file/d/1lD4yJP_Fbb5rGAeWH6nYH-PjEYdTuFSw/view . Details `docs/HEALTH_SNIPPET_RECONCILIATION_20261005.md`.
