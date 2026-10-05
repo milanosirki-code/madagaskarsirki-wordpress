@@ -20,9 +20,13 @@ Yalnız kampanya shortcode'unun bulunduğu sayfa için `template_redirect` aşam
 
 ## Akış ve sınırlar
 
-Kod → aynı ildeki aktif gösteriler → salon/tarih/seans/güncel yetişkin fiyatı → kişi sayısı → kampanya hesabı. Çocuklar 3–12 yaş dahil, ücretli yetişkin başına en fazla iki; 0–2 mevcut ücretsiz kuralına tabi. İzmir gibi farklı fiyatlar güncel Woo varyasyonundan okunur. Kod ve seans her hesaplamada yeniden doğrulanır; başka ile ait seans gönderilirse reddedilir. Hesaplama rezervasyon veya bilet değildir.
+Kod → aynı ildeki aktif gösteriler → salon/tarih/seans/güncel yetişkin ve çocuk fiyatı → kişi sayısı ve her çocuğun yaşı → kampanya hesabı. 0–2 ücretsiz ve kampanya hakkını tüketmez. 3–12 yaş dahil çocukların ücretli yetişkin bileti başına ikisi ücretsiz; hak üzerindeki çocuklar normal Woo çocuk fiyatıyla ücretlidir. 13+ yaş girilen kişiler yetişkin fiyatıyla yetişkin bileti sayılır ve ücretli yetişkin bileti sayısına dahil olur. Aynı kişi hem yetişkin sayısına hem yaş listesine eklenmemelidir.
 
-İlk pilotta yalnız 1–2 yetişkin ve 1–4 çocuk hesabı vardır. Gerçek alışveriş/PayTR/Tickera, kupon kapsamı, kota, iade ve yetişkin bağlı check-in entegrasyonu henüz yoktur. Ortak kod üyeliği kanıtlamaz.
+İzmir gibi farklı fiyatlar güncel Woo varyasyonundan okunur. Kod/seans ve bütün yaşlar her hesaplamada sunucuda yeniden doğrulanır; başka ile ait seans gönderilirse reddedilir. Yaşların sayısı seçilen çocuk sayısına eşit olmalıdır. Negatif/ondalık/eksik/dizi yaş değerleri reddedilir. Yaş alanları ve ücretli/ücretsiz durumları JavaScript ile anlık güncellenir; sunucu sonucu yetkilidir. JavaScript yoksa yaş alanlarını güncelle düğmesi kullanılabilir.
+
+Form 1–10 yetişkin ve 0–20 çocuk girdisi destekler; ücretsiz hak ücretli yetişkin bileti sayısıyla artar. Bunlar girdi sınırlarıdır, toplu/kurumsal grup alımına kampanya izni değildir. Hesaplama rezervasyon veya bilet değildir. Gerçek alışveriş/PayTR/Tickera, kupon kapsamı, kota, iade ve yetişkin bağlı check-in entegrasyonu henüz yoktur. Ortak kod üyeliği kanıtlamaz.
+
+Denizli fiyatıyla örnekler: 1 yetişkin + 3 uygun çocuk = 500 + 250 = 750 TL; 2 yetişkin + 3 çocuk = 1.000 TL; 2 yetişkin + 5 çocuk = 1.250 TL. 1 yetişkin + yaşı 13 olan kişi + 3 uygun çocuk = 2 yetişkin bileti, 3 ücretsiz çocuk = 1.000 TL.
 
 ## Deploy ve test
 
