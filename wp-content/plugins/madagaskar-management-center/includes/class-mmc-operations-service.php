@@ -675,6 +675,10 @@ class MMC_Operations_Service {
         $lock='mmc_ops_'.substr(hash('sha256',$wpdb->prefix.$pid),0,40);$transaction=false;
         if(1!==(int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)',$lock))){return new WP_Error('mmc_ops_busy','Program başka işlemde.');}
         try{
+            foreach(array('mmc_tasks','mmc_programs') as$table){
+                $engine=$wpdb->get_var($wpdb->prepare('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s',$wpdb->prefix.$table));
+                if(strtoupper((string)$engine)!=='INNODB'){throw new RuntimeException('Transactional tables required for atomic adoption');}
+            }
             if(false===$wpdb->query('START TRANSACTION')){throw new RuntimeException('Transaction unavailable');}$transaction=true;
             $wpdb->get_results($wpdb->prepare("SELECT id FROM {$wpdb->prefix}mmc_programs WHERE id=%d FOR UPDATE",$pid));
             $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mmc_tasks WHERE program_id=%d ORDER BY id FOR UPDATE",$pid));
