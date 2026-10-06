@@ -14,8 +14,11 @@ This consolidation ports only the final verified protocol feature set onto curre
   - repository source: `docs/code-snippets/mdg-protocol-ticket-menu.php`
 - Code Snippets #128 — MDG Protokol PDF Düzeni
   - repository source: `docs/code-snippets/mdg-protocol-pdf.php`
+- Code Snippets #20 — MS Güvenli Sayfa Önbelleği
+  - repository source: `docs/code-snippets/mdg-safe-cache-protocol-exclusions.php`
+  - protocol/package/PDF exclusion rules used by the cache regression contract
 
-All three live snippets are active with `code_error=null`.
+All four canonical live snippets (#20/#126/#127/#128) are active with `code_error=null`.
 
 Code Snippets stores the executable body without the repository file's PHP wrapper. After stripping the leading `<?php` / trailing wrapper and normalizing line endings, each live source matches its final protocol branch file exactly.
 
