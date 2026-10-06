@@ -31,11 +31,16 @@ final class MDG_Protocol_PDF {
   $data['protocol_terms']="Bu bilet bir kişilik ve yalnız belirtilen seans için geçerlidir.\n".($unnumbered?'Numarasız bilet - serbest oturma. Girişte QR kodunuzu gösterin.':'Girişte QR kodunuzu, yeriniz için koltuk bilginizi gösterin.')."\nLütfen seans saatinden 30 dakika önce salonda olun.";
   return $data;
  }
+ static function prepared_template($template_id){
+  $t=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_Template');$native=new $t($template_id);$copy=clone $native;$copy->set('template_data',wp_json_encode(self::layout($native->get_template_array())));return $copy;
+ }
  static function render($template_id,$data){
-  $t=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_Template');$g=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_PDF_Generator');$native=new $t($template_id);$copy=clone $native;
-  $copy->set('template_data',wp_json_encode(self::layout($native->get_template_array())));
-  if(function_exists('tickera_ticket_designer_ensure_tcpdf'))tickera_ticket_designer_ensure_tcpdf();
-  $pdf=$g::generate($copy,self::clean_data($data),'S','davetiye.pdf');if(!is_string($pdf)||substr($pdf,0,5)!=='%PDF-')throw new Exception('Protokol PDF oluşturulamadı.');return $pdf;
+  $g=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_PDF_Generator');if(function_exists('tickera_ticket_designer_ensure_tcpdf'))tickera_ticket_designer_ensure_tcpdf();
+  $pdf=$g::generate(self::prepared_template($template_id),self::clean_data($data),'S','davetiye.pdf');if(!is_string($pdf)||substr($pdf,0,5)!=='%PDF-')throw new Exception('Protokol PDF oluşturulamadı.');return $pdf;
+ }
+ static function render_many($items){
+  if(!$items||count($items)>400)throw new Exception('Paket 1–400 geçerli bilet içermeli.');$g=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_PDF_Generator');$prepared=array();$templates=array();foreach($items as $it){$id=(int)$it['template'];if(!$id)throw new Exception('PDF şablonu bulunamadı.');if(!isset($templates[$id]))$templates[$id]=self::prepared_template($id);$prepared[]=array('template'=>$templates[$id],'ticket_data'=>self::clean_data($it['data']));}
+  if(function_exists('tickera_ticket_designer_ensure_tcpdf'))tickera_ticket_designer_ensure_tcpdf();$pdf=$g::generate_multi($prepared,'S','protokol-paketi.pdf');if(!is_string($pdf)||substr($pdf,0,5)!=='%PDF-')throw new Exception('Toplu PDF oluşturulamadı.');return $pdf;
  }
  static function diagnostics(){
   $id=4596;$data=MDG_Denizli_Invitations::data($id);$type=(int)get_post_meta($id,'ticket_type_id',true);$template=(int)get_post_meta($type,'tc_designer_template_id',true);$t=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_Template');$o=new $t($template);$original=$o->get('template_data');$pdf=self::render($template,$data);
