@@ -234,3 +234,9 @@ A current read-only key-level inventory confirms volatile WordPress/admin/auth k
 Conclusion: `EXACT_KEY_CAUSE=UNRECOVERABLE_FROM_AGGREGATE_BASELINE`; `ATTRIBUTABLE_TO_PR158=NO_EVIDENCE`; `BUSINESS_DOMAIN_SIDE_EFFECT=NOT_OBSERVED`. Do not reset or roll back usermeta. Future verification treats strict business-domain tables separately from volatile technical usermeta; if usermeta is observed, use sanitized meta_key-level count/hash baselines rather than whole-table equality. Detailed sanitized evidence: `docs/OPERATIONS_V3B_USERMETA_INVESTIGATION.json`.
 
 This closes the verification exception as a fingerprint-scope limitation rather than an Operations defect. PR158 can proceed through normal final CI/review/merge while retaining the explicit limitation that the historical exact changed usermeta key cannot be reconstructed.
+
+
+## Operations Phase3B closure / Phase3C start — 2026-10-06
+PR158 merged as `aef750852b8e0d961367c17a2529d286817219fe`; Issue157 CLOSED/completed. Usermeta exception closed as fingerprint-scope limitation: exact historical meta_key unrecoverable from aggregate baseline, no PR158 usermeta write path, no business-domain side effect observed, no usermeta rollback. Detailed evidence `OPERATIONS_V3B_USERMETA_INVESTIGATION.json`.
+
+Phase3C Issue164 / branch `codex/operations-guided-timeline-v3c`: guided operation timeline on existing plan fields; no new table. CURRENT/SUGGESTED/SOURCE preview, door-open suggestion only from first session minus stored door_open_minutes, chronology validation on existing save_plan, unsupported timestamps never guessed. Task due/owner writes remain separate explicit automation and are not performed in this phase deploy/smoke. Pilot read-only baseline: Denizli#10 first17:30/doors suggestion17:00; Mamak#11 first12:00/doors suggestion11:30; all seven current plan timestamps NULL. Phase3C code/tests/docs are branch-only pending CI and production deploy.
