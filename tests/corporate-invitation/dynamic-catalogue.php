@@ -102,9 +102,11 @@ check($c::resolve('KURUM-DENİZLİ',$event_rows,$custom,'2026-10-05')['name']===
 event_fixture(30,'Denizli','2026-10-22 14:30:00');
 $cat=$c::catalogue($campaign,$c::source_events());
 check(array_keys($cat)===array(12,30),'new same-city event automatically appears without code edit');
-$event_rows[3]->status='cancelled';
+$event30_index=null;foreach($event_rows as $idx=>$row){if((int)$row->id===30){$event30_index=$idx;break;}}
+check($event30_index!==null,'event 30 fixture located');
+$event_rows[$event30_index]->status='cancelled';
 check(!isset($c::catalogue($campaign,$event_rows)[30]),'cancelled event immediately hidden');
-$event_rows[3]->status='onsale';
+$event_rows[$event30_index]->status='onsale';
 $session_rows[30][0]->start_at='2026-10-01 09:00:00';
 check(!isset($c::catalogue($campaign,$event_rows)[30]),'past session immediately hidden');
 $session_rows[30][0]->start_at='2026-10-22 14:30:00';
