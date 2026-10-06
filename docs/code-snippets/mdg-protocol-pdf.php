@@ -20,14 +20,15 @@ final class MDG_Protocol_PDF {
   $qr['x']=460;$qr['y']=128;$qr['width']=96;$qr['height']=96;$qr['size']=96;$qr['rotation']=0;$e[]=$qr;
   $e[]=self::text('protocol_entry_label',450,101,116,12,'','#d4af37','center');
   $e[]=self::text('ticket_code',447,234,120,12,'','#d4af37','center');
-  if($map){$map['x']=470;$map['y']=303;$map['width']=78;$map['height']=78;$map['rotation']=0;$e[]=$map;$e[]=self::text('protocol_map_label',440,280,138,11,'','#d4af37','center');}
+  if($map){$e[]=array('id'=>'protocol_map_margin','type'=>'rectangle','x'=>459,'y'=>296,'width'=>100,'height'=>100,'fill'=>'#ffffff','stroke'=>'#ffffff','strokeWidth'=>0);$map['x']=470;$map['y']=307;$map['width']=78;$map['height']=78;$map['rotation']=0;$e[]=$map;$e[]=self::text('protocol_map_label',440,280,138,11,'','#d4af37','center');}
   return array('width'=>595,'height'=>420,'background'=>'#111111','elements'=>$e);
  }
  static function clean_data($data){
   $address=trim((string)($data['venue_address']??''));if($address===''){$raw=preg_replace('/<br\s*\/?>/i',"\n",(string)($data['event_terms']??''));$raw=html_entity_decode(wp_strip_all_tags($raw),ENT_QUOTES,'UTF-8');$address=trim(preg_split('/Bilgi\s*&\s*Destek|Koltuk numarası|Fatura Bilgilendirmesi/iu',$raw)[0]);}
   $data['protocol_address']=preg_replace('/^Adres\s*:\s*/iu','',$address);
   $data['protocol_entry_label']='GİRİŞ QR';$data['protocol_map_label']='SALON KONUMU';
-  $data['protocol_terms']="Bu davetiye bir kişilik ve yalnız belirtilen seans için geçerlidir.\nGirişte QR kodunuzu, yeriniz için koltuk bilginizi gösterin.\nLütfen seans saatinden 30 dakika önce salonda olun.";
+  $unnumbered=strpos((string)($data['attendee_name']??''),'Numarasız')!==false;
+  $data['protocol_terms']="Bu bilet bir kişilik ve yalnız belirtilen seans için geçerlidir.\n".($unnumbered?'Numarasız bilet - serbest oturma. Girişte QR kodunuzu gösterin.':'Girişte QR kodunuzu, yeriniz için koltuk bilginizi gösterin.')."\nLütfen seans saatinden 30 dakika önce salonda olun.";
   return $data;
  }
  static function render($template_id,$data){
@@ -43,3 +44,4 @@ final class MDG_Protocol_PDF {
 }
 add_action('rest_api_init',function(){register_rest_route('mdg-protocol-pdf/v1','/diagnostics',array('methods'=>'GET','permission_callback'=>function(){return current_user_can('manage_woocommerce');},'callback'=>array('MDG_Protocol_PDF','diagnostics')));});
 }
+
