@@ -1,0 +1,11 @@
+# Protocol / complimentary ticket console
+
+User requests a recurring admin flow for named (Excel/manual), numbered, or unnumbered complimentary tickets. Menu under Madagaskar/mmc-dashboard; program-scoped button. Uses current active MDG catalogue and future sessions, verified adult variation mappings. Supports up to100 attendees and4 sessions per package. Named Excel.xlsx/CSV columns ad_soyad,bolum,koltuk; name mandatory, seat optional with section. Built-in downloadable.xlsx template. Old.xls must be saved as.xlsx. Upload bound4MB; zip member size2MB; no external entities or formula cells.
+
+Preview contains actual attendee/seat list and session totals. Authorized owner explicitly issues through nonce-checked admin-post. Durable package ID/registry and per-session lock prevent replay and collisions, including legacy Denizli A2–A11 metadata. Native zero-total WooCommerce order and existing atomic MDG capacity holds per session; native Bridge ticket instances; QR payload unchanged; attendee labels adapt on native Designer output. No paid product or global template changes. No contact data required or notification delivery; scoped Woo email suppression. Public package/individual PDFs require random192-bit bearer token and exclude cancelled/invalidated tickets. Admin history includes drafts and recoverable partial errors.
+
+Hooks: admin_menu,admin_notices,admin_post_mdg_protocol_preview/issue/template,template_redirect,scoped email filters,admin-only diagnostics REST. Requires MDG/Woo/Bridge/native Tickera Designer and ZipArchive/SimpleXML for.xlsx. Legacy snippet126 stays active and its20-ticket package remains accessible.
+
+Validation: syntax and23 parser/count/seat/QR/date/idempotency/ownership assertions. Live plan: verify menu HTML, current catalogue, legacy seat collision, Excel template/parser roundtrip without new order issuance. Physical scanner and real uploaded guest-list issuance are not part of automatic smoke tests.
+
+Rollback: deactivate only the new console snippet; existing paid checkout and snippet126 unchanged. Issued native QR tickets remain valid unless revoked through authorized existing invalidation/order APIs. Package URL is no longer served by deactivated console. No destructive order/ticket cleanup. Archive excludes guest names, QR values and bearer links.
