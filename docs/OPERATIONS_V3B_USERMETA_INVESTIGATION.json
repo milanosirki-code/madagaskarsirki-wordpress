@@ -1,0 +1,98 @@
+{
+  "checked_at": "2026-10-06",
+  "scope": "Operations Phase3B usermeta fingerprint investigation",
+  "conclusion": {
+    "exact_changed_meta_key": "UNRECOVERABLE_FROM_AGGREGATE_BASELINE",
+    "attributable_to_pr158": "NO_EVIDENCE",
+    "business_domain_side_effect": "NOT_OBSERVED",
+    "rollback_usermeta": "DO_NOT_PERFORM"
+  },
+  "historical_fingerprints": [
+    {
+      "phase": "Operations Phase2",
+      "before": "0eed5905ad52343084d26133ce18efc8e03fa542fc9b98d8194ea998196251ba",
+      "after": "0eed5905ad52343084d26133ce18efc8e03fa542fc9b98d8194ea998196251ba",
+      "count": 118,
+      "stable_within_phase": true
+    },
+    {
+      "phase": "Operations Phase3A",
+      "before": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2",
+      "after": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2",
+      "count": 118,
+      "stable_within_phase": true
+    },
+    {
+      "phase": "Operations Phase3B post-pilot",
+      "before": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2",
+      "after": "025f9a82e86711c7cd86d07dfb3f3efac061d7b642086bd91f52d0156bb0da5f",
+      "count": 118,
+      "later_snapshot_stable": true
+    }
+  ],
+  "inference": "The table hash changed between earlier phase observation windows before the Phase3B pilot as well as across the wider Phase3B authenticated-read window. Therefore wp_usermeta is not a reliable strict business-domain invariant without key-level baseline data.",
+  "current_key_level_read_only_audit": {
+    "raw_values_exported": false,
+    "technical_keys_observed": [
+      "session_tokens",
+      "_application_passwords",
+      "_last_login",
+      "wc_last_active",
+      "wp_user-settings",
+      "wp_user-settings-time"
+    ],
+    "note": "Only meta_key, row count and hashes of values were inspected; private raw meta_value content was not exported."
+  },
+  "pr158_source_audit": {
+    "changed_runtime_files": [
+      "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php",
+      "wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php"
+    ],
+    "usermeta_write_paths_found": false,
+    "searched_patterns": [
+      "update_user_meta",
+      "add_user_meta",
+      "delete_user_meta",
+      "$wpdb->usermeta",
+      "direct INSERT/UPDATE usermeta"
+    ]
+  },
+  "verified_business_effects": {
+    "authorized_task_metadata_changes_only": [
+      109,
+      118
+    ],
+    "due_writes": 0,
+    "owner_writes": 0,
+    "program_status_writes": 0,
+    "other_task_writes": 0,
+    "external_messages": 0,
+    "guarded_get_domain_writes": 0,
+    "health": "16/16",
+    "code_error": 0
+  },
+  "future_fingerprint_policy": {
+    "strict_business_domain": [
+      "mmc_programs",
+      "mmc_tasks",
+      "mmc_operation_plans",
+      "mmc_operation_checklist",
+      "mmc_operation_schedule",
+      "mmc_events",
+      "mmc_sessions",
+      "mmc_program_resources",
+      "mmc_finance_entries",
+      "mmc_sales_ledger",
+      "mmc_sales_mappings",
+      "mck_campaigns",
+      "mck_comments",
+      "mck_draws",
+      "mck_redraw_audit",
+      "mmc_kommo_profiles"
+    ],
+    "volatile_technical": [
+      "wp_usermeta"
+    ],
+    "rule": "Volatile technical tables are not merge blockers based on whole-table aggregate hash alone. If monitored, use sanitized key-level count/hash baselines and never archive private raw values."
+  }
+}
