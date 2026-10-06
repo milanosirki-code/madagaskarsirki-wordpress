@@ -15,26 +15,44 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             return preg_match( '/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $raw ) ? $raw : '';
         }
 
+        public static function adapt($row) {
+            if(!is_array($row)){return array();}
+            if(!isset($row['cities']) || !is_array($row['cities'])){
+                $row['cities']=array();
+                if(!empty($row['province'])){
+                    $p=is_array($row['pricing']??null)?array_intersect_key($row['pricing'],array('adult_campaign'=>1,'child_campaign'=>1)):array();
+                    $row['cities'][self::normalize($row['province'])]=array('province'=>$row['province'],'active'=>true,'end_date'=>$row['end_date']??'','pricing'=>$p,'legacy'=>true);
+                    $row['end_date']='';
+                }
+            }
+            unset($row['province'],$row['pricing']);
+            $row['schema_version']=2;
+            return $row;
+        }
         public static function registry() {
-            $rows = get_option( self::OPTION, array() );
-            return is_array( $rows ) ? $rows : array();
+            $rows=get_option(self::OPTION,array());
+            if(!is_array($rows)){return array();}
+            foreach($rows as $key=>$row){$rows[$key]=self::adapt($row);}
+            return $rows;
         }
 
-        public static function resolve( $raw, $events, $registry, $today ) {
-            $key = self::normalize( $raw );
-            if ( ! $key ) { return null; }
-            if ( isset( $registry[ $key ] ) ) {
-                $row = $registry[ $key ];
-                if ( ! is_array( $row ) || empty( $row['active'] ) || empty( $row['province'] ) ||
-                    ( ! empty( $row['end_date'] ) && $row['end_date'] < $today ) ) { return null; }
-                return array( 'key'=>$key, 'name'=>(string) ( $row['name'] ?? '' ), 'province'=>(string)$row['province'], 'test_only'=>false, 'pricing'=>is_array($row['pricing']??null)?$row['pricing']:array() );
-            }
-            // TEST codes are demonstration codes, never real discount authority.
-            foreach ( $events as $event ) {
-                $province = (string) $event->province_name;
-                if ( 'test-' . self::normalize( $province ) === $key ) {
-                    return array( 'key'=>$key, 'name'=>'Test Kurumu', 'province'=>$province, 'test_only'=>true, 'pricing'=>array() );
+        public static function resolve($raw,$events,$registry,$today) {
+            $key=self::normalize($raw);
+            if(!$key){return null;}
+            if(isset($registry[$key])){
+                $row=self::adapt($registry[$key]);
+                if(empty($row['active']) || (!empty($row['end_date']) && $row['end_date']<$today)){return null;}
+                $cities=array();
+                foreach($row['cities'] as $city){
+                    if(!is_array($city) || empty($city['active']) || empty($city['province']) || (!empty($city['end_date']) && $city['end_date']<$today)){continue;}
+                    $cities[self::normalize($city['province'])]=$city;
                 }
+                if(!$cities){return null;}
+                return array('key'=>$key,'name'=>(string)($row['name']??''),'province'=>implode(' / ',array_column($cities,'province')),'cities'=>$cities,'test_only'=>false);
+            }
+            foreach($events as $event){
+                $province=(string)$event->province_name;
+                if('test-'.self::normalize($province)===$key){return array('key'=>$key,'name'=>'Test Kurumu','province'=>$province,'test_only'=>true,'pricing'=>array());}
             }
             return null;
         }
@@ -49,7 +67,15 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $result = array();
             $now = current_time( 'mysql', true );
             foreach ( $events as $event ) {
-                if ( 'onsale' !== (string)$event->status || self::normalize( (string)$event->province_name ) !== self::normalize( $campaign['province'] ) ) { continue; }
+                if('onsale' !== (string)$event->status){continue;}
+                $city_key=self::normalize((string)$event->province_name);
+                if(!empty($campaign['test_only'])){
+                    if($city_key!==self::normalize($campaign['province'])){continue;}
+                    $city=array('pricing'=>array());
+                }else{
+                    if(!isset($campaign['cities'][$city_key])){continue;}
+                    $city=$campaign['cities'][$city_key];
+                }
                 $sessions = array();
                 foreach ( (array) MDG_Sessions::by_event( $event->id ) as $s ) {
                     if ( 'onsale' !== (string)$s->status || empty( $s->start_at ) || (string)$s->start_at < $now || empty( $s->wc_product_id ) ) { continue; }
@@ -70,12 +96,12 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         $regular=(float)$price;
                         $effective=(float)$price;
                         if ( empty($campaign['test_only']) ) {
-                            $pricing=is_array($campaign['pricing']??null)?$campaign['pricing']:array();
+                            $pricing=is_array($city['pricing']??null)?$city['pricing']:array();
                             $campaign_key=$role.'_campaign';
                             if(isset($pricing[$campaign_key]) && is_numeric($pricing[$campaign_key]) && (float)$pricing[$campaign_key]>0){
                                 // Kampanya hiçbir zaman canlı normal fiyattan daha pahalı olamaz.
                                 $effective=min($regular,(float)$pricing[$campaign_key]);
-                            } elseif($role==='adult' && (int)$event->id===12 && self::normalize((string)$event->province_name)==='denizli'){
+                            } elseif(!empty($city['legacy']) && $role==='adult' && (int)$event->id===12 && self::normalize((string)$event->province_name)==='denizli'){
                                 // Mevcut Denizli kurumsal kampanyalarının eski davranışını koru.
                                 $effective=min($regular,475.0);
                             }
@@ -492,66 +518,56 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             add_submenu_page('mmc-dashboard','Okul / Kurumsal Kampanyalar','Okul Kampanyaları','manage_woocommerce',self::ADMIN,array(__CLASS__,'admin_page'));
         }
 
+        public static function admin_form($key,$op) {
+            echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';
+            echo '<input type="hidden" name="action" value="mdg_corporate_campaign_update"><input type="hidden" name="code" value="'.esc_attr($key).'"><input type="hidden" name="op" value="'.esc_attr($op).'">';
+            wp_nonce_field(self::ADMIN);
+        }
+        public static function city_fields($provinces,$city=array(),$fixed=false) {
+            $p=$city['pricing']??array(); ?>
+            <p><label>İl <select name="province" required <?php echo $fixed?'disabled':''; ?>><?php foreach($provinces as $name): ?><option <?php selected($city['province']??'',$name); ?> value="<?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></option><?php endforeach; ?></select></label><?php if($fixed): ?><input type="hidden" name="province" value="<?php echo esc_attr($city['province']); ?>"><?php endif; ?></p>
+            <p>Normal fiyat: <strong>Programdan otomatik</strong></p>
+            <p><label>Yetişkin indirimli fiyat <input type="number" name="adult_campaign" min="0.01" step="0.01" required value="<?php echo esc_attr($p['adult_campaign']??''); ?>"></label> TL</p>
+            <p><label>Çocuk indirimli fiyat <input type="number" name="child_campaign" min="0.01" step="0.01" required value="<?php echo esc_attr($p['child_campaign']??''); ?>"></label> TL</p>
+            <p><label>İl son geçerlilik tarihi <input type="date" name="end_date" value="<?php echo esc_attr($city['end_date']??''); ?>"></label></p>
+            <?php
+        }
         public static function admin_page() {
             if(!current_user_can('manage_woocommerce')){return;}
-            $provinces=class_exists('MDG_Venues') ? MDG_Venues::provinces() : array();
-            $registry=self::registry();
-            $edit_key=isset($_GET['edit'])?self::normalize(sanitize_text_field(wp_unslash($_GET['edit']))):'';
-            $editing=$edit_key!=='' && isset($registry[$edit_key]) ? $registry[$edit_key] : null;
-            ?>
+            $provinces=class_exists('MDG_Venues')?MDG_Venues::provinces():array();
+            $registry=self::registry(); $key=self::normalize(self::input($_GET,'edit')); $editing=$registry[$key]??null; ?>
             <div class="wrap"><h1>Okul / Kurumsal Kampanyalar</h1>
-            <p>Okul ve kurumlara özel kampanya kodlarını ve indirimli fiyatları buradan yönetin. <strong>Normal bilet fiyatı ilgili program/seanstaki güncel bilet fiyatından otomatik alınır.</strong> İndirimli fiyat yalnız ilgili kampanya koduyla uygulanır. Ücretsiz çocuk kuralı mevcut kampanya akışındaki gibi korunur.</p>
-            <?php if(isset($_GET['saved'])): ?><div class="notice notice-success"><p>Kampanya kodu kaydedildi.</p></div><?php endif; ?>
-            <?php if(isset($_GET['updated'])): ?><div class="notice notice-success"><p>Kampanya ve fiyatları güncellendi.</p></div><?php endif; ?>
-
-            <?php if($editing): $p=is_array($editing['pricing']??null)?$editing['pricing']:array(); ?>
-            <div class="card" style="max-width:980px;padding:20px;margin:20px 0">
-              <h2><?php echo esc_html(strtoupper($edit_key)); ?> kampanyasını düzenle</h2>
-              <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-              <input type="hidden" name="action" value="mdg_corporate_campaign_update">
-              <input type="hidden" name="code" value="<?php echo esc_attr($edit_key); ?>">
-              <?php wp_nonce_field(self::ADMIN); ?>
-              <table class="form-table"><tbody>
-                <tr><th><label for="mdg-name-edit">Kampanya / kurum adı</label></th><td><input id="mdg-name-edit" class="regular-text" name="name" required maxlength="120" value="<?php echo esc_attr($editing['name']??''); ?>"></td></tr>
-                <tr><th><label for="mdg-province-edit">İl</label></th><td><select id="mdg-province-edit" name="province" required><?php foreach($provinces as $name): ?><option value="<?php echo esc_attr($name); ?>" <?php selected($editing['province']??'',$name); ?>><?php echo esc_html($name); ?></option><?php endforeach; ?></select></td></tr>
-                <tr><th>Normal bilet fiyatı</th><td><strong>Programdan otomatik alınır.</strong><p class="description">Yetişkin ve çocuk normal fiyatlarını burada girmeyin. Sistem ilgili program/seanstaki güncel bilet fiyatını kullanır.</p></td></tr>
-                <tr><th><label for="mdg-adult-campaign-edit">Yetişkin indirimli fiyat</label></th><td><input id="mdg-adult-campaign-edit" type="number" step="0.01" min="0.01" name="adult_campaign" required value="<?php echo esc_attr($p['adult_campaign']??''); ?>"> TL</td></tr>
-                <tr><th><label for="mdg-child-campaign-edit">Çocuk indirimli fiyat</label></th><td><input id="mdg-child-campaign-edit" type="number" step="0.01" min="0.01" name="child_campaign" required value="<?php echo esc_attr($p['child_campaign']??''); ?>"> TL<p class="description">Ücretsiz çocuk hakkını aşan ücretli çocuklarda bu fiyat kullanılır. Canlı normal fiyat daha düşükse müşteri daha yüksek fiyatlandırılmaz.</p></td></tr>
-                <tr><th><label for="mdg-date-edit">Son geçerlilik günü</label></th><td><input id="mdg-date-edit" type="date" name="end_date" value="<?php echo esc_attr($editing['end_date']??''); ?>"></td></tr>
-              </tbody></table>
-              <p><button class="button button-primary" type="submit">Kampanya ve fiyatları güncelle</button> <a class="button" href="<?php echo esc_url(admin_url('admin.php?page='.self::ADMIN)); ?>">Vazgeç</a></p>
-              </form>
-            </div>
+            <p>Bir kampanya koduna birden fazla il bağlayabilirsiniz. Normal fiyat ilgili program / seans / WooCommerce biletinden canlı alınır. Yalnız indirimli fiyatları girin. Mevcut çocuk ve yaş kuralları korunur.</p>
+            <?php if(isset($_GET['saved'])||isset($_GET['updated'])): ?><div class="notice notice-success"><p>Kampanya kaydedildi.</p></div><?php endif; ?>
+            <?php if($editing): ?>
+            <h2><?php echo esc_html(strtoupper($key)); ?> — Kampanya bilgileri</h2>
+            <?php self::admin_form($key,'info'); ?>
+            <p><label>Kampanya adı <input name="name" class="regular-text" required maxlength="120" value="<?php echo esc_attr($editing['name']??''); ?>"></label></p>
+            <p>Kampanya kodu: <strong><?php echo esc_html(strtoupper($key)); ?></strong></p>
+            <p><label><input type="checkbox" name="active" value="1" <?php checked(!empty($editing['active'])); ?>> Aktif</label></p>
+            <p><label>Genel son geçerlilik tarihi <input type="date" name="end_date" value="<?php echo esc_attr($editing['end_date']??''); ?>"></label> Genel tarih ve il tarihi birlikte uygulanır.</p>
+            <button class="button button-primary">Kampanya bilgilerini kaydet</button></form>
+            <h2>Kampanyaya bağlı iller</h2>
+            <table class="widefat striped"><thead><tr><th>İl</th><th>Normal fiyat</th><th>Yetişkin indirimli fiyat</th><th>Çocuk indirimli fiyat</th><th>Son geçerlilik tarihi</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
+            <?php foreach($editing['cities'] as $ck=>$city): $p=$city['pricing']??array(); ?>
+            <tr><td><?php echo esc_html($city['province']); ?></td><td>Programdan otomatik</td><td><?php echo isset($p['adult_campaign'])?esc_html(number_format_i18n($p['adult_campaign'],2).' TL'):(!empty($city['legacy'])?'Mevcut fiyat kuralı korunuyor':'Tanımlanmadı'); ?></td><td><?php echo isset($p['child_campaign'])?esc_html(number_format_i18n($p['child_campaign'],2).' TL'):(!empty($city['legacy'])?'Canlı normal çocuk fiyatı':'Tanımlanmadı'); ?></td><td><?php echo esc_html($city['end_date']?:'Süresiz'); ?></td><td><?php echo !empty($city['active'])?'Aktif':'Pasif'; ?></td><td>
+            <a class="button" href="<?php echo esc_url(admin_url('admin.php?page='.self::ADMIN.'&edit='.rawurlencode($key).'&city='.rawurlencode($ck))); ?>">Düzenle</a>
+            <?php self::admin_form($key,'city_toggle'); ?><input type="hidden" name="province" value="<?php echo esc_attr($city['province']); ?>"><button class="button"><?php echo !empty($city['active'])?'Pasife Al':'Etkinleştir'; ?></button></form></td></tr>
+            <?php endforeach; ?></tbody></table>
+            <?php $ck=self::normalize(self::input($_GET,'city')); if(isset($editing['cities'][$ck])): ?>
+            <h2>İl düzenle — <?php echo esc_html($editing['cities'][$ck]['province']); ?></h2>
+            <?php self::admin_form($key,'city_edit'); self::city_fields($provinces,$editing['cities'][$ck],true); ?><button class="button button-primary">İl fiyatlarını kaydet</button></form>
             <?php endif; ?>
-
-            <div class="card" style="max-width:980px;padding:20px;margin:20px 0">
-            <h2>Yeni kampanya oluştur</h2>
-            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-            <input type="hidden" name="action" value="mdg_corporate_campaign_save"><?php wp_nonce_field(self::ADMIN); ?>
-            <table class="form-table"><tbody>
-              <tr><th><label>Kampanya / kurum adı</label></th><td><input class="regular-text" name="name" required maxlength="120"></td></tr>
-              <tr><th><label>Kampanya kodu</label></th><td><input name="code" required maxlength="80" placeholder="Örn. OKUL26"><p class="description">Büyük/küçük harf ve Türkçe harf farkı aranmaz. TEST- kodları denemeler için ayrılmıştır.</p></td></tr>
-              <tr><th><label>İl</label></th><td><select name="province" required><?php foreach($provinces as $name): ?><option value="<?php echo esc_attr($name); ?>"><?php echo esc_html($name); ?></option><?php endforeach; ?></select></td></tr>
-              <tr><th>Normal bilet fiyatı</th><td><strong>Programdan otomatik alınır.</strong><p class="description">Kampanya tanımlarken yalnız indirimli fiyatları girin.</p></td></tr>
-              <tr><th><label>Yetişkin indirimli fiyat</label></th><td><input type="number" step="0.01" min="0.01" name="adult_campaign" required> TL</td></tr>
-              <tr><th><label>Çocuk indirimli fiyat</label></th><td><input type="number" step="0.01" min="0.01" name="child_campaign" required> TL</td></tr>
-              <tr><th><label>Son geçerlilik günü</label></th><td><input type="date" name="end_date"></td></tr>
-            </tbody></table>
-            <p><button class="button button-primary" type="submit">Kampanyayı oluştur</button></p></form>
-            </div>
-
-            <h2>Tanımlı kampanyalar</h2><table class="widefat striped"><thead><tr><th>Kod</th><th>Kampanya</th><th>İl</th><th>Normal fiyat</th><th>Yetişkin indirimli</th><th>Çocuk indirimli</th><th>Son gün</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
-            <?php foreach($registry as $key=>$row): $p=is_array($row['pricing']??null)?$row['pricing']:array(); ?><tr>
-              <td><strong><?php echo esc_html(strtoupper($key)); ?></strong></td><td><?php echo esc_html($row['name']); ?></td><td><?php echo esc_html($row['province']); ?></td>
-              <td>Programdan otomatik</td>
-              <td><?php echo isset($p['adult_campaign'])?esc_html(number_format_i18n((float)$p['adult_campaign'],2).' TL'):'Tanımlanmadı'; ?></td>
-              <td><?php echo isset($p['child_campaign'])?esc_html(number_format_i18n((float)$p['child_campaign'],2).' TL'):'Tanımlanmadı'; ?></td>
-              <td><?php echo esc_html($row['end_date']?:'Süresiz'); ?></td><td><?php echo !empty($row['active'])?'Aktif':'Kapalı'; ?></td>
-              <td><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page='.self::ADMIN.'&edit='.rawurlencode($key))); ?>">Düzenle</a>
-              <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block;margin-left:6px"><input type="hidden" name="action" value="mdg_corporate_campaign_toggle"><input type="hidden" name="code" value="<?php echo esc_attr($key); ?>"><?php wp_nonce_field(self::ADMIN); ?><button class="button" type="submit"><?php echo !empty($row['active'])?'Durdur':'Etkinleştir'; ?></button></form></td></tr><?php endforeach; ?>
-            </tbody></table><h2>Otomatik test kodları</h2><p>Bu kodlar gerçek bilet üretmez; yalnız güncel satış programını denemeye yarar.</p><ul>
-            <?php $seen=array(); foreach(self::source_events() as $e): $key='test-'.self::normalize((string)$e->province_name); if(isset($seen[$key]))continue; $seen[$key]=true; ?><li><code><?php echo esc_html(strtoupper($key)); ?></code> — <?php echo esc_html($e->province_name); ?></li><?php endforeach; ?>
-            </ul></div>
+            <details id="mdg-add-city"><summary class="button" style="margin:20px 0">+ İl Ekle</summary>
+            <?php self::admin_form($key,'city_add'); self::city_fields($provinces); ?><p>Fiyatlar girilmeden yeni il kaydedilmez. Diğer illerin fiyatları değişmez.</p><button class="button button-primary">İli ekle</button></form></details>
+            <?php else: ?>
+            <h2>Yeni kampanya oluştur</h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mdg_corporate_campaign_save"><?php wp_nonce_field(self::ADMIN); ?>
+            <p><label>Kampanya adı <input name="name" required maxlength="120"></label></p><p><label>Kampanya kodu <input name="code" required maxlength="80" placeholder="Örn. OKUL26"></label></p>
+            <?php self::city_fields($provinces); ?><button class="button button-primary">Kampanyayı oluştur</button></form>
+            <?php endif; ?>
+            <h2>Tanımlı kampanyalar</h2><table class="widefat striped"><thead><tr><th>Kod</th><th>Kampanya</th><th>İller</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
+            <?php foreach($registry as $k=>$row): ?><tr><td><?php echo esc_html(strtoupper($k)); ?></td><td><?php echo esc_html($row['name']??''); ?></td><td><?php echo esc_html(implode(' / ',array_column($row['cities'],'province'))); ?></td><td><?php echo !empty($row['active'])?'Aktif':'Pasif'; ?></td><td><a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page='.self::ADMIN.'&edit='.rawurlencode($k))); ?>">Düzenle</a></td></tr><?php endforeach; ?></tbody></table>
+            <h2>Otomatik test kodları</h2><p>TEST- kodları yalnız hesaplama içindir; ödeme veya bilet oluşturmaz.</p></div>
             <?php
         }
 
@@ -571,30 +587,44 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $rows=self::registry();
             if(isset($rows[$key])){wp_die('Bu kod zaten tanımlı. Mevcut kodun Düzenle butonunu kullanın.');}
             if(count($rows)>=200){wp_die('En fazla 200 kurum kodu tanımlanabilir.');}
-            $rows[$key]=array('name'=>$name,'province'=>$province,'end_date'=>$date,'active'=>true,'pricing'=>$pricing);
+            $rows[$key]=array('name'=>$name,'end_date'=>'','active'=>true,'schema_version'=>2,'cities'=>array(self::normalize($province)=>array('province'=>$province,'end_date'=>$date,'active'=>true,'pricing'=>$pricing,'legacy'=>false)));
             update_option(self::OPTION,$rows,false);
             wp_safe_redirect(admin_url('admin.php?page='.self::ADMIN.'&saved=1')); exit;
         }
 
+        private static function valid_date($date) {
+            if($date===''){return true;}
+            $d=DateTimeImmutable::createFromFormat('!Y-m-d',$date);
+            return $d && $d->format('Y-m-d')===$date;
+        }
         public static function update() {
             if(!current_user_can('manage_woocommerce')){wp_die('Bu işlem için yetkiniz yok.');}
             check_admin_referer(self::ADMIN);
-            $key=self::normalize(self::input($_POST,'code'));
-            $rows=self::registry();
+            $key=self::normalize(self::input($_POST,'code')); $rows=self::registry();
             if(!$key || !isset($rows[$key])){wp_die('Kampanya kodu bulunamadı.');}
-            $name=self::input($_POST,'name'); $province=self::input($_POST,'province'); $date=self::input($_POST,'end_date');
-            $pricing=self::validate_pricing($_POST);
-            if(isset($pricing['error'])){wp_die(esc_html($pricing['error']));}
-            $provinces=class_exists('MDG_Venues') ? MDG_Venues::provinces() : array();
-            if(!$name || !in_array($province,$provinces,true)){wp_die('Kampanya adı veya il geçersiz.');}
-            if($date!=='') {
-                $d=DateTimeImmutable::createFromFormat('!Y-m-d',$date);
-                if(!$d || $d->format('Y-m-d')!==$date){wp_die('Son geçerlilik günü geçersiz.');}
+            $op=self::input($_POST,'op');
+            if($op==='info'){
+                $name=self::input($_POST,'name'); $date=self::input($_POST,'end_date');
+                if(!$name || !self::valid_date($date)){wp_die('Kampanya adı veya tarih geçersiz.');}
+                $rows[$key]['name']=$name; $rows[$key]['end_date']=$date; $rows[$key]['active']=self::input($_POST,'active')==='1';
+            }else{
+                $province=self::input($_POST,'province'); $ck=self::normalize($province);
+                $provinces=class_exists('MDG_Venues')?MDG_Venues::provinces():array();
+                if(!in_array($province,$provinces,true)){wp_die('İl geçersiz.');}
+                if($op==='city_toggle'){
+                    if(!isset($rows[$key]['cities'][$ck])){wp_die('İl bulunamadı.');}
+                    $rows[$key]['cities'][$ck]['active']=empty($rows[$key]['cities'][$ck]['active']);
+                }elseif($op==='city_add' || $op==='city_edit'){
+                    $exists=isset($rows[$key]['cities'][$ck]);
+                    if(($op==='city_add' && $exists)||($op==='city_edit' && !$exists)){wp_die('İl zaten bağlı veya düzenlenecek il bulunamadı.');}
+                    $pricing=self::validate_pricing($_POST); $date=self::input($_POST,'end_date');
+                    if(isset($pricing['error'])){wp_die(esc_html($pricing['error']));}
+                    if(!self::valid_date($date)){wp_die('Tarih geçersiz.');}
+                    $city=$exists?$rows[$key]['cities'][$ck]:array('province'=>$province,'active'=>true);
+                    $city['pricing']=$pricing; $city['end_date']=$date; $city['legacy']=false;
+                    $rows[$key]['cities'][$ck]=$city;
+                }else{wp_die('İşlem geçersiz.');}
             }
-            $rows[$key]['name']=$name;
-            $rows[$key]['province']=$province;
-            $rows[$key]['end_date']=$date;
-            $rows[$key]['pricing']=$pricing;
             update_option(self::OPTION,$rows,false);
             wp_safe_redirect(admin_url('admin.php?page='.self::ADMIN.'&updated=1&edit='.rawurlencode($key))); exit;
         }
