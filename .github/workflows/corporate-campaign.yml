@@ -1,0 +1,26 @@
+name: Corporate campaign contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  corporate-campaign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: php -l docs/code-snippets/mdg-corporate-campaigns.php
+      - run: php -l docs/code-snippets/mdg-campaign-sales-report.php
+      - run: php tests/corporate-invitation/dynamic-catalogue.php
+      - run: php tests/corporate-invitation/sales-report.php
+      - run: php tests/corporate-invitation/live-price-menu.php
+      - run: npm install --no-save jsdom@26
+      - run: node tests/corporate-invitation/age-ui.cjs
