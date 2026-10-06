@@ -185,6 +185,8 @@ class MMC_Operations_Service {
             'notes' => sanitize_textarea_field( $data['notes'] ?? '' ),
             'updated_at' => current_time( 'mysql' ),
         );
+        $timeline_check = self::validate_operation_timeline( $program_id, $payload );
+        if ( is_wp_error( $timeline_check ) ) { return $timeline_check; }
         $ok = $wpdb->update( $wpdb->prefix . 'mmc_operation_plans', $payload, array( 'program_id'=>$program_id ) );
         if ( false === $ok ) { return new WP_Error( 'mmc_ops_plan_update', 'Operasyon planı güncellenemedi.' ); }
 
@@ -571,8 +573,58 @@ class MMC_Operations_Service {
         $eligibility=self::operational_eligibility_state($program,$plan,$event,$first!==null);
         $owner=absint($program->owner_user_id??0);
         $valid_owner=$owner && get_user_by('id',$owner)?$owner:null;
-        return array('program'=>$program,'plan'=>$plan,'event'=>$event,'first_session'=>$first,'last_session_end'=>$last_end,
+        return array('program'=>$program,'plan'=>$plan,'event'=>$event,'first_session'=>$first,'last_session_start'=>$last_start,'last_session_end'=>$last_end,
             'program_date'=>$eligibility['date'],'eligible'=>$eligibility['eligible'],'eligibility'=>$eligibility,'owner_user_id'=>$valid_owner);
+    }
+
+    public static function operation_timeline_fields() {
+        return array(
+            'departure_at'=>'Hareket',
+            'venue_entry_at'=>'Salon Giriş',
+            'setup_start_at'=>'Kurulum Başlangıç',
+            'rehearsal_at'=>'Prova',
+            'doors_open_at'=>'Kapı Açılış',
+            'teardown_end_at'=>'Söküm Bitiş',
+            'return_at'=>'Dönüş / Hareket',
+        );
+    }
+
+    /** Read-only guided timeline: never writes plan/task state or invents unsupported timestamps. */
+    public static function guided_timeline_preview( $program_id ) {
+        $context=self::task_automation_context($program_id);$plan=$context['plan'];$event=$context['event'];
+        $out=array('program_id'=>absint($program_id),'eligible'=>$context['eligible'],'first_session'=>$context['first_session']??null,
+            'last_session_start'=>$context['last_session_start']??null,'fields'=>array());
+        foreach(self::operation_timeline_fields() as$field=>$label){
+            $current=$plan?self::canonical_timestamp($plan->$field??null):null;$suggested=null;$source=null;
+            if('doors_open_at'===$field && !$current){
+                $minutes=$event->door_open_minutes??null;$first=self::canonical_timestamp($context['first_session']??null);
+                if($first && (is_int($minutes)||(is_string($minutes)&&preg_match('/^\d+$/',$minutes))) && (int)$minutes>=0){
+                    $suggested=(new DateTimeImmutable($first,wp_timezone()))->modify('-'.(int)$minutes.' minutes')->format('Y-m-d H:i:s');
+                    $source='event.first_session_minus_door_open_minutes';
+                }
+            }
+            $out['fields'][$field]=array('label'=>$label,'current'=>$current,'suggested'=>$suggested,'source'=>$source,
+                'manager_required'=>!$current&&!$suggested);
+        }
+        return $out;
+    }
+
+    /** Validate only timestamps that are actually present; partial plans remain allowed. */
+    public static function validate_operation_timeline( $program_id, $payload ) {
+        $values=array();foreach(array_keys(self::operation_timeline_fields()) as$field){$values[$field]=self::canonical_timestamp($payload[$field]??null);}
+        $pairs=array(
+            array('departure_at','venue_entry_at','Hareket, salon girişinden sonra olamaz.'),
+            array('venue_entry_at','setup_start_at','Salon giriş, kurulum başlangıcından sonra olamaz.'),
+            array('setup_start_at','rehearsal_at','Kurulum başlangıcı, provadan sonra olamaz.'),
+            array('rehearsal_at','doors_open_at','Prova, kapı açılışından sonra olamaz.'),
+            array('teardown_end_at','return_at','Söküm bitişi, dönüş/hareket saatinden sonra olamaz.'),
+        );
+        foreach($pairs as$rule){if($values[$rule[0]]&&$values[$rule[1]]&&$values[$rule[0]]>$values[$rule[1]]){return new WP_Error('mmc_ops_timeline_order',$rule[2]);}}
+        $context=self::task_automation_context($program_id);$first=self::canonical_timestamp($context['first_session']??null);$last=self::canonical_timestamp($context['last_session_start']??null);
+        if($values['doors_open_at']&&$first&&$values['doors_open_at']>$first){return new WP_Error('mmc_ops_timeline_doors','Kapı açılışı ilk seans başlangıcından sonra olamaz.');}
+        if($values['teardown_end_at']&&$last&&$values['teardown_end_at']<$last){return new WP_Error('mmc_ops_timeline_teardown','Söküm bitişi son seans başlangıcından önce olamaz.');}
+        if($values['return_at']&&$last&&$values['return_at']<$last){return new WP_Error('mmc_ops_timeline_return','Dönüş/hareket saati son seans başlangıcından önce olamaz.');}
+        return true;
     }
 
     public static function resolve_task_deadline( $key, $context ) {
