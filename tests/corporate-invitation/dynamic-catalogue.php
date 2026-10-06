@@ -65,6 +65,34 @@ check($c::normalize(array('bad'))==='','array code rejected');
 event_fixture(12,'Denizli','2026-10-08 14:30:00');
 event_fixture(10,'İzmir','2026-11-08 09:00:00',600);
 event_fixture(23,'Manisa','2026-10-18 09:00:00',500,true);
+event_fixture(40,'Ankara','2026-10-10 09:00:00',500);
+event_fixture(41,'Eskişehir','2026-10-11 09:00:00',500);
+$multi_registry=array(
+ 'bms'=>array(
+  'name'=>'Büro Memursen','active'=>true,'end_date'=>'','schema_version'=>2,
+  'cities'=>array(
+   'denizli'=>array('province'=>'Denizli','active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250)),
+   'ankara'=>array('province'=>'Ankara','active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250)),
+   'eskisehir'=>array('province'=>'Eskişehir','active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>490,'child_campaign'=>250)),
+  )
+ )
+);
+$multi=$c::resolve('BMS',$event_rows,$multi_registry,'2026-10-05');
+check($multi['name']==='Büro Memursen' && count($multi['cities'])===3,'one code resolves three active provinces');
+$multi_cat=$c::catalogue($multi,$event_rows);
+check(isset($multi_cat[12],$multi_cat[40],$multi_cat[41]) && !isset($multi_cat[10],$multi_cat[23]),'multi-province catalogue includes only configured provinces');
+check($multi_cat[40]['sessions'][400]['types']['adult']['price']===475.0,'Ankara city-specific campaign price');
+check($multi_cat[41]['sessions'][410]['types']['adult']['price']===490.0,'Eskisehir city-specific campaign price');
+$multi_registry['bms']['cities']['ankara']['active']=false;
+$multi=$c::resolve('bms',$event_rows,$multi_registry,'2026-10-05');
+check(!isset($c::catalogue($multi,$event_rows)[40]) && isset($c::catalogue($multi,$event_rows)[41]),'disabled city hidden without disabling campaign');
+$multi_registry['bms']['cities']['ankara']['active']=true;
+$multi_registry['bms']['cities']['eskisehir']['end_date']='2026-10-04';
+$multi=$c::resolve('bms',$event_rows,$multi_registry,'2026-10-05');
+check(!isset($c::catalogue($multi,$event_rows)[41]) && isset($c::catalogue($multi,$event_rows)[40]),'expired city hidden independently');
+$legacy_row=array('name'=>'Legacy','province'=>'Denizli','active'=>true,'end_date'=>'2026-10-10','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250));
+$adapted=$c::adapt($legacy_row);
+check(($adapted['schema_version']??0)===2 && isset($adapted['cities']['denizli']) && !isset($adapted['province'],$adapted['pricing']),'legacy single-province row adapts to schema v2');
 $campaign=$c::resolve('test-denizli',$event_rows,array(),'2026-10-05');
 $cat=$c::catalogue($campaign,$event_rows);
 check(array_keys($cat)===array(12),'code reveals only its city');
@@ -179,7 +207,7 @@ check($c::quote($realcat,'120','2',array('5','7','8','9'))['total']===950.0,'two
 check($c::quote($realcat,'120','1',array('5','7','8'))['total']===725.0,'third child regular 250');
 check($c::quote($realcat,'120','1',array('13','5','7'))['total']===950.0,'13+ uses campaign adult rate');
 check($realcat[30]['sessions'][300]['types']['adult']['price']===500.0,'another Denizli program not discounted');
-$iz=array('key'=>'iz','province'=>'İzmir','test_only'=>false);check($c::catalogue($iz,$event_rows)[10]['sessions'][100]['types']['adult']['price']===600.0,'Izmir campaign remains 600');
+$iz=array('key'=>'iz','province'=>'İzmir','cities'=>array('izmir'=>array('province'=>'İzmir','active'=>true,'end_date'=>'','pricing'=>array())),'test_only'=>false);check($c::catalogue($iz,$event_rows)[10]['sessions'][100]['types']['adult']['price']===600.0,'Izmir campaign remains 600');
 $products[1202]->price='450';check($c::catalogue($real,$event_rows)[12]['sessions'][120]['types']['adult']['price']===450.0,'campaign never exceeds lower current price');$products[1202]->price='500';
 echo "All $count campaign checks passed.\n";
 
