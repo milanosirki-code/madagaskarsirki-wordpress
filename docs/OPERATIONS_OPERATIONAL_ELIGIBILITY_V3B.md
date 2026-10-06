@@ -1,0 +1,50 @@
+# Operations Phase3B — derived eligibility and metadata-only pilot
+
+Issue157 / branch codex/operations-operational-eligibility-v3b. Phase3A PR156 merged and Issue155 completed; merged main recorded in project state and Drive closure. Existing lifecycle is mutually exclusive; sales_open must not be changed to operations for automation.
+
+## Eligibility
+Existing lifecycle allowlist: venue_confirmed, event_setup, sales_prep, sales_open, promotion, operations, show_day. No newstatus/schema; preparation/region/venue research/allocation stages and financial/completed/cancelled excluded. Real existing plan and canonical event with at least one valid non-cancelled session required. Today/future canonical event_date takes precedence over planned_date; no session-date fallback; conflicting event/program dates reported as drift. Derived helper and atomic SQL guards use same allowlist/date/plan/session conditions. No program status updates. Readiness uses bounded aggregate query and displays existing lifecycle plus OPERASYON KAPSAMINDA; show_day display still computed separately.
+
+## Deadlines / pilot scope
+Plan template uses only real departure_at→venue_entry_at; no first-session fallback. Without operation timestamps due proposalNULL and DUE_ANCHOR_INSUFFICIENT. Other13-template policies unchanged; no T-minus policy. Due policy version3, existing manual/auto provenance retained. Valid owner proposal available separately; no actual owner/due Apply authorized here.
+
+Pilot only program10 PRG-2026-DEN-PAMUKK-001 and program11 PRG-2026-ANK-MAMAK-001, exact legacy planning task. Read preview first; explicit selected task metadata-only adoption via existing service lock/InnoDB transaction/snapshot/byte CAS/duplicate guard and capability+nonce. Separate read request after adoption shows due/owner proposals. No initialize/ensure or deadline Apply called. Pilot service cannot write title/status/priority/due/owner/notes/created/updated/completed timestamps. All other program/task hashes must remain unchanged. No new audit table; metadata adopted_at/adoption_policy plus file evidence records exact allowed changes.
+
+## Safety / verification
+248 isolated assertions incl previous209; real MySQL fixtures validate sales lifecycle/adoption/idempotency/metadata-only/no-deadline/owner proposal/missing-session guards. CI before exact-hash-gated deploy of existing service/admin only, no migration. Guarded GET all13 previews, nine future program contexts, current status/timestamp completeness, AI read callbacks, admin render, SQL write/provider guards.22 domain tables fingerprinted across source deploy. Pilot before/after compares each task/column; only2 pilot metadata fields may differ; all other domain hashes must remain equal. Actual due/owner/status/other-program writes0.18 cancelled-program tasks remain read-only inventory; no cleanup. WhatsApp/email/SMS/Kommo message0.
+
+## Rollback / records
+Keep exact Phase3A service/admin sources and source-hash snapshots. Atomic code restore and opcache invalidation on failed verification. If pilot metadata differs beyond allowance, transaction rollback/CAS restore exact pilot metadata only; do not alter other domains. GitHub/Drive source/tests/policy/pilots/preview/before-after/deploy/rollback/project state, raw-byte/hash read-back required. Manager next decision: pilot owner Apply and actual operation timestamps. Final deployment/pilot evidence appended after verification; no blind adoption of nine future programs.
+
+## Verified pre-write preview
+Live SELECT-only candidate policy preview:9 eligible future programs (1,4,5,6,7,10,11,12,13), no date drift; all7 plan timestampsNULL, valid owner13/13. Pilot10 task109 and pilot11 task118 exact planning title, empty metadata, dueNULL/ownerNULL. Simulated adoption proposes owner281776200 but dueNULL/DUE_ANCHOR_INSUFFICIENT for both. No production adoption/backfill yet. Full safe preview and task fingerprints in OPERATIONS_V3B_PILOT_PREVIEW.json; nonces not archived.
+
+
+## Controlled production completion — 2026-10-06
+
+Candidate 062cfa8115f103ce7e1d3dbb2859952013691ce5. All eight original CI jobs had runner_id=0, no steps and cancellation before execution; retry attempt2 is8/8GREEN. No code/test correction was required. Operations CI passed248 isolated and55 real-MySQL assertions. Phase3A merged main c56260ca6dfc5da98abeeb612bc1d64e99da537c remains main; PR158 must not be merged in this stage.
+
+Fresh live preflight matched Phase3A service/admin hashes. Exact rollback copies retained locally and on host. Two-file deployment completed without schema migration; live service fc64f301cb4af1c9d6e0f6126b7796af1ecd38a2976e75d17a2ea47289d66fbd and admin 7f9a3aa7e689349c89090be2a84933cb0252bf4e398e04780f9f597f5f7d3db9 match candidate bytes. PHP syntax/CI passed. All22 monitored table hashes matched across source deployment before adoption.
+
+Fresh pilot preview verified task109/program10 and task118/program11: exact template, unique matching task, ADOPTABLE, operationally eligible, no custom metadata blocker. Separate explicit authenticated POSTs adopted only these two selected tasks. Both raw metadata BEFORE=NULL. AFTER contains source_key=operations_v1.plan, system_generated=true, phase=pre_departure, template_version=1, adopted_from_legacy=true, adoption_policy=operations_v3_exact_title, adopted_at=2026-10-06 05:03:04 and05:03:05 respectively (WordPress local time). Full-row comparisons show metadata is the only changed column, including unchanged updated_at. Second adoption for both returns adopted=0 and no changed columns.
+
+Separate post-adoption GET: current due=NULL, proposed due=NULL, due_source=NULL, DUE_ANCHOR_INSUFFICIENT, would_update_due=false for both. Current owner=NULL, proposed owner=281776200, would_update_owner=true for both. No due/owner Apply executed. Both program status values remain sales_open. All other139 task full hashes match. No other program adoption/update, cancelled/past task update or external message. Other seven future programs only previewed;18 cancelled-program open tasks untouched. Three native Operations read abilities succeed with guarded no-write assertions; missing-plan fixture and admin renders preserve read-only behavior.
+
+Final health16/16, critical0/warning0. Code Snippets126total/46active/code_error0. Guarded GET PHP warnings/fatals0, blocked domain writes0, full before/after GET snapshots match. Diagnostic117 original code restored and inactive with read-back. No rollback was needed.
+
+### Additional broad fingerprint exception — not concealed
+
+Across the wider adoption observation window, named business tables match except the two authorized task metadata fields. The additional usermeta table (118 rows) has a hash difference:171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2→025f9a82e86711c7cd86d07dfb3f3efac061d7b642086bd91f52d0156bb0da5f. This includes separate authenticated health/API reads between snapshots. Exact changed meta key/cause cannot be proven from the aggregate-only baseline. Source audit finds no user-meta write path in the changed Operations files, guarded callbacks write0, and later snapshots remain stable. Authentication/technical metadata is a hypothesis, not a confirmed classification. No private values exported and no authentication/profile metadata reset performed. Do not claim that all22 tables match or that this exception is resolved. PR158 stays draft pending this verification exception; no merge, Issue157 remains open. This is a remaining verification limitation, separate from verified pilot metadata-only changes.
+
+Detailed sanitized evidence: OPERATIONS_V3B_DEPLOYMENT_ADOPTION.json. Rollback: restore exact Phase3A service/admin backups atomically and invalidate opcache if required; pilot metadata restoration would require exact after-value CAS for tasks109/118 only and preserve all other columns. Do not restore unrelated user metadata blindly. Next manager decisions: owner Apply and actual operation timestamps, after resolving the additional fingerprint exception.
+
+
+### Usermeta fingerprint investigation closure — 2026-10-06
+
+The Phase3B usermeta exception was investigated without exporting raw private values. Historical evidence proves the whole-table usermeta hash is not stable across unrelated Operations observation windows: Phase2 was internally stable at `0eed5905...`, while Phase3A was internally stable at `171fac17...` before the Phase3B pilot. The Phase3B wider authenticated-read window later observed `025f9a82...`, always with 118 rows. The old baselines stored only one aggregate table hash, so the exact historical changed meta_key is unrecoverable.
+
+A current read-only key-level inventory confirms volatile WordPress/admin/auth keys including `session_tokens`, `_application_passwords`, `_last_login`, `wc_last_active`, `wp_user-settings`, and `wp_user-settings-time`. Raw meta values were not exported. PR158 runtime diffs were separately audited and contain no `update_user_meta`, `add_user_meta`, `delete_user_meta`, `$wpdb->usermeta`, or direct usermeta SQL write path.
+
+Conclusion: `EXACT_KEY_CAUSE=UNRECOVERABLE_FROM_AGGREGATE_BASELINE`; `ATTRIBUTABLE_TO_PR158=NO_EVIDENCE`; `BUSINESS_DOMAIN_SIDE_EFFECT=NOT_OBSERVED`. Do not reset or roll back usermeta. Future verification treats strict business-domain tables separately from volatile technical usermeta; if usermeta is observed, use sanitized meta_key-level count/hash baselines rather than whole-table equality. Detailed sanitized evidence: `docs/OPERATIONS_V3B_USERMETA_INVESTIGATION.json`.
+
+This closes the verification exception as a fingerprint-scope limitation rather than an Operations defect. PR158 can proceed through normal final CI/review/merge while retaining the explicit limitation that the historical exact changed usermeta key cannot be reconstructed.

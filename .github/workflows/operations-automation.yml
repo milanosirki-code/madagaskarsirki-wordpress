@@ -33,11 +33,16 @@ jobs:
       - run: php tests/operations/automation-v1.php
       - run: php tests/operations/automation-v2.php
       - run: php tests/operations/adoption-v3.php
+      - run: php tests/operations/eligibility-v3b.php
       - name: Real SQL in ephemeral database only
         run: php tests/operations/automation-v2-mysql.php
         env:
           OPS_FIXTURE_DB: operations_fixture
       - name: Real adoption SQL in ephemeral database only
         run: php tests/operations/adoption-v3-mysql.php
+        env:
+          OPS_FIXTURE_DB: operations_fixture
+      - name: Real operational eligibility and pilot SQL
+        run: php tests/operations/eligibility-v3b-mysql.php
         env:
           OPS_FIXTURE_DB: operations_fixture

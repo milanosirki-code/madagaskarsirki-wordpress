@@ -1,0 +1,1153 @@
+{
+  "checked_at": "2026-10-06",
+  "candidate": "062cfa8115f103ce7e1d3dbb2859952013691ce5",
+  "ci_original": [
+    {
+      "run_id": 37362928244,
+      "name": "MMC live reconciliation checks",
+      "jobs": [
+        {
+          "id": 111941563575,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928228,
+      "name": "Madagaskar Plugins CI",
+      "jobs": [
+        {
+          "id": 111941563764,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928345,
+      "name": "Read-only integrity contract",
+      "jobs": [
+        {
+          "id": 111941564206,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928227,
+      "name": "Kommo source HTTP contract",
+      "jobs": [
+        {
+          "id": 111941563203,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928180,
+      "name": "Raffle replacement contract",
+      "jobs": [
+        {
+          "id": 111941563197,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928186,
+      "name": "Changed PHP Syntax",
+      "jobs": [
+        {
+          "id": 111941563248,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928249,
+      "name": "Production Source Archive",
+      "jobs": [
+        {
+          "id": 111941563874,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    },
+    {
+      "run_id": 37362928190,
+      "name": "Operations automation contract",
+      "jobs": [
+        {
+          "id": 111941563318,
+          "conclusion": "cancelled",
+          "runner_id": 0,
+          "steps": 0
+        }
+      ]
+    }
+  ],
+  "ci_retry": [
+    {
+      "id": 37362928244,
+      "name": "MMC live reconciliation checks",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928228,
+      "name": "Madagaskar Plugins CI",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928345,
+      "name": "Read-only integrity contract",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928227,
+      "name": "Kommo source HTTP contract",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928180,
+      "name": "Raffle replacement contract",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928186,
+      "name": "Changed PHP Syntax",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928249,
+      "name": "Production Source Archive",
+      "run_attempt": 2,
+      "conclusion": "success"
+    },
+    {
+      "id": 37362928190,
+      "name": "Operations automation contract",
+      "run_attempt": 2,
+      "conclusion": "success"
+    }
+  ],
+  "health": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 16,
+    "info": 0
+  },
+  "snippets": {
+    "total": 126,
+    "active": 46,
+    "code_error": 0,
+    "diagnostic117_restored": true
+  },
+  "final_get": {
+    "files": {
+      "service": {
+        "sha256": "fc64f301cb4af1c9d6e0f6126b7796af1ecd38a2976e75d17a2ea47289d66fbd"
+      },
+      "admin": {
+        "sha256": "7f9a3aa7e689349c89090be2a84933cb0252bf4e398e04780f9f597f5f7d3db9"
+      }
+    },
+    "domain_unchanged": true,
+    "warnings": [],
+    "blocked_writes": [],
+    "abilities": {
+      "2": {
+        "operations-plan-get": {
+          "legacy_contract_sha256": "27061ca98d28e0e3c6bba7cefe65cc7c15420a1546cffba86d54ea6e222121c7",
+          "success": true,
+          "sha256": "89984ad8d888a6594d8ef510824628b3a63089da641ee05ec79c5c4b17556fb0",
+          "error": null
+        },
+        "operations-summary": {
+          "legacy_contract_sha256": "740322b86dfe2d83359408b74dd2db742e9b3ffb07b5a9d9c44b88842e810dc9",
+          "success": true,
+          "sha256": "5ec39a0c3119c4398825dd908f6d27b6fa6d1eb2ad6b2cd0fde49c59d13cc970",
+          "error": null
+        },
+        "operations-checklist-list": {
+          "legacy_contract_sha256": "8480d6c07ff8d8f5640627803b7be9a3ea1d92f6b671f28abc7f5354b5397b21",
+          "success": true,
+          "sha256": "c2cd5c13abc8aa6f09430bda288e6465b2de73cde4fdd020e4d2ea2229a531e8",
+          "error": null
+        }
+      },
+      "9": {
+        "operations-plan-get": {
+          "legacy_contract_sha256": "de9ed48b22665a5ce85edbc3cdefa18f32d2414e0d6adef31ece99c0bb516bae",
+          "success": true,
+          "sha256": "a80450344f179fa1ea313756c693ca9da7d28043cf3647334be831c9090584b3",
+          "error": null
+        },
+        "operations-summary": {
+          "legacy_contract_sha256": "ed7e9dcf4bb0990d22e59c7c6cbc4ed2283154e80f6fd00b8d5b2abb3a9d6288",
+          "success": true,
+          "sha256": "c728e9d18520d17d7149cd0081ff7b96d4811753b7fc65205158b80985b681f7",
+          "error": null
+        },
+        "operations-checklist-list": {
+          "legacy_contract_sha256": "ff0f0d569c780e03a2b348d2f05cb3a30772eb948460b6f3c7d1d5354e2478a5",
+          "success": true,
+          "sha256": "b16fbeae726f9c93ed1b01dccd927ad038d7ff1b6f1381b8da4b6fbcb5e55d2a",
+          "error": null
+        }
+      },
+      "10": {
+        "operations-plan-get": {
+          "legacy_contract_sha256": "aa8526c7f46381dbbb1dcc169f9efaa3ba7dd2135f5025fd880a7840ced49a2e",
+          "success": true,
+          "sha256": "9028c5217efe8cff3033ecab21b9923269415df5bf09d8c2b1281029eb3e2bc2",
+          "error": null
+        },
+        "operations-summary": {
+          "legacy_contract_sha256": "2528877452529fc51c62649765b303523c19ef2d9dcf0b233f56cf411c2a84b7",
+          "success": true,
+          "sha256": "7e211dbf4d834e8dfff8066d2c0899699efa9d9c44dd7f4b8be0374bb2354d37",
+          "error": null
+        },
+        "operations-checklist-list": {
+          "legacy_contract_sha256": "c3241beba55dad52fe4c6a29f5ab5cb72c6a220726602c940206ddd43c4a410e",
+          "success": true,
+          "sha256": "ebc5302e2019a120bd1281dea6ec3a90259120df8a66553656737385136041a5",
+          "error": null
+        }
+      }
+    }
+  },
+  "business_tables": [
+    {
+      "table": "mmc_programs",
+      "before": {
+        "count": 13,
+        "sha256": "2123eaf3eb07842d598cb6129ae5272e5c4201f53ecae9de8c80f768146b0b18"
+      },
+      "after": {
+        "count": 13,
+        "sha256": "2123eaf3eb07842d598cb6129ae5272e5c4201f53ecae9de8c80f768146b0b18"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_operation_plans",
+      "before": {
+        "count": 13,
+        "sha256": "602892998d3af2f8268b567d9d859fc298d09248ab266ee6180ea009aaf2369e"
+      },
+      "after": {
+        "count": 13,
+        "sha256": "602892998d3af2f8268b567d9d859fc298d09248ab266ee6180ea009aaf2369e"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_operation_checklist",
+      "before": {
+        "count": 559,
+        "sha256": "579d02a8d160e435df1337fdcb69a6cabbf9769ef01ff6a5da3dfe3a808d25b6"
+      },
+      "after": {
+        "count": 559,
+        "sha256": "579d02a8d160e435df1337fdcb69a6cabbf9769ef01ff6a5da3dfe3a808d25b6"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_operation_schedule",
+      "before": {
+        "count": 33,
+        "sha256": "c1e4377c4525aa85ede740dcc059c78fa73d7b1e5426a612d29b37687bac9dc6"
+      },
+      "after": {
+        "count": 33,
+        "sha256": "c1e4377c4525aa85ede740dcc059c78fa73d7b1e5426a612d29b37687bac9dc6"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_resources",
+      "before": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "after": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_program_resources",
+      "before": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "after": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_tasks",
+      "before": {
+        "count": 141,
+        "sha256": "c74fe1382c31e6c2335e2c260d283f214d2b92261b53f5525c80eb283b1fd16e"
+      },
+      "after": {
+        "count": 141,
+        "sha256": "585f1025bcb0ac7c8cfdb66d7682b75b98b698cc9cadd125ffba67fe5ba056e4"
+      },
+      "match": false
+    },
+    {
+      "table": "mmc_logs",
+      "before": {
+        "count": 622,
+        "sha256": "502a41d417ba862fe76b3e80ab8dab87dd0c3b9bcab19cb9711178e06c3af7d8"
+      },
+      "after": {
+        "count": 622,
+        "sha256": "502a41d417ba862fe76b3e80ab8dab87dd0c3b9bcab19cb9711178e06c3af7d8"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_events",
+      "before": {
+        "count": 13,
+        "sha256": "6be8a187e00c775d0e5136888033a868a1a2c6f90f4d0a6eb90643140d436490"
+      },
+      "after": {
+        "count": 13,
+        "sha256": "6be8a187e00c775d0e5136888033a868a1a2c6f90f4d0a6eb90643140d436490"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_sessions",
+      "before": {
+        "count": 33,
+        "sha256": "d429c50d6df51b66f65fa79586c7401b0fbe309f79e8afebf9711c3dd4522527"
+      },
+      "after": {
+        "count": 33,
+        "sha256": "d429c50d6df51b66f65fa79586c7401b0fbe309f79e8afebf9711c3dd4522527"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_program_venues",
+      "before": {
+        "count": 13,
+        "sha256": "ab8c6eee43585dadd00af7365cfecc7c495896dd1e73e02eb6a48fdbd5f5ca2d"
+      },
+      "after": {
+        "count": 13,
+        "sha256": "ab8c6eee43585dadd00af7365cfecc7c495896dd1e73e02eb6a48fdbd5f5ca2d"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_venues",
+      "before": {
+        "count": 188,
+        "sha256": "e772e2699c7793087551a0e41cde531a0646084ce2c25dcc6371b1c371ff07e7"
+      },
+      "after": {
+        "count": 188,
+        "sha256": "e772e2699c7793087551a0e41cde531a0646084ce2c25dcc6371b1c371ff07e7"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_finance_entries",
+      "before": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "after": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_sales_ledger",
+      "before": {
+        "count": 351,
+        "sha256": "62cab2640f0a3a4bde3e8d04ba150b2fd67edffdb79ee464f12cfe3c4eada954"
+      },
+      "after": {
+        "count": 351,
+        "sha256": "62cab2640f0a3a4bde3e8d04ba150b2fd67edffdb79ee464f12cfe3c4eada954"
+      },
+      "match": true
+    },
+    {
+      "table": "mmc_sales_mappings",
+      "before": {
+        "count": 56,
+        "sha256": "13eba20592586d8eef169367d2f4d3ba40637af9af2c51773c8134d58e7de033"
+      },
+      "after": {
+        "count": 56,
+        "sha256": "13eba20592586d8eef169367d2f4d3ba40637af9af2c51773c8134d58e7de033"
+      },
+      "match": true
+    },
+    {
+      "table": "users",
+      "before": {
+        "count": 3,
+        "sha256": "5ac2250cda15b0cfc0655ccb83e3dca0ad00c0faf38ff99deb0e24687d78af55"
+      },
+      "after": {
+        "count": 3,
+        "sha256": "5ac2250cda15b0cfc0655ccb83e3dca0ad00c0faf38ff99deb0e24687d78af55"
+      },
+      "match": true
+    },
+    {
+      "table": "usermeta",
+      "before": {
+        "count": 118,
+        "sha256": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2"
+      },
+      "after": {
+        "count": 118,
+        "sha256": "025f9a82e86711c7cd86d07dfb3f3efac061d7b642086bd91f52d0156bb0da5f"
+      },
+      "match": false
+    },
+    {
+      "table": "mmc_kommo_profiles",
+      "before": {
+        "count": 13,
+        "sha256": "6c429d59c4274eba5f0a790e1caca06eca46d0fdb239ce90437475b6894d5ec4"
+      },
+      "after": {
+        "count": 13,
+        "sha256": "6c429d59c4274eba5f0a790e1caca06eca46d0fdb239ce90437475b6894d5ec4"
+      },
+      "match": true
+    },
+    {
+      "table": "mck_campaigns",
+      "before": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "after": {
+        "count": 7,
+        "sha256": "7bd54fbaa5c52d3eff6c0619364efe0e17f5e7b84008d91959017cfc7ebc91cb"
+      },
+      "match": true
+    },
+    {
+      "table": "mck_comments",
+      "before": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "after": {
+        "count": 2590,
+        "sha256": "29fd7554617454a1389446ebad5971bf3c711c8c9819e3d3c7f89df7a303e6de"
+      },
+      "match": true
+    },
+    {
+      "table": "mck_draws",
+      "before": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "after": {
+        "count": 14,
+        "sha256": "caf5651249d6f879cef2910785b9786a018b238c672fb63e7e6edc28ac261b4e"
+      },
+      "match": true
+    },
+    {
+      "table": "mck_redraw_audit",
+      "before": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      },
+      "after": {
+        "count": 1,
+        "sha256": "7f91c4c0a66bc69cb817da1a284e1d768c87e4c62733c83abeb2ee2851714d68"
+      },
+      "match": true
+    }
+  ],
+  "usermeta_exception": {
+    "before": {
+      "count": 118,
+      "sha256": "171fac17c40944be2aeb72284be4373e5e419ec773b852e45630b5e3409c0ba2"
+    },
+    "after": {
+      "count": 118,
+      "sha256": "025f9a82e86711c7cd86d07dfb3f3efac061d7b642086bd91f52d0156bb0da5f"
+    },
+    "subsequent_hash_stable": true,
+    "cause": "UNCONFIRMED",
+    "no_raw_values_exported": true
+  },
+  "adoption": [
+    {
+      "program_id": 10,
+      "task_id": 109,
+      "result": {
+        "adopted": 1,
+        "due_updated": 0,
+        "owner_updated": 0
+      },
+      "changed_columns": [
+        "metadata"
+      ],
+      "metadata_before": null,
+      "metadata_after": {
+        "source_key": "operations_v1.plan",
+        "system_generated": true,
+        "phase": "pre_departure",
+        "template_version": 1,
+        "adopted_from_legacy": true,
+        "adopted_at": "2026-10-06 05:03:04",
+        "adoption_policy": "operations_v3_exact_title"
+      },
+      "other_columns_unchanged": true,
+      "program_status": "sales_open",
+      "due_at": null,
+      "assigned_user_id": null
+    },
+    {
+      "program_id": 11,
+      "task_id": 118,
+      "result": {
+        "adopted": 1,
+        "due_updated": 0,
+        "owner_updated": 0
+      },
+      "changed_columns": [
+        "metadata"
+      ],
+      "metadata_before": null,
+      "metadata_after": {
+        "source_key": "operations_v1.plan",
+        "system_generated": true,
+        "phase": "pre_departure",
+        "template_version": 1,
+        "adopted_from_legacy": true,
+        "adopted_at": "2026-10-06 05:03:05",
+        "adoption_policy": "operations_v3_exact_title"
+      },
+      "other_columns_unchanged": true,
+      "program_status": "sales_open",
+      "due_at": null,
+      "assigned_user_id": null
+    }
+  ],
+  "double_adoption": [
+    {
+      "program_id": 10,
+      "task_id": 109,
+      "result": {
+        "adopted": 0,
+        "due_updated": 0,
+        "owner_updated": 0
+      },
+      "changed_columns": [],
+      "metadata_before": "{\"source_key\":\"operations_v1.plan\",\"system_generated\":true,\"phase\":\"pre_departure\",\"template_version\":1,\"adopted_from_legacy\":true,\"adopted_at\":\"2026-10-06 05:03:04\",\"adoption_policy\":\"operations_v3_exact_title\"}",
+      "metadata_after": {
+        "source_key": "operations_v1.plan",
+        "system_generated": true,
+        "phase": "pre_departure",
+        "template_version": 1,
+        "adopted_from_legacy": true,
+        "adopted_at": "2026-10-06 05:03:04",
+        "adoption_policy": "operations_v3_exact_title"
+      },
+      "other_columns_unchanged": true,
+      "program_status": "sales_open",
+      "due_at": null,
+      "assigned_user_id": null
+    },
+    {
+      "program_id": 11,
+      "task_id": 118,
+      "result": {
+        "adopted": 0,
+        "due_updated": 0,
+        "owner_updated": 0
+      },
+      "changed_columns": [],
+      "metadata_before": "{\"source_key\":\"operations_v1.plan\",\"system_generated\":true,\"phase\":\"pre_departure\",\"template_version\":1,\"adopted_from_legacy\":true,\"adopted_at\":\"2026-10-06 05:03:05\",\"adoption_policy\":\"operations_v3_exact_title\"}",
+      "metadata_after": {
+        "source_key": "operations_v1.plan",
+        "system_generated": true,
+        "phase": "pre_departure",
+        "template_version": 1,
+        "adopted_from_legacy": true,
+        "adopted_at": "2026-10-06 05:03:05",
+        "adoption_policy": "operations_v3_exact_title"
+      },
+      "other_columns_unchanged": true,
+      "program_status": "sales_open",
+      "due_at": null,
+      "assigned_user_id": null
+    }
+  ],
+  "post_adoption_preview": {
+    "10": {
+      "program_id": 10,
+      "eligible": true,
+      "snapshot": "f1db3d1b0567ed6c5565ef714f0737cbbf4d59df7d1b14ca6e23286ab9dbce83",
+      "items": [
+        {
+          "task_id": 109,
+          "program_id": 10,
+          "program": "PRG-2026-DEN-PAMUKK-001",
+          "title": "Operasyon ve lojistik planını tamamla",
+          "module": "operations",
+          "status": "open",
+          "metadata": {
+            "source_key": "operations_v1.plan",
+            "system_generated": true,
+            "phase": "pre_departure",
+            "template_version": 1,
+            "adopted_from_legacy": true,
+            "adopted_at": "2026-10-06 05:03:04",
+            "adoption_policy": "operations_v3_exact_title"
+          },
+          "exact_template_match": true,
+          "template_key": "plan",
+          "duplicate_count": 1,
+          "current_due": null,
+          "current_owner": null,
+          "adoptable": false,
+          "classification": "AMBIGUOUS",
+          "reject_reason": "ALREADY_MANAGED",
+          "backfill_preview": {
+            "task_id": 109,
+            "program_id": 10,
+            "task": "Operasyon ve lojistik planını tamamla",
+            "system_generated": true,
+            "current_due": null,
+            "proposed_due": null,
+            "due_source": null,
+            "current_owner": null,
+            "proposed_owner": 281776200,
+            "would_update_due": false,
+            "would_update_owner": true,
+            "would_leave_unchanged": false,
+            "reason": [
+              "DUE_ANCHOR_INSUFFICIENT",
+              "CANONICAL_PROPOSAL"
+            ]
+          },
+          "scope_eligible": true
+        }
+      ],
+      "counts": {
+        "ADOPTABLE": 0,
+        "DUPLICATE": 0,
+        "CUSTOM": 0,
+        "CLOSED": 0,
+        "WRONG_MODULE": 8,
+        "AMBIGUOUS": 1
+      },
+      "managed": 1,
+      "legacy": 8,
+      "would_adopt": 0,
+      "would_update_due": 0,
+      "would_update_owner": 1
+    },
+    "11": {
+      "program_id": 11,
+      "eligible": true,
+      "snapshot": "d3d257f10029216ed61c70dff25842b825a3d3dd59155cd511796ab17a43bce6",
+      "items": [
+        {
+          "task_id": 118,
+          "program_id": 11,
+          "program": "PRG-2026-ANK-MAMAK-001",
+          "title": "Operasyon ve lojistik planını tamamla",
+          "module": "operations",
+          "status": "open",
+          "metadata": {
+            "source_key": "operations_v1.plan",
+            "system_generated": true,
+            "phase": "pre_departure",
+            "template_version": 1,
+            "adopted_from_legacy": true,
+            "adopted_at": "2026-10-06 05:03:05",
+            "adoption_policy": "operations_v3_exact_title"
+          },
+          "exact_template_match": true,
+          "template_key": "plan",
+          "duplicate_count": 1,
+          "current_due": null,
+          "current_owner": null,
+          "adoptable": false,
+          "classification": "AMBIGUOUS",
+          "reject_reason": "ALREADY_MANAGED",
+          "backfill_preview": {
+            "task_id": 118,
+            "program_id": 11,
+            "task": "Operasyon ve lojistik planını tamamla",
+            "system_generated": true,
+            "current_due": null,
+            "proposed_due": null,
+            "due_source": null,
+            "current_owner": null,
+            "proposed_owner": 281776200,
+            "would_update_due": false,
+            "would_update_owner": true,
+            "would_leave_unchanged": false,
+            "reason": [
+              "DUE_ANCHOR_INSUFFICIENT",
+              "CANONICAL_PROPOSAL"
+            ]
+          },
+          "scope_eligible": true
+        }
+      ],
+      "counts": {
+        "ADOPTABLE": 0,
+        "DUPLICATE": 0,
+        "CUSTOM": 0,
+        "CLOSED": 0,
+        "WRONG_MODULE": 8,
+        "AMBIGUOUS": 1
+      },
+      "managed": 1,
+      "legacy": 8,
+      "would_adopt": 0,
+      "would_update_due": 0,
+      "would_update_owner": 1
+    }
+  },
+  "future_programs": {
+    "1": {
+      "program_id": 1,
+      "program_code": "PRG-2026-AYD-EFELER-001",
+      "status": "venue_confirmed",
+      "city": "Aydın",
+      "district": "Efeler",
+      "event_id": "1",
+      "event_date": "2026-10-16",
+      "planned_date": "2026-10-16",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-16",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "2": {
+      "program_id": 2,
+      "program_code": "PRG-2026-KIR-MERKEZ-001",
+      "status": "cancelled",
+      "city": "Kırıkkale",
+      "district": "Merkez",
+      "event_id": "2",
+      "event_date": "2026-10-02",
+      "planned_date": "2026-10-02",
+      "eligibility": {
+        "eligible": false,
+        "date": "2026-10-02",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": [
+          "LIFECYCLE_OUTSIDE_OPERATIONAL_SCOPE",
+          "INVALID_OR_PAST_CANONICAL_DATE"
+        ]
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "3": {
+      "program_id": 3,
+      "program_code": "PRG-2026-ANK-PURSAK-001",
+      "status": "sales_open",
+      "city": "Ankara",
+      "district": "Pursaklar",
+      "event_id": "3",
+      "event_date": "2026-10-01",
+      "planned_date": "2026-10-01",
+      "eligibility": {
+        "eligible": false,
+        "date": "2026-10-01",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": [
+          "INVALID_OR_PAST_CANONICAL_DATE"
+        ]
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "4": {
+      "program_id": 4,
+      "program_code": "PRG-2026-USA-MERKEZ-001",
+      "status": "sales_open",
+      "city": "Uşak",
+      "district": "Merkez",
+      "event_id": "4",
+      "event_date": "2026-10-15",
+      "planned_date": "2026-10-15",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-15",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "5": {
+      "program_id": 5,
+      "program_code": "PRG-2026-AYD-EFELER-002",
+      "status": "sales_prep",
+      "city": "Aydın",
+      "district": "Efeler",
+      "event_id": "5",
+      "event_date": "2026-10-17",
+      "planned_date": "2026-10-17",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-17",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "6": {
+      "program_id": 6,
+      "program_code": "PRG-2026-AYD-DIDIM-001",
+      "status": "sales_prep",
+      "city": "Aydın",
+      "district": "Didim",
+      "event_id": "6",
+      "event_date": "2026-10-16",
+      "planned_date": "2026-10-16",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-16",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "7": {
+      "program_id": 7,
+      "program_code": "PRG-2026-MAN-SEHZAD-001",
+      "status": "sales_prep",
+      "city": "Manisa",
+      "district": "Şehzadeler",
+      "event_id": "7",
+      "event_date": "2026-10-18",
+      "planned_date": "2026-10-18",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-18",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "8": {
+      "program_id": 8,
+      "program_code": "PRG-2026-ANK-SINCAN-001",
+      "status": "sales_open",
+      "city": "Ankara",
+      "district": "Sincan",
+      "event_id": "8",
+      "event_date": "2026-10-03",
+      "planned_date": "2026-10-03",
+      "eligibility": {
+        "eligible": false,
+        "date": "2026-10-03",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": [
+          "INVALID_OR_PAST_CANONICAL_DATE"
+        ]
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "9": {
+      "program_id": 9,
+      "program_code": "PRG-2026-ANK-YENIMA-001",
+      "status": "sales_open",
+      "city": "Ankara",
+      "district": "Yenimahalle",
+      "event_id": "9",
+      "event_date": "2026-10-04",
+      "planned_date": "2026-10-04",
+      "eligibility": {
+        "eligible": false,
+        "date": "2026-10-04",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": [
+          "INVALID_OR_PAST_CANONICAL_DATE"
+        ]
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "10": {
+      "program_id": 10,
+      "program_code": "PRG-2026-DEN-PAMUKK-001",
+      "status": "sales_open",
+      "city": "Denizli",
+      "district": "Pamukkale",
+      "event_id": "10",
+      "event_date": "2026-10-08",
+      "planned_date": "2026-10-08",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-08",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "11": {
+      "program_id": 11,
+      "program_code": "PRG-2026-ANK-MAMAK-001",
+      "status": "sales_open",
+      "city": "Ankara",
+      "district": "Mamak",
+      "event_id": "11",
+      "event_date": "2026-10-10",
+      "planned_date": "2026-10-10",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-10",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "12": {
+      "program_id": 12,
+      "program_code": "PRG-2026-ESK-ODUNPA-001",
+      "status": "sales_open",
+      "city": "Eskişehir",
+      "district": "Odunpazarı",
+      "event_id": "12",
+      "event_date": "2026-10-11",
+      "planned_date": "2026-10-11",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-10-11",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    },
+    "13": {
+      "program_id": 13,
+      "program_code": "PRG-2026-IZM-KONAK-001",
+      "status": "sales_open",
+      "city": "İzmir",
+      "district": "Konak",
+      "event_id": "13",
+      "event_date": "2026-11-08",
+      "planned_date": "2026-11-08",
+      "eligibility": {
+        "eligible": true,
+        "date": "2026-11-08",
+        "date_source": "event.event_date",
+        "date_drift": false,
+        "reasons": []
+      },
+      "owner_user_id": 281776200,
+      "plan_status": "draft",
+      "timestamps": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      }
+    }
+  },
+  "domain_proof": {
+    "changed_tables": [
+      "mmc_tasks",
+      "usermeta"
+    ],
+    "changed_tasks": [
+      "109",
+      "118"
+    ],
+    "only_metadata": true,
+    "other_tables_match": false,
+    "other_tasks_match": true
+  },
+  "rollback": {
+    "deployed": true,
+    "hashes": {
+      "includes/class-mmc-operations-service.php": "fc64f301cb4af1c9d6e0f6126b7796af1ecd38a2976e75d17a2ea47289d66fbd",
+      "includes/class-mmc-operations-admin.php": "7f9a3aa7e689349c89090be2a84933cb0252bf4e398e04780f9f597f5f7d3db9"
+    },
+    "backups": {
+      "includes/class-mmc-operations-service.php": "mmc-ops157-original-mc6ghf70qokv3WiYQBU",
+      "includes/class-mmc-operations-admin.php": "mmc-ops157-original-1ll6oh22msu42cepwjt"
+    },
+    "db_version": "1.3.7",
+    "migration_triggered": false
+  }
+}

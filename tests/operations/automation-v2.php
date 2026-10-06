@@ -58,7 +58,7 @@ function phase2_db($status='operations'){
     $GLOBALS['fixture_program_fields']=['planned_date'=>'2026-10-08','owner_user_id'=>501];
     MMC_Event_Service::$fixture_event=(object)['id'=>17,'event_date'=>'2026-10-08','status'=>'sales_open','door_open_minutes'=>30];
     MMC_Event_Service::$rows=[(object)['id'=>88,'session_time'=>'2026-10-08 18:00:00','status'=>'active'],(object)['id'=>89,'session_time'=>'2026-10-08 20:00:00','status'=>'active']];
-    $GLOBALS['wpdb']=new Phase2DB;return $GLOBALS['wpdb'];
+    $GLOBALS['wpdb']=new Phase2DB;$GLOBALS['wpdb']->plan=(object)['id'=>1,'program_id'=>77,'status'=>'draft','operation_mode'=>'undecided','accommodation_required'=>0,'departure_at'=>'2026-10-08 18:00:00'];foreach(['venue_entry_at','setup_start_at','rehearsal_at','doors_open_at','teardown_end_at','return_at','origin_city','next_destination','lodging_address','lodging_cost','lodging_name','lodging_rooms','meal_cost','meal_plan','notes','other_cost','transport_cost'] as $field){$GLOBALS['wpdb']->plan->$field=null;}return $GLOBALS['wpdb'];
 }
 function fixture_task($db,$key='plan',$override=[]){
     $template=MMC_Operations_Service::task_templates()[$key];
@@ -70,7 +70,7 @@ check(count($db->tasks)===13,'New task count changed');
 $by_title=[];foreach($db->tasks as$t)$by_title[$t->title]=$t;
 $plan_task=$by_title[MMC_Operations_Service::task_templates()['plan'][1]];
 check($plan_task->due_at==='2026-10-08 18:00:00' && $plan_task->assigned_user_id===501,'New tasks not enriched');
-$meta=json_decode($plan_task->metadata,true);check($meta['due_source']==='event.first_session' && $meta['due_managed']==='operations_v2','New deadline provenance missing');
+$meta=json_decode($plan_task->metadata,true);check($meta['due_source']==='plan.departure_at' && $meta['due_managed']==='operations_v2','New deadline provenance missing');
 check($by_title[MMC_Operations_Service::task_templates()['box_office'][1]]->due_at==='2026-10-08 17:30:00','Configured door minutes not used');
 check($by_title[MMC_Operations_Service::task_templates()['inventory'][1]]->due_at===null,'Invented session duration used');
 // Every deterministic anchor/fallback, plus date-only and invalid date behavior.
@@ -90,9 +90,9 @@ check($preview['would_update_due']===1 && $preview['would_update_owner']===1,'Pr
 $r=MMC_Operations_Service::apply_task_automation(77);check($r['tasks_updated']===1 && $r['due_updated']===1 && $r['owner_updated']===1,'Explicit apply failed');
 check($task->status==='open' && $task->priority==='normal' && $task->notes==='MANUAL_NOTE' && $task->completed_at===null,'Protected columns changed');
 $before=$db->snapshot();$r=MMC_Operations_Service::apply_task_automation(77);check($r['tasks_updated']===0 && $db->snapshot()===$before,'Double apply not idempotent');
-MMC_Event_Service::$rows[0]->session_time='2026-10-08 19:00:00';$GLOBALS['fixture_program_fields']['owner_user_id']=502;
+$db->plan->departure_at='2026-10-08 19:00:00';MMC_Event_Service::$rows[0]->session_time='2026-10-08 19:00:00';$GLOBALS['fixture_program_fields']['owner_user_id']=502;
 $r=MMC_Operations_Service::apply_task_automation(77);check($task->due_at==='2026-10-08 19:00:00' && $task->assigned_user_id===502,'Auto-managed canonical update failed');
-$db->plan=(object)['departure_at'=>'2026-10-08 08:00:00'];MMC_Operations_Service::apply_task_automation(77);check($task->due_at==='2026-10-08 08:00:00','Changed plan anchor did not update managed due');
+$db->plan=(object)['id'=>1,'program_id'=>77,'departure_at'=>'2026-10-08 08:00:00'];MMC_Operations_Service::apply_task_automation(77);check($task->due_at==='2026-10-08 08:00:00','Changed plan anchor did not update managed due');
 $task->due_at='2026-10-07 10:00:00';$task->assigned_user_id=503;$before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Direct manual edit overwritten');
 // Even manual clearing without a hook is detected as divergence from the stored auto values.
 $task->due_at=null;$task->assigned_user_id=null;$before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Manual cleared fields refilled');
@@ -100,12 +100,12 @@ $task->due_at=null;$task->assigned_user_id=null;$before=$db->snapshot();MMC_Oper
 $db=phase2_db();$task=fixture_task($db);MMC_Operations_Service::apply_task_automation(77);
 MMC_Operations_Service::on_program_logged(77,'task_updated','task',$task->id,null,['due_at'=>$task->due_at,'assigned_user_id'=>$task->assigned_user_id],'fixture manual edit');
 $meta=json_decode($task->metadata,true);check($meta['due_manual_override']===true && $meta['assignment_manual_override']===true,'Manual provenance not revoked');
-$before=$db->snapshot();MMC_Event_Service::$rows[0]->session_time='2026-10-08 19:00:00';$GLOBALS['fixture_program_fields']['owner_user_id']=502;MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Same-value manual edit lost to canonical change');
+$before=$db->snapshot();$db->plan->departure_at='2026-10-08 19:00:00';MMC_Event_Service::$rows[0]->session_time='2026-10-08 19:00:00';$GLOBALS['fixture_program_fields']['owner_user_id']=502;$before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Same-value manual edit lost to canonical change');
 // Existing manual values, unmarked/finance/closed tasks and invalid owner are protected.
 $db=phase2_db();$manual=fixture_task($db,'plan',['due_at'=>'2026-10-06 12:00:00','assigned_user_id'=>503]);$unmarked=fixture_task($db,'crew',['metadata'=>null]);$finance=fixture_task($db,'technical',['module'=>'finance']);$completed=fixture_task($db,'return',['status'=>'completed','completed_at'=>'2026-10-01 12:00:00']);$cancelled=fixture_task($db,'equipment',['status'=>'cancelled']);
 $before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Manual/unmarked/finance/closed data changed');
-$db=phase2_db();$GLOBALS['fixture_program_fields']['owner_user_id']=99999;$t=fixture_task($db,'transport');$before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Invalid owner or missing transport anchor applied');
-foreach(['cancelled','completed','preparation','sales_open','financial_close'] as$status){$db=phase2_db($status);fixture_task($db);$before=$db->snapshot();check(is_wp_error(MMC_Operations_Service::apply_task_automation(77)),'Stage accepted:'.$status);check($db->snapshot()===$before,'Excluded program updated');}
+$db=phase2_db();$GLOBALS['fixture_program_fields']['owner_user_id']=99999;$db->plan->departure_at=null;$t=fixture_task($db,'transport');$before=$db->snapshot();MMC_Operations_Service::apply_task_automation(77);check($db->snapshot()===$before,'Invalid owner or missing transport anchor applied');
+foreach(['cancelled','completed','preparation','region_analysis','financial_close'] as$status){$db=phase2_db($status);fixture_task($db);$before=$db->snapshot();check(is_wp_error(MMC_Operations_Service::apply_task_automation(77)),'Stage accepted:'.$status);check($db->snapshot()===$before,'Excluded program updated');}
 $db=phase2_db();MMC_Event_Service::$fixture_event->event_date='2026-10-01';fixture_task($db);$before=$db->snapshot();check(is_wp_error(MMC_Operations_Service::apply_task_automation(77)),'Historical program applied');check($db->snapshot()===$before,'Historical state changed');
 $db=phase2_db();MMC_Event_Service::$fixture_event->status='cancelled';fixture_task($db);check(is_wp_error(MMC_Operations_Service::apply_task_automation(77)),'Cancelled event accepted');
 $db=phase2_db();$task=fixture_task($db);$db->race=true;$r=MMC_Operations_Service::apply_task_automation(77);check($r['stale_skipped']===1 && $task->due_at==='2026-10-09 09:00:00' && $task->assigned_user_id===null,'Concurrent manual edit overwritten');
