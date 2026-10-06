@@ -79,6 +79,7 @@ final class MDG_Denizli_Invitations {
   if(!$template_id)throw new Exception('Bilet şablonu yok.');
   $t=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_Template');$g=MDG_Ticket_Session_Datetime::designer_class('TC_Ticket_Designer_PDF_Generator');
   if(function_exists('tickera_ticket_designer_ensure_tcpdf'))tickera_ticket_designer_ensure_tcpdf();
+  if(class_exists('MDG_Protocol_PDF'))return MDG_Protocol_PDF::render($template_id,self::data($id));
   return $g::generate(new $t($template_id),self::data($id),'S','davetiye.pdf');
  }
  public static function verify(){
