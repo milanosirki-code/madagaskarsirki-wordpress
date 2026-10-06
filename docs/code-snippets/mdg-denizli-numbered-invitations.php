@@ -1,6 +1,7 @@
 <?php
 /** Fixed, authorized Denizli protocol batch. Uses native Woo/Bridge ticket issuance. */
 if(!defined('ABSPATH'))exit;
+if(!class_exists('MDG_Denizli_Invitations',false)){
 final class MDG_Denizli_Invitations {
  const OPTION='mdg_denizli_protocol_20261008_a2_a11';
  const LOCK='mdg_denizli_protocol_batch_lock';
@@ -101,3 +102,5 @@ final class MDG_Denizli_Invitations {
  }
 }
 MDG_Denizli_Invitations::hooks();
+
+}
