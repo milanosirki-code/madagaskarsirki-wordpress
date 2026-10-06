@@ -1,7 +1,7 @@
 <?php
 /** Native complimentary ticket console; does not alter paid checkout or templates. */
 if(!defined('ABSPATH'))exit;
-if(class_exists('MDG_Protocol_Tickets',false))return;
+if(!class_exists('MDG_Protocol_Tickets',false)){
 final class MDG_Protocol_Tickets {
  const PAGE='mdg-protocol-tickets'; const INDEX='mdg_protocol_index_v1'; const PREFIX='mdg_protocol_batch_'; const MAX=100;
  static function hooks(){
@@ -152,3 +152,5 @@ final class MDG_Protocol_Tickets {
  }
 }
 MDG_Protocol_Tickets::hooks();
+
+}
