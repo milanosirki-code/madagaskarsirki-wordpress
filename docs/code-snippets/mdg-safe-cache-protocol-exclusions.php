@@ -1,5 +1,5 @@
 <?php
-if(!function_exists('ms_v3_guvenli_onbellek_istegi')){
+if(!function_exists('ms_v3p_guvenli_onbellek_istegi')){
 
 /**
  * ============================================================
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 1. İSTEK ÖNBELLEĞE UYGUN MU?
  * ------------------------------------------------------------
  */
-function ms_v3_guvenli_onbellek_istegi() {
+function ms_v3p_guvenli_onbellek_istegi() {
 
     /*
      * Yönetim, kullanıcı oturumu, AJAX, REST ve POST istekleri.
@@ -228,7 +228,7 @@ function ms_v3_guvenli_onbellek_istegi() {
  *
  * Diğer çerez başlıkları korunur.
  */
-function ms_v3_gereksiz_cookie_basliklarini_kaldir() {
+function ms_v3p_gereksiz_cookie_basliklarini_kaldir() {
 
     if ( headers_sent() ) {
         return;
@@ -318,9 +318,9 @@ function ms_v3_gereksiz_cookie_basliklarini_kaldir() {
  * 3. SAYFA ÇIKTISININ EN SONUNDA BAŞLIKLARI DÜZELT
  * ------------------------------------------------------------
  */
-function ms_v3_son_cikti_duzenle( $html ) {
+function ms_v3p_son_cikti_duzenle( $html ) {
 
-    if ( ! ms_v3_guvenli_onbellek_istegi() ) {
+    if ( ! ms_v3p_guvenli_onbellek_istegi() ) {
         return $html;
     }
 
@@ -339,7 +339,7 @@ function ms_v3_son_cikti_duzenle( $html ) {
      * Tickera ve diğer eklentilerin sonradan eklediği
      * gereksiz çerez başlıklarını kaldır.
      */
-    ms_v3_gereksiz_cookie_basliklarini_kaldir();
+    ms_v3p_gereksiz_cookie_basliklarini_kaldir();
 
 
     if ( ! headers_sent() ) {
@@ -388,12 +388,12 @@ add_action(
     'template_redirect',
     function () {
 
-        if ( ! ms_v3_guvenli_onbellek_istegi() ) {
+        if ( ! ms_v3p_guvenli_onbellek_istegi() ) {
             return;
         }
 
         ob_start(
-            'ms_v3_son_cikti_duzenle'
+            'ms_v3p_son_cikti_duzenle'
         );
     },
     -999
