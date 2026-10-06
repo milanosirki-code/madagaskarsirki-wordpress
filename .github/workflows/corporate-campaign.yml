@@ -22,5 +22,6 @@ jobs:
       - run: php tests/corporate-invitation/dynamic-catalogue.php
       - run: php tests/corporate-invitation/sales-report.php
       - run: php tests/corporate-invitation/live-price-menu.php
+      - run: php tests/corporate-invitation/multi-province-admin.php
       - run: npm install --no-save jsdom@26
       - run: node tests/corporate-invitation/age-ui.cjs

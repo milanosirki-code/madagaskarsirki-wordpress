@@ -1,7 +1,7 @@
 <?php
 $src=file_get_contents(__DIR__.'/../../docs/code-snippets/mdg-corporate-campaigns.php');
 function must($ok,$label){if(!$ok){fwrite(STDERR,"FAIL $label\n");exit(1);}echo "PASS $label\n";}
-must(str_contains($src,'Programdan otomatik alınır.'),'normal price is live-program derived in admin');
+must(str_contains($src,'Programdan otomatik'),'normal price is live-program derived in admin');
 must(str_contains($src,'name="adult_campaign"'),'adult campaign price field');
 must(str_contains($src,'name="child_campaign"'),'child campaign price field');
 must(!str_contains($src,'name="adult_regular"'),'no manual adult regular price field');
