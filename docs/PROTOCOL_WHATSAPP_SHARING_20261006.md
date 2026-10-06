@@ -15,3 +15,7 @@ Hooks added: admin_post_mdg_protocol_contacts, admin_post_mdg_protocol_whatsapp,
 Tests: PHP syntax and 53 regression checks; phone formats, missing/malformed numbers, Excel/manual parsing, prepared message, target bounds, personal/full-package scope, existing QR/date/idempotency checks.
 Live smoke plan: snippet active/no error, admin phone input, generated Excel roundtrip, synthetic sharing render and URL construction; no actual sends or new orders during diagnostics.
 Rollback: restore prior source for snippet127. Native tickets remain; personal URLs from this version then stop resolving. Existing full-package URLs and snippet126 remain available.
+
+## Live verification
+Snippet127 active=true and code_error=null after reload. Live diagnostics: Excel supported/roundtrip/sharedStrings, legacy seat collision, three input modes, phone normalization, personal scope, synthetic sharing form, manual-delivery labels and WhatsApp URL all passed. Existing Kommo link bridge function is loaded. Admin HTML includes recipient phone field, manual name|phone instructions and Excel telefon column instructions. Catalogue includes8 active events and Denizli sessions99/100. No new orders, tickets, contacts, WhatsApp messages or provider calls were issued by these diagnostics. A real WhatsApp Send action and delivery to a handset were not exercised.
+PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/160
