@@ -1,0 +1,23 @@
+name: Protocol ticket contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  protocol-tickets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l docs/code-snippets/mdg-denizli-numbered-invitations.php
+      - run: php -l docs/code-snippets/mdg-protocol-ticket-menu.php
+      - run: php -l docs/code-snippets/mdg-protocol-pdf.php
+      - run: php tests/protocol-tickets/regression.php
+      - run: php tests/protocol-tickets/pdf-layout.php
+      - run: php tests/protocol-tickets/cache.php
+      - run: php tests/protocol-tickets/bulk-pdf.php
