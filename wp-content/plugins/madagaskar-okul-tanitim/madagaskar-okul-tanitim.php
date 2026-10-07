@@ -781,6 +781,12 @@ add_action('admin_post_mad_okul_student_update', function() {
 });
 
 
+function mad_okul_is_imam_hatip_middle($row) {
+    $name = mad_okul_norm($row['KURUM_ADI'] ?? '');
+    $type = mad_okul_norm($row['KURUM_TUR_ADI'] ?? '');
+    return strpos(mad_okul_norm($name.' '.$type), 'İMAM HATİP ORTAOKULU') !== false;
+}
+
 function mad_okul_should_include($row) {
     $name = mad_okul_norm($row['KURUM_ADI'] ?? '');
     $type = trim($row['KURUM_TUR_ADI'] ?? '');
@@ -789,7 +795,7 @@ function mad_okul_should_include($row) {
     $haystack = mad_okul_norm($name.' '.$type);
 
     // Operasyon kuralı: İmam Hatip Ortaokulları okul tanıtım/rota havuzuna alınmaz.
-    if (strpos($haystack, 'İMAM HATİP ORTAOKULU') !== false) return false;
+    if (mad_okul_is_imam_hatip_middle($row)) return false;
     foreach ($blocked as $keyword) if (strpos($haystack, $keyword)!==false) return false;
     if (preg_match('/\bRAM\b/u',$haystack)) return false;
 
@@ -993,8 +999,16 @@ function mad_okul_import_page() {
     <div class="wrap mad-okul-wrap">
       <h1>MEBBİS Listesi İçe Aktar</h1>
       <p>MEBBİS'ten indirdiğiniz <strong>.xls, .xlsx veya .csv</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; <strong>İmam Hatip Ortaokullarını</strong>, kırsal açık adresleri, hedef dışı kurumları ve mükerrerleri dışarıda bırakır. Dosyada telefon, web sitesi veya öğrenci sayısı alanı varsa bunlar da okul ana kaydına işlenir.</p>
-      <?php if (!empty($_GET['imported'])): ?>
-        <div class="notice notice-success is-dismissible"><p>Ham: <?php echo (int)($_GET['raw'] ?? 0); ?> · Ana liste: <?php echo (int)$_GET['imported']; ?> · Kırsal çıkarılan: <?php echo (int)($_GET['rural'] ?? 0); ?> · Hedef dışı: <?php echo (int)($_GET['non_target'] ?? 0); ?> · Adresi eksik: <?php echo (int)($_GET['missing'] ?? 0); ?>.</p></div>
+      <?php if (isset($_GET['raw'])): ?>
+        <div class="notice notice-success is-dismissible"><p>
+          Ham: <?php echo (int)($_GET['raw'] ?? 0); ?> ·
+          İşlenen/eklenen: <?php echo (int)($_GET['imported'] ?? 0); ?> ·
+          <strong>İmam Hatip Ortaokulu çıkarılan: <?php echo (int)($_GET['imam_hatip'] ?? 0); ?></strong> ·
+          Kırsal çıkarılan: <?php echo (int)($_GET['rural'] ?? 0); ?> ·
+          Diğer hedef dışı: <?php echo (int)($_GET['non_target'] ?? 0); ?> ·
+          Adresi eksik: <?php echo (int)($_GET['missing'] ?? 0); ?> ·
+          Tahmini fiziksel ziyaret noktası: <?php echo (int)($_GET['visit_points'] ?? 0); ?>.
+        </p></div>
       <?php endif; ?>
       <?php if ($errors): ?><div class="notice notice-error"><p><?php echo esc_html(implode(' ', (array)$errors)); ?></p></div><?php endif; ?>
       <form method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="mad-upload-box">
@@ -1012,7 +1026,7 @@ add_action('admin_post_mad_okul_import', function() {
     if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
     check_admin_referer('mad_okul_import');
 
-    $imported=0; $skipped=0; $missing=0; $rural=0; $non_target=0; $raw=0; $errors=[];
+    $imported=0; $skipped=0; $missing=0; $rural=0; $non_target=0; $imam_hatip=0; $raw=0; $errors=[]; $visit_keys=[];
     $names = $_FILES['files']['name'] ?? [];
     $tmps  = $_FILES['files']['tmp_name'] ?? [];
     if (!is_array($names)) { $names=[$names]; $tmps=[$tmps]; }
@@ -1030,8 +1044,13 @@ add_action('admin_post_mad_okul_import', function() {
             $r=mad_okul_canonical_row($r);
             $il=$r['IL_ADI']; $ilce=$r['ILCE_ADI'];
             $kurum=$r['KURUM_ADI']; $adres=$r['ADRES'];
+            if (mad_okul_is_imam_hatip_middle($r)) { $skipped++; $imam_hatip++; continue; }
             if (!mad_okul_should_include($r)) { $skipped++; $non_target++; continue; }
             if (mad_okul_is_rural($kurum,$adres)) { mad_okul_store_rural($il,$ilce,$kurum,$adres,'Açık kırsal adres ifadesi'); $skipped++; $rural++; continue; }
+            $visit_key = $adres
+                ? mad_okul_norm($il).'|'.mad_okul_norm($ilce).'|ADDR|'.mad_okul_norm($adres)
+                : mad_okul_norm($il).'|'.mad_okul_norm($ilce).'|SCHOOL|'.mad_okul_norm($kurum);
+            $visit_keys[$visit_key] = true;
             $res=mad_okul_insert_school($il,$ilce,$kurum,$adres,[
                 'kurum_turu'               => $r['KURUM_TUR_ADI'] ?? '',
                 'egitim_kademesi'           => $r['EGITIM_KADEMESI'] ?? '',
@@ -1059,7 +1078,17 @@ add_action('admin_post_mad_okul_import', function() {
     }
 
     if ($errors) set_transient('mad_okul_import_errors_'.get_current_user_id(), $errors, 120);
-    wp_safe_redirect(add_query_arg(['page'=>'mad-okul-import','raw'=>$raw,'imported'=>$imported,'skipped'=>$skipped,'missing'=>$missing,'rural'=>$rural,'non_target'=>$non_target], admin_url('admin.php')));
+    wp_safe_redirect(add_query_arg([
+        'page'=>'mad-okul-import',
+        'raw'=>$raw,
+        'imported'=>$imported,
+        'skipped'=>$skipped,
+        'missing'=>$missing,
+        'rural'=>$rural,
+        'non_target'=>$non_target,
+        'imam_hatip'=>$imam_hatip,
+        'visit_points'=>count($visit_keys),
+    ], admin_url('admin.php')));
     exit;
 });
 
