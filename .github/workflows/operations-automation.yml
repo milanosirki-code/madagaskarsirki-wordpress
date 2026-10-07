@@ -34,6 +34,7 @@ jobs:
       - run: php tests/operations/automation-v2.php
       - run: php tests/operations/adoption-v3.php
       - run: php tests/operations/eligibility-v3b.php
+      - run: php tests/operations/timeline-v3c.php
       - name: Real SQL in ephemeral database only
         run: php tests/operations/automation-v2-mysql.php
         env:
