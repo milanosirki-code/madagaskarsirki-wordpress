@@ -246,3 +246,13 @@ Live campaign source #124 is ahead of historical PR #145 and is being backported
 
 ## Campaign multi-province live reconciliation — 2026-10-06
 After PR #168 merged, live Code Snippets #124 advanced again and became live-ahead of main. Current live source uses `schema_version=2` with a `cities` map so one campaign code can target multiple provinces independently. Read-only live registry: `bms` = Denizli + Ankara + Eskişehir; `sagliksendenizli` = Denizli; `okul26` = Eskişehir. BMS Ankara/Eskişehir campaign prices are 475/250; OKUL26 Eskişehir 490/250. Public rendered `/kampanya/?kod=BMS` shows “Denizli / Ankara / Eskişehir gösterileri”. Branch `codex/campaign-multiprovince-live-reconcile` backports the exact active #124 source, extends runtime regression for multi-province isolation and adds an admin/source contract. No production registry/order/payment/ticket/message write is part of the reconciliation. See `docs/CAMPAIGN_MULTIPROVINCE_LIVE_RECONCILIATION_20261006.md`.
+
+
+## Operations Phase3C clean rebase checkpoint — 2026-10-07
+
+- Legacy PR #165 / branch `codex/operations-guided-timeline-v3c` was found diverged from current main: 49 commits behind and 8 ahead; it is not safe to merge as-is.
+- Current main at rebase start: `7cbc27537aa4d50e36ea3025712fdcd17261c670`. Original Phase3C merge base: `aef750852b8e0d961367c17a2529d286817219fe`.
+- Scope audit proved `class-mmc-operations-service.php`, `class-mmc-operations-admin.php` and `.github/workflows/operations-automation.yml` are byte-identical on current main versus the Phase3C merge base. Therefore the Phase3C runtime/test changes can be ported without overwriting the unrelated 49 main commits.
+- Clean branch: `chatgpt/operations-guided-timeline-v3c-rebase-20261007`, created from exact current main. The two Operations files, workflow addition, Phase3C test, guided-timeline documentation and pilot preview were ported from the verified Phase3C candidate.
+- Production deployment was NOT performed in this rebase step. Timeline/domain writes=0, task due writes=0, owner writes=0, program-status writes=0, customer/external messages=0.
+- Next gates: repository CI; then only a file-capable controlled production deployment with exact live rollback/read-back/health/domain-write guards. Do not use Code Snippets as a plugin-file deployment shim.
