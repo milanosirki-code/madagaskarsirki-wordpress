@@ -318,16 +318,25 @@ class MMC_School_Planning_Service {
     public static function summary( $program_id ) {
         $plans = self::plans( $program_id );
         $out = array(
-            'campus_count'    => count( $plans ),
-            'student_count'   => 0,
-            'known_campuses'  => 0,
-            'unknown_campuses'=> 0,
-            'suggested_qty'   => 0,
-            'planned_qty'     => 0,
-            'printed_qty'     => 0,
-            'distributed_qty' => 0,
+            'campus_count'         => count( $plans ),
+            'school_unit_count'    => 0,
+            'student_count'        => 0,
+            'known_campuses'       => 0,
+            'unknown_campuses'     => 0,
+            'known_school_units'   => 0,
+            'unknown_school_units' => 0,
+            'suggested_qty'        => 0,
+            'planned_qty'          => 0,
+            'printed_qty'          => 0,
+            'distributed_qty'      => 0,
         );
         foreach ( $plans as $row ) {
+            $components = max( 1, (int) $row->component_school_count );
+            $known_units = min( $components, max( 0, (int) $row->student_known_count ) );
+            $out['school_unit_count'] += $components;
+            $out['known_school_units'] += $known_units;
+            $out['unknown_school_units'] += max( 0, $components - $known_units );
+
             if ( null === $row->student_count_snapshot || '' === (string)$row->student_count_snapshot ) {
                 $out['unknown_campuses']++;
             } else {
