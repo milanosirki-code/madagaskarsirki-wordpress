@@ -1,0 +1,23 @@
+name: Issue 182 shop and catalogue safety
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  issue-182:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l wp-content/plugins/madagaskar-legacy-redirects/madagaskar-legacy-redirects.php
+      - run: php tests/legacy-redirects/contract.php
+      - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php
+      - run: python3 tests/issue-182/catalog-safety.py

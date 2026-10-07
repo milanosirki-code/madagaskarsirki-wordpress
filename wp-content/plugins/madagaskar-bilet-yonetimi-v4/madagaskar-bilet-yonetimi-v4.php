@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Bilet Yönetimi V4.0
  * Description: Madagaskar Sirki için WooCommerce + PayTR + Tickera üzerine kurulu tek yönetim merkezi. Satış kapatma, erteleme/aktarım, Biletlerim, iki kişili iptal/tam iade + iade sonrası ticket uzlaştırma ve geçiş envanterini güvenli biçimde tek yerde yönetir.
- * Version: 4.0.14-transition
+ * Version: 4.0.15-transition
  * Author: Madagaskar Sirki / Dünya Organizasyon
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -13,13 +13,15 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class MDG_Bilet_Yonetimi_V4 {
-    const VERSION = '4.0.14-transition';
+    const VERSION = '4.0.15-transition';
     const MENU_SLUG = 'madagaskar-v4';
     const CAP = 'manage_woocommerce';
     const MAP_POST_TYPE = 'mdg_postpone_map';
     const TRANSFER_POST_TYPE = 'mdg_v4_transfer';
     const REFUND_POST_TYPE = 'mdg_v4_refund_case';
     const SALES_META = '_mdg_v371_sales_closed';
+    const CATALOG_HIDDEN_META = '_mdg_v4_catalog_hidden';
+    const CATALOG_PREVIOUS_META = '_mdg_v4_catalog_previous_visibility';
     const INVALID_META = '_mdg_invalidated';
     const INVALID_REASON_META = '_mdg_invalidated_reason';
     const LEGACY_MAPPING_STATE = '_mdg_v387_mapping_state';
@@ -68,6 +70,7 @@ final class MDG_Bilet_Yonetimi_V4 {
         // Keeping the same meta key makes this safe while V3.7.1 is still active; duplicate false decisions are idempotent.
         add_filter( 'woocommerce_is_purchasable', [ $this, 'filter_sales_closed_purchasable' ], 99, 2 );
         add_filter( 'woocommerce_variation_is_purchasable', [ $this, 'filter_sales_closed_purchasable' ], 99, 2 );
+        add_filter( 'woocommerce_product_is_visible', [ $this, 'filter_closed_or_expired_catalog_visibility' ], 99, 2 );
 
         if ( ! function_exists( 'mdg_v4_biletlerim_url' ) ) {
             function mdg_v4_biletlerim_url( $order_id ) {
@@ -261,6 +264,68 @@ final class MDG_Bilet_Yonetimi_V4 {
         return $purchasable;
     }
 
+    private function product_session_started( $product_id ) {
+        $product_id = absint( $product_id );
+        if ( ! $product_id ) return false;
+
+        $title = get_the_title( $product_id );
+        if ( ! $title ) return false;
+
+        $date = $this->postpone_date_from_title( $title );
+        $time = $this->postpone_time_from_title( $title );
+        if ( ! $date || ! $time ) return false;
+
+        $tz = wp_timezone();
+        $session = DateTimeImmutable::createFromFormat( '!Y-m-d H:i', $date . ' ' . $time, $tz );
+        if ( ! $session ) return false;
+
+        return $session->getTimestamp() <= time();
+    }
+
+    private function hide_product_catalog_by_v4( $product_id ) {
+        if ( ! function_exists( 'wc_get_product' ) ) return;
+        $product = wc_get_product( absint( $product_id ) );
+        if ( ! $product ) return;
+
+        $current = (string) $product->get_catalog_visibility();
+        if ( 'hidden' === $current ) return;
+
+        update_post_meta( $product->get_id(), self::CATALOG_PREVIOUS_META, $current ?: 'visible' );
+        update_post_meta( $product->get_id(), self::CATALOG_HIDDEN_META, 'yes' );
+        $product->set_catalog_visibility( 'hidden' );
+        $product->save();
+    }
+
+    private function restore_product_catalog_by_v4( $product_id ) {
+        if ( 'yes' !== get_post_meta( $product_id, self::CATALOG_HIDDEN_META, true ) ) return;
+        if ( ! function_exists( 'wc_get_product' ) ) return;
+
+        $product = wc_get_product( absint( $product_id ) );
+        if ( ! $product ) return;
+
+        $previous = (string) get_post_meta( $product_id, self::CATALOG_PREVIOUS_META, true );
+        if ( ! in_array( $previous, array( 'visible', 'catalog', 'search', 'hidden' ), true ) ) {
+            $previous = 'visible';
+        }
+
+        $product->set_catalog_visibility( $previous );
+        $product->save();
+        delete_post_meta( $product_id, self::CATALOG_HIDDEN_META );
+        delete_post_meta( $product_id, self::CATALOG_PREVIOUS_META );
+    }
+
+    public function filter_closed_or_expired_catalog_visibility( $visible, $product_id ) {
+        if ( ! $visible || ! function_exists( 'wc_get_product' ) ) return $visible;
+
+        $product = wc_get_product( absint( $product_id ) );
+        if ( ! $product ) return $visible;
+
+        if ( $this->sales_closed_for_product( $product ) ) return false;
+        if ( $this->product_session_started( $product->get_id() ) ) return false;
+
+        return $visible;
+    }
+
     /* -------------------- SALES -------------------- */
 
     public function render_sales() {
@@ -313,10 +378,12 @@ final class MDG_Bilet_Yonetimi_V4 {
 
         if ( 'close' === $mode && 'SATISI KAPAT' === $confirm ) {
             update_post_meta($product_id,self::SALES_META,'yes');
+            $this->hide_product_catalog_by_v4( $product_id );
         } elseif ( 'open' === $mode && 'SATISI AC' === $confirm ) {
             delete_post_meta($product_id,self::SALES_META);
             $p=wc_get_product($product_id);
             if($p && $p->is_type('variable')) foreach($p->get_children() as $cid) delete_post_meta($cid,self::SALES_META);
+            $this->restore_product_catalog_by_v4( $product_id );
         } else wp_die('Onay geçersiz.');
 
         clean_post_cache($product_id);

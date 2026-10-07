@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Legacy Redirects
  * Description: Kaldırılmış eski Madagaskar URL'lerini güncel kanonik sayfalara 301 ile yönlendirir.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Dünya Organizasyon
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MDG_LEGACY_REDIRECTS_VERSION', '1.0.1' );
+define( 'MDG_LEGACY_REDIRECTS_VERSION', '1.0.2' );
 
 add_action(
 	'template_redirect',
@@ -33,7 +33,13 @@ add_action(
 			'/hula-hoop'      => '/gosteriler/hula-hoop/',
 			'/palyaco'        => '/gosteriler/palyaco/',
 			'/tum-gosteriler' => '/gosteriler/',
+			'/shop' => '/bilet-al/',
 			'/urun/madagaskar-sirki-ankara-26-eylul-2026-1200-bileti' => '/bilet-al/',
+			'/urun/madagaskar-sirki-ankara-26-eylul-2026-1400-bileti' => '/bilet-al/',
+			'/urun/madagaskar-sirki-ankara-26-eylul-2026-1600-bileti' => '/bilet-al/',
+			'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1200-bileti' => '/bilet-al/',
+			'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1400-bileti' => '/bilet-al/',
+			'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1600-bileti' => '/bilet-al/',
 		);
 
 		if ( ! isset( $redirects[ $path ] ) ) {

@@ -1,0 +1,35 @@
+name: WordPress.com Issue 182 V4 artifact
+
+on:
+  push:
+    branches:
+      - chatgpt/issue-182-shop-catalog-20261007
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcom-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php
+      - run: python3 tests/issue-182/catalog-safety.py
+      - name: Stage V4 plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p wpcom-deploy
+          cp -R wp-content/plugins/madagaskar-bilet-yonetimi-v4/. wpcom-deploy/
+          diff -qr wp-content/plugins/madagaskar-bilet-yonetimi-v4 wpcom-deploy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wpcom
+          path: wpcom-deploy/
+          retention-days: 1
+          if-no-files-found: error
