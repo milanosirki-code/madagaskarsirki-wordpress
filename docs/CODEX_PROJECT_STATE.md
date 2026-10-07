@@ -246,3 +246,59 @@ Live campaign source #124 is ahead of historical PR #145 and is being backported
 
 ## Campaign multi-province live reconciliation — 2026-10-06
 After PR #168 merged, live Code Snippets #124 advanced again and became live-ahead of main. Current live source uses `schema_version=2` with a `cities` map so one campaign code can target multiple provinces independently. Read-only live registry: `bms` = Denizli + Ankara + Eskişehir; `sagliksendenizli` = Denizli; `okul26` = Eskişehir. BMS Ankara/Eskişehir campaign prices are 475/250; OKUL26 Eskişehir 490/250. Public rendered `/kampanya/?kod=BMS` shows “Denizli / Ankara / Eskişehir gösterileri”. Branch `codex/campaign-multiprovince-live-reconcile` backports the exact active #124 source, extends runtime regression for multi-province isolation and adds an admin/source contract. No production registry/order/payment/ticket/message write is part of the reconciliation. See `docs/CAMPAIGN_MULTIPROVINCE_LIVE_RECONCILIATION_20261006.md`.
+
+
+## Operations Phase3C latest-main clean rebase checkpoint — 2026-10-07
+
+BEFORE:
+- Current main: `5e669cae3c4d0828d8760725b55af73c631f6508`; PR #176 already merged. Completed T1–T9, legacy PRs and reminder safety were not repeated.
+- PR #172 head `fafcd7ccd7e2b9a6feb87f7f0aecfa7e54d73740` is not merged because its base predates new main; no Phase3C logic defect was found. Replacement preserves new main rather than merging the older branch.
+
+ACTION:
+- Continue existing replacement branch `chatgpt/operations-guided-timeline-v3c-rebase2-20261007` at `2ccfc51ccb1c74606522823b55ce9d25d4f17cbb`; its six existing files were verified, not recreated. Compare: 6 commits ahead, 0 behind current main.
+- Main vs old merge-base `7cbc27537aa4d50e36ea3025712fdcd17261c670` blob proof: workflow `88607ad88a9ddc8e3915d1a1b07994b900ef0602`, admin `eed6d5dfc7e8ce9658cc6c63bd9f3d32a2c3183a`, service `03e30574670202eedff0b5355542e9938ec8d467` are identical at both refs. No runtime/workflow conflict.
+- Replacement vs PR172 candidate blob proof: workflow `2ca9ceeeb24e3d15dfb02e4c6575c0a15908a06d`, admin `d8c855b51ac040eb81809a37842dbb69639a6fa2`, service `5723a009bc64cfecfc2e2689f771923a4a2688bc` are identical. Phase3C contract unchanged.
+- Final scope: .github/workflows/operations-automation.yml; wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php; wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php; docs/OPERATIONS_GUIDED_TIMELINE_V3C.md; docs/OPERATIONS_V3C_PILOT_PREVIEW.json; tests/operations/timeline-v3c.php; docs/CODEX_PROJECT_STATE.md.
+
+AFTER / EVIDENCE:
+- CI: replacement PR #177 head `6743f2440e6872b03f5ee8ca59a735060248890d` passed 12/12 fresh workflows. Operations run37588694883/job112684745140 confirms both PHP lints, 265 Phase3C assertions (including prior contracts), and 55 real MySQL fixture assertions. This documentation-only result commit must also pass its own fresh checks before PR172 closure.
+- Local Git fetch/checkout/pull could not complete because configured proxy endpoint is unavailable; local PHP is absent. GitHub connector is authoritative for refs/blob comparisons; no local execution success claimed.
+- Production deploy NOT performed. Domain write=0; timeline write=0; task due write=0; owner write=0; program status write=0; order/payment/ticket write=0; customer SEND=0 for this task.
+- Production gate still requires real controlled file-capable hosting/SFTP/SSH access, exact live two-file backup/hash/byte size, baseline check, temp upload/lint/atomic replacement, exact read-back, health/admin/pilot/abilities checks and equal domain snapshots. Code Snippets/theme draft/eval/WPCode shims are prohibited. No merge or Issue164 closure before all gates pass.
+- Fresh live `operations-plan-get` GET reads for Denizli10/Mamak11: both sales_open, plan draft/undecided, all seven timeline fields NULL. Canonical read-only unified output confirms first sessions17:30/12:00 and last19:30/18:00. Existing candidate fixture records stored door interval30, suggestions17:00/11:30, source `event.first_session_minus_door_open_minutes`; interval was NOT freshly verified live because event-get ability is absent. Candidate CURRENT/SUGGESTED/SOURCE and GET write-free are tested by CI265 assertions, not by production guided render. No production SQL-write snapshot/equality claim. Read callback calls get_program/get_plan/summary, not ensure/create/update; no domain write endpoint called. Full production proof remains deployment gate.
+
+ROLLBACK:
+- No production mutation; production rollback not needed. This checkpoint is record-only on the replacement branch. Existing six-file Phase3C candidate remains unchanged.
+
+
+## Operations Phase3C controlled deployment preparation — 2026-10-07
+
+BEFORE: Main5e669cae3c4d0828d8760725b55af73c631f6508; PR177 head802ce17191f275b0883d0552cec76377923e35e4 open/ready/mergeable/unmerged,0behind,7files,12/12GREEN. No rebase, runtime port, historical task or reminder patch repeated.
+
+ACTION: Expanded existing docs/OPERATIONS_GUIDED_TIMELINE_V3C.md only with exact candidate/main hashes and byte sizes, private live backup requirements, pair deployment consistency/partial-failure rollback, host lint/read-back/opcache gates, canonical door interval SELECT, full-column server-side row-hash SQL generator, independent BEFORE/AFTER transactions, complete-table scope including mmc_logs and commerce storage, and explicit stop conditions. No new runtime file/table/ability/snippet. Candidate artifacts locally verified against Git blob identities; these are not live backups.
+
+AFTER/EVIDENCE: Fresh authenticated health16OK/0warning/0critical. Current environment has no hosting credentials/identities/capabilities/TCPgrants/VPN; WPVibe file tools support draft theme only. Controlled plugin-file access remains BLOCKED. No live source/backup/tempupload/atomicreplace/guidedpreview/interval/SQLsnapshot claim. Existing candidate265Phase3C/55MySQL and lint results independently re-read from CI; new documentation head checks will be verified before handoff. docs SQL reviewed against MMC_Activator schema; not executed live. Production pair rollback must preserve legitimate sales, never restore whole DB. Legacy Redirect176 remains separate unit.
+
+Production plugin/domain/timeline/task due/owner/program status/order/payment/ticket/customer SEND/credential writes initiated=0. Issue164 and PR177 remain open/unmerged. Issues82remoteinventory/166legacyrevoke blocked;105SENDdisabled and owner124/Aile/AI/Tickera/Phone decisions unchanged.
+
+ROLLBACK: No production change; no production rollback needed. Documentation-only changes can be corrected/reverted without touching the preserved runtime candidate. GitHub/Drive checkpoints preserve earlier history and require read-back.
+
+
+## Operations Phase3C controlled access revalidation — 2026-10-07
+
+BEFORE: main 5e669cae3c4d0828d8760725b55af73c631f6508; PR #177 head 0afce5582a4860db4737f511d265121161c916e5, OPEN/READY/MERGEABLE/UNMERGED; 10 ahead, 0 behind, scope 7 files; all 12 workflows SUCCESS. Issue #164 remains OPEN.
+
+ACTION: Read current GitHub refs/compare/CI, latest #164 evidence, existing checkpoint and complete deployment runbook. Revalidated available tools and current cloud configuration: no hosting secret bindings, outbound identities or file deployment capabilities; no TCP grants/VPN; WPVibe file operations are restricted to draft themes. No controlled exact-byte production plugin read/backup/temp upload/atomic pair replace/read-back/rollback channel. No prohibited workaround attempted. Existing runbook is complete and retained unchanged; no rebase, runtime port or test rewrite required.
+
+AFTER/EVIDENCE: Documentation-only checkpoint on the same branch. Candidate runtime remains byte-identical to tested 802ce17191f275b0883d0552cec76377923e35e4. CI at incoming head confirms 12/12 SUCCESS; Operations run 37594481757 previously proved both PHP lints, 265 Phase3C and 55 MySQL assertions. New documentation head CI must be checked separately. Last authenticated health 16 OK/0 warning/0 critical is prior evidence, not a new health execution. Exact live backup/hashes, recorded door interval, Denizli #10/Mamak #11 production guided preview and SQL BEFORE/AFTER remain NOT EXECUTED. GitHub artifact hashes in the unchanged runbook are not production hashes or backups.
+
+BLOCKER: CONTROLLED FILE ACCESS YOK. Required channel must prove real resolved plugin paths, exact bytes and hash, private backup plus backup read-back, candidate temp upload/lint/hash, consistent two-file replacement with partial-failure rollback, exact production read-back and host health/audit access. Keep PR #177 unmerged and #164 open until every runbook gate passes. Other tasks/owner decisions unchanged; #105 SEND remains closed.
+
+Production writes initiated: plugin file=0; domain data=0; order=0; payment=0; ticket=0; timeline=0; task/due=0; owner=0; program status=0; customer message=0; credential=0.
+
+ROLLBACK: Not needed; no production write. Runbook rollback plan is prepared, but exact production rollback copies are NOT captured or verified. This documentation append can be reverted independently. GitHub and existing Drive records must preserve prior content and be read back.
+
+
+## Operations Phase3C provider discovery and access handoff — 2026-10-07
+
+New evidence: authenticated WordPress.com site listing verifies production madagaskarsirki.com as Atomic site255726534; separate Simple site255726778 is not production. Managed backup credential reference does not grant agent file access. Provider-specific owner handoff is now recorded in docs/OPERATIONS_GUIDED_TIMELINE_V3C.md: Hosting Dashboard→correct site→Settings→SFTP/SSH; protected authentication binding plus verified host/port TCP grant; exact root/path remains unverified and must be resolved read-only. No SSH enabling/credential creation/reset/key attachment/deploy/API speculation performed. Existing runtime and deployment gates preserved; no repeated ability scan/rebase/new branch/PR. Incoming candidate0fa08320994c730008d402cb11024fa7b2d831de was12/12GREEN; documentation head CI checked separately. New live backup/hash/door interval/guided preview/SQL equality not performed. Production plugin/domain/order/payment/ticket/timeline/task/owner/customer message/credential writes=0;SENDclosed;177unmerged/164open. BEFORE→ACTION→AFTER→EVIDENCE→ROLLBACK details and official sources are in the runbook handoff; production rollback unnecessary, exact live rollback copies still absent.

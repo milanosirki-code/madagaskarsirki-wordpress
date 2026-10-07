@@ -1,0 +1,46 @@
+{
+  "checked_at": "2026-10-06",
+  "production_write": 0,
+  "pilots": {
+    "10": {
+      "program_code": "PRG-2026-DEN-PAMUKK-001",
+      "status": "sales_open",
+      "event_date": "2026-10-08",
+      "door_open_minutes": 30,
+      "first_session": "2026-10-08 17:30:00",
+      "last_session_start": "2026-10-08 19:30:00",
+      "current_timeline": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      },
+      "safe_suggestions": {
+        "doors_open_at": "2026-10-08 17:00:00"
+      }
+    },
+    "11": {
+      "program_code": "PRG-2026-ANK-MAMAK-001",
+      "status": "sales_open",
+      "event_date": "2026-10-10",
+      "door_open_minutes": 30,
+      "first_session": "2026-10-10 12:00:00",
+      "last_session_start": "2026-10-10 18:00:00",
+      "current_timeline": {
+        "departure_at": null,
+        "venue_entry_at": null,
+        "setup_start_at": null,
+        "rehearsal_at": null,
+        "doors_open_at": null,
+        "teardown_end_at": null,
+        "return_at": null
+      },
+      "safe_suggestions": {
+        "doors_open_at": "2026-10-10 11:30:00"
+      }
+    }
+  }
+}
