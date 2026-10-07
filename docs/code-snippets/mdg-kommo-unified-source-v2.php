@@ -14,6 +14,43 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_today' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_kommo_unified_v2_family_fallback' ) ) {
+    function mdg_kommo_unified_v2_family_fallback( $program_id, $tickets ) {
+        foreach ( (array) $tickets as $ticket ) {
+            if ( 'family_2_2' === (string) ( $ticket['code'] ?? '' ) ) {
+                return $tickets;
+            }
+        }
+
+        global $wpdb;
+        $program_id = absint( $program_id );
+        if ( ! $program_id ) { return $tickets; }
+
+        $mdg_event_id = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT mdg_event_id FROM {$wpdb->prefix}mmc_mdg_event_bridge WHERE program_id = %d AND is_active = 1 LIMIT 1",
+            $program_id
+        ) );
+        if ( ! $mdg_event_id ) { return $tickets; }
+
+        $settings = get_option( 'mdg_family_package_22_v1', array() );
+        if ( ! is_array( $settings ) || empty( $settings['events'][ $mdg_event_id ] ) ) {
+            return $tickets;
+        }
+
+        $price = isset( $settings['event_prices'][ $mdg_event_id ] )
+            ? (float) $settings['event_prices'][ $mdg_event_id ]
+            : (float) ( $settings['price'] ?? 0 );
+        if ( $price <= 0 ) { return $tickets; }
+
+        $tickets[] = array(
+            'code' => 'family_2_2',
+            'name' => 'Aile Paketi 2+2',
+            'price' => $price,
+            'capacity_units' => 4,
+        );
+        return $tickets;
+    }
+}
 if ( ! function_exists( 'mdg_kommo_unified_v2_collect' ) ) {
     function mdg_kommo_unified_v2_collect() {
         if ( ! class_exists( 'MMC_Program_Service' ) || ! class_exists( 'MMC_Event_Service' ) || ! class_exists( 'MMC_Venue_Service' ) ) {
@@ -66,6 +103,8 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_collect' ) ) {
                 );
             }
 
+            $tickets = mdg_kommo_unified_v2_family_fallback( $program_id, $tickets );
+
             $price_parts = array();
             foreach ( $tickets as $ticket ) {
                 $label = $ticket['name'] ?: $ticket['code'];
@@ -114,7 +153,7 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_compact_text' ) ) {
     function mdg_kommo_unified_v2_compact_text( $rows ) {
         $lines = array(
             'MADAGASKAR SİRKİ — GÜNCEL AKTİF PROGRAM',
-            'Kaynak: MMC canonical program/event/venue/session/ticket data.',
+            'Kaynak: MMC canonical program/event/venue/session/ticket data + aktif aile paketi yapılandırması.',
             '0–2 yaş ücretsiz; 3–12 çocuk; 13+ yetişkin. Çocuklar yetişkin eşliğinde katılır.',
         );
 
