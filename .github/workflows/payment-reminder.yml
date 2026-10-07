@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'docs/code-snippets/ms-incomplete-payment-dryrun.php'
+      - 'prototypes/payment-reminder/**'
+      - 'docs/PAYMENT_REMINDER_PAYMENT_LINK_SOURCE_186.md'
       - 'tests/payment-reminder/**'
       - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php'
       - '.github/workflows/payment-reminder.yml'
@@ -18,5 +20,9 @@ jobs:
         run: |
           php -l docs/code-snippets/ms-incomplete-payment-dryrun.php
           php -l tests/payment-reminder/regression.php
+          php -l prototypes/payment-reminder/payment-reminder-preview.php
+          php -l tests/payment-reminder/preview.php
       - name: Eligibility and no-send regressions
         run: php tests/payment-reminder/regression.php
+      - name: Preview payment-link safety
+        run: php tests/payment-reminder/preview.php
