@@ -2,7 +2,7 @@
 /**
  * SOURCE-ONLY REPLACEMENT EXCERPT for live Code Snippets #42.
  *
- * Goal: remove the corporate flow's dependency on legacy MS_KOMMO_TOKEN.
+ * Goal: remove the corporate flow's dependency on the legacy Kommo token constant.
  * Base URL remains MS_KOMMO_BASE_URL because current production Kommo
  * configuration still reports that non-secret value as its subdomain source.
  *
