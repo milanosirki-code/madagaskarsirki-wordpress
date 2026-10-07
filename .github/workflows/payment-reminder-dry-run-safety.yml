@@ -1,0 +1,27 @@
+name: Payment Reminder Dry-Run Safety
+
+on:
+  push:
+    branches:
+      - chatgpt/payment-reminder-send-design-186-20261007
+      - main
+  pull_request:
+    paths:
+      - 'docs/live-captures/2026-10-07/snippet-103-payment-reminder-dry-run.php'
+      - 'docs/PAYMENT_REMINDER_SEND_DESIGN_186.md'
+      - 'tests/validate-payment-reminder-dry-run.py'
+      - '.github/workflows/payment-reminder-dry-run-safety.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tests/validate-payment-reminder-dry-run.py
