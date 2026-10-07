@@ -383,9 +383,19 @@ class MMC_School_Planning_Service {
     private static function row_campus_key( $row ) {
         $existing = sanitize_key( (string) ( $row->campus_key ?? '' ) );
         if ( $existing ) { return $existing; }
-        $base = self::base_school_name( (string) $row->school_name );
+
+        // Fiziksel saha kuralı: aynı açık adres tek ziyaret noktasıdır.
+        // Adres yeterince belirgin değilse okulun kademe eklerinden arındırılmış adı
+        // ikinci güvenli anahtar olarak kullanılır.
+        $province = self::norm( (string) $row->province_name );
+        $district = self::norm( (string) $row->district_name );
         $address = self::norm( (string) $row->address );
-        return 'cmp-' . substr( sha1( self::norm($row->province_name) . '|' . self::norm($row->district_name) . '|' . self::norm($base) . '|' . $address ), 0, 32 );
+        if ( strlen( $address ) >= 12 ) {
+            return 'cmp-' . substr( sha1( $province . '|' . $district . '|addr|' . $address ), 0, 32 );
+        }
+
+        $base = self::base_school_name( (string) $row->school_name );
+        return 'cmp-' . substr( sha1( $province . '|' . $district . '|name|' . self::norm($base) ), 0, 32 );
     }
 
     private static function row_campus_name( $row ) {
