@@ -564,21 +564,33 @@ function mad_okul_students_page() {
     }
 
     $il = $ctx ? mad_okul_place_title($ctx->program->province_name) : mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['il'] ?? '')));
-    $ilce = $ctx ? mad_okul_place_title($ctx->program->district_name) : mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
+    $program_districts = [];
+    if ($ctx) {
+        $program_districts = class_exists('MMC_Region_Service') ? MMC_Region_Service::get_program_targets($mmc_program_id) : [];
+        if (!$program_districts && !empty($ctx->program->district_name)) $program_districts = [$ctx->program->district_name];
+        $program_districts = array_values(array_unique(array_filter(array_map('mad_okul_place_title',(array)$program_districts))));
+    }
+    $ilce = $ctx ? (count($program_districts)===1 ? $program_districts[0] : '') : mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
     $unknown_only = !empty($_GET['unknown_only']);
 
     [$ils,$ilceler] = mad_okul_filter_options($il);
     $where = ["1=1", "UPPER(CONCAT(kurum_adi,' ',kurum_turu)) NOT LIKE '%İMAM HATİP ORTAOKULU%'"];
     $params = [];
     if ($il) { $where[]='il=%s'; $params[]=$il; }
-    if ($ilce) { $where[]='ilce=%s'; $params[]=$ilce; }
+    if ($program_districts) {
+        $where[]='ilce IN ('.implode(',',array_fill(0,count($program_districts),'%s')).')';
+        $params=array_merge($params,$program_districts);
+    } elseif ($ilce) { $where[]='ilce=%s'; $params[]=$ilce; }
     if ($unknown_only) { $where[]='ogrenci_sayisi IS NULL'; }
     $where_sql = implode(' AND ', $where);
 
     $total_where = ["1=1", "UPPER(CONCAT(kurum_adi,' ',kurum_turu)) NOT LIKE '%İMAM HATİP ORTAOKULU%'"];
     $total_params = [];
     if ($il) { $total_where[]='il=%s'; $total_params[]=$il; }
-    if ($ilce) { $total_where[]='ilce=%s'; $total_params[]=$ilce; }
+    if ($program_districts) {
+        $total_where[]='ilce IN ('.implode(',',array_fill(0,count($program_districts),'%s')).')';
+        $total_params=array_merge($total_params,$program_districts);
+    } elseif ($ilce) { $total_where[]='ilce=%s'; $total_params[]=$ilce; }
     $total_sql_where = implode(' AND ', $total_where);
 
     $total_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where";
@@ -606,7 +618,7 @@ function mad_okul_students_page() {
 
       <form method="get" class="mad-filter">
         <input type="hidden" name="page" value="mad-okul-students">
-        <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><strong><?php echo esc_html($il.' / '.$ilce); ?></strong><?php else: ?>
+        <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><strong><?php echo esc_html($il.' / '.implode(', ',$program_districts)); ?></strong><?php else: ?>
         <select name="il"><option value="">Tüm İller</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
         <select name="ilce"><option value="">Tüm İlçeler</option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select><?php endif; ?>
         <label><input type="checkbox" name="unknown_only" value="1" <?php checked($unknown_only); ?>> Sadece öğrenci sayısı bilinmeyenler</label>
@@ -618,25 +630,27 @@ function mad_okul_students_page() {
       <table class="widefat striped">
         <thead><tr><th>Okul</th><th>Adres</th><th>Web</th><th>Öğrenci</th><th>Durum</th><th>Kaynak</th><th>Doğrulama</th><th>Öncelik</th><th>Kaydet</th></tr></thead>
         <tbody>
-        <?php if(!$rows): ?><tr><td colspan="9">Kayıt bulunamadı.</td></tr><?php else: foreach($rows as $r): ?>
+        <?php if(!$rows): ?><tr><td colspan="9">Kayıt bulunamadı.</td></tr><?php else: foreach($rows as $r): $form_id='mad-student-'.(int)$r->id; ?>
           <tr>
-            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-              <input type="hidden" name="action" value="mad_okul_student_update">
-              <input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
-              <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
-              <?php wp_nonce_field('mad_okul_student_update_'.$r->id); ?>
-              <td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><small><?php echo esc_html(trim($r->kurum_turu.' · '.$r->egitim_kademesi,' ·')); ?></small></td>
+              <td>
+                <form id="<?php echo esc_attr($form_id); ?>" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                  <input type="hidden" name="action" value="mad_okul_student_update">
+                  <input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
+                  <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
+                  <?php wp_nonce_field('mad_okul_student_update_'.$r->id); ?>
+                </form>
+                <strong><?php echo esc_html($r->kurum_adi); ?></strong><br><small><?php echo esc_html(trim($r->kurum_turu.' · '.$r->egitim_kademesi,' ·')); ?></small>
+              </td>
               <td><?php echo esc_html($r->adres); ?></td>
               <td><?php if($r->web_adresi): ?><a href="<?php echo esc_url($r->web_adresi); ?>" target="_blank" rel="noopener noreferrer">Siteyi Aç</a><?php else: ?>—<?php endif; ?></td>
-              <td><input style="width:90px" type="number" min="0" name="ogrenci_sayisi" value="<?php echo esc_attr(null===$r->ogrenci_sayisi?'':$r->ogrenci_sayisi); ?>" placeholder="Bilinmiyor"></td>
-              <td><select name="ogrenci_sayi_durumu">
+              <td><input form="<?php echo esc_attr($form_id); ?>" style="width:90px" type="number" min="0" name="ogrenci_sayisi" value="<?php echo esc_attr(null===$r->ogrenci_sayisi?'':$r->ogrenci_sayisi); ?>" placeholder="Bilinmiyor"></td>
+              <td><select form="<?php echo esc_attr($form_id); ?>" name="ogrenci_sayi_durumu">
                 <?php foreach([''=>'—','tam'=>'Tam','kismi'=>'Kısmi','ikincil'=>'İkincil','bulunamadi'=>'Bulunamadı'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->ogrenci_sayi_durumu,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?>
               </select></td>
-              <td><input style="width:120px" name="ogrenci_kaynak_turu" value="<?php echo esc_attr($r->ogrenci_kaynak_turu); ?>" placeholder="MEB resmî"><br><input style="width:180px" type="url" name="ogrenci_kaynak_url" value="<?php echo esc_attr($r->ogrenci_kaynak_url); ?>" placeholder="Kaynak URL"></td>
-              <td><input type="date" name="ogrenci_dogrulama_tarihi" value="<?php echo esc_attr($r->ogrenci_dogrulama_tarihi ? substr($r->ogrenci_dogrulama_tarihi,0,10) : ''); ?>"></td>
-              <td><select name="oncelik"><?php foreach([''=>'—','cok_yuksek'=>'Çok Yüksek','yuksek'=>'Yüksek','orta'=>'Orta','dusuk'=>'Düşük'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->oncelik,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?></select></td>
-              <td><button class="button button-primary">Kaydet</button></td>
-            </form>
+              <td><input form="<?php echo esc_attr($form_id); ?>" style="width:120px" name="ogrenci_kaynak_turu" value="<?php echo esc_attr($r->ogrenci_kaynak_turu); ?>" placeholder="MEB resmî"><br><input form="<?php echo esc_attr($form_id); ?>" style="width:180px" type="url" name="ogrenci_kaynak_url" value="<?php echo esc_attr($r->ogrenci_kaynak_url); ?>" placeholder="Kaynak URL"></td>
+              <td><input form="<?php echo esc_attr($form_id); ?>" type="date" name="ogrenci_dogrulama_tarihi" value="<?php echo esc_attr($r->ogrenci_dogrulama_tarihi ? substr($r->ogrenci_dogrulama_tarihi,0,10) : ''); ?>"></td>
+              <td><select form="<?php echo esc_attr($form_id); ?>" name="oncelik"><?php foreach([''=>'—','cok_yuksek'=>'Çok Yüksek','yuksek'=>'Yüksek','orta'=>'Orta','dusuk'=>'Düşük'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->oncelik,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?></select></td>
+              <td><button form="<?php echo esc_attr($form_id); ?>" class="button button-primary">Kaydet</button></td>
           </tr>
         <?php endforeach; endif; ?>
         </tbody>
