@@ -99,15 +99,21 @@ class MMC_School_Planning_Service {
      */
     public static function campus_rows( $program_id ) {
         $program_id = absint( $program_id );
-        if ( ! $program_id || ! class_exists( 'MMC_Field_Service' ) ) { return array(); }
+        $program = $program_id ? MMC_Program_Service::get_program( $program_id ) : null;
+        if ( ! $program || ! class_exists( 'MMC_School_Source_Service' ) ) { return array(); }
 
-        $targets = MMC_Field_Service::targets( $program_id, array(
-            'exclude_skipped' => true,
-            'limit'            => 2000,
-        ) );
+        $districts = class_exists( 'MMC_Region_Service' )
+            ? MMC_Region_Service::get_program_targets( $program_id )
+            : array();
+        if ( ! $districts && ! empty( $program->district_name ) ) {
+            $districts = array( $program->district_name );
+        }
+        $rows = MMC_School_Source_Service::schools_for_area( $program->province_name, $districts );
 
         $groups = array();
-        foreach ( (array) $targets as $row ) {
+        foreach ( (array) $rows as $row ) {
+            if ( empty( $row->is_active ) || self::excluded_school_row( $row ) ) { continue; }
+
             $key = self::row_campus_key( $row );
             if ( ! isset( $groups[ $key ] ) ) {
                 $groups[ $key ] = array(
@@ -120,13 +126,13 @@ class MMC_School_Planning_Service {
                     'website'                 => (string) ( $row->website ?? '' ),
                     'component_names'         => array(),
                     'education_levels'        => array(),
-                    'target_ids'              => array(),
+                    'source_refs'             => array(),
                     'component_school_count'  => 0,
                     'student_count_snapshot'  => 0,
                     'student_known_count'     => 0,
                     'student_statuses'        => array(),
                     'student_source_urls'     => array(),
-                    'priority'                => (string) ( $row->school_priority ?? $row->priority ?? '' ),
+                    'priority'                => (string) ( $row->priority ?? '' ),
                 );
             }
             $g =& $groups[ $key ];
@@ -134,10 +140,10 @@ class MMC_School_Planning_Service {
             $g['component_names'][] = (string) $row->school_name;
             $level = trim( (string) ( $row->education_level ?: $row->school_type ) );
             if ( $level ) { $g['education_levels'][] = $level; }
-            $g['target_ids'][] = (int) $row->id;
+            if ( ! empty( $row->source_ref ) ) { $g['source_refs'][] = (string) $row->source_ref; }
 
-            if ( null !== $row->student_count_snapshot && '' !== (string) $row->student_count_snapshot ) {
-                $g['student_count_snapshot'] += absint( $row->student_count_snapshot );
+            if ( null !== $row->student_count && '' !== (string) $row->student_count ) {
+                $g['student_count_snapshot'] += absint( $row->student_count );
                 $g['student_known_count']++;
             }
             $status = sanitize_key( (string) ( $row->student_count_status ?? '' ) );
@@ -156,7 +162,7 @@ class MMC_School_Planning_Service {
             $group['education_levels'] = array_values( array_unique( array_filter( $group['education_levels'] ) ) );
             $group['student_statuses'] = array_values( array_unique( array_filter( $group['student_statuses'] ) ) );
             $group['student_source_urls'] = array_values( array_unique( array_filter( $group['student_source_urls'] ) ) );
-            $group['target_ids'] = array_values( array_unique( array_filter( $group['target_ids'] ) ) );
+            $group['source_refs'] = array_values( array_unique( array_filter( $group['source_refs'] ) ) );
             if ( 0 === $group['student_known_count'] ) {
                 $group['student_count_snapshot'] = null;
             }
@@ -350,6 +356,19 @@ class MMC_School_Planning_Service {
         if ( $min > 0 ) { $qty = max( $qty, $min ); }
         if ( $max > 0 ) { $qty = min( $qty, $max ); }
         return max( 0, $qty );
+    }
+
+    private static function excluded_school_row( $row ) {
+        $type = self::norm_words( (string) ( $row->school_type ?? '' ) );
+        $name = self::norm_words( (string) ( $row->school_name ?? '' ) );
+        return false !== strpos( $type, 'IMAM HATIP ORTAOKULU' )
+            || false !== strpos( $name, 'IMAM HATIP ORTAOKULU' );
+    }
+
+    private static function norm_words( $value ) {
+        $value = remove_accents( wp_strip_all_tags( (string) $value ) );
+        $value = strtoupper( preg_replace( '/\s+/u', ' ', trim( $value ) ) );
+        return $value;
     }
 
     private static function row_campus_key( $row ) {
