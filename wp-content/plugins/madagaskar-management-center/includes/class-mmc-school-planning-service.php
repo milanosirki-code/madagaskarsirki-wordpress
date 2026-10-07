@@ -189,7 +189,7 @@ class MMC_School_Planning_Service {
         $policy = self::policy( $program_id );
         $campuses = self::campus_rows( $program_id );
         if ( ! $campuses ) {
-            return new WP_Error( 'mmc_school_plan_no_targets', 'Önce Okul / Saha ekranında program hedef okullarını oluşturun.' );
+            return new WP_Error( 'mmc_school_plan_no_targets', 'Bu programın il/ilçe kapsamı için okul ana kaynağında kayıt bulunamadı. Önce MEBBİS verisini aktarın ve program tanıtım ilçelerini kontrol edin.' );
         }
 
         $table = self::plan_table();
