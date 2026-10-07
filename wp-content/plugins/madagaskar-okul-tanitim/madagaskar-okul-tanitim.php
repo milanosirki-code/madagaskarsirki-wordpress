@@ -174,11 +174,12 @@ function mad_okul_insert_school($il, $ilce, $kurum, $adres, $student_count = nul
 
     $hash = mad_okul_hash($il, $ilce, $kurum, $adres);
     $now = current_time('mysql');
+    $student_sql = $student_count === null ? 'NULL' : (string)absint($student_count);
     $sql = $wpdb->prepare(
         "INSERT IGNORE INTO ".mad_okul_table()."
         (il, ilce, kurum_adi, adres, student_count, durum, personel, etkinlik, son_ziyaret, notlar, dedupe_hash, created_at, updated_at)
-        VALUES (%s,%s,%s,%s,%s,'Bekliyor','','',NULL,'',%s,%s,%s)",
-        $il, $ilce, $kurum, $adres, $student_count, $hash, $now, $now
+        VALUES (%s,%s,%s,%s,$student_sql,'Bekliyor','','',NULL,'',%s,%s,%s)",
+        $il, $ilce, $kurum, $adres, $hash, $now, $now
     );
     $inserted = $wpdb->query($sql);
 
@@ -808,7 +809,7 @@ function mad_okul_route_page() {
     }
 
     // Geriye uyumluluk: önce Okul Tanıtım programı, yoksa MMC kesin salonu.
-    if(!$start && !$mmc_program_id && $il && $ilce){
+    if(!$mmc_program_id && $il && $ilce){
         $programs_table=Mad_Okul_Operations::programs_table();
         $programs_exists=$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$programs_table));
         if($programs_exists===$programs_table){
@@ -822,7 +823,7 @@ function mad_okul_route_page() {
             ));
             if($p) {
                 $route_program=$p;
-                $start=trim($p->salon_adi.', '.$p->salon_adresi,', ');
+                if(!$start) $start=trim($p->salon_adi.', '.$p->salon_adresi,', ');
             }
         }
 
