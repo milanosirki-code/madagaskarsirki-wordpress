@@ -1,5 +1,5 @@
 <?php
-$source_path = __DIR__ . '/../../docs/code-snippets/ms-gosteri-arsivi-v1.php';
+$source_path = __DIR__ . '/../../docs/code-snippets/ms-gosteri-arsivi-v1.php.txt';
 $source = file_get_contents($source_path);
 if (false === $source) { fwrite(STDERR, "archive source unreadable\n"); exit(1); }
 
