@@ -153,6 +153,10 @@ class MMC_Admin {
         $totals = $summary['totals'];
         $coverage = $summary['coverage'];
         $n = max( 1, (int) $summary['district_total'] );
+        $school_area = (array) ( $summary['school_area_stats'] ?? array() );
+        $student_known = (int) ( $school_area['student_known_rows'] ?? 0 );
+        $student_missing = (int) ( $school_area['student_missing_rows'] ?? max( 0, (int)$summary['school_rows'] - $student_known ) );
+        $student_total_available = $student_known > 0 || (int)($coverage['student_count'] ?? 0) > 0;
         ?>
         <div class="mmc-panel mmc-hero-panel">
             <div><small><?php echo esc_html( $program->program_code ); ?></small><h2><?php echo esc_html( MMC_Region_Service::normalize_place_name( $program->province_name ) . ' / ' . ( $program->district_name ? MMC_Region_Service::normalize_place_name( $program->district_name ) : 'Genel' ) ); ?></h2></div>
@@ -198,7 +202,7 @@ class MMC_Admin {
             <div class="mmc-card"><span>Toplam Nüfus</span><strong><?php echo esc_html( $this->fmt( $totals['population_total'] ) ); ?></strong><small><?php echo esc_html( $this->coverage_text( $coverage['population_total'], $n ) ); ?></small></div>
             <div class="mmc-card"><span>0–14 Yaş</span><strong><?php echo esc_html( $this->fmt( $totals['population_0_14'] ) ); ?></strong><small><?php echo esc_html( $this->coverage_text( $coverage['population_0_14'], $n ) ); ?></small></div>
             <div class="mmc-card"><span>Okul Sayısı</span><strong><?php echo esc_html( $this->fmt( $totals['school_count'] ) ); ?></strong><small><?php echo esc_html( $this->coverage_text( $coverage['school_count'], $n ) ); ?></small></div>
-            <div class="mmc-card"><span>Öğrenci Sayısı</span><strong><?php echo esc_html( $this->fmt( $totals['student_count'] ) ); ?></strong><small><?php echo esc_html( $this->coverage_text( $coverage['student_count'], $n ) ); ?></small></div>
+            <div class="mmc-card"><span>Öğrenci Sayısı</span><strong><?php echo esc_html( $student_total_available ? $this->fmt( $totals['student_count'] ) : 'Veri yok' ); ?></strong><small><?php echo $summary['school_rows'] ? esc_html( 'Kayıtlı: ' . number_format_i18n($student_known) . ' / ' . number_format_i18n((int)$summary['school_rows']) . ' kurum · Eksik: ' . number_format_i18n($student_missing) . ' kurum' ) : esc_html( $this->coverage_text( $coverage['student_count'], $n ) ); ?></small></div>
         </div>
 
         <div class="mmc-grid-2">
@@ -210,6 +214,7 @@ class MMC_Admin {
                     <tr><td><?php echo esc_html( $label ); ?></td><td><?php echo esc_html( $c . ' / ' . $summary['district_total'] . ' ilçe' ); ?></td><td><?php echo esc_html( $state ); ?></td></tr>
                     <?php endforeach; ?>
                     <tr><td>Okul listesi</td><td><?php echo esc_html( number_format_i18n( $summary['school_rows'] ) . ' okul kaydı' ); ?></td><td><?php echo $summary['school_rows'] ? '🟢 Kayıt var' : '🔴 Veri yok'; ?></td></tr>
+                    <tr><td>Öğrenci sayısı bulunan kurum</td><td><?php echo esc_html( number_format_i18n($student_known) . ' / ' . number_format_i18n((int)$summary['school_rows']) . ' kurum' ); ?></td><td><?php echo esc_html( 'Eksik: ' . number_format_i18n($student_missing) . ' kurum' ); ?></td></tr>
                 </tbody></table>
                 <p class="description">Toplam nüfus otomatik ilçe kaynağından hesaplanır. Kaynakta olmayan yaş/öğrenci kırılımları tahmin edilmez; il toplamı ilçelere dağıtılmaz.</p>
                 <?php if ( ! empty($summary['school_source']['external']) ) : ?><p class="description"><strong>Okul listesi kaynağı:</strong> <?php echo esc_html($summary['school_source']['label']); ?>. Okul sayısı bu ana listeden hesaplanır; öğrenci sayısı yalnız kaynakta mevcutsa kullanılır.</p><?php endif; ?>
@@ -242,6 +247,7 @@ class MMC_Admin {
             unset( $labels['population_total'] );
         }
         $school_source = class_exists('MMC_School_Source_Service') ? MMC_School_Source_Service::source_info() : array('external'=>false,'label'=>'MMC okul cache','menu_url'=>'');
+        $school_stats = class_exists('MMC_School_Source_Service') ? MMC_School_Source_Service::all_stats() : array('school_count'=>0,'student_count'=>0,'student_known_rows'=>0,'student_missing_rows'=>0);
         $meb_source = class_exists('MMC_MEB_Source_Service') ? MMC_MEB_Source_Service::info() : array('ready'=>false,'academic_year'=>'','province_count'=>0,'school_total'=>0,'student_total'=>0,'source_name'=>'');
         $prefill_province = MMC_Region_Service::normalize_place_name( wp_unslash( $_GET['province'] ?? '' ) );
         $prefill_district = MMC_Region_Service::normalize_place_name( wp_unslash( $_GET['district'] ?? '' ) );
@@ -255,6 +261,8 @@ class MMC_Admin {
                 <div class="mmc-card"><span>İl Nüfusu</span><strong><?php echo esc_html( (int)($population_source['province_count'] ?? 0) . ' / 81' ); ?></strong></div>
                 <div class="mmc-card"><span>İlçe Nüfusu</span><strong><?php echo esc_html( (int)($population_source['district_count'] ?? 0) . ' / 973' ); ?></strong></div>
                 <div class="mmc-card"><span>Okul Kaydı</span><strong><?php echo esc_html( number_format_i18n( $counts['schools'] ) ); ?></strong></div>
+                <div class="mmc-card"><span>Kayıtlı Öğrenci</span><strong><?php echo esc_html( (int)$school_stats['student_known_rows'] > 0 ? number_format_i18n((int)$school_stats['student_count']) : 'Veri yok' ); ?></strong><small><?php echo esc_html( number_format_i18n((int)$school_stats['student_known_rows']) . ' kurumda öğrenci sayısı var' ); ?></small></div>
+                <div class="mmc-card"><span>Öğrenci Sayısı Eksik Kurum</span><strong><?php echo esc_html( number_format_i18n((int)$school_stats['student_missing_rows']) ); ?></strong><small><?php echo esc_html( 'Toplam ' . number_format_i18n((int)$school_stats['school_count']) . ' kurum' ); ?></small></div>
                 <div class="mmc-card"><span>MEB Eğitim</span><strong><?php echo ! empty($meb_source['ready']) ? '✅' : '⚠️'; ?></strong><small><?php echo esc_html( ! empty($meb_source['academic_year']) ? $meb_source['academic_year'] : 'Hazır değil' ); ?></small></div>
                 <div class="mmc-card"><span>Ek Metrik</span><strong><?php echo esc_html( number_format_i18n( $counts['metrics'] ) ); ?></strong></div>
             </div>
@@ -302,6 +310,7 @@ class MMC_Admin {
                     <?php if ( ! empty($school_source['external']) ) : ?>
                         <h3>Okul Listesi Ana Kaynağı</h3>
                         <p><strong>✅ <?php echo esc_html($school_source['label']); ?></strong> bağlıdır. Okul listesi için MMC'ye ayrıca CSV yüklemeyin; okul adı, il/ilçe, adres, koordinat ve varsa öğrenci sayısı ana kaynaktan okunur.</p>
+                        <p class="description"><strong>Öğrenci verisi kapsaması:</strong> <?php echo esc_html(number_format_i18n((int)$school_stats['student_known_rows'])); ?> kurumda kayıtlı, <strong><?php echo esc_html(number_format_i18n((int)$school_stats['student_missing_rows'])); ?> kurumda eksik</strong>. Eksik sayı tahmin edilmez.</p>
                         <?php if ( ! empty($school_source['menu_url']) ) : ?><p><a class="button" href="<?php echo esc_url($school_source['menu_url']); ?>">Okul Tanıtım Menüsünü Aç</a></p><?php endif; ?>
                     <?php else : ?>
                         <h3>Okul Listesi — Geriye Uyumluluk</h3>

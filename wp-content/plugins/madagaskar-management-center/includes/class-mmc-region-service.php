@@ -355,6 +355,7 @@ class MMC_Region_Service {
             'district_total'    => count( $districts ),
             'years'             => $latest_years,
             'school_rows'       => $school_rows,
+            'school_area_stats' => is_array( $school_source ) ? $school_source : array(),
             'school_source'     => class_exists('MMC_School_Source_Service') ? MMC_School_Source_Service::source_info() : array(),
             'population_source' => $auto_population ? MMC_Population_Source_Service::info() : array( 'ready'=>false ),
             'population_detail' => $population_source,
