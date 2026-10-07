@@ -282,3 +282,18 @@ AFTER/EVIDENCE: Fresh authenticated health16OK/0warning/0critical. Current envir
 Production plugin/domain/timeline/task due/owner/program status/order/payment/ticket/customer SEND/credential writes initiated=0. Issue164 and PR177 remain open/unmerged. Issues82remoteinventory/166legacyrevoke blocked;105SENDdisabled and owner124/Aile/AI/Tickera/Phone decisions unchanged.
 
 ROLLBACK: No production change; no production rollback needed. Documentation-only changes can be corrected/reverted without touching the preserved runtime candidate. GitHub/Drive checkpoints preserve earlier history and require read-back.
+
+
+## Operations Phase3C controlled access revalidation — 2026-10-07
+
+BEFORE: main 5e669cae3c4d0828d8760725b55af73c631f6508; PR #177 head 0afce5582a4860db4737f511d265121161c916e5, OPEN/READY/MERGEABLE/UNMERGED; 10 ahead, 0 behind, scope 7 files; all 12 workflows SUCCESS. Issue #164 remains OPEN.
+
+ACTION: Read current GitHub refs/compare/CI, latest #164 evidence, existing checkpoint and complete deployment runbook. Revalidated available tools and current cloud configuration: no hosting secret bindings, outbound identities or file deployment capabilities; no TCP grants/VPN; WPVibe file operations are restricted to draft themes. No controlled exact-byte production plugin read/backup/temp upload/atomic pair replace/read-back/rollback channel. No prohibited workaround attempted. Existing runbook is complete and retained unchanged; no rebase, runtime port or test rewrite required.
+
+AFTER/EVIDENCE: Documentation-only checkpoint on the same branch. Candidate runtime remains byte-identical to tested 802ce17191f275b0883d0552cec76377923e35e4. CI at incoming head confirms 12/12 SUCCESS; Operations run 37594481757 previously proved both PHP lints, 265 Phase3C and 55 MySQL assertions. New documentation head CI must be checked separately. Last authenticated health 16 OK/0 warning/0 critical is prior evidence, not a new health execution. Exact live backup/hashes, recorded door interval, Denizli #10/Mamak #11 production guided preview and SQL BEFORE/AFTER remain NOT EXECUTED. GitHub artifact hashes in the unchanged runbook are not production hashes or backups.
+
+BLOCKER: CONTROLLED FILE ACCESS YOK. Required channel must prove real resolved plugin paths, exact bytes and hash, private backup plus backup read-back, candidate temp upload/lint/hash, consistent two-file replacement with partial-failure rollback, exact production read-back and host health/audit access. Keep PR #177 unmerged and #164 open until every runbook gate passes. Other tasks/owner decisions unchanged; #105 SEND remains closed.
+
+Production writes initiated: plugin file=0; domain data=0; order=0; payment=0; ticket=0; timeline=0; task/due=0; owner=0; program status=0; customer message=0; credential=0.
+
+ROLLBACK: Not needed; no production write. Runbook rollback plan is prepared, but exact production rollback copies are NOT captured or verified. This documentation append can be reverted independently. GitHub and existing Drive records must preserve prior content and be read back.
