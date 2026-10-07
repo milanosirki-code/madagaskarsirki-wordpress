@@ -15,7 +15,7 @@ listeleyen bir arşiv sayfası.
 
 ## Yeni dosya
 
-`docs/code-snippets/ms-gosteri-arsivi-v1.php`
+`docs/code-snippets/ms-gosteri-arsivi-v1.php.txt`
 
 - `ms_gosteri_arsivi_past_events()`: MDG `events` + `sessions`
   tablolarını okur, `s.end_at < now` olan (yani bitmiş) oturumları
@@ -40,7 +40,7 @@ listeleyen bir arşiv sayfası.
 ## Canlıya alma
 
 1. WP Admin → Code Snippets → yeni snippet oluştur, kaynağı
-   `docs/code-snippets/ms-gosteri-arsivi-v1.php` ile birebir aynı
+   `docs/code-snippets/ms-gosteri-arsivi-v1.php.txt` ile birebir aynı
    yap, aktif et (global, normal öncelik).
 2. Yeni sayfa oluştur: üst (parent) sayfa **Bilet Al** (id 311),
    slug `arsiv`, içerik `[ms_gosteri_arsivi]` (shortcode bloğu).
