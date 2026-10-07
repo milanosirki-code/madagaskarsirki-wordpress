@@ -246,3 +246,26 @@ Live campaign source #124 is ahead of historical PR #145 and is being backported
 
 ## Campaign multi-province live reconciliation — 2026-10-06
 After PR #168 merged, live Code Snippets #124 advanced again and became live-ahead of main. Current live source uses `schema_version=2` with a `cities` map so one campaign code can target multiple provinces independently. Read-only live registry: `bms` = Denizli + Ankara + Eskişehir; `sagliksendenizli` = Denizli; `okul26` = Eskişehir. BMS Ankara/Eskişehir campaign prices are 475/250; OKUL26 Eskişehir 490/250. Public rendered `/kampanya/?kod=BMS` shows “Denizli / Ankara / Eskişehir gösterileri”. Branch `codex/campaign-multiprovince-live-reconcile` backports the exact active #124 source, extends runtime regression for multi-province isolation and adds an admin/source contract. No production registry/order/payment/ticket/message write is part of the reconciliation. See `docs/CAMPAIGN_MULTIPROVINCE_LIVE_RECONCILIATION_20261006.md`.
+
+
+## Operations Phase3C latest-main clean rebase checkpoint — 2026-10-07
+
+BEFORE:
+- Current main: `5e669cae3c4d0828d8760725b55af73c631f6508`; PR #176 already merged. Completed T1–T9, legacy PRs and reminder safety were not repeated.
+- PR #172 head `fafcd7ccd7e2b9a6feb87f7f0aecfa7e54d73740` is not merged because its base predates new main; no Phase3C logic defect was found. Replacement preserves new main rather than merging the older branch.
+
+ACTION:
+- Continue existing replacement branch `chatgpt/operations-guided-timeline-v3c-rebase2-20261007` at `2ccfc51ccb1c74606522823b55ce9d25d4f17cbb`; its six existing files were verified, not recreated. Compare: 6 commits ahead, 0 behind current main.
+- Main vs old merge-base `7cbc27537aa4d50e36ea3025712fdcd17261c670` blob proof: workflow `88607ad88a9ddc8e3915d1a1b07994b900ef0602`, admin `eed6d5dfc7e8ce9658cc6c63bd9f3d32a2c3183a`, service `03e30574670202eedff0b5355542e9938ec8d467` are identical at both refs. No runtime/workflow conflict.
+- Replacement vs PR172 candidate blob proof: workflow `2ca9ceeeb24e3d15dfb02e4c6575c0a15908a06d`, admin `d8c855b51ac040eb81809a37842dbb69639a6fa2`, service `5723a009bc64cfecfc2e2689f771923a4a2688bc` are identical. Phase3C contract unchanged.
+- Final scope: .github/workflows/operations-automation.yml; wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php; wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php; docs/OPERATIONS_GUIDED_TIMELINE_V3C.md; docs/OPERATIONS_V3C_PILOT_PREVIEW.json; tests/operations/timeline-v3c.php; docs/CODEX_PROJECT_STATE.md.
+
+AFTER / EVIDENCE:
+- CI: replacement PR checks pending; old PR172 10/10 is historical evidence only. New exact-head CI must pass before closing PR172. Operations workflow reruns both PHP lints, timeline-v3c and earlier Operations/read-only/MySQL contracts.
+- Local Git fetch/checkout/pull could not complete because configured proxy endpoint is unavailable; local PHP is absent. GitHub connector is authoritative for refs/blob comparisons; no local execution success claimed.
+- Production deploy NOT performed. Domain write=0; timeline write=0; task due write=0; owner write=0; program status write=0; order/payment/ticket write=0; customer SEND=0 for this task.
+- Production gate still requires real controlled file-capable hosting/SFTP/SSH access, exact live two-file backup/hash/byte size, baseline check, temp upload/lint/atomic replacement, exact read-back, health/admin/pilot/abilities checks and equal domain snapshots. Code Snippets/theme draft/eval/WPCode shims are prohibited. No merge or Issue164 closure before all gates pass.
+- Pilot live GET reads and candidate CURRENT/SUGGESTED/SOURCE verification will be recorded separately; no production guided preview or SQL-write snapshot proof is claimed before deployment.
+
+ROLLBACK:
+- No production mutation; production rollback not needed. This checkpoint is record-only on the replacement branch. Existing six-file Phase3C candidate remains unchanged.
