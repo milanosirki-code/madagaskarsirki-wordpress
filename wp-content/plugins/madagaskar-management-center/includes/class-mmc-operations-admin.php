@@ -144,6 +144,7 @@ class MMC_Operations_Admin {
         $automation_preview=$program?MMC_Operations_Service::task_automation_preview($pid):null;
         $adoption_preview=$program?MMC_Operations_Service::task_adoption_preview($pid):null;
         $plan=$program?MMC_Operations_Service::get_plan($pid):null;
+        $timeline_preview=$program&&$plan?MMC_Operations_Service::guided_timeline_preview($pid):null;
         $summary=$program?MMC_Operations_Service::summary($pid):array();
         $resources=MMC_Operations_Service::resources();
         $assigned=$program?MMC_Operations_Service::program_resources($pid):array();
@@ -194,6 +195,26 @@ class MMC_Operations_Admin {
                 <?php foreach($tasks as $task):?><tr><td><?php echo esc_html($task->title);?></td><td><?php echo esc_html($task->status.' / '.$task->priority);?></td><td><?php echo esc_html($task->due_at??'Belirlenmedi');?></td><td><?php echo esc_html($task->assigned_user_id??'Atanmadı');?></td><td><?php echo esc_html($task->completed_at??'—');?></td></tr><?php endforeach;?>
                 <?php if(!$tasks):?><tr><td colspan="5">Bu kapsamda görev yok.</td></tr><?php endif;?></tbody></table>
             </div>
+            <?php if($timeline_preview):?>
+            <div class="mmc-panel">
+                <h2>Operasyon Zaman Çizelgesi Rehberi</h2>
+                <p>Bu alan yalnız rehberlik eder; GET sırasında hiçbir saat veya görev tarihi yazılmaz. Sadece kanonik event/seans verisinden güvenle türetilebilen öneri gösterilir. Hareket, salon giriş, kurulum, prova, söküm ve dönüş saatleri yönetici girişi gerektirir.</p>
+                <p>İlk seans: <strong><?php echo esc_html($timeline_preview['first_session']?:'Yok');?></strong> · Son seans başlangıcı: <strong><?php echo esc_html($timeline_preview['last_session_start']?:'Yok');?></strong></p>
+                <table class="widefat striped"><thead><tr><th>Alan</th><th>Mevcut</th><th>Öneri</th><th>Kaynak</th><th>Durum</th></tr></thead><tbody>
+                <?php foreach($timeline_preview['fields'] as$field=>$item):?>
+                    <tr>
+                        <td><?php echo esc_html($item['label']);?></td>
+                        <td><?php echo esc_html($item['current']?:'NULL');?></td>
+                        <td><?php echo esc_html($item['suggested']?:'—');?></td>
+                        <td><?php echo esc_html($item['source']?:'Yönetici girişi / mevcut plan');?></td>
+                        <td><?php echo $item['manager_required']?'Yönetici girişi gerekli':($item['suggested']&&!$item['current']?'Öneri mevcut':'Kayıt mevcut');?></td>
+                    </tr>
+                <?php endforeach;?>
+                </tbody></table>
+                <p><strong>Not:</strong> Öneri otomatik uygulanmaz. Aşağıdaki formda kaydedilen saatler kronolojik olarak doğrulanır; görev due/owner alanları bu kayıtla otomatik uygulanmaz, yalnız mevcut ayrı preview mekanizması yeniden hesaplanır.</p>
+            </div>
+            <?php endif;?>
+
             <div class="mmc-panel">
                 <h2>1. Operasyon Planı</h2>
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php'));?>"><input type="hidden" name="action" value="mmc_ops_save_plan"><input type="hidden" name="program_id" value="<?php echo esc_attr($pid);?>"><?php wp_nonce_field('mmc_ops_plan_'.$pid);?>
@@ -238,7 +259,7 @@ class MMC_Operations_Admin {
     }
 
     public function ensure_plan(){ if('POST'!==($_SERVER['REQUEST_METHOD']??'')){wp_die('Bu işlem POST gerektirir.', '', array('response'=>405));}$this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_ensure_'.$pid);$r=MMC_Operations_Service::ensure_plan($pid);$this->redirect($pid,$r,'Operasyon planı oluşturuldu / hazırlandı.'); }
-    public function save_plan(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_plan_'.$pid);$r=MMC_Operations_Service::save_plan($pid,wp_unslash($_POST));$this->redirect($pid,$r,'Operasyon planı kaydedildi.'); }
+    public function save_plan(){ if('POST'!==($_SERVER['REQUEST_METHOD']??'')){wp_die('Bu işlem POST gerektirir.','',array('response'=>405));}$this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_plan_'.$pid);$r=MMC_Operations_Service::save_plan($pid,wp_unslash($_POST));$this->redirect($pid,$r,'Operasyon planı kaydedildi.'); }
     public function add_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_resource_'.$pid);$r=MMC_Operations_Service::add_resource(wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak ana kaydı eklendi.'); }
     public function assign_resource(){ $this->guard();$pid=absint($_POST['program_id']??0);check_admin_referer('mmc_ops_assign_'.$pid);$r=MMC_Operations_Service::assign_resource($pid,absint($_POST['resource_id']??0),wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak programa atandı.'); }
     public function update_assignment(){ $this->guard();$pid=absint($_POST['program_id']??0);$aid=absint($_POST['assignment_id']??0);check_admin_referer('mmc_ops_assignment_'.$pid.'_'.$aid);$r=MMC_Operations_Service::update_assignment($pid,$aid,wp_unslash($_POST));$this->redirect($pid,$r,'Kaynak ataması güncellendi.'); }
