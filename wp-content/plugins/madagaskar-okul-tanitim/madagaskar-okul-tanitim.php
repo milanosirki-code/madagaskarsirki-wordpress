@@ -249,18 +249,26 @@ function mad_okul_insert_school($il, $ilce, $kurum, $adres, $meta = []) {
     ));
     if (!$existing_id) return false;
 
+    // Basit MEBBİS dosyası sonradan tekrar yüklendiğinde elle/web araştırmasıyla
+    // zenginleştirilmiş alanları boş değerlerle silme. Gelen dolu alanlar güncellenir.
     $update = [
-        'kurum_turu'               => $data['kurum_turu'],
-        'egitim_kademesi'          => $data['egitim_kademesi'],
-        'adres'                    => $adres,
-        'telefon'                  => $data['telefon'],
-        'web_adresi'               => $data['web_adresi'],
-        'campus_key'               => $data['campus_key'],
-        'campus_name'              => $data['campus_name'],
-        'oncelik'                  => $data['oncelik'],
-        'veri_yili'                => $data['veri_yili'],
-        'updated_at'               => $now,
+        'adres'      => $adres,
+        'updated_at' => $now,
     ];
+    foreach ([
+        'kurum_turu',
+        'egitim_kademesi',
+        'telefon',
+        'web_adresi',
+        'campus_key',
+        'campus_name',
+        'oncelik',
+        'veri_yili',
+    ] as $optional_key) {
+        if (isset($data[$optional_key]) && trim((string)$data[$optional_key]) !== '') {
+            $update[$optional_key] = $data[$optional_key];
+        }
+    }
     if (null !== $student_count) {
         $update['ogrenci_sayisi'] = $student_count;
         $update['ogrenci_sayi_durumu'] = $data['ogrenci_sayi_durumu'];
