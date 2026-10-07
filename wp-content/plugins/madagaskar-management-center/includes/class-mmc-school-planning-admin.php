@@ -108,7 +108,7 @@ class MMC_School_Planning_Admin {
                 <?php if ( ! empty( $source['menu_url'] ) ) : ?>
                     · <a href="<?php echo esc_url( $source['menu_url'] ); ?>">Okul Tanıtım ana listesini aç</a>
                 <?php endif; ?>
-                <p class="description">Programa alınacak okul havuzu <a href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-field', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Okul / Saha</a> ekranında oluşturulur. Bu sayfa hedefleri fiziksel kampüs düzeyinde toplar.</p>
+                <p class="description">Bu sayfa programın il/ilçe kapsamındaki <strong>Okul Tanıtım ana kaynağını</strong> doğrudan okur ve fiziksel kampüs düzeyinde toplar. Saha hedefleri daha sonra Okul / Saha ekranına bağlanır.</p>
             </div>
 
             <div class="mmc-cards mmc-cards-5">
@@ -131,7 +131,7 @@ class MMC_School_Planning_Admin {
                         <thead><tr><th>Kampüs / Ziyaret Noktası</th><th>Okul Birimleri</th><th>Adres</th><th>Öğrenci</th><th>Veri</th><th>Web / Telefon</th><th>Öncelik</th></tr></thead>
                         <tbody>
                         <?php if ( ! $rows ) : ?>
-                            <tr><td colspan="7">Bu program için kampüs verisi yok. Önce Okul / Saha ekranında hedef okulları programa bağlayın.</td></tr>
+                            <tr><td colspan="7">Bu program için kampüs verisi yok. Önce MEBBİS listesini aktarın ve programın tanıtım il/ilçelerini kontrol edin.</td></tr>
                         <?php else : foreach ( $rows as $row ) : ?>
                             <tr>
                                 <td><strong><?php echo esc_html( $row->campus_name ); ?></strong><br><small><?php echo esc_html( $row->district_name ); ?></small></td>
@@ -218,7 +218,7 @@ class MMC_School_Planning_Admin {
                 <p><strong>Dağıtım:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->distribution_percent, 2 ) ); ?> · <strong>Yedek:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->reserve_percent, 2 ) ); ?> · <strong>Yuvarlama:</strong> <?php echo esc_html( number_format_i18n( (int)$policy->round_to ) ); ?></p>
 
                 <?php if ( ! $plans ) : ?>
-                    <div class="notice notice-warning inline mmc-no-print"><p>Henüz baskı planı oluşturulmadı. Önce Okul / Saha ekranında hedef okulları bağlayın, ardından “Kampüsleri ve Önerilen Adetleri Güncelle” düğmesini kullanın.</p></div>
+                    <div class="notice notice-warning inline mmc-no-print"><p>Henüz baskı planı oluşturulmadı. MEBBİS/okul verisi ve öğrenci sayıları hazırsa “Kampüsleri ve Önerilen Adetleri Güncelle” düğmesini kullanın.</p></div>
                 <?php else : ?>
                     <form method="post" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>">
                         <input type="hidden" name="action" value="mmc_school_print_rows_save">
