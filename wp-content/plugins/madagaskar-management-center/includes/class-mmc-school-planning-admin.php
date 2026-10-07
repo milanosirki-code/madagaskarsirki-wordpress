@@ -203,6 +203,12 @@ class MMC_School_Planning_Admin {
                 <a class="button" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-school-data', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Okul Veri Merkezine Dön</a>
             </div>
 
+            <?php if ( $plans && ! empty( $summary['unknown_school_units'] ) ) : ?>
+                <div class="notice notice-warning inline">
+                    <p><strong>Eksik öğrenci verisi:</strong> <?php echo esc_html( number_format_i18n( $summary['unknown_school_units'] ) ); ?> okul biriminin öğrenci sayısı bilinmiyor. Önerilen toplam baskı bu eksikliği otomatik tahmin etmez<?php if ( (int)$policy->unknown_student_qty > 0 ) : ?>; yalnız “bilinmeyen kampüs varsayılanı” uygulanır<?php endif; ?>. Baskı onayından önce mümkünse Öğrenci Sayıları ekranını tamamlayın.</p>
+                </div>
+            <?php endif; ?>
+
             <?php if ( $plans ) : ?>
                 <div class="mmc-cards mmc-cards-5">
                     <div class="mmc-card"><span>Kampüs / Okul</span><strong><?php echo esc_html( number_format_i18n( $summary['campus_count'] ) ); ?> / <?php echo esc_html( number_format_i18n( $summary['school_unit_count'] ) ); ?></strong><small><?php echo esc_html( number_format_i18n( $summary['unknown_school_units'] ) ); ?> okulun öğrenci sayısı bilinmiyor</small></div>
@@ -215,7 +221,7 @@ class MMC_School_Planning_Admin {
 
             <div class="mmc-panel">
                 <h2><?php echo esc_html( $program->program_code . ' — ' . $program->province_name . ' / ' . $program->district_name ); ?></h2>
-                <p><strong>Dağıtım:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->distribution_percent, 2 ) ); ?> · <strong>Yedek:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->reserve_percent, 2 ) ); ?> · <strong>Yuvarlama:</strong> <?php echo esc_html( number_format_i18n( (int)$policy->round_to ) ); ?></p>
+                <p><strong>Dağıtım:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->distribution_percent, 2 ) ); ?> · <strong>Yedek:</strong> %<?php echo esc_html( number_format_i18n( (float)$policy->reserve_percent, 2 ) ); ?> · <strong>Yuvarlama:</strong> <?php echo esc_html( number_format_i18n( (int)$policy->round_to ) ); ?><?php if($plans): ?> · <strong>Öğrenci sayısı bilinmeyen okul:</strong> <?php echo esc_html( number_format_i18n( $summary['unknown_school_units'] ) ); ?><?php endif; ?></p>
 
                 <?php if ( ! $plans ) : ?>
                     <div class="notice notice-warning inline mmc-no-print"><p>Henüz baskı planı oluşturulmadı. MEBBİS/okul verisi ve öğrenci sayıları hazırsa “Kampüsleri ve Önerilen Adetleri Güncelle” düğmesini kullanın.</p></div>
