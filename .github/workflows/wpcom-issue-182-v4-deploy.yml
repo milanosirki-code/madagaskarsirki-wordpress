@@ -3,7 +3,7 @@ name: WordPress.com Issue 182 V4 artifact
 on:
   push:
     branches:
-      - chatgpt/issue-182-shop-catalog-20261007
+      - main
   workflow_dispatch:
 
 permissions:
