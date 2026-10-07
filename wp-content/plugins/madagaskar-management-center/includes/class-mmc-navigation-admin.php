@@ -345,37 +345,89 @@ class MMC_Navigation_Admin {
     public function school_hub() {
         $this->guard( 'mmc_manage_field' );
 
-        $cards = array(
-            $this->card( 'Okul Veri Merkezi', 'mmc-school-data', 'mmc_manage_field', 'Kampüs bazlı ziyaret noktaları, okul birimleri, öğrenci sayısı, web/telefon ve veri kalitesi.' ),
-            $this->card( 'Davetiye / Bilet Baskı Planı', 'mmc-school-print-plan', 'mmc_manage_field', 'Öğrenci sayısına göre önerilen baskı adedi, manuel plan, basılan ve dağıtılan adet takibi.' ),
-            $this->card( 'Okul / Saha Hedefleri', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef kampüs/okul havuzu, personel, ziyaret, KML ve saha takibi.' ),
+        $by_slug = array();
+        foreach ( (array) $this->school_items as $item ) {
+            if ( ! empty( $item['slug'] ) ) { $by_slug[ $item['slug'] ] = $item; }
+        }
+
+        $cards = array();
+
+        // 1) Ham MEBBİS verisini al.
+        if ( isset( $by_slug['mad-okul-import'] ) ) {
+            $card = $this->legacy_card( $by_slug['mad-okul-import'], 'school' );
+            $card['title'] = '1. MEBBİS Veri Aktarımı';
+            $card['note'] = 'MEBBİS XLS/XLSX/CSV: okul, adres, telefon ve web verisini içe alır; İmam Hatip Ortaokullarını ve hedef dışı kurumları dışarıda bırakır.';
+            $cards[] = $card;
+        }
+
+        // 2) Fiziksel ziyaret noktalarını tekilleştir.
+        $cards[] = $this->card(
+            '2. Okul & Kampüs Listesi',
+            'mmc-school-data',
+            'mmc_manage_field',
+            'Aynı kampüsteki anaokulu/ilkokul/ortaokulu tek ziyaret noktasında toplar; adres, web, telefon ve kampüs öğrenci toplamını gösterir.'
         );
 
-        $school_order = array(
-            'mad-okul-list', 'mad-okul-programs', 'mad-okul-route',
-            'mad-okul-assign', 'mad-okul-route-plan', 'mad-okul',
-            'mad-okul-import', 'mad-okul-missing', 'mad-okul-rural',
-            'mad-okul-settings',
+        // 3) Web araştırmasıyla öğrenci sayısını tamamla.
+        if ( isset( $by_slug['mad-okul-students'] ) ) {
+            $card = $this->legacy_card( $by_slug['mad-okul-students'], 'school' );
+            $card['title'] = '3. Öğrenci Sayıları';
+            $card['note'] = 'Web/kaynak doğrulaması, öğrenci sayısı, kaynak URL ve erişim tarihi. Öğrenci sayısı bilinmeyen okul adedini ayrıca gösterir; tahmin yapılmaz.';
+            $cards[] = $card;
+        }
+
+        // 4) Baskı kararı.
+        $cards[] = $this->card(
+            '4. Davetiye / Bilet Baskı Planı',
+            'mmc-school-print-plan',
+            'mmc_manage_field',
+            'Öğrenci sayısına göre önerilen baskı; planlanan, basılan, dağıtılan ve kalan adetler. Eksik öğrenci verisini okul adediyle uyarır.'
         );
-        $school_items = $this->school_items;
-        usort( $school_items, static function ( $a, $b ) use ( $school_order ) {
-            $a_pos = array_search( $a['slug'], $school_order, true );
-            $b_pos = array_search( $b['slug'], $school_order, true );
-            return ( false === $a_pos ? 999 : $a_pos ) <=> ( false === $b_pos ? 999 : $b_pos );
-        } );
-        foreach ( $school_items as $item ) {
-            $cards[] = array(
-                'title'      => $item['title'],
-                'slug'       => $item['slug'],
-                'capability' => $item['capability'],
-                'note'       => $this->item_note( $item['slug'], 'school' ),
-                'legacy'     => true,
-            );
+
+        // 5) Etkinlik öncesi saha hedefi / ziyaret kaydı.
+        $cards[] = $this->card(
+            '5. Saha Planı & Ziyaret Sonuçları',
+            'mmc-field',
+            'mmc_manage_field',
+            'Program hedef okulları, personel, ziyaret durumu, teslim edilen materyal ve fiilî öğrenci erişimi.'
+        );
+
+        // 6) Görev dağılımı.
+        foreach ( array( 'mad-okul-assign', 'mad-okul-route-plan' ) as $slug ) {
+            if ( ! isset( $by_slug[$slug] ) ) { continue; }
+            $card = $this->legacy_card( $by_slug[$slug], 'school' );
+            $card['title'] = '6. ' . ( 'mad-okul-assign' === $slug ? 'Görev Atama' : 'Rota / Görev Planı' );
+            $card['note'] = 'Saha personeline okul/kampüs ve görev grubunu dağıtır.';
+            $cards[] = $card;
+        }
+
+        // 7) Son rota.
+        if ( isset( $by_slug['mad-okul-route'] ) ) {
+            $card = $this->legacy_card( $by_slug['mad-okul-route'], 'school' );
+            $card['title'] = '7. Rota Oluşturma';
+            $card['note'] = 'Gösteri salonunu başlangıç kabul ederek seçili kampüslerden Google Maps rota bağlantısı üretir.';
+            $cards[] = $card;
+        }
+
+        // Operasyon akışının dışında kalan destek ekranlarını kaybetme.
+        $used = array(
+            'mad-okul-import','mad-okul-students','mad-okul-assign',
+            'mad-okul-route-plan','mad-okul-route',
+        );
+        $support_order = array(
+            'mad-okul-list','mad-okul-programs','mad-okul',
+            'mad-okul-missing','mad-okul-rural','mad-okul-settings',
+        );
+        foreach ( $support_order as $slug ) {
+            if ( in_array( $slug, $used, true ) || ! isset( $by_slug[$slug] ) ) { continue; }
+            $card = $this->legacy_card( $by_slug[$slug], 'school' );
+            $card['title'] = 'Destek — ' . $card['title'];
+            $cards[] = $card;
         }
 
         $this->render_group_hub(
             'Okul Tanıtım & Saha',
-            'Tek akış: okul verisini doğrula → kampüsleri programa bağla → baskı adetlerini planla → rota ve görev dağıtımını yap → saha sonucunu kaydet.',
+            'İş akışı: MEBBİS aktar → okul/kampüs listesini temizle → öğrenci sayılarını doğrula → davetiye/bilet baskısını planla → saha ziyaretini planla → görev ata → rotayı oluştur → ziyaret sonucunu kaydet.',
             $cards
         );
     }
