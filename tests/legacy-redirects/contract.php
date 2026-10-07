@@ -4,9 +4,15 @@ $src = file_get_contents($path);
 if (false === $src) { fwrite(STDERR, "source unreadable\n"); exit(1); }
 
 $required = array(
-    "Version: 1.0.1",
-    "MDG_LEGACY_REDIRECTS_VERSION', '1.0.1",
+    "Version: 1.0.2",
+    "MDG_LEGACY_REDIRECTS_VERSION', '1.0.2",
+    "'/shop' => '/bilet-al/'",
     "'/urun/madagaskar-sirki-ankara-26-eylul-2026-1200-bileti' => '/bilet-al/'",
+    "'/urun/madagaskar-sirki-ankara-26-eylul-2026-1400-bileti' => '/bilet-al/'",
+    "'/urun/madagaskar-sirki-ankara-26-eylul-2026-1600-bileti' => '/bilet-al/'",
+    "'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1200-bileti' => '/bilet-al/'",
+    "'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1400-bileti' => '/bilet-al/'",
+    "'/urun/madagaskar-sirki-ankara-cubuk-2026-09-26-1600-bileti' => '/bilet-al/'",
     "wp_safe_redirect(",
     "301,",
 );
