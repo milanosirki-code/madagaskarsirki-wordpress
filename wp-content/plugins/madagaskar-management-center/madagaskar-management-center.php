@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Management Center
  * Description: Madagaskar Sirki program yaşam döngüsü, bölge veri ambarı, hazırlık analizi, görev, yetki ve değişiklik geçmişi için yönetim merkezi.
- * Version: 1.3.47
+ * Version: 1.3.48
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-management-center
  */
@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MMC_VERSION', '1.3.47' );
-define( 'MMC_DB_VERSION', '1.3.7' );
+define( 'MMC_VERSION', '1.3.48' );
+define( 'MMC_DB_VERSION', '1.3.8' );
 define( 'MMC_FILE', __FILE__ );
 define( 'MMC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MMC_URL', plugin_dir_url( __FILE__ ) );
@@ -23,6 +23,8 @@ require_once MMC_DIR . 'includes/class-mmc-population-source-service.php';
 require_once MMC_DIR . 'includes/class-mmc-region-service.php';
 require_once MMC_DIR . 'includes/class-mmc-meb-source-service.php';
 require_once MMC_DIR . 'includes/class-mmc-school-source-service.php';
+require_once MMC_DIR . 'includes/class-mmc-school-planning-service.php';
+require_once MMC_DIR . 'includes/class-mmc-school-planning-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-venue-service.php';
 require_once MMC_DIR . 'includes/class-mmc-venue-admin.php';
 require_once MMC_DIR . 'includes/class-mmc-event-service.php';
@@ -141,6 +143,7 @@ add_action( 'plugins_loaded', function () {
         new MMC_Kommo_Admin();
         new MMC_Marketing_Admin();
         new MMC_Field_Admin();
+        new MMC_School_Planning_Admin();
         new MMC_Operations_Admin();
         new MMC_Finance_Admin();
         new MMC_Report_Admin();
