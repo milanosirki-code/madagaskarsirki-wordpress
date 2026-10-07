@@ -269,3 +269,16 @@ AFTER / EVIDENCE:
 
 ROLLBACK:
 - No production mutation; production rollback not needed. This checkpoint is record-only on the replacement branch. Existing six-file Phase3C candidate remains unchanged.
+
+
+## Operations Phase3C controlled deployment preparation — 2026-10-07
+
+BEFORE: Main5e669cae3c4d0828d8760725b55af73c631f6508; PR177 head802ce17191f275b0883d0552cec76377923e35e4 open/ready/mergeable/unmerged,0behind,7files,12/12GREEN. No rebase, runtime port, historical task or reminder patch repeated.
+
+ACTION: Expanded existing docs/OPERATIONS_GUIDED_TIMELINE_V3C.md only with exact candidate/main hashes and byte sizes, private live backup requirements, pair deployment consistency/partial-failure rollback, host lint/read-back/opcache gates, canonical door interval SELECT, full-column server-side row-hash SQL generator, independent BEFORE/AFTER transactions, complete-table scope including mmc_logs and commerce storage, and explicit stop conditions. No new runtime file/table/ability/snippet. Candidate artifacts locally verified against Git blob identities; these are not live backups.
+
+AFTER/EVIDENCE: Fresh authenticated health16OK/0warning/0critical. Current environment has no hosting credentials/identities/capabilities/TCPgrants/VPN; WPVibe file tools support draft theme only. Controlled plugin-file access remains BLOCKED. No live source/backup/tempupload/atomicreplace/guidedpreview/interval/SQLsnapshot claim. Existing candidate265Phase3C/55MySQL and lint results independently re-read from CI; new documentation head checks will be verified before handoff. docs SQL reviewed against MMC_Activator schema; not executed live. Production pair rollback must preserve legitimate sales, never restore whole DB. Legacy Redirect176 remains separate unit.
+
+Production plugin/domain/timeline/task due/owner/program status/order/payment/ticket/customer SEND/credential writes initiated=0. Issue164 and PR177 remain open/unmerged. Issues82remoteinventory/166legacyrevoke blocked;105SENDdisabled and owner124/Aile/AI/Tickera/Phone decisions unchanged.
+
+ROLLBACK: No production change; no production rollback needed. Documentation-only changes can be corrected/reverted without touching the preserved runtime candidate. GitHub/Drive checkpoints preserve earlier history and require read-back.
