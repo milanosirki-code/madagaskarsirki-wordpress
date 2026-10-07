@@ -1,0 +1,53 @@
+name: WordPress.com AI Abilities 0.7.0 artifact
+
+on:
+  push:
+    branches:
+      - chatgpt/ai-abilities-070-deploy-20261007
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcom-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint AI Abilities PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          find wp-content/plugins/madagaskar-ai-abilities -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Validate AI Abilities package
+        run: python tests/validate-ai-abilities-package.py
+
+      - name: Validate legacy MDG preview safety
+        run: python tests/validate-legacy-mdg-mmc-preview.py
+
+      - name: Validate controlled legacy migration safety
+        run: python tests/validate-legacy-mdg-mmc-migrate.py
+
+      - name: Verify release and stage plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.7.0' wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
+          grep -Fq "define( 'MDG_AI_ABILITIES_VERSION', '0.7.0' );" wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
+          rm -rf wpcom-deploy
+          mkdir -p wpcom-deploy
+          cp -R wp-content/plugins/madagaskar-ai-abilities/. wpcom-deploy/
+          diff -qr wp-content/plugins/madagaskar-ai-abilities wpcom-deploy
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wpcom
+          path: wpcom-deploy/
+          retention-days: 1
+          if-no-files-found: error
