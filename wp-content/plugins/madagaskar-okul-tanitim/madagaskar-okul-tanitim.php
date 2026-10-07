@@ -14,6 +14,8 @@ define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
 require_once MAD_OKUL_DIR . 'includes/class-mad-okul-operations.php';
+require_once MAD_OKUL_DIR . 'includes/class-mad-okul-student-research.php';
+Mad_Okul_Student_Research::hooks();
 
 function mad_okul_table() {
     global $wpdb;
@@ -619,9 +621,11 @@ function mad_okul_students_page() {
     $total_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where";
     $known_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where AND ogrenci_sayisi IS NOT NULL";
     $students_sql = "SELECT COALESCE(SUM(ogrenci_sayisi),0) FROM $table WHERE $total_sql_where AND ogrenci_sayisi IS NOT NULL";
+    $website_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where AND web_adresi<>''";
     $total = $total_params ? (int)$wpdb->get_var($wpdb->prepare($total_sql,$total_params)) : (int)$wpdb->get_var($total_sql);
     $known = $total_params ? (int)$wpdb->get_var($wpdb->prepare($known_sql,$total_params)) : (int)$wpdb->get_var($known_sql);
     $student_sum = $total_params ? (int)$wpdb->get_var($wpdb->prepare($students_sql,$total_params)) : (int)$wpdb->get_var($students_sql);
+    $website_known = $total_params ? (int)$wpdb->get_var($wpdb->prepare($website_sql,$total_params)) : (int)$wpdb->get_var($website_sql);
     $unknown = max(0,$total-$known);
 
     $query = "SELECT * FROM $table WHERE $where_sql ORDER BY (ogrenci_sayisi IS NULL) DESC, il, ilce, kurum_adi LIMIT 1000";
@@ -631,12 +635,48 @@ function mad_okul_students_page() {
       <h1>Öğrenci Sayıları</h1>
       <p class="description">Okul internet sitesi veya doğrulanabilir kaynaktan bulunan öğrenci sayısını burada saklayın. <strong>Bulunamayan okul için tahmin girmeyin.</strong></p>
       <?php if (!empty($_GET['student_saved'])): ?><div class="notice notice-success is-dismissible"><p>Öğrenci verisi güncellendi.</p></div><?php endif; ?>
+      <?php
+        $research_notice = sanitize_text_field(wp_unslash($_GET['research_notice'] ?? ''));
+        $research_type = sanitize_key($_GET['research_type'] ?? 'success');
+        if ($research_notice):
+          $research_class = $research_type === 'error' ? 'notice-error' : ($research_type === 'warning' ? 'notice-warning' : 'notice-success');
+      ?>
+        <div class="notice <?php echo esc_attr($research_class); ?> is-dismissible"><p><?php echo esc_html($research_notice); ?></p></div>
+      <?php endif; ?>
+
+      <?php
+        $research_school_id = absint($_GET['research_school_id'] ?? 0);
+        $research_result = $research_school_id && class_exists('Mad_Okul_Student_Research')
+          ? Mad_Okul_Student_Research::get_result($research_school_id)
+          : null;
+        if ($research_result):
+      ?>
+        <div class="notice notice-info inline" style="padding:12px 16px;margin:12px 0">
+          <p><strong>Web araştırma sonucu — <?php echo esc_html($research_result['school_name'] ?? 'Okul'); ?></strong></p>
+          <?php if(!empty($research_result['candidate'])): ?>
+            <p><strong>Aday öğrenci sayısı: <?php echo number_format_i18n((int)$research_result['candidate']); ?></strong></p>
+            <p><?php echo esc_html($research_result['excerpt'] ?? ''); ?></p>
+            <p><a target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($research_result['source_url']); ?>">Kaynak sayfayı aç</a></p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+              <input type="hidden" name="action" value="mad_okul_student_candidate_accept">
+              <input type="hidden" name="id" value="<?php echo (int)$research_school_id; ?>">
+              <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
+              <?php wp_nonce_field('mad_okul_student_candidate_accept_'.$research_school_id); ?>
+              <button class="button button-primary">Bu Sayıyı Onayla ve Kaydet</button>
+            </form>
+          <?php else: ?>
+            <p>Güvenilir sayı adayı bulunamadı. Tahmin yapılmadı.</p>
+            <?php if(!empty($research_result['scanned_urls'])): ?><p><small>Taranan sayfa: <?php echo esc_html(implode(' · ',(array)$research_result['scanned_urls'])); ?></small></p><?php endif; ?>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
 
       <div class="mad-cards">
         <div class="mad-card"><strong><?php echo number_format_i18n($total); ?></strong><span>Toplam Okul Birimi</span></div>
         <div class="mad-card"><strong><?php echo number_format_i18n($known); ?></strong><span>Öğrenci Sayısı Bilinen</span></div>
         <div class="mad-card"><strong><?php echo number_format_i18n($unknown); ?></strong><span>Öğrenci Sayısı Bilinmeyen</span></div>
         <div class="mad-card"><strong><?php echo number_format_i18n($student_sum); ?></strong><span>Doğrulanmış Öğrenci</span></div>
+        <div class="mad-card"><strong><?php echo number_format_i18n($website_known); ?></strong><span>Web Sitesi Kayıtlı</span></div>
       </div>
 
       <form method="get" class="mad-filter">
@@ -665,7 +705,21 @@ function mad_okul_students_page() {
                 <strong><?php echo esc_html($r->kurum_adi); ?></strong><br><small><?php echo esc_html(trim($r->kurum_turu.' · '.$r->egitim_kademesi,' ·')); ?></small>
               </td>
               <td><?php echo esc_html($r->adres); ?></td>
-              <td><?php if($r->web_adresi): ?><a href="<?php echo esc_url($r->web_adresi); ?>" target="_blank" rel="noopener noreferrer">Siteyi Aç</a><?php else: ?>—<?php endif; ?></td>
+              <td>
+                <input form="<?php echo esc_attr($form_id); ?>" style="width:210px" type="url" name="web_adresi" value="<?php echo esc_attr($r->web_adresi); ?>" placeholder="https://okul...">
+                <?php if($r->web_adresi): ?>
+                  <p style="margin:4px 0"><a href="<?php echo esc_url($r->web_adresi); ?>" target="_blank" rel="noopener noreferrer">Siteyi Aç</a></p>
+                  <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:4px">
+                    <input type="hidden" name="action" value="mad_okul_student_research">
+                    <input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
+                    <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
+                    <?php wp_nonce_field('mad_okul_student_research_'.$r->id); ?>
+                    <button class="button button-small">Siteden Öğrenci Sayısını Ara</button>
+                  </form>
+                <?php else: ?>
+                  <small>Önce web adresini yazıp Kaydet.</small>
+                <?php endif; ?>
+              </td>
               <td><input form="<?php echo esc_attr($form_id); ?>" style="width:90px" type="number" min="0" name="ogrenci_sayisi" value="<?php echo esc_attr(null===$r->ogrenci_sayisi?'':$r->ogrenci_sayisi); ?>" placeholder="Bilinmiyor"></td>
               <td><select form="<?php echo esc_attr($form_id); ?>" name="ogrenci_sayi_durumu">
                 <?php foreach([''=>'—','tam'=>'Tam','kismi'=>'Kısmi','ikincil'=>'İkincil','bulunamadi'=>'Bulunamadı'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->ogrenci_sayi_durumu,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?>
@@ -702,6 +756,7 @@ add_action('admin_post_mad_okul_student_update', function() {
     if (null === $count && !$status) $status='bulunamadi';
 
     $wpdb->update(mad_okul_table(),[
+        'web_adresi'=>esc_url_raw($_POST['web_adresi'] ?? ''),
         'ogrenci_sayisi'=>$count,
         'ogrenci_sayi_durumu'=>$status,
         'ogrenci_kaynak_turu'=>sanitize_text_field($_POST['ogrenci_kaynak_turu'] ?? ''),
