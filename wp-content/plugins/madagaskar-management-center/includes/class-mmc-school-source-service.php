@@ -345,7 +345,7 @@ class MMC_School_Source_Service {
             'latitude'         => array( 'latitude','lat','enlem' ),
             'longitude'        => array( 'longitude','lng','lon','boylam' ),
             'student_count'    => array( 'studentcount','students','ogrencisayisi','ogrenci','ogrenciadedi','ogrencisayisiweb' ),
-            'student_count_status' => array( 'studentcountstatus','sayidurumu','ogrenciveridurumu' ),
+            'student_count_status' => array( 'studentcountstatus','sayidurumu','ogrenciveridurumu','ogrencisayidurumu' ),
             'student_source_type'  => array( 'studentsourcetype','kaynakturu','ogrencikaynakturu' ),
             'student_source_url'   => array( 'studentsourceurl','ogrencisayisikaynagi','ogrencikaynakurl' ),
             'student_verified_at'  => array( 'studentverifiedat','erisimtarihi','ogrencidogrulamatarihi' ),
