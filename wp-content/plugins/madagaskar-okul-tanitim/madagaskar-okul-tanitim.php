@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.7.9
+ * Version: 1.8.0
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.7.9');
+define('MAD_OKUL_VERSION', '1.8.0');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -111,7 +111,20 @@ function mad_okul_create_table() {
         il varchar(100) NOT NULL,
         ilce varchar(100) NOT NULL,
         kurum_adi text NOT NULL,
+        kurum_turu varchar(190) NOT NULL DEFAULT '',
+        egitim_kademesi varchar(120) NOT NULL DEFAULT '',
         adres text NOT NULL,
+        telefon varchar(80) NOT NULL DEFAULT '',
+        web_adresi text NULL,
+        campus_key varchar(64) NOT NULL DEFAULT '',
+        campus_name varchar(255) NOT NULL DEFAULT '',
+        ogrenci_sayisi int unsigned NULL,
+        ogrenci_sayi_durumu varchar(30) NOT NULL DEFAULT '',
+        ogrenci_kaynak_turu varchar(50) NOT NULL DEFAULT '',
+        ogrenci_kaynak_url text NULL,
+        ogrenci_dogrulama_tarihi datetime NULL,
+        oncelik varchar(20) NOT NULL DEFAULT '',
+        veri_yili varchar(20) NOT NULL DEFAULT '',
         durum varchar(50) NOT NULL DEFAULT 'Bekliyor',
         personel varchar(190) NOT NULL DEFAULT '',
         etkinlik varchar(190) NOT NULL DEFAULT '',
@@ -132,6 +145,8 @@ function mad_okul_create_table() {
         PRIMARY KEY  (id),
         UNIQUE KEY dedupe_hash (dedupe_hash),
         KEY il_ilce (il(40), ilce(40)),
+        KEY campus_key (campus_key),
+        KEY ogrenci_sayi_durumu (ogrenci_sayi_durumu),
         KEY durum (durum),
         KEY program_assignment (program_id, assigned_user_id, route_group(20), route_order),
         KEY mmc_program_id (mmc_program_id)
@@ -153,7 +168,7 @@ function mad_okul_create_table() {
     ) $charset;");
 }
 
-function mad_okul_insert_school($il, $ilce, $kurum, $adres) {
+function mad_okul_insert_school($il, $ilce, $kurum, $adres, $meta = []) {
     global $wpdb;
     $il = mad_okul_place_title(sanitize_text_field($il));
     $ilce = mad_okul_place_title(sanitize_text_field($ilce));
@@ -163,13 +178,72 @@ function mad_okul_insert_school($il, $ilce, $kurum, $adres) {
 
     $hash = mad_okul_hash($il, $ilce, $kurum, $adres);
     $now = current_time('mysql');
-    $sql = $wpdb->prepare(
-        "INSERT IGNORE INTO ".mad_okul_table()."
-        (il, ilce, kurum_adi, adres, durum, personel, etkinlik, son_ziyaret, notlar, dedupe_hash, created_at, updated_at)
-        VALUES (%s,%s,%s,%s,'Bekliyor','','',NULL,'',%s,%s,%s)",
-        $il, $ilce, $kurum, $adres, $hash, $now, $now
-    );
-    return $wpdb->query($sql);
+    $student_count = isset($meta['ogrenci_sayisi']) && $meta['ogrenci_sayisi'] !== ''
+        ? absint($meta['ogrenci_sayisi'])
+        : null;
+    $verified_at = !empty($meta['ogrenci_dogrulama_tarihi'])
+        ? sanitize_text_field($meta['ogrenci_dogrulama_tarihi'])
+        : null;
+
+    $data = [
+        'il'                        => $il,
+        'ilce'                      => $ilce,
+        'kurum_adi'                 => $kurum,
+        'kurum_turu'                => sanitize_text_field($meta['kurum_turu'] ?? ''),
+        'egitim_kademesi'           => sanitize_text_field($meta['egitim_kademesi'] ?? ''),
+        'adres'                     => $adres,
+        'telefon'                   => sanitize_text_field($meta['telefon'] ?? ''),
+        'web_adresi'                => esc_url_raw($meta['web_adresi'] ?? ''),
+        'campus_key'                => sanitize_key($meta['campus_key'] ?? ''),
+        'campus_name'               => sanitize_text_field($meta['campus_name'] ?? ''),
+        'ogrenci_sayisi'            => $student_count,
+        'ogrenci_sayi_durumu'       => sanitize_key($meta['ogrenci_sayi_durumu'] ?? ''),
+        'ogrenci_kaynak_turu'       => sanitize_text_field($meta['ogrenci_kaynak_turu'] ?? ''),
+        'ogrenci_kaynak_url'        => esc_url_raw($meta['ogrenci_kaynak_url'] ?? ''),
+        'ogrenci_dogrulama_tarihi'  => $verified_at,
+        'oncelik'                   => sanitize_key($meta['oncelik'] ?? ''),
+        'veri_yili'                 => sanitize_text_field($meta['veri_yili'] ?? ''),
+        'durum'                     => 'Bekliyor',
+        'personel'                  => '',
+        'etkinlik'                  => '',
+        'son_ziyaret'               => null,
+        'notlar'                    => '',
+        'dedupe_hash'               => $hash,
+        'created_at'                => $now,
+        'updated_at'                => $now,
+    ];
+
+    $inserted = $wpdb->insert(mad_okul_table(), $data);
+    if ($inserted) return $inserted;
+
+    // Aynı okul/adres tekrar içe aktarılırsa okul ana kaydını güncel MEBBİS/web
+    // metadatasıyla zenginleştir; saha durumunu/personeli ezme.
+    $existing_id = (int)$wpdb->get_var($wpdb->prepare(
+        'SELECT id FROM '.mad_okul_table().' WHERE dedupe_hash=%s LIMIT 1',
+        $hash
+    ));
+    if (!$existing_id) return false;
+
+    $update = [
+        'kurum_turu'               => $data['kurum_turu'],
+        'egitim_kademesi'          => $data['egitim_kademesi'],
+        'adres'                    => $adres,
+        'telefon'                  => $data['telefon'],
+        'web_adresi'               => $data['web_adresi'],
+        'campus_key'               => $data['campus_key'],
+        'campus_name'              => $data['campus_name'],
+        'oncelik'                  => $data['oncelik'],
+        'veri_yili'                => $data['veri_yili'],
+        'updated_at'               => $now,
+    ];
+    if (null !== $student_count) {
+        $update['ogrenci_sayisi'] = $student_count;
+        $update['ogrenci_sayi_durumu'] = $data['ogrenci_sayi_durumu'];
+        $update['ogrenci_kaynak_turu'] = $data['ogrenci_kaynak_turu'];
+        $update['ogrenci_kaynak_url'] = $data['ogrenci_kaynak_url'];
+        $update['ogrenci_dogrulama_tarihi'] = $verified_at;
+    }
+    return $wpdb->update(mad_okul_table(), $update, ['id'=>$existing_id]);
 }
 
 function mad_okul_seed() {
