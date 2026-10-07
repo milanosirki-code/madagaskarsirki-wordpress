@@ -100,6 +100,33 @@ function mad_okul_maps_url($r) {
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($q);
 }
 
+function mad_okul_nullable_int($value) {
+    if ($value === null || trim((string)$value) === '') return null;
+    $digits = preg_replace('/[^0-9]/', '', (string)$value);
+    return $digits === '' ? null : absint($digits);
+}
+
+function mad_okul_normalize_datetime($value) {
+    $value = trim((string)$value);
+    if ($value === '') return null;
+
+    // Excel seri tarihleri (1900 date system).
+    if (is_numeric($value)) {
+        $serial = (float)$value;
+        if ($serial > 20000 && $serial < 90000) {
+            $unix = (int)round(($serial - 25569) * 86400);
+            return gmdate('Y-m-d H:i:s', $unix);
+        }
+    }
+
+    foreach (['Y-m-d H:i:s','Y-m-d','d.m.Y','d/m/Y','d-m-Y'] as $format) {
+        $dt = DateTime::createFromFormat($format, $value);
+        if ($dt instanceof DateTime) return $dt->format('Y-m-d H:i:s');
+    }
+    $ts = strtotime($value);
+    return $ts ? wp_date('Y-m-d H:i:s', $ts) : null;
+}
+
 function mad_okul_create_table() {
     global $wpdb;
     $table = mad_okul_table();
@@ -178,12 +205,8 @@ function mad_okul_insert_school($il, $ilce, $kurum, $adres, $meta = []) {
 
     $hash = mad_okul_hash($il, $ilce, $kurum, $adres);
     $now = current_time('mysql');
-    $student_count = isset($meta['ogrenci_sayisi']) && $meta['ogrenci_sayisi'] !== ''
-        ? absint($meta['ogrenci_sayisi'])
-        : null;
-    $verified_at = !empty($meta['ogrenci_dogrulama_tarihi'])
-        ? sanitize_text_field($meta['ogrenci_dogrulama_tarihi'])
-        : null;
+    $student_count = mad_okul_nullable_int($meta['ogrenci_sayisi'] ?? null);
+    $verified_at = mad_okul_normalize_datetime($meta['ogrenci_dogrulama_tarihi'] ?? '');
 
     $data = [
         'il'                        => $il,
@@ -672,7 +695,7 @@ add_action('admin_post_mad_okul_student_update', function() {
     if(!$row) wp_die('Okul bulunamadı.');
 
     $raw_count = trim((string)($_POST['ogrenci_sayisi'] ?? ''));
-    $count = $raw_count === '' ? null : absint($raw_count);
+    $count = mad_okul_nullable_int($raw_count);
     $date = sanitize_text_field($_POST['ogrenci_dogrulama_tarihi'] ?? '');
     $verified_at = $date ? $date.' 00:00:00' : null;
     $status = sanitize_key($_POST['ogrenci_sayi_durumu'] ?? '');
