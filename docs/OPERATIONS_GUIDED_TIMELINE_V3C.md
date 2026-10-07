@@ -234,3 +234,62 @@ Rollback restores the two exact live files as one controlled unit, read-back has
 Legacy Redirects1.0.1 (#176) is a separate optional deployment/backup/rollback unit; it is not bundled with Phase3C. No owner-gated Aile/AI/Tickera/Phone updates, #124 bridge write, #105 SEND, #82 source mutation or #166 credential operation are part of this runbook.
 
 Preparation status: SQL/host operations above are reviewed **plans**, not executed live. Recorded door interval/current source-byte baseline/full snapshots remain prerequisites pending direct access.
+
+## Provider-specific ACCESS HANDOFF — 2026-10-07
+
+### HOSTING / evidence
+
+- **Verified live provider/platform:** WordPress.com Atomic, production domain madagaskarsirki.com, blog/site ID **255726534**. Authenticated WordPress.com user-sites response reports platform=atomic, active=true and MCP site tools available. Do not select the separate Simple site 255726778 (milanosirki-twfeu.wordpress.com).
+- Cross-check: live WPVibe REST namespace wpcomsh/v1 and WordPress.com code-deployment log GET route. Historical Drive project file 1bhi6m-a3rD9_fJ0Ydd6CWoerjXDIokKD records WordPress.com Kurumsal Plan; the present subscription tier was not independently read.
+- **Panel:** WordPress.com custom Hosting Dashboard (https://my.wordpress.com/), not cPanel. Plesk, third-party file manager and existing repo deployment connection: **DOĞRULANMADI**. GitHub workflows reviewed are CI/archive/build records, not proof of a production file deployment.
+- WordPress.com backup.credentials_status returned only a **managed credential reference**, connection_test=untested, with no host/port/user/path. This is host-managed backup metadata, NOT an agent-usable SSH credential, file channel, exact backup or restore proof.
+- Current WordPress.com MCP site operation inventory exposes no SSH/SFTP credential creation, session, plugin-file byte read/write or deployment operation. wpcomsh route is deployment **logs only**; no speculative API or log-ID guessing.
+
+### GEREKLİ ERİŞİM / operator route
+
+1. Site owner or authorized WordPress.com hosting administrator opens **Hosting Dashboard → Madagaskar Sirki / madagaskarsirki.com (255726534) → Settings → SFTP/SSH**.
+2. Inspect existing site-specific access first. Do not reset existing shared credentials. If no credentials/SSH access exist, the owner enables SSH and provisions access through WordPress.com's supported panel/key workflow. This session did NOT enable SSH, create/reset credentials, attach keys, change subscriptions or connect auto-deployment.
+3. Recommended channel: **direct WordPress.com SSH plus SFTP**, rather than SFTP alone: host-side PHP lint, SHA256, realpath, rollback and a proven consistent two-file replace are required. Official SSH endpoint is ssh.wp.com:22; **actual site-specific command/hostname must be copied from the panel and verified**, not inferred. SFTP hostname must also come from that site's panel.
+4. Bind authentication to the execution environment using protected secret/file binding or a supported outbound identity. Do not paste password/private key into chat, GitHub, Drive or command text. Add a narrowly scoped TCP egress grant for the actual verified host/port. Existing WordPress.com MCP login / WPVibe admin auth does not confer an SSH session.
+5. Required named fields (no values): site_id, production_domain, ssh_hostname, sftp_hostname, port, site_specific_username, authentication_method, secret_binding_or_identity_alias, approved_host_key_fingerprint, ssh_enabled, resolved_document_root, resolved_plugin_directory, operator/expiry. Use provider-confirmed host key, not blind trust.
+6. Also arrange supported read-only database snapshot and PHP/server-log access through this host. File access alone does not satisfy production SQL/health/no-write gates. Existing exact runbook remains mandatory.
+
+### HEDEF PATH / uncertainty
+
+Exact relative scope remains:
+- wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php
+- wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php
+
+Official platform docs define WP_CONTENT_DIR as /htdocs/wp-content and discuss htdocs and /srv/htdocs depending on access context. Thus /htdocs/wp-content/plugins/... is a **provider-documented starting point, NOT a verified Madagaskar realpath**. Production document root, symlinks, resolved plugin paths, mode/owner and write/rename permissions remain **DOĞRULANMADI**. Never substitute ABSPATH for WP_CONTENT_DIR on Atomic.
+
+### İLK READ-ONLY TEST (only after protected connection is bound)
+
+Verify selected site's SSH identity/host key, then run only host-native reads:
+```sh
+pwd
+ls -ld /htdocs /srv/htdocs
+```
+Missing alias is not itself failure: resolve the existing documented root, then inspect only the two exact files. With the verified root, use readlink -f (or host-supported realpath), stat, wc -c and sha256sum; fetch both original byte streams by SFTP into private local artifacts and independently compare SHA256/size. Do not read wp-config, environment secrets, DB passwords or arbitrary source dumps. The first connection performs no touch/upload/rename/chmod/WP-CLI mutation.
+
+After reads, prove permissions, private backup/read-back, temp upload/read-back, production PHP lint, same-filesystem replace, consistent two-file request/opcache generation and rollback capabilities before labeling the channel CONTROLLED. Independent renames alone are not a pair-atomic operation. If platform support cannot prove a sales-safe unit, STOP and involve WordPress.com hosting support through the owner; this session sends no support message.
+
+### DEPLOYMENT SONRAKİ SIRA
+
+Verified path/identity → original bytes/hash/size → exact private rollback copies and backup hash equality → PR candidate bytes/hash/lint → temp upload/read-back/lint → supported two-file unit replace → final exact read-back → health/PHP warnings → fresh per-pilot SQL BEFORE → real recorded door interval → Denizli10 GET preview → fresh SQL AFTER/equality → Mamak11 independent BEFORE/GET/AFTER equality → no-write gate → final CI and dual records → merge177/close164 only after ALL gates.
+
+WordPress.com GitHub Deployments is a supported alternative product, but current repository attachment/configuration is **DOĞRULANMADI**. Do not connect the whole repo or enable automatic deployment as a shortcut: it could widen scope beyond two files and does not itself prove exact backups or the required pair unit.
+
+### BEFORE / ACTION / AFTER / EVIDENCE / ROLLBACK
+
+BEFORE: main5e669cae3c4d0828d8760725b55af73c631f6508, candidate head0fa08320994c730008d402cb11024fa7b2d831de;12/12GREEN;0behind;7files.
+ACTION: Provider-specific read-only investigation across GitHub/Drive/WPVibe and newly evaluated WordPress.com account/site infrastructure tools; no repeated 150-ability scan.
+AFTER: Provider and correct production site are now verified; precise panel handoff established. No actual file channel bound. Runtime unchanged, no rebase or new branch/PR.
+EVIDENCE: authenticated Atomic site listing and managed credential metadata, wpcomsh route inventory; official references below.
+ROLLBACK: No production change or credential operation; unnecessary. Exact live backup/rollback/guided preview/door interval/SQL equality NOT executed. Production plugin/domain/order/payment/ticket/timeline/task/owner/customer message/credential writes=0;SEND closed. PR177 unmerged and Issue164 open.
+
+Sources:
+- https://wordpress.com/support/ssh/
+- https://wordpress.com/support/sftp/
+- https://wordpress.com/support/cpanel/
+- https://wordpress.com/support/plugins/incompatible-plugins/
+- https://wordpress.com/support/github-deployments/
