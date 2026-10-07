@@ -72,8 +72,16 @@ class MMC_School_Planning_Admin {
         $students = 0;
         $known = 0;
         $unknown = 0;
+        $known_school_units = 0;
+        $unknown_school_units = 0;
+        $school_unit_count = 0;
         $with_site = 0;
         foreach ( $rows as $row ) {
+            $components = max( 1, (int) $row->component_school_count );
+            $known_units = min( $components, max( 0, (int) $row->student_known_count ) );
+            $school_unit_count += $components;
+            $known_school_units += $known_units;
+            $unknown_school_units += max( 0, $components - $known_units );
             if ( null === $row->student_count_snapshot ) {
                 $unknown++;
             } else {
@@ -105,15 +113,16 @@ class MMC_School_Planning_Admin {
 
             <div class="mmc-cards mmc-cards-5">
                 <div class="mmc-card"><span>Ziyaret Noktası</span><strong><?php echo esc_html( number_format_i18n( count($rows) ) ); ?></strong><small>Kampüs bazlı</small></div>
-                <div class="mmc-card"><span>Bilinen Öğrenci</span><strong><?php echo esc_html( number_format_i18n( $students ) ); ?></strong><small><?php echo esc_html( $known ); ?> kampüs</small></div>
-                <div class="mmc-card"><span>Öğrenci Sayısı Eksik</span><strong><?php echo esc_html( number_format_i18n( $unknown ) ); ?></strong><small>Tahmin edilmez</small></div>
-                <div class="mmc-card"><span>Web Sitesi Olan</span><strong><?php echo esc_html( number_format_i18n( $with_site ) ); ?></strong><small>Hedef kampüs</small></div>
-                <div class="mmc-card"><span>Kapsanan Okul Birimi</span><strong><?php echo esc_html( number_format_i18n( array_sum( array_map( static function($r){ return (int)$r->component_school_count; }, $rows ) ) ) ); ?></strong><small>Anaokulu/ilkokul/ortaokul</small></div>
+                <div class="mmc-card"><span>Okul Birimi</span><strong><?php echo esc_html( number_format_i18n( $school_unit_count ) ); ?></strong><small>Anaokulu/ilkokul/ortaokul</small></div>
+                <div class="mmc-card"><span>Doğrulanmış Öğrenci</span><strong><?php echo esc_html( number_format_i18n( $students ) ); ?></strong><small><?php echo esc_html( $known_school_units ); ?> okulda sayı var</small></div>
+                <div class="mmc-card"><span>Öğrenci Sayısı Bilinmeyen</span><strong><?php echo esc_html( number_format_i18n( $unknown_school_units ) ); ?></strong><small><?php echo esc_html( $unknown ); ?> kampüs etkileniyor · tahmin yok</small></div>
+                <div class="mmc-card"><span>Web Sitesi Olan</span><strong><?php echo esc_html( number_format_i18n( $with_site ) ); ?></strong><small>Kampüs</small></div>
             </div>
 
             <div class="mmc-action-row mmc-no-print">
-                <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-school-print-plan', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Davetiye / Bilet Baskı Planını Aç</a>
-                <a class="button" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-field', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Okul / Saha Hedeflerini Aç</a>
+                <a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mad-okul-students', 'mmc_program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Öğrenci Sayılarını Tamamla</a>
+                <a class="button" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-school-print-plan', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Davetiye / Bilet Baskı Planını Aç</a>
+                <a class="button" href="<?php echo esc_url( add_query_arg( array( 'page'=>'mmc-field', 'program_id'=>$pid ), admin_url('admin.php') ) ); ?>">Saha Planını Aç</a>
             </div>
 
             <div class="mmc-panel">
@@ -196,7 +205,7 @@ class MMC_School_Planning_Admin {
 
             <?php if ( $plans ) : ?>
                 <div class="mmc-cards mmc-cards-5">
-                    <div class="mmc-card"><span>Kampüs</span><strong><?php echo esc_html( number_format_i18n( $summary['campus_count'] ) ); ?></strong><small><?php echo esc_html( $summary['unknown_campuses'] ); ?> öğrenci sayısı eksik</small></div>
+                    <div class="mmc-card"><span>Kampüs / Okul</span><strong><?php echo esc_html( number_format_i18n( $summary['campus_count'] ) ); ?> / <?php echo esc_html( number_format_i18n( $summary['school_unit_count'] ) ); ?></strong><small><?php echo esc_html( number_format_i18n( $summary['unknown_school_units'] ) ); ?> okulun öğrenci sayısı bilinmiyor</small></div>
                     <div class="mmc-card"><span>Bilinen Öğrenci</span><strong><?php echo esc_html( number_format_i18n( $summary['student_count'] ) ); ?></strong><small>Snapshot</small></div>
                     <div class="mmc-card"><span>Önerilen Baskı</span><strong><?php echo esc_html( number_format_i18n( $summary['suggested_qty'] ) ); ?></strong><small>Politika sonucu</small></div>
                     <div class="mmc-card"><span>Planlanan Baskı</span><strong><?php echo esc_html( number_format_i18n( $summary['planned_qty'] ) ); ?></strong><small>Manuel düzeltilebilir</small></div>
@@ -224,7 +233,7 @@ class MMC_School_Planning_Admin {
                                         <td><?php echo esc_html( $i+1 ); ?></td>
                                         <td><strong><?php echo esc_html( $row->campus_name ); ?></strong><br><small><?php echo esc_html( $row->district_name ); ?></small></td>
                                         <td><?php echo esc_html( str_replace( ' | ', ' + ', (string)$row->component_names ) ); ?><br><small><?php echo esc_html( $row->component_school_count ); ?> okul birimi</small></td>
-                                        <td><?php echo null === $row->student_count_snapshot ? '<strong>—</strong><br><small>Veri eksik</small>' : esc_html( number_format_i18n( $row->student_count_snapshot ) ); ?></td>
+                                        <td><?php if ( null === $row->student_count_snapshot ) : ?><strong>—</strong><br><small><?php echo esc_html( $row->component_school_count ); ?> okulda veri eksik</small><?php else : ?><?php echo esc_html( number_format_i18n( $row->student_count_snapshot ) ); ?><br><small><?php echo esc_html( $row->student_known_count . '/' . $row->component_school_count ); ?> okulda sayı var</small><?php endif; ?></td>
                                         <td><strong><?php echo esc_html( number_format_i18n( $row->suggested_qty ) ); ?></strong></td>
                                         <td><input class="small-text" type="number" min="0" name="rows[<?php echo esc_attr($row->id); ?>][planned_qty]" value="<?php echo esc_attr($row->planned_qty); ?>"></td>
                                         <td><input class="small-text" type="number" min="0" name="rows[<?php echo esc_attr($row->id); ?>][printed_qty]" value="<?php echo esc_attr($row->printed_qty); ?>"></td>
