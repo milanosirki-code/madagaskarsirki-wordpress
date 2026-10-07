@@ -126,7 +126,8 @@ class Mad_Okul_Student_Research {
         $scanned = array();
         $errors = array();
 
-        foreach ( array_slice( $pages, 0, self::MAX_PAGES ) as $url ) {
+        for ( $page_index = 0; $page_index < self::MAX_PAGES && $page_index < count( $pages ); $page_index++ ) {
+            $url = $pages[ $page_index ];
             $response = wp_safe_remote_get(
                 $url,
                 array(
@@ -155,7 +156,7 @@ class Mad_Okul_Student_Research {
             }
 
             // İlk sayfanın içinden kurumsal/hakkımızda benzeri güvenli iç sayfaları bul.
-            if ( 1 === count( $scanned ) ) {
+            if ( 0 === $page_index ) {
                 foreach ( self::discover_internal_pages( $body, $url ) as $discovered ) {
                     if ( count( $pages ) >= self::MAX_PAGES ) { break; }
                     if ( ! in_array( $discovered, $pages, true ) ) { $pages[] = $discovered; }
