@@ -154,6 +154,8 @@ class MMC_Navigation_Admin {
             'mmc-sales-prep',
             'mmc-sales',
             'mmc-field',
+            'mmc-school-data',
+            'mmc-school-print-plan',
             'mmc-marketing',
             'mmc-kommo',
             'mmc-finance',
@@ -344,7 +346,9 @@ class MMC_Navigation_Admin {
         $this->guard( 'mmc_manage_field' );
 
         $cards = array(
-            $this->card( 'MMC Okul / Saha', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef okul, saha planı ve ziyaret takibi.' ),
+            $this->card( 'Okul Veri Merkezi', 'mmc-school-data', 'mmc_manage_field', 'Kampüs bazlı ziyaret noktaları, okul birimleri, öğrenci sayısı, web/telefon ve veri kalitesi.' ),
+            $this->card( 'Davetiye / Bilet Baskı Planı', 'mmc-school-print-plan', 'mmc_manage_field', 'Öğrenci sayısına göre önerilen baskı adedi, manuel plan, basılan ve dağıtılan adet takibi.' ),
+            $this->card( 'Okul / Saha Hedefleri', 'mmc-field', 'mmc_manage_field', 'MMC Program ID bazlı hedef kampüs/okul havuzu, personel, ziyaret, KML ve saha takibi.' ),
         );
 
         $school_order = array(
@@ -371,7 +375,7 @@ class MMC_Navigation_Admin {
 
         $this->render_group_hub(
             'Okul Tanıtım & Saha',
-            'Pursaklar akışı: hedef okulları kontrol edin, kesin salonu bağlayın, rota ve görev dağıtımını hazırlayın. MEBBİS aktarımı ve harita ayarları destek araçlarıdır.',
+            'Tek akış: okul verisini doğrula → kampüsleri programa bağla → baskı adetlerini planla → rota ve görev dağıtımını yap → saha sonucunu kaydet.',
             $cards
         );
     }
