@@ -16,3 +16,4 @@ jobs:
           extensions: mbstring
           coverage: none
       - run: python3 tests/kommo-source/http-status.py
+      - run: python3 tests/kommo-source/family-fallback-static.py
