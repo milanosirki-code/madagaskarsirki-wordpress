@@ -557,6 +557,9 @@ function mad_okul_should_include($row) {
 
     $blocked = ['LİSE','MESLEKİ EĞİTİM','ÖZEL EĞİTİM','REHABİLİTASYON','KURS','SÜRÜCÜ','MOTORLU TAŞIT','KİŞİSEL GELİŞİM','HALK EĞİTİM','BİLİM VE SANAT','BİLSEM','REHBERLİK VE ARAŞTIRMA','YURT','ÖĞRETMENEVİ','MİLLİ EĞİTİM MÜDÜRLÜĞÜ','MİLLÎ EĞİTİM MÜDÜRLÜĞÜ'];
     $haystack = mad_okul_norm($name.' '.$type);
+
+    // Operasyon kuralı: İmam Hatip Ortaokulları okul tanıtım/rota havuzuna alınmaz.
+    if (strpos($haystack, 'İMAM HATİP ORTAOKULU') !== false) return false;
     foreach ($blocked as $keyword) if (strpos($haystack, $keyword)!==false) return false;
     if (preg_match('/\bRAM\b/u',$haystack)) return false;
 
@@ -564,7 +567,7 @@ function mad_okul_should_include($row) {
         if (strpos($name, $keyword) !== false) return true;
     }
 
-    $official = ['Anaokulu','İlkokul','Ortaokul','İmam Hatip Ortaokulu','Yatılı Bölge Ortaokulu'];
+    $official = ['Anaokulu','İlkokul','Ortaokul','Yatılı Bölge Ortaokulu'];
     $private  = ['Özel Türk Okul Öncesi Kurumu','Özel Türk İlkokulu','Özel Türk Ortaokulu'];
     return in_array($type, $official, true) || in_array($type, $private, true);
 }
@@ -681,9 +684,21 @@ function mad_okul_canonical_row($row) {
     $aliases = [
         'IL_ADI' => ['IL_ADI','IL','SEHIR'],
         'ILCE_ADI' => ['ILCE_ADI','ILCE'],
-        'KURUM_ADI' => ['KURUM_ADI','OKUL_ADI','KURUM','OKUL'],
-        'KURUM_TUR_ADI' => ['KURUM_TUR_ADI','KURUM_TURU','OKUL_TURU','TUR'],
+        'KURUM_ADI' => ['KURUM_ADI','OKUL_ADI','KURUM','OKUL','KURUM_ADLARI'],
+        'KURUM_TUR_ADI' => ['KURUM_TUR_ADI','KURUM_TURU','OKUL_TURU','TUR','KAYNAK_TURU'],
+        'EGITIM_KADEMESI' => ['EGITIM_KADEMESI','KADEMELER','KADEME'],
         'ADRES' => ['ADRES','ACIK_ADRES','KURUM_ADRESI','OKUL_ADRESI'],
+        'TEL' => ['TEL','TELEFON','PHONE'],
+        'WEB_ADRES' => ['WEB_ADRES','WEB_ADRESI','WEB_SITESI','WEB_SITELERI','WEBSITE'],
+        'CAMPUS_KEY' => ['CAMPUS_KEY','KAMPUS_KEY','KAMPUS_ANAHTARI'],
+        'CAMPUS_NAME' => ['CAMPUS_NAME','KAMPUS_ADI','ZIYARET_NOKTASI_KAMPUS','ZIYARET_NOKTASI'],
+        'OGRENCI_SAYISI' => ['OGRENCI_SAYISI','OGRENCI_SAYISI_WEB','KAMPUS_TOPLAM_OGRENCI'],
+        'OGRENCI_SAYI_DURUMU' => ['OGRENCI_SAYI_DURUMU','SAYI_DURUMU','OGRENCI_VERI_DURUMU'],
+        'OGRENCI_KAYNAK_TURU' => ['OGRENCI_KAYNAK_TURU','KAYNAK_TURU'],
+        'OGRENCI_KAYNAK_URL' => ['OGRENCI_KAYNAK_URL','OGRENCI_SAYISI_KAYNAGI','KAYNAK_ERISIM'],
+        'OGRENCI_DOGRULAMA_TARIHI' => ['OGRENCI_DOGRULAMA_TARIHI','ERISIM_TARIHI'],
+        'ONCELIK' => ['ONCELIK','PRIORITY'],
+        'VERI_YILI' => ['VERI_YILI','DATA_YEAR','YIL'],
     ];
     $normalized = [];
     foreach ($row as $key=>$value) $normalized[mad_okul_header_key($key)] = trim((string)$value);
@@ -747,7 +762,7 @@ function mad_okul_import_page() {
     ?>
     <div class="wrap mad-okul-wrap">
       <h1>MEBBİS Listesi İçe Aktar</h1>
-      <p>MEBBİS'ten indirdiğiniz <strong>.xls, .xlsx veya .csv</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; kırsal açık adresleri ve mükerrerleri dışarıda bırakır.</p>
+      <p>MEBBİS'ten indirdiğiniz <strong>.xls, .xlsx veya .csv</strong> dosyalarını aynı anda yükleyebilirsiniz. Sistem kreş/gündüz bakımevi, anaokulu, ilkokul ve ortaokulları alır; <strong>İmam Hatip Ortaokullarını</strong>, kırsal açık adresleri, hedef dışı kurumları ve mükerrerleri dışarıda bırakır. Dosyada telefon, web sitesi veya öğrenci sayısı alanı varsa bunlar da okul ana kaydına işlenir.</p>
       <?php if (!empty($_GET['imported'])): ?>
         <div class="notice notice-success is-dismissible"><p>Ham: <?php echo (int)($_GET['raw'] ?? 0); ?> · Ana liste: <?php echo (int)$_GET['imported']; ?> · Kırsal çıkarılan: <?php echo (int)($_GET['rural'] ?? 0); ?> · Hedef dışı: <?php echo (int)($_GET['non_target'] ?? 0); ?> · Adresi eksik: <?php echo (int)($_GET['missing'] ?? 0); ?>.</p></div>
       <?php endif; ?>
@@ -787,7 +802,21 @@ add_action('admin_post_mad_okul_import', function() {
             $kurum=$r['KURUM_ADI']; $adres=$r['ADRES'];
             if (!mad_okul_should_include($r)) { $skipped++; $non_target++; continue; }
             if (mad_okul_is_rural($kurum,$adres)) { mad_okul_store_rural($il,$ilce,$kurum,$adres,'Açık kırsal adres ifadesi'); $skipped++; $rural++; continue; }
-            $res=mad_okul_insert_school($il,$ilce,$kurum,$adres);
+            $res=mad_okul_insert_school($il,$ilce,$kurum,$adres,[
+                'kurum_turu'               => $r['KURUM_TUR_ADI'] ?? '',
+                'egitim_kademesi'           => $r['EGITIM_KADEMESI'] ?? '',
+                'telefon'                   => $r['TEL'] ?? '',
+                'web_adresi'                => $r['WEB_ADRES'] ?? '',
+                'campus_key'                => $r['CAMPUS_KEY'] ?? '',
+                'campus_name'               => $r['CAMPUS_NAME'] ?? '',
+                'ogrenci_sayisi'            => $r['OGRENCI_SAYISI'] ?? '',
+                'ogrenci_sayi_durumu'       => $r['OGRENCI_SAYI_DURUMU'] ?? '',
+                'ogrenci_kaynak_turu'       => $r['OGRENCI_KAYNAK_TURU'] ?? '',
+                'ogrenci_kaynak_url'        => $r['OGRENCI_KAYNAK_URL'] ?? '',
+                'ogrenci_dogrulama_tarihi'  => $r['OGRENCI_DOGRULAMA_TARIHI'] ?? '',
+                'oncelik'                   => $r['ONCELIK'] ?? '',
+                'veri_yili'                 => $r['VERI_YILI'] ?? '',
+            ]);
             if ($res) {
                 $imported++;
                 if (!$adres) {
