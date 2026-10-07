@@ -129,6 +129,32 @@ class MMC_School_Source_Service {
         }
         $stats['district_school_coverage'] = count( $stats['district_counts'] );
         $stats['district_student_coverage'] = count( $stats['district_student_rows'] );
+        $stats['student_missing_rows'] = max( 0, (int)$stats['school_count'] - (int)$stats['student_known_rows'] );
+        return $stats;
+    }
+
+    /**
+     * Veri Ambarı için okul ana kaynağının genel öğrenci veri kapsamasını verir.
+     * Tahmin üretmez: yalnız okul kayıtlarında gerçekten bulunan öğrenci sayılarını toplar.
+     */
+    public static function all_stats() {
+        $source = self::source_info();
+        $rows = self::rows_from_source( $source, '', array(), 50000 );
+        $stats = array(
+            'school_count' => 0,
+            'student_count' => 0,
+            'student_known_rows' => 0,
+            'student_missing_rows' => 0,
+        );
+        foreach ( $rows as $row ) {
+            if ( empty( $row->is_active ) ) { continue; }
+            $stats['school_count']++;
+            if ( null !== $row->student_count && '' !== (string)$row->student_count ) {
+                $stats['student_count'] += (int)$row->student_count;
+                $stats['student_known_rows']++;
+            }
+        }
+        $stats['student_missing_rows'] = max( 0, (int)$stats['school_count'] - (int)$stats['student_known_rows'] );
         return $stats;
     }
 
