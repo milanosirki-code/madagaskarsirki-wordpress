@@ -1,0 +1,62 @@
+name: WordPress.com Phase3C MMC artifact
+
+on:
+  push:
+    branches:
+      - chatgpt/operations-guided-timeline-v3c-rebase2-20261007
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcom-artifact:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: operations_fixture
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, mysqli
+          coverage: none
+      - name: Lint the two candidate files
+        run: |
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php
+      - name: Phase3C contract
+        run: php tests/operations/timeline-v3c.php
+      - name: Operations SQL contracts in ephemeral MySQL only
+        env:
+          OPS_FIXTURE_DB: operations_fixture
+        run: |
+          php tests/operations/automation-v2-mysql.php
+          php tests/operations/adoption-v3-mysql.php
+          php tests/operations/eligibility-v3b-mysql.php
+      - name: Stage exactly two files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p wpcom-deploy/includes
+          cp wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php wpcom-deploy/includes/
+          cp wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php wpcom-deploy/includes/
+          test "$(find wpcom-deploy -type f | wc -l)" -eq 2
+          cmp wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-service.php wpcom-deploy/includes/class-mmc-operations-service.php
+          cmp wp-content/plugins/madagaskar-management-center/includes/class-mmc-operations-admin.php wpcom-deploy/includes/class-mmc-operations-admin.php
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wpcom
+          path: wpcom-deploy/
+          retention-days: 1
+          if-no-files-found: error
