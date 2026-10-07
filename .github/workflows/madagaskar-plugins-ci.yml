@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'Version:[[:space:]]*1\.3\.47' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Eq 'Version:[[:space:]]*1\.3\.48' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
           grep -Eq 'Version:[[:space:]]*1\.1\.3' wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
           grep -Eq "mmc_family_price_for_event" wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
           grep -Eq "2 çocuk \+ 2 yetişkin" wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php
@@ -112,7 +112,7 @@ jobs:
           grep -Eq "MMC Program Pipeline Şeması" wp-content/plugins/madagaskar-management-center/includes/class-mmc-health-service.php
           grep -Eq "MS_KOMMO_TOKEN" wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
           ! grep -Eq "remove_submenu_page\( .mmc-dashboard" wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
-          grep -Eq 'Version:[[:space:]]*1\.7\.9' wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
+          grep -Eq 'Version:[[:space:]]*1\.8\.0' wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php
           grep -Eq 'Version:[[:space:]]*1\.3\.1' wp-content/plugins/madagaskar-population-data/madagaskar-population-data.php
 
 
