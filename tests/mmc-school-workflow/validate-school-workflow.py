@@ -14,6 +14,7 @@ admin = (ROOT / "wp-content/plugins/madagaskar-management-center/includes/class-
 checks = {
     "school plugin 1.8.0": "Version: 1.8.0" in school_plugin,
     "imam hatip excluded": "İMAM HATİP ORTAOKULU" in school_plugin and "return false" in school_plugin,
+    "MEBBIS import reports exclusions": all(x in school_plugin for x in ["imam_hatip", "visit_points", "Tahmini fiziksel ziyaret noktası"]),
     "student page registered": "'mad-okul-students'" in school_plugin,
     "unknown student count metric": "Öğrenci Sayısı Bilinmeyen" in school_plugin,
     "student source fields": all(x in school_plugin for x in ["ogrenci_sayisi", "ogrenci_kaynak_url", "ogrenci_dogrulama_tarihi"]),
