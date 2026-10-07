@@ -294,6 +294,7 @@ add_action('admin_menu', function() {
         27
     );
     add_submenu_page('mad-okul','Tüm Okullar','Tüm Okullar','manage_options','mad-okul-list','mad_okul_list_page');
+    add_submenu_page('mad-okul','Öğrenci Sayıları','Öğrenci Sayıları','manage_options','mad-okul-students','mad_okul_students_page');
     add_submenu_page('mad-okul','MEBBİS İçe Aktar','MEBBİS İçe Aktar','manage_options','mad-okul-import','mad_okul_import_page');
     add_submenu_page('mad-okul','Adresi Eksik Kurumlar','Adresi Eksik','manage_options','mad-okul-missing','mad_okul_missing_page');
     add_submenu_page('mad-okul','Kırsal Çıkarılanlar','Kırsal Çıkarılanlar','manage_options','mad-okul-rural','mad_okul_rural_page');
@@ -550,6 +551,135 @@ add_action('admin_post_mad_okul_update', function() {
     wp_safe_redirect(add_query_arg($args, admin_url('admin.php')));
     exit;
 });
+
+function mad_okul_students_page() {
+    if (!current_user_can('manage_options')) return;
+    global $wpdb;
+    $table = mad_okul_table();
+    $mmc_program_id = absint($_GET['mmc_program_id'] ?? 0);
+    $ctx = $mmc_program_id ? Mad_Okul_Operations::mmc_program_context($mmc_program_id) : null;
+    if (is_wp_error($ctx)) {
+        echo '<div class="wrap"><div class="notice notice-error"><p>'.esc_html($ctx->get_error_message()).'</p></div></div>';
+        return;
+    }
+
+    $il = $ctx ? mad_okul_place_title($ctx->program->province_name) : mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['il'] ?? '')));
+    $ilce = $ctx ? mad_okul_place_title($ctx->program->district_name) : mad_okul_place_title(sanitize_text_field(wp_unslash($_GET['ilce'] ?? '')));
+    $unknown_only = !empty($_GET['unknown_only']);
+
+    [$ils,$ilceler] = mad_okul_filter_options($il);
+    $where = ["1=1", "UPPER(CONCAT(kurum_adi,' ',kurum_turu)) NOT LIKE '%İMAM HATİP ORTAOKULU%'"];
+    $params = [];
+    if ($il) { $where[]='il=%s'; $params[]=$il; }
+    if ($ilce) { $where[]='ilce=%s'; $params[]=$ilce; }
+    if ($unknown_only) { $where[]='ogrenci_sayisi IS NULL'; }
+    $where_sql = implode(' AND ', $where);
+
+    $total_where = ["1=1", "UPPER(CONCAT(kurum_adi,' ',kurum_turu)) NOT LIKE '%İMAM HATİP ORTAOKULU%'"];
+    $total_params = [];
+    if ($il) { $total_where[]='il=%s'; $total_params[]=$il; }
+    if ($ilce) { $total_where[]='ilce=%s'; $total_params[]=$ilce; }
+    $total_sql_where = implode(' AND ', $total_where);
+
+    $total_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where";
+    $known_sql = "SELECT COUNT(*) FROM $table WHERE $total_sql_where AND ogrenci_sayisi IS NOT NULL";
+    $students_sql = "SELECT COALESCE(SUM(ogrenci_sayisi),0) FROM $table WHERE $total_sql_where AND ogrenci_sayisi IS NOT NULL";
+    $total = $total_params ? (int)$wpdb->get_var($wpdb->prepare($total_sql,$total_params)) : (int)$wpdb->get_var($total_sql);
+    $known = $total_params ? (int)$wpdb->get_var($wpdb->prepare($known_sql,$total_params)) : (int)$wpdb->get_var($known_sql);
+    $student_sum = $total_params ? (int)$wpdb->get_var($wpdb->prepare($students_sql,$total_params)) : (int)$wpdb->get_var($students_sql);
+    $unknown = max(0,$total-$known);
+
+    $query = "SELECT * FROM $table WHERE $where_sql ORDER BY (ogrenci_sayisi IS NULL) DESC, il, ilce, kurum_adi LIMIT 1000";
+    $rows = $params ? $wpdb->get_results($wpdb->prepare($query,$params)) : $wpdb->get_results($query);
+    ?>
+    <div class="wrap mad-okul-wrap">
+      <h1>Öğrenci Sayıları</h1>
+      <p class="description">Okul internet sitesi veya doğrulanabilir kaynaktan bulunan öğrenci sayısını burada saklayın. <strong>Bulunamayan okul için tahmin girmeyin.</strong></p>
+      <?php if (!empty($_GET['student_saved'])): ?><div class="notice notice-success is-dismissible"><p>Öğrenci verisi güncellendi.</p></div><?php endif; ?>
+
+      <div class="mad-cards">
+        <div class="mad-card"><strong><?php echo number_format_i18n($total); ?></strong><span>Toplam Okul Birimi</span></div>
+        <div class="mad-card"><strong><?php echo number_format_i18n($known); ?></strong><span>Öğrenci Sayısı Bilinen</span></div>
+        <div class="mad-card"><strong><?php echo number_format_i18n($unknown); ?></strong><span>Öğrenci Sayısı Bilinmeyen</span></div>
+        <div class="mad-card"><strong><?php echo number_format_i18n($student_sum); ?></strong><span>Doğrulanmış Öğrenci</span></div>
+      </div>
+
+      <form method="get" class="mad-filter">
+        <input type="hidden" name="page" value="mad-okul-students">
+        <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><strong><?php echo esc_html($il.' / '.$ilce); ?></strong><?php else: ?>
+        <select name="il"><option value="">Tüm İller</option><?php foreach($ils as $x): ?><option <?php selected($il,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select>
+        <select name="ilce"><option value="">Tüm İlçeler</option><?php foreach($ilceler as $x): ?><option <?php selected($ilce,$x); ?>><?php echo esc_html($x); ?></option><?php endforeach; ?></select><?php endif; ?>
+        <label><input type="checkbox" name="unknown_only" value="1" <?php checked($unknown_only); ?>> Sadece öğrenci sayısı bilinmeyenler</label>
+        <button class="button">Filtrele</button>
+      </form>
+
+      <p><strong><?php echo number_format_i18n($unknown); ?></strong> okul biriminin öğrenci sayısı bilinmiyor. Bu sayı sıfırlanmadan baskı planında eksik veri uyarısı devam eder.</p>
+
+      <table class="widefat striped">
+        <thead><tr><th>Okul</th><th>Adres</th><th>Web</th><th>Öğrenci</th><th>Durum</th><th>Kaynak</th><th>Doğrulama</th><th>Öncelik</th><th>Kaydet</th></tr></thead>
+        <tbody>
+        <?php if(!$rows): ?><tr><td colspan="9">Kayıt bulunamadı.</td></tr><?php else: foreach($rows as $r): ?>
+          <tr>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+              <input type="hidden" name="action" value="mad_okul_student_update">
+              <input type="hidden" name="id" value="<?php echo (int)$r->id; ?>">
+              <?php if($mmc_program_id): ?><input type="hidden" name="mmc_program_id" value="<?php echo (int)$mmc_program_id; ?>"><?php endif; ?>
+              <?php wp_nonce_field('mad_okul_student_update_'.$r->id); ?>
+              <td><strong><?php echo esc_html($r->kurum_adi); ?></strong><br><small><?php echo esc_html(trim($r->kurum_turu.' · '.$r->egitim_kademesi,' ·')); ?></small></td>
+              <td><?php echo esc_html($r->adres); ?></td>
+              <td><?php if($r->web_adresi): ?><a href="<?php echo esc_url($r->web_adresi); ?>" target="_blank" rel="noopener noreferrer">Siteyi Aç</a><?php else: ?>—<?php endif; ?></td>
+              <td><input style="width:90px" type="number" min="0" name="ogrenci_sayisi" value="<?php echo esc_attr(null===$r->ogrenci_sayisi?'':$r->ogrenci_sayisi); ?>" placeholder="Bilinmiyor"></td>
+              <td><select name="ogrenci_sayi_durumu">
+                <?php foreach([''=>'—','tam'=>'Tam','kismi'=>'Kısmi','ikincil'=>'İkincil','bulunamadi'=>'Bulunamadı'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->ogrenci_sayi_durumu,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?>
+              </select></td>
+              <td><input style="width:120px" name="ogrenci_kaynak_turu" value="<?php echo esc_attr($r->ogrenci_kaynak_turu); ?>" placeholder="MEB resmî"><br><input style="width:180px" type="url" name="ogrenci_kaynak_url" value="<?php echo esc_attr($r->ogrenci_kaynak_url); ?>" placeholder="Kaynak URL"></td>
+              <td><input type="date" name="ogrenci_dogrulama_tarihi" value="<?php echo esc_attr($r->ogrenci_dogrulama_tarihi ? substr($r->ogrenci_dogrulama_tarihi,0,10) : ''); ?>"></td>
+              <td><select name="oncelik"><?php foreach([''=>'—','cok_yuksek'=>'Çok Yüksek','yuksek'=>'Yüksek','orta'=>'Orta','dusuk'=>'Düşük'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->oncelik,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?></select></td>
+              <td><button class="button button-primary">Kaydet</button></td>
+            </form>
+          </tr>
+        <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
+    <script>
+      const p=document.querySelector('select[name="il"]');
+      if(p) p.addEventListener('change',function(){ const d=document.querySelector('select[name="ilce"]'); if(d)d.value=''; this.form.submit(); });
+    </script>
+    <?php
+}
+
+add_action('admin_post_mad_okul_student_update', function() {
+    if (!current_user_can('manage_options')) wp_die('Yetkisiz işlem');
+    global $wpdb;
+    $id=absint($_POST['id'] ?? 0);
+    check_admin_referer('mad_okul_student_update_'.$id);
+    $row=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.mad_okul_table().' WHERE id=%d LIMIT 1',$id));
+    if(!$row) wp_die('Okul bulunamadı.');
+
+    $raw_count = trim((string)($_POST['ogrenci_sayisi'] ?? ''));
+    $count = $raw_count === '' ? null : absint($raw_count);
+    $date = sanitize_text_field($_POST['ogrenci_dogrulama_tarihi'] ?? '');
+    $verified_at = $date ? $date.' 00:00:00' : null;
+    $status = sanitize_key($_POST['ogrenci_sayi_durumu'] ?? '');
+    if (null === $count && !$status) $status='bulunamadi';
+
+    $wpdb->update(mad_okul_table(),[
+        'ogrenci_sayisi'=>$count,
+        'ogrenci_sayi_durumu'=>$status,
+        'ogrenci_kaynak_turu'=>sanitize_text_field($_POST['ogrenci_kaynak_turu'] ?? ''),
+        'ogrenci_kaynak_url'=>esc_url_raw($_POST['ogrenci_kaynak_url'] ?? ''),
+        'ogrenci_dogrulama_tarihi'=>$verified_at,
+        'oncelik'=>sanitize_key($_POST['oncelik'] ?? ''),
+        'updated_at'=>current_time('mysql'),
+    ],['id'=>$id]);
+
+    $args=['page'=>'mad-okul-students','student_saved'=>1,'il'=>$row->il,'ilce'=>$row->ilce];
+    if(!empty($_POST['mmc_program_id'])) $args['mmc_program_id']=absint($_POST['mmc_program_id']);
+    wp_safe_redirect(add_query_arg($args,admin_url('admin.php')));
+    exit;
+});
+
 
 function mad_okul_should_include($row) {
     $name = mad_okul_norm($row['KURUM_ADI'] ?? '');
