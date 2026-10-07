@@ -17,6 +17,7 @@ checks = {
     "student page registered": "'mad-okul-students'" in school_plugin,
     "unknown student count metric": "Öğrenci Sayısı Bilinmeyen" in school_plugin,
     "student source fields": all(x in school_plugin for x in ["ogrenci_sayisi", "ogrenci_kaynak_url", "ogrenci_dogrulama_tarihi"]),
+    "basic reimport preserves enriched metadata": "zenginleştirilmiş alanları boş değerlerle silme" in school_plugin and "optional_key" in school_plugin,
     "website research UI": all(x in school_plugin for x in ["mad_okul_student_research", "Siteden Öğrenci Sayısını Ara", "Bu Sayıyı Onayla ve Kaydet"]),
     "safe website research": all(x in student_research for x in ["wp_safe_remote_get", "wp_http_validate_url", "MAX_PAGES", "limit_response_size"]),
     "research never auto-saves": "handle_accept" in student_research and "set_transient" in student_research and "ogrenci_sayisi" in student_research,
