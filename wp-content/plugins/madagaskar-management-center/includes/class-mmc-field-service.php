@@ -144,7 +144,7 @@ class MMC_Field_Service {
         if ( ! empty( $args['exclude_skipped'] ) ) { $where[] = "t.status<>'skipped'"; }
 
         $limit = isset( $args['limit'] ) ? min( 2000, max( 1, absint( $args['limit'] ) ) ) : 1000;
-        $sql = "SELECT t.*, s.school_name,s.province_name,s.district_name,s.school_type,s.education_level,s.address,s.latitude,s.longitude,s.student_count,s.data_year,s.institution_code
+        $sql = "SELECT t.*, s.school_name,s.province_name,s.district_name,s.school_type,s.education_level,s.address,s.phone,s.website,s.campus_key,s.campus_name,s.component_names,s.latitude,s.longitude,s.student_count,s.student_count_status,s.student_source_type,s.student_source_url,s.student_verified_at,s.priority AS school_priority,s.data_year,s.institution_code
                 FROM $targets t INNER JOIN $schools s ON s.id=t.school_id
                 WHERE " . implode( ' AND ', $where ) . " ORDER BY s.district_name,s.school_name LIMIT $limit";
         return $wpdb->get_results( $wpdb->prepare( $sql, $params ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -155,7 +155,7 @@ class MMC_Field_Service {
         $targets = $wpdb->prefix . 'mmc_program_target_schools';
         $schools = $wpdb->prefix . 'mmc_schools';
         return $wpdb->get_row( $wpdb->prepare(
-            "SELECT t.*, s.school_name,s.province_name,s.district_name,s.school_type,s.education_level,s.address,s.latitude,s.longitude,s.student_count,s.data_year,s.institution_code
+            "SELECT t.*, s.school_name,s.province_name,s.district_name,s.school_type,s.education_level,s.address,s.phone,s.website,s.campus_key,s.campus_name,s.component_names,s.latitude,s.longitude,s.student_count,s.student_count_status,s.student_source_type,s.student_source_url,s.student_verified_at,s.priority AS school_priority,s.data_year,s.institution_code
              FROM $targets t INNER JOIN $schools s ON s.id=t.school_id WHERE t.id=%d LIMIT 1",
             absint( $target_id )
         ) );
