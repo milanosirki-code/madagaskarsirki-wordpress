@@ -20,6 +20,11 @@ jobs:
         with:
           ref: codex/mmc-school-data-print-plan-20261007
 
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: rollback-src
+
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -45,8 +50,17 @@ jobs:
           (cd .package && zip -qr ../deploy/madagaskar-management-center-1.3.48.zip madagaskar-management-center)
           (cd .package && zip -qr ../deploy/madagaskar-okul-tanitim-1.8.0.zip madagaskar-okul-tanitim)
 
+          rm -rf .rollback-package
+          mkdir -p .rollback-package
+          cp -R rollback-src/wp-content/plugins/madagaskar-management-center .rollback-package/madagaskar-management-center
+          cp -R rollback-src/wp-content/plugins/madagaskar-okul-tanitim .rollback-package/madagaskar-okul-tanitim
+          (cd .rollback-package && zip -qr ../deploy/ROLLBACK-madagaskar-management-center-1.3.47.zip madagaskar-management-center)
+          (cd .rollback-package && zip -qr ../deploy/ROLLBACK-madagaskar-okul-tanitim-1.7.9.zip madagaskar-okul-tanitim)
+
           unzip -t deploy/madagaskar-management-center-1.3.48.zip
           unzip -t deploy/madagaskar-okul-tanitim-1.8.0.zip
+          unzip -t deploy/ROLLBACK-madagaskar-management-center-1.3.47.zip
+          unzip -t deploy/ROLLBACK-madagaskar-okul-tanitim-1.7.9.zip
 
       - name: Commit deployment ZIPs to branch
         shell: bash
@@ -54,7 +68,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f deploy/madagaskar-management-center-1.3.48.zip deploy/madagaskar-okul-tanitim-1.8.0.zip
+          git add -f deploy/madagaskar-management-center-1.3.48.zip deploy/madagaskar-okul-tanitim-1.8.0.zip \
+            deploy/ROLLBACK-madagaskar-management-center-1.3.47.zip deploy/ROLLBACK-madagaskar-okul-tanitim-1.7.9.zip
           if git diff --cached --quiet; then
             echo "Deployment ZIPs already current."
             exit 0
