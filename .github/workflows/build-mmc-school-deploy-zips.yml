@@ -1,0 +1,63 @@
+name: Build MMC school deployment ZIPs
+
+on:
+  push:
+    branches:
+      - codex/mmc-school-data-print-plan-20261007
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-okul-tanitim/**'
+      - '.github/workflows/build-mmc-school-deploy-zips.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/mmc-school-data-print-plan-20261007
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint school plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+          find wp-content/plugins/madagaskar-management-center -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find wp-content/plugins/madagaskar-okul-tanitim -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Build installable plugin ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf deploy .package
+          mkdir -p deploy .package
+
+          cp -R wp-content/plugins/madagaskar-management-center .package/madagaskar-management-center
+          cp -R wp-content/plugins/madagaskar-okul-tanitim .package/madagaskar-okul-tanitim
+
+          (cd .package && zip -qr ../deploy/madagaskar-management-center-1.3.48.zip madagaskar-management-center)
+          (cd .package && zip -qr ../deploy/madagaskar-okul-tanitim-1.8.0.zip madagaskar-okul-tanitim)
+
+          unzip -t deploy/madagaskar-management-center-1.3.48.zip
+          unzip -t deploy/madagaskar-okul-tanitim-1.8.0.zip
+
+      - name: Commit deployment ZIPs to branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f deploy/madagaskar-management-center-1.3.48.zip deploy/madagaskar-okul-tanitim-1.8.0.zip
+          if git diff --cached --quiet; then
+            echo "Deployment ZIPs already current."
+            exit 0
+          fi
+          git commit -m "Build MMC school deployment ZIPs"
+          git push origin HEAD:codex/mmc-school-data-print-plan-20261007
