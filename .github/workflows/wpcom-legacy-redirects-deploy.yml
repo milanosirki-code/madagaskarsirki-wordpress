@@ -1,0 +1,38 @@
+name: WordPress.com Legacy Redirects artifact
+
+on:
+  push:
+    branches:
+      - chatgpt/t10-legacy-redirect-deploy-20261007
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wpcom-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Lint legacy redirects plugin
+        run: php -l wp-content/plugins/madagaskar-legacy-redirects/madagaskar-legacy-redirects.php
+      - name: Legacy redirect contract
+        run: php tests/legacy-redirects/contract.php
+      - name: Stage exactly one plugin file
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p wpcom-deploy
+          cp wp-content/plugins/madagaskar-legacy-redirects/madagaskar-legacy-redirects.php wpcom-deploy/
+          test "$(find wpcom-deploy -type f | wc -l)" -eq 1
+          cmp wp-content/plugins/madagaskar-legacy-redirects/madagaskar-legacy-redirects.php wpcom-deploy/madagaskar-legacy-redirects.php
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wpcom
+          path: wpcom-deploy/
+          retention-days: 1
+          if-no-files-found: error
