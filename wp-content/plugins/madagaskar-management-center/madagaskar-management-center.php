@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Management Center
  * Description: Madagaskar Sirki program yaşam döngüsü, bölge veri ambarı, hazırlık analizi, görev, yetki ve değişiklik geçmişi için yönetim merkezi.
- * Version: 1.3.48
+ * Version: 1.3.49
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-management-center
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MMC_VERSION', '1.3.48' );
+define( 'MMC_VERSION', '1.3.49' );
 define( 'MMC_DB_VERSION', '1.3.8' );
 define( 'MMC_FILE', __FILE__ );
 define( 'MMC_DIR', plugin_dir_path( __FILE__ ) );

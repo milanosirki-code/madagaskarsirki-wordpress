@@ -18,4 +18,6 @@ jobs:
           extensions: pdo_sqlite
           coverage: none
       - run: php -l tests/mmc-sales/gross-revenue.php
+      - run: php -l tests/mmc-sales/refund-object-guard.php
       - run: php -d error_reporting=E_ALL tests/mmc-sales/gross-revenue.php
+      - run: php -d error_reporting=E_ALL tests/mmc-sales/refund-object-guard.php
