@@ -49,6 +49,8 @@ class MMC_Activator {
         $marketing_items = $wpdb->prefix . 'mmc_marketing_items';
         $meta_plans = $wpdb->prefix . 'mmc_meta_plans';
         $target_schools = $wpdb->prefix . 'mmc_program_target_schools';
+        $school_print_policies = $wpdb->prefix . 'mmc_school_print_policies';
+        $school_print_plans = $wpdb->prefix . 'mmc_school_print_plans';
         $field_visits = $wpdb->prefix . 'mmc_field_visits';
         $field_routes = $wpdb->prefix . 'mmc_field_routes';
         $field_tokens = $wpdb->prefix . 'mmc_field_tokens';
@@ -158,9 +160,19 @@ class MMC_Activator {
             education_level varchar(80) NOT NULL DEFAULT '',
             ownership varchar(40) NOT NULL DEFAULT '',
             address text DEFAULT NULL,
+            phone varchar(80) NOT NULL DEFAULT '',
+            website text DEFAULT NULL,
+            campus_key varchar(64) NOT NULL DEFAULT '',
+            campus_name varchar(255) NOT NULL DEFAULT '',
+            component_names longtext DEFAULT NULL,
             latitude decimal(10,7) DEFAULT NULL,
             longitude decimal(10,7) DEFAULT NULL,
             student_count int(11) unsigned DEFAULT NULL,
+            student_count_status varchar(30) NOT NULL DEFAULT '',
+            student_source_type varchar(40) NOT NULL DEFAULT '',
+            student_source_url text DEFAULT NULL,
+            student_verified_at datetime DEFAULT NULL,
+            priority varchar(20) NOT NULL DEFAULT '',
             data_year varchar(20) NOT NULL DEFAULT '',
             source_org varchar(80) NOT NULL DEFAULT 'MEB',
             source_url text DEFAULT NULL,
@@ -172,6 +184,8 @@ class MMC_Activator {
             KEY institution_code (institution_code),
             KEY province_district (province_name,district_name),
             KEY school_name (school_name(191)),
+            KEY campus_key (campus_key),
+            KEY student_count_status (student_count_status),
             KEY data_year (data_year)
         ) $charset_collate;";
 
@@ -618,6 +632,50 @@ class MMC_Activator {
             KEY status (status)
         ) $charset_collate;";
 
+        $sql_school_print_policies = "CREATE TABLE $school_print_policies (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            program_id bigint(20) unsigned NOT NULL,
+            distribution_percent decimal(7,2) NOT NULL DEFAULT 100.00,
+            reserve_percent decimal(7,2) NOT NULL DEFAULT 0.00,
+            round_to int(11) unsigned NOT NULL DEFAULT 10,
+            min_per_campus int(11) unsigned NOT NULL DEFAULT 0,
+            max_per_campus int(11) unsigned NOT NULL DEFAULT 0,
+            unknown_student_qty int(11) unsigned NOT NULL DEFAULT 0,
+            notes text DEFAULT NULL,
+            created_by bigint(20) unsigned DEFAULT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY program_id (program_id)
+        ) $charset_collate;";
+
+        $sql_school_print_plans = "CREATE TABLE $school_print_plans (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            program_id bigint(20) unsigned NOT NULL,
+            campus_key varchar(64) NOT NULL,
+            campus_name varchar(255) NOT NULL,
+            province_name varchar(120) NOT NULL,
+            district_name varchar(120) NOT NULL,
+            component_school_count int(11) unsigned NOT NULL DEFAULT 1,
+            component_names longtext DEFAULT NULL,
+            student_count_snapshot int(11) unsigned DEFAULT NULL,
+            student_known_count int(11) unsigned NOT NULL DEFAULT 0,
+            suggested_qty int(11) unsigned NOT NULL DEFAULT 0,
+            planned_qty int(11) unsigned NOT NULL DEFAULT 0,
+            printed_qty int(11) unsigned NOT NULL DEFAULT 0,
+            distributed_qty int(11) unsigned NOT NULL DEFAULT 0,
+            status varchar(30) NOT NULL DEFAULT 'draft',
+            notes text DEFAULT NULL,
+            created_by bigint(20) unsigned DEFAULT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY program_campus (program_id,campus_key),
+            KEY program_id (program_id),
+            KEY campus_key (campus_key),
+            KEY status (status)
+        ) $charset_collate;";
+
         $sql_field_visits = "CREATE TABLE $field_visits (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             program_id bigint(20) unsigned NOT NULL,
@@ -951,6 +1009,8 @@ class MMC_Activator {
         dbDelta( $sql_marketing_items );
         dbDelta( $sql_meta_plans );
         dbDelta( $sql_target_schools );
+        dbDelta( $sql_school_print_policies );
+        dbDelta( $sql_school_print_plans );
         dbDelta( $sql_field_visits );
         dbDelta( $sql_field_routes );
         dbDelta( $sql_field_tokens );
