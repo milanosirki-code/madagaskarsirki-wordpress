@@ -33,6 +33,8 @@ file_put_contents($path,"IL_ADI,ILCE_ADI,KURUM_ADI,OGRENCI_SAYISI\nUşak,Merkez,
 check(count(Mad_Okul_Records::file_rows($path,'csv'))===1,'comma CSV accepted');
 
 // Minimal multi-sheet analogue of the supplied grouped research workbook.
+$single=Mad_Okul_Records::grid_rows([['İl','İlçe','Kurum Adları','Öğrenci Sayısı (Web)'],['UŞAK','MERKEZ','TEST İLKOKULU','306']]);
+check(mad_okul_canonical_row($single[0])['OGRENCI_SAYISI']==='306','parenthesized Web student header reads single-school counts');
 $bytes=Mad_Okul_Records::xlsx_bytes([['İl','İlçe','Ziyaret Noktası / Kampüs','Kurum Adları','Öğrenci Sayısı (Web)'],['UŞAK','MERKEZ','TEST KAMPÜSÜ','TEST İLKOKULU + TEST ORTAOKULU','795']]);file_put_contents($path,$bytes);
 $z=new ZipArchive();$z->open($path);$z->addFromString('xl/workbook.xml','<x:workbook xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><x:sheets><x:sheet name="Temiz Liste" sheetId="1" r:id="rId1"/><x:sheet name="Birleştirme Kontrolü" sheetId="2" r:id="rId2"/></x:sheets></x:workbook>');
 $sheet_xml=$z->getFromName('xl/worksheets/sheet1.xml');
