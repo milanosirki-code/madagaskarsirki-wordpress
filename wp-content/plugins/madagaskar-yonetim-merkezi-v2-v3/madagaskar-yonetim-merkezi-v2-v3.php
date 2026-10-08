@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Yönetim Merkezi V2 + V3
  * Description: Madagaskar Sirki için V2 Pazarlama (Meta Ads, Instagram, GA4) ve V3 CRM (Kommo, WhatsApp, reklam→müşteri→satış atıf zinciri) yönetim merkezi.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Madagaskar Sirki / Dünya Organizasyon
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -11,12 +11,14 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'MDGY_VERSION', '1.3.2' );
+define( 'MDGY_VERSION', '1.3.3' );
 define( 'MDGY_FILE', __FILE__ );
 define( 'MDGY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MDGY_URL', plugin_dir_url( __FILE__ ) );
 
+require_once MDGY_DIR . 'includes/class-mdgy-meta-expenses.php';
 require_once MDGY_DIR . 'includes/class-mdgy-core.php';
+MDGY_Meta_Expenses::boot();
 
 register_activation_hook( __FILE__, array( 'MDGY_Core', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'MDGY_Core', 'deactivate' ) );

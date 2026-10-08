@@ -382,6 +382,7 @@ final class MDGY_Core {
 
         $this->render_sync_buttons( array( 'meta', 'instagram', 'ga4' ) );
         $this->render_meta_campaigns( $from, $to );
+        MDGY_Meta_Expenses::render();
         $this->render_ga4_sources( $from, $to );
         $this->render_instagram_panel();
 
@@ -617,6 +618,10 @@ final class MDGY_Core {
             elseif ( 'kommo' === $source ) { $rows = $this->sync_kommo( $from, $to ); }
             else { throw new Exception( 'Bilinmeyen kaynak.' ); }
         } catch ( Exception $e ) { $status = 'error'; $msg = $e->getMessage(); }
+        if ( 'meta' === $source && 'ok' === $status ) {
+            $expenses = MDGY_Meta_Expenses::sync();
+            if ( is_wp_error( $expenses ) ) { $status = 'error'; $msg = $expenses->get_error_message(); }
+        }
         $this->log_sync( $source, $status, $start, current_time( 'mysql' ), $rows, $msg );
         return array( 'status'=>$status, 'rows'=>$rows, 'message'=>$msg );
     }
@@ -658,31 +663,37 @@ final class MDGY_Core {
         if ( ! $account ) { throw new Exception( 'Meta Ad Account ID kayıtlı değil.' ); }
         if ( 0 !== strpos( $account, 'act_' ) ) { $account = 'act_' . preg_replace( '/\D+/', '', $account ); }
         $params = array(
-            'fields' => 'date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,clicks,ctr,cpc,actions,action_values',
+            'fields' => 'date_start,date_stop,account_currency,campaign_id,campaign_name,spend,impressions,reach,clicks,ctr,cpc,actions,action_values',
             'level' => 'campaign', 'time_increment' => 1, 'limit' => 500,
             'time_range' => wp_json_encode( array( 'since'=>$from, 'until'=>$to ) ),
         );
         $data = $this->meta_get( $account . '/insights', $params ); $rows = 0; $page = 0;
         while ( true ) {
+            if ( ! isset($data['data']) || ! is_array($data['data']) ) { throw new Exception('Meta yanıtında kampanya verisi yok.'); }
             foreach ( (array) ( $data['data'] ?? array() ) as $r ) {
                 $date = sanitize_text_field( $r['date_start'] ?? '' ); if ( ! $date ) { continue; }
                 $purchases = self::action_value( $r['actions'] ?? array(), array( 'purchase','omni_purchase','offsite_conversion.fb_pixel_purchase','onsite_conversion.purchase' ) );
                 $pvalue = self::action_value( $r['action_values'] ?? array(), array( 'purchase','omni_purchase','offsite_conversion.fb_pixel_purchase','onsite_conversion.purchase' ) );
                 $links = self::action_value( $r['actions'] ?? array(), array( 'link_click','outbound_click' ) );
                 $cid = sanitize_text_field( $r['campaign_id'] ?? '' );
-                $row_key = hash( 'sha256', $date . '|campaign|' . $cid );
-                $wpdb->replace( self::table( 'meta_daily' ), array(
+                $row_key = hash( 'sha256', $account . '|' . $date . '|campaign|' . $cid );
+                $existing_key = $wpdb->get_var( $wpdb->prepare( 'SELECT row_key FROM ' . self::table('meta_daily') . " WHERE account_id=%s AND metric_date=%s AND campaign_id=%s AND level_name='campaign' LIMIT 1", $account, $date, $cid ) );
+                if ( $existing_key ) { $row_key = $existing_key; }
+                $saved = $wpdb->replace( self::table( 'meta_daily' ), array(
                     'row_key'=>$row_key,'metric_date'=>$date,'level_name'=>'campaign','account_id'=>$account,
                     'campaign_id'=>$cid,'campaign_name'=>sanitize_text_field( $r['campaign_name'] ?? '' ),'adset_id'=>'','adset_name'=>'','ad_id'=>'','ad_name'=>'',
                     'spend'=>(float)($r['spend']??0),'impressions'=>(int)($r['impressions']??0),'reach'=>(int)($r['reach']??0),'clicks'=>(int)($r['clicks']??0),'link_clicks'=>(int)$links,
                     'ctr'=>(float)($r['ctr']??0),'cpc'=>(float)($r['cpc']??0),'purchases'=>$purchases,'purchase_value'=>$pvalue,
                     'raw_json'=>wp_json_encode( $r ),'updated_at'=>current_time( 'mysql' )
-                ) ); $rows++;
+                ) );
+                if ( false === $saved ) { throw new Exception('Meta günlük harcaması kaydedilemedi; gider aktarımı durduruldu.'); }
+                $rows++;
             }
-            $next = $data['paging']['next'] ?? ''; if ( ! $next || ++$page >= 20 ) { break; }
+            $next = $data['paging']['next'] ?? ''; if ( ! $next ) { break; }
+            if ( ++$page >= 20 ) { throw new Exception('Meta sayfalama sınırı aşıldı; tarih aralığını daraltın.'); }
             $res = wp_remote_get( esc_url_raw( $next ), array( 'timeout'=>30, 'headers'=>array( 'Authorization'=>'Bearer ' . self::secret( 'meta' ) ) ) );
-            if ( is_wp_error( $res ) || wp_remote_retrieve_response_code( $res ) >= 300 ) { break; }
-            $data = json_decode( wp_remote_retrieve_body( $res ), true ); if ( ! is_array( $data ) ) { break; }
+            if ( is_wp_error( $res ) || wp_remote_retrieve_response_code( $res ) >= 300 ) { throw new Exception('Meta sayfalama tamamlanamadı; gider aktarımı çalıştırılmadı.'); }
+            $data = json_decode( wp_remote_retrieve_body( $res ), true ); if ( ! is_array( $data ) ) { throw new Exception('Meta sayfalama yanıtı geçersiz.'); }
         }
         return $rows;
     }
