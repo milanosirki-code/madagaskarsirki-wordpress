@@ -1,0 +1,50 @@
+name: WordPress.com MMC 1.3.49 plugin-ready artifact
+
+on:
+  push:
+    branches:
+      - chatgpt/mmc-1349-plugin-ready-20261009
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: Verify and lint MMC
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 1.3.49' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Fq "define( 'MMC_VERSION', '1.3.49' );" wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          find wp-content/plugins/madagaskar-management-center -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -d error_reporting=E_ALL tests/mmc-sales/gross-revenue.php
+          php -d error_reporting=E_ALL tests/mmc-sales/refund-object-guard.php
+
+      - name: Stage WordPress plugin directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf wpcom-package
+          mkdir -p wpcom-package/madagaskar-management-center
+          cp -R wp-content/plugins/madagaskar-management-center/. wpcom-package/madagaskar-management-center/
+          diff -qr wp-content/plugins/madagaskar-management-center wpcom-package/madagaskar-management-center
+          test -f wpcom-package/madagaskar-management-center/madagaskar-management-center.php
+          test -f wpcom-package/madagaskar-management-center/includes/class-mmc-sales-service.php
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mmc-1.3.49-plugin-ready
+          path: wpcom-package/**
+          retention-days: 1
+          if-no-files-found: error
