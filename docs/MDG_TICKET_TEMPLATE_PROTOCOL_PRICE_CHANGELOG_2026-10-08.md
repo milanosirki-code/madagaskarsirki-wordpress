@@ -277,3 +277,74 @@ PDF smoke test:
 
 Terminoloji notu:
 Bilet gerçek e-Fatura/e-Arşiv fatura numarası üretmediği için şablonda “Fatura Tarihi / Fatura No” yerine mali referans olarak “İşlem Tarihi / Bilet No” kullanılmıştır.
+
+
+## Baskı Okunurluk Güncellemesi — 2026-10-08
+
+**Durum:** CANLI / doğrulandı.
+
+Normal satış şablonları #15, #16, #17, #19, #20, #23, #24, #26 ve #27 güncellendi. Snippet #161 normal biletlerin event_terms verisini gerçek \n ve \n\n satır sonlarıyla bloklara ayırır. Aynı filtre birden fazla kez çalıştığında adres başlığı veya destek metni tekrarlanmaz.
+
+### Yeni alan ölçüleri
+
+Tüm ölçüler pt; x koordinatları ve genişlikler korunmuştur.
+
+| Alan | Font (önce → sonra) | x | y | width | height |
+|---|---:|---:|---:|---:|---:|
+| event_datetime | 10.5 → 11.5 | 14 | 112 | 430 | 16 |
+| venue_name | 12 → 13 | 14 | 132 | 430 | 34 |
+| event_terms | 9.2 → 10.2 | 14 | 172 | 425 | 134 |
+| attendee_name | 11.5 → 12.5 | 14 | 312 | 380 | 20 |
+| mdg_document_line | 9.2 → 10.2 | 14 | 338 | 410 | 18 |
+| mdg_price_summary | 9.3 → 10.3 | 14 | 362 | 410 | 44 |
+
+Fontlar +1 punto büyütüldü. Sol kolondaki normal başlık/metin ve fiyat/işlem satırları #111111 oldu. Sağ kolondaki QR başlıkları/seri kodu dahil QR alanları aynen korundu. Arka plan #f7f2e6 ve logo filigranı değiştirilmedi.
+
+### event_terms düzeni
+
+Şablondaki mevcut “Adres: ” etiketi korunur; veri içinde aynı etiket ikinci kez eklenmez.
+
+```text
+Adres: [mevcut adres]
+
+Bilgi & Destek WhatsApp Hattı:
++90 312 911 37 10
+
+Lütfen seans saatinden en az 30 dakika önce salonda hazır bulununuz.
+
+Koltuk numarası bulunmamaktadır.
+```
+
+HTML <br> üretilmez. Gelen eski <br> varsa gerçek satır sonuna normalize edilir. Adres, WhatsApp, 30 dakika uyarısı ve koltuk notu ayrı bloklardır. Eski fatura/gişe notu kaldırma davranışı korunur.
+
+### Canlı PDF smoke ve görsel doğrulama
+
+- #5071 normal ücretli / şablon #20: geçerli tek sayfalı PDF; 11.5/13/10.2/12.5/10.2/10.3 pt ve #111111 renk PDF metin spanlarından doğrulandı. İşlem tarihi/bilet no görünüyor; 454,55 TL net + 45,45 TL KDV = 500,00 TL toplam korunuyor. Bloklar arasında boşluk var, alan taşması/çakışması yok.
+- #5076 normal 0 TL / şablon #19: geçerli tek sayfalı PDF; aynı tipografi ve blok düzeni; ÜCRETSİZ BİLET ve 0,00 TL fiyat/KDV/toplam korunuyor. İşlem/bilet referansı görünür. Alan taşması/çakışması yok.
+- #5078 protokol / şablon #20: geçerli tek sayfalı PDF; PROTOKOL DAVETİYESİ ve misafir adı korunuyor. Fiyat/KDV ve işlem tarihi/bilet no yok. Protokol in-memory layout değişiklik öncesi ile birebir aynı.
+- Üç PDF yerelde açıldı, metin/font/renk kontrolü ve PNG görsel incelemesi yapıldı.
+- Dokuz şablonun her biri canlı native PDF generator ile #5071 temsilî verisi kullanılarak ayrıca render edildi: 9/9 geçerli PDF. Bu ek test her programın gerçek siparişiyle uçtan uca satın alma testi değildir.
+- Dokuz şablonda giriş QR, salon konumu QR ve beyaz güvenli paneller option yedekleriyle alan alan birebir aynı. Arka plan ve filigran da birebir aynı. #5071/#5076/#5078 QR payload SHA-256 değerleri değişmedi. Fiziksel yazıcı/telefon tarama testi yapılmadı.
+- Snippet #128 değiştirilmedi. #161 ve #128 aktif, code_error=null.
+- Yeni sipariş, ödeme veya bilet oluşturulmadı; müşteri mesajı gönderilmedi.
+
+### Geri dönüş yedekleri
+
+Snippet #170 — **BACKUP — MDG Bilet Baskı Okunurluk Öncesi 20261008**: #161'in değişiklik öncesi kodu; pasif.
+
+Her şablonun ham template_data yedeği ayrı option içinde, autoload kapalı:
+- `mdg_ticket_template_15_backup_20261008_print_readability`
+- `mdg_ticket_template_16_backup_20261008_print_readability`
+- `mdg_ticket_template_17_backup_20261008_print_readability`
+- `mdg_ticket_template_19_backup_20261008_print_readability`
+- `mdg_ticket_template_20_backup_20261008_print_readability`
+- `mdg_ticket_template_23_backup_20261008_print_readability`
+- `mdg_ticket_template_24_backup_20261008_print_readability`
+- `mdg_ticket_template_26_backup_20261008_print_readability`
+- `mdg_ticket_template_27_backup_20261008_print_readability`
+
+Geri dönüş: ilgili option'daki ham template_data değerini Tickera Template sınıfının set/save akışıyla geri yükleyin; #170 kodunu #161'e geri koyun. #170'i ayrıca aktive etmeyin.
+
+### Geçici kod temizliği
+
+Bu görevde oluşturulan geçici snippet #171 — Print readability scoped apply and PDF smoke — deaktive edildi (active=false, code_error=null). PDF transferi için geçici chunk option kayıtları silindi; kalan kayıt 0. Önceki geçici ticket snippetleri de pasif. Kalıcı #161 ve #128 aktif kalır.
