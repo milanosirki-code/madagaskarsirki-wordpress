@@ -133,10 +133,101 @@ class MMC_School_Source_Service {
         return $stats;
     }
 
+    public static function count_all() {
+        $source = self::source_info();
+        if ( empty( $source['external'] ) ) {
+            global $wpdb;
+            return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_schools WHERE is_active=1" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        }
+        $rows = self::rows_from_source( $source, '', array(), 50000 );
+        return count( array_filter( $rows, function( $r ){ return ! empty( $r->is_active ); } ) );
+    }
+
+    public static function known_districts( $province ) {
+        $province = class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $province ) : sanitize_text_field( $province );
+        if ( ! $province ) { return array(); }
+        $source = self::source_info();
+        if ( empty( $source['external'] ) ) { return array(); }
+        $rows = self::rows_from_source( $source, $province, array(), 50000 );
+        $out = array();
+        foreach ( $rows as $row ) {
+            if ( ! empty( $row->is_active ) && $row->district_name ) { $out[] = $row->district_name; }
+        }
+        $out = array_values( array_unique( array_filter( $out ) ) );
+        natcasesort( $out );
+        return array_values( $out );
+    }
+
+    public static function schools_for_area( $province, $districts ) {
+        $province = class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $province ) : sanitize_text_field( $province );
+        $districts = array_values( array_filter( array_map( function( $v ) {
+            return class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $v ) : sanitize_text_field( $v );
+        }, (array) $districts ) ) );
+        $source = self::source_info();
+        return self::rows_from_source( $source, $province, $districts, 10000 );
+    }
+
     /**
-     * Veri Ambarı için okul ana kaynağının genel öğrenci veri kapsamasını verir.
-     * Tahmin üretmez: yalnız okul kayıtlarında gerçekten bulunan öğrenci sayılarını toplar.
+     * Okul Tanıtım kaynağını MMC'nin salt-okunur uyumluluk cache'ine yansıtır.
+     * Bu cache yönetim kaynağı değildir; düzenleme yapılmaz. Saha modülünün mevcut
+     * foreign-key benzeri okul_id ilişkisini bozmadan tek-kaynak ilkesini sağlar.
      */
+    public static function refresh_cache_for_area( $province, $districts ) {
+        global $wpdb;
+        $source = self::source_info();
+        if ( empty( $source['external'] ) ) {
+            return array( 'source'=>$source, 'read'=>0, 'inserted'=>0, 'updated'=>0, 'external'=>false );
+        }
+        $rows = self::schools_for_area( $province, $districts );
+        $table = $wpdb->prefix . 'mmc_schools';
+        $now = current_time( 'mysql' );
+        $inserted = $updated = 0;
+        foreach ( $rows as $row ) {
+            $stable = (string) ( $row->source_ref ?: $row->institution_code ?: ( $row->province_name . '|' . $row->district_name . '|' . $row->school_name ) );
+            $cache_code = 'OKT-' . strtoupper( substr( sha1( (string)$source['table'] . '|' . $stable ), 0, 36 ) );
+            $record = array(
+                'institution_code' => $cache_code,
+                'province_name'    => $row->province_name,
+                'district_name'    => $row->district_name,
+                'school_name'      => $row->school_name,
+                'school_type'      => $row->school_type,
+                'education_level'  => $row->education_level,
+                'ownership'        => $row->ownership,
+                'address'          => $row->address,
+                'phone'            => $row->phone,
+                'website'          => $row->website,
+                'campus_key'       => $row->campus_key,
+                'campus_name'      => $row->campus_name,
+                'component_names'  => $row->component_names,
+                'latitude'         => $row->latitude,
+                'longitude'        => $row->longitude,
+                'student_count'    => $row->student_count,
+                'student_count_status' => $row->student_count_status,
+                'student_source_type'  => $row->student_source_type,
+                'student_source_url'   => $row->student_source_url,
+                'student_verified_at'  => $row->student_verified_at,
+                'priority'         => $row->priority,
+                'data_year'        => $row->data_year,
+                'source_org'       => 'Okul Tanıtım',
+                'source_url'       => $source['menu_url'] ?: '',
+                'verified_at'      => $now,
+                'is_active'        => ! empty( $row->is_active ) ? 1 : 0,
+                'updated_at'       => $now,
+            );
+            $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE institution_code=%s LIMIT 1", $cache_code ) );
+            if ( $existing ) {
+                $ok = $wpdb->update( $table, $record, array( 'id'=>(int)$existing ) );
+                if ( false !== $ok ) { $updated++; }
+            } else {
+                $record['created_at'] = $now;
+                $ok = $wpdb->insert( $table, $record );
+                if ( false !== $ok ) { $inserted++; }
+            }
+        }
+        return array( 'source'=>$source, 'read'=>count($rows), 'inserted'=>$inserted, 'updated'=>$updated, 'external'=>true );
+    }
+
+
     public static function all_stats() {
         $source = self::source_info();
         $rows = self::rows_from_source( $source, '', array(), 50000 );
@@ -249,7 +340,7 @@ class MMC_School_Source_Service {
         if ( ! $table ) { return array(); }
         $m = $source['mapping'];
         $select = array();
-        foreach ( array( 'id','institution_code','province_name','district_name','school_name','school_type','education_level','ownership','address','latitude','longitude','student_count','data_year','active' ) as $key ) {
+        foreach ( array( 'id','institution_code','province_name','district_name','school_name','school_type','education_level','ownership','address','phone','website','campus_key','campus_name','component_names','latitude','longitude','student_count','student_count_status','student_source_type','student_source_url','student_verified_at','priority','data_year','active' ) as $key ) {
             if ( ! empty( $m[$key] ) ) {
                 $col = self::quote_identifier( $m[$key] );
                 if ( $col ) { $select[] = "$col AS `" . esc_sql( $key ) . "`"; }
@@ -289,9 +380,19 @@ class MMC_School_Source_Service {
                 'education_level'  => sanitize_text_field( $r->education_level ?? '' ),
                 'ownership'        => sanitize_text_field( $r->ownership ?? '' ),
                 'address'          => sanitize_textarea_field( $r->address ?? '' ),
+                'phone'            => sanitize_text_field( $r->phone ?? '' ),
+                'website'          => esc_url_raw( $r->website ?? '' ),
+                'campus_key'       => sanitize_key( $r->campus_key ?? '' ),
+                'campus_name'      => sanitize_text_field( $r->campus_name ?? '' ),
+                'component_names'  => sanitize_textarea_field( $r->component_names ?? '' ),
                 'latitude'         => self::nullable_float( $r->latitude ?? null ),
                 'longitude'        => self::nullable_float( $r->longitude ?? null ),
                 'student_count'    => self::nullable_int( $r->student_count ?? null ),
+                'student_count_status' => sanitize_key( $r->student_count_status ?? '' ),
+                'student_source_type'  => sanitize_text_field( $r->student_source_type ?? '' ),
+                'student_source_url'   => esc_url_raw( $r->student_source_url ?? '' ),
+                'student_verified_at'  => self::nullable_datetime( $r->student_verified_at ?? null ),
+                'priority'         => sanitize_key( $r->priority ?? '' ),
                 'data_year'        => sanitize_text_field( $r->data_year ?? '' ),
                 'is_active'        => $active ? 1 : 0,
             );
@@ -314,7 +415,7 @@ class MMC_School_Source_Service {
             $mapping = self::map_columns( $columns );
             if ( empty( $mapping['school_name'] ) || empty( $mapping['province_name'] ) || empty( $mapping['district_name'] ) ) { continue; }
             $score = $name_bonus + 12;
-            foreach ( array( 'id','institution_code','address','latitude','longitude','student_count','data_year','active','school_type','education_level' ) as $k ) {
+            foreach ( array( 'id','institution_code','address','phone','website','campus_key','campus_name','latitude','longitude','student_count','student_count_status','student_source_url','data_year','active','school_type','education_level' ) as $k ) {
                 if ( ! empty( $mapping[$k] ) ) { $score++; }
             }
             if ( ! $best || $score > $best['confidence'] ) {
@@ -343,9 +444,19 @@ class MMC_School_Source_Service {
             'education_level'  => array( 'educationlevel','kademe','okulkademesi','level','egitimkademesi' ),
             'ownership'        => array( 'ownership','resmiozel','kurumtipi','ownershiptype','mulkiyet' ),
             'address'          => array( 'address','adres','acikadres','adresbilgisi' ),
+            'phone'            => array( 'phone','telefon','tel','telefonno' ),
+            'website'          => array( 'website','web','webadresi','webadres','internetadresi' ),
+            'campus_key'       => array( 'campuskey','kampuskey','kampusanahtari' ),
+            'campus_name'      => array( 'campusname','kampusadi','ziyaretnoktasi','ziyaretnoktasikampus' ),
+            'component_names'  => array( 'componentnames','bilesenkurumlar','kurumadlari','kampuskurumlari' ),
             'latitude'         => array( 'latitude','lat','enlem' ),
             'longitude'        => array( 'longitude','lng','lon','boylam' ),
-            'student_count'    => array( 'studentcount','students','ogrencisayisi','ogrenci','ogrenciadedi' ),
+            'student_count'    => array( 'ogrencisayisi','studentcount','students','ogrenci','ogrenciadedi','ogrencisayisiweb' ),
+            'student_count_status' => array( 'studentcountstatus','sayidurumu','ogrenciveridurumu','ogrencisayidurumu' ),
+            'student_source_type'  => array( 'studentsourcetype','kaynakturu','ogrencikaynakturu' ),
+            'student_source_url'   => array( 'studentsourceurl','ogrencisayisikaynagi','ogrencikaynakurl' ),
+            'student_verified_at'  => array( 'studentverifiedat','erisimtarihi','ogrencidogrulamatarihi' ),
+            'priority'         => array( 'priority','oncelik' ),
             'data_year'        => array( 'datayear','veriyili','yil','egitimogretimyili','donem' ),
             'active'           => array( 'isactive','active','aktif','durum','status' ),
         );
@@ -375,7 +486,8 @@ class MMC_School_Source_Service {
         return array(
             'id'=>'id','institution_code'=>'institution_code','province_name'=>'province_name','district_name'=>'district_name',
             'school_name'=>'school_name','school_type'=>'school_type','education_level'=>'education_level','ownership'=>'ownership',
-            'address'=>'address','latitude'=>'latitude','longitude'=>'longitude','student_count'=>'student_count','data_year'=>'data_year','active'=>'is_active',
+            'address'=>'address','phone'=>'phone','website'=>'website','campus_key'=>'campus_key','campus_name'=>'campus_name','component_names'=>'component_names',
+            'latitude'=>'latitude','longitude'=>'longitude','student_count'=>'student_count','student_count_status'=>'student_count_status','student_source_type'=>'student_source_type','student_source_url'=>'student_source_url','student_verified_at'=>'student_verified_at','priority'=>'priority','data_year'=>'data_year','active'=>'is_active',
         );
     }
 
@@ -406,5 +518,12 @@ class MMC_School_Source_Service {
         if ( null === $value || '' === trim( (string) $value ) ) { return null; }
         $v = preg_replace( '/[^0-9]/', '', (string) $value );
         return '' === $v ? null : absint( $v );
+    }
+
+    private static function nullable_datetime( $value ) {
+        $value = trim( (string) $value );
+        if ( '' === $value ) { return null; }
+        $ts = strtotime( $value );
+        return $ts ? wp_date( 'Y-m-d H:i:s', $ts ) : null;
     }
 }
