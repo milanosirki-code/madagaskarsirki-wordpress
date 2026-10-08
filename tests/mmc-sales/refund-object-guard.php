@@ -49,8 +49,8 @@ expect_same(MMC_Sales_Service::sync_order(200),false,'refund-like object skipped
 
 $source=file_get_contents($service);
 expect_same(strpos($source,"'type'         => 'shop_order'")!==false,true,'event scan filters shop_order');
-expect_same(strpos($source,"method_exists( $order, 'get_payment_method' )")!==false,true,'payment method guard present');
-expect_same(strpos($source,"method_exists( $order, 'get_payment_method_title' )")!==false,true,'payment title guard present');
+expect_same(strpos($source,"method_exists( \$order, 'get_payment_method' )")!==false,true,'payment method guard present');
+expect_same(strpos($source,"method_exists( \$order, 'get_payment_method_title' )")!==false,true,'payment title guard present');
 
 echo json_encode(array(
     'assertions'=>$checks,
