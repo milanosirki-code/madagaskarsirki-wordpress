@@ -133,100 +133,6 @@ class MMC_School_Source_Service {
         return $stats;
     }
 
-    public static function count_all() {
-        $source = self::source_info();
-        if ( empty( $source['external'] ) ) {
-            global $wpdb;
-            return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mmc_schools WHERE is_active=1" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        }
-        $rows = self::rows_from_source( $source, '', array(), 50000 );
-        return count( array_filter( $rows, function( $r ){ return ! empty( $r->is_active ); } ) );
-    }
-
-    public static function known_districts( $province ) {
-        $province = class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $province ) : sanitize_text_field( $province );
-        if ( ! $province ) { return array(); }
-        $source = self::source_info();
-        if ( empty( $source['external'] ) ) { return array(); }
-        $rows = self::rows_from_source( $source, $province, array(), 50000 );
-        $out = array();
-        foreach ( $rows as $row ) {
-            if ( ! empty( $row->is_active ) && $row->district_name ) { $out[] = $row->district_name; }
-        }
-        $out = array_values( array_unique( array_filter( $out ) ) );
-        natcasesort( $out );
-        return array_values( $out );
-    }
-
-    public static function schools_for_area( $province, $districts ) {
-        $province = class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $province ) : sanitize_text_field( $province );
-        $districts = array_values( array_filter( array_map( function( $v ) {
-            return class_exists( 'MMC_Region_Service' ) ? MMC_Region_Service::normalize_place_name( $v ) : sanitize_text_field( $v );
-        }, (array) $districts ) ) );
-        $source = self::source_info();
-        return self::rows_from_source( $source, $province, $districts, 10000 );
-    }
-
-    /**
-     * Okul Tanıtım kaynağını MMC'nin salt-okunur uyumluluk cache'ine yansıtır.
-     * Bu cache yönetim kaynağı değildir; düzenleme yapılmaz. Saha modülünün mevcut
-     * foreign-key benzeri okul_id ilişkisini bozmadan tek-kaynak ilkesini sağlar.
-     */
-    public static function refresh_cache_for_area( $province, $districts ) {
-        global $wpdb;
-        $source = self::source_info();
-        if ( empty( $source['external'] ) ) {
-            return array( 'source'=>$source, 'read'=>0, 'inserted'=>0, 'updated'=>0, 'external'=>false );
-        }
-        $rows = self::schools_for_area( $province, $districts );
-        $table = $wpdb->prefix . 'mmc_schools';
-        $now = current_time( 'mysql' );
-        $inserted = $updated = 0;
-        foreach ( $rows as $row ) {
-            $stable = (string) ( $row->source_ref ?: $row->institution_code ?: ( $row->province_name . '|' . $row->district_name . '|' . $row->school_name ) );
-            $cache_code = 'OKT-' . strtoupper( substr( sha1( (string)$source['table'] . '|' . $stable ), 0, 36 ) );
-            $record = array(
-                'institution_code' => $cache_code,
-                'province_name'    => $row->province_name,
-                'district_name'    => $row->district_name,
-                'school_name'      => $row->school_name,
-                'school_type'      => $row->school_type,
-                'education_level'  => $row->education_level,
-                'ownership'        => $row->ownership,
-                'address'          => $row->address,
-                'phone'            => $row->phone,
-                'website'          => $row->website,
-                'campus_key'       => $row->campus_key,
-                'campus_name'      => $row->campus_name,
-                'component_names'  => $row->component_names,
-                'latitude'         => $row->latitude,
-                'longitude'        => $row->longitude,
-                'student_count'    => $row->student_count,
-                'student_count_status' => $row->student_count_status,
-                'student_source_type'  => $row->student_source_type,
-                'student_source_url'   => $row->student_source_url,
-                'student_verified_at'  => $row->student_verified_at,
-                'priority'         => $row->priority,
-                'data_year'        => $row->data_year,
-                'source_org'       => 'Okul Tanıtım',
-                'source_url'       => $source['menu_url'] ?: '',
-                'verified_at'      => $now,
-                'is_active'        => ! empty( $row->is_active ) ? 1 : 0,
-                'updated_at'       => $now,
-            );
-            $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE institution_code=%s LIMIT 1", $cache_code ) );
-            if ( $existing ) {
-                $ok = $wpdb->update( $table, $record, array( 'id'=>(int)$existing ) );
-                if ( false !== $ok ) { $updated++; }
-            } else {
-                $record['created_at'] = $now;
-                $ok = $wpdb->insert( $table, $record );
-                if ( false !== $ok ) { $inserted++; }
-            }
-        }
-        return array( 'source'=>$source, 'read'=>count($rows), 'inserted'=>$inserted, 'updated'=>$updated, 'external'=>true );
-    }
-
 
     public static function all_stats() {
         $source = self::source_info();
@@ -310,9 +216,19 @@ class MMC_School_Source_Service {
                 'education_level'  => $row->education_level,
                 'ownership'        => $row->ownership,
                 'address'          => $row->address,
+                'phone'            => $row->phone,
+                'website'          => $row->website,
+                'campus_key'       => $row->campus_key,
+                'campus_name'      => $row->campus_name,
+                'component_names'  => $row->component_names,
                 'latitude'         => $row->latitude,
                 'longitude'        => $row->longitude,
                 'student_count'    => $row->student_count,
+                'student_count_status' => $row->student_count_status,
+                'student_source_type'  => $row->student_source_type,
+                'student_source_url'   => $row->student_source_url,
+                'student_verified_at'  => $row->student_verified_at,
+                'priority'         => $row->priority,
                 'data_year'        => $row->data_year,
                 'source_org'       => 'Okul Tanıtım',
                 'source_url'       => $source['menu_url'] ?: '',
