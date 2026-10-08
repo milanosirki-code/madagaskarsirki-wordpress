@@ -1,0 +1,59 @@
+name: Build USKD standalone repository seed
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'integrations/uskd/**'
+      - 'docs/USKD_MADAGASKAR_EVENTS_DEPLOYMENT.md'
+      - 'scripts/build-uskd-repository-export.py'
+      - 'tests/validate-uskd-repository-export.py'
+      - '.github/workflows/build-uskd-repository-seed.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'integrations/uskd/**'
+      - 'docs/USKD_MADAGASKAR_EVENTS_DEPLOYMENT.md'
+      - 'scripts/build-uskd-repository-export.py'
+      - 'tests/validate-uskd-repository-export.py'
+      - '.github/workflows/build-uskd-repository-seed.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate export contract
+        run: python tests/validate-uskd-repository-export.py
+      - name: Build repository seed
+        run: python scripts/build-uskd-repository-export.py build/uskdernegi-wordpress
+      - name: Lint exported plugin
+        run: php -l build/uskdernegi-wordpress/wp-content/plugins/uskd-madagaskar-events/uskd-madagaskar-events.php
+      - name: Archive repository seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            cd build
+            zip -r -q uskdernegi-wordpress-repo-seed.zip uskdernegi-wordpress
+            sha256sum uskdernegi-wordpress-repo-seed.zip > uskdernegi-wordpress-repo-seed.zip.sha256
+          )
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uskdernegi-wordpress-repo-seed
+          path: |
+            build/uskdernegi-wordpress-repo-seed.zip
+            build/uskdernegi-wordpress-repo-seed.zip.sha256
+          retention-days: 30
+          if-no-files-found: error
