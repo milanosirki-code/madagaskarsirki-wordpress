@@ -222,6 +222,18 @@ class MMC_Sales_Service {
         $order = wc_get_order( absint( $order_id ) );
         if ( ! $order ) return false;
 
+        // Historical wc_get_orders() scans can surface refund objects on some
+        // WooCommerce/HPOS combinations. Refund objects are not normal orders
+        // and do not expose payment-method accessors. Refund accounting still
+        // belongs to the parent order via get_*_refunded_for_item().
+        if (
+            ! method_exists( $order, 'get_items' ) ||
+            ! method_exists( $order, 'get_payment_method' ) ||
+            ! method_exists( $order, 'get_payment_method_title' )
+        ) {
+            return false;
+        }
+
         foreach ( $order->get_items( 'line_item' ) as $item_id => $item ) {
             $product_id   = absint( $item->get_product_id() );
             $variation_id = absint( $item->get_variation_id() );
@@ -323,6 +335,7 @@ class MMC_Sales_Service {
                 'paginate'     => true,
                 'orderby'      => 'date',
                 'order'        => 'DESC',
+                'type'         => 'shop_order',
                 'date_created' => '>' . ( time() - DAY_IN_SECONDS * $lookback_days ),
                 'return'       => 'objects',
             ) );
