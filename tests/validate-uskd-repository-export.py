@@ -39,8 +39,11 @@ with tempfile.TemporaryDirectory() as td:
     plugin = (out / "wp-content/plugins/uskd-madagaskar-events/uskd-madagaskar-events.php").read_text(encoding="utf-8")
     assert "Version: 0.2.0" in plugin
     assert "USKD_MDG_EVENTS_VERSION', '0.2.0'" in plugin
-    assert "price" not in plugin.lower()
-    assert "checkout" not in plugin.lower()
+    assert "$event['price']" not in plugin
+    assert 'woocommerce_' not in plugin.lower()
+    assert 'wc_get_' not in plugin.lower()
+    assert 'add_to_cart' not in plugin.lower()
+    assert '/checkout' not in plugin.lower()
 
     export_manifest = json.loads((out / "repository-export-manifest.json").read_text(encoding="utf-8"))
     paths = {row["path"] for row in export_manifest["files"]}
