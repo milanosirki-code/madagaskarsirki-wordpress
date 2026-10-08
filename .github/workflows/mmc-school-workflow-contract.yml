@@ -1,0 +1,22 @@
+name: MMC school workflow contract
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-okul-tanitim/**'
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'tests/mmc-school-workflow/**'
+      - '.github/workflows/mmc-school-workflow-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/plugins/madagaskar-okul-tanitim/**'
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'tests/mmc-school-workflow/**'
+permissions:
+  contents: read
+jobs:
+  school-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/mmc-school-workflow/validate-school-workflow.py
