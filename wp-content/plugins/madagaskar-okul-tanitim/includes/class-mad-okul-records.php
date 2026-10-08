@@ -190,7 +190,7 @@ class Mad_Okul_Records {
                         return mad_okul_header_key($c['ZIYARET_NOKTASI_KAMPUS'] ?? '')===mad_okul_header_key($r['ZIYARET_NOKTASI_KAMPUS'] ?? '');
                     }));
                     if ($matched) {
-                        foreach($matched as $c) { $x=$r; $x['KURUM_ADI']=$c['BIRLESEN_KURUM'] ?? ''; $x['OGRENCI_SAYISI']=$c['OGRENCI_SAYISI'] ?? ''; $x['KURUM_ADLARI']=''; $x['WEB_ADRES']=$c['WEB'] ?? ''; $x['OGRENCI_SAYISI_WEB']=''; $out[]=$x; }
+                        foreach($matched as $c) { $x=$r; $x['KURUM_ADI']=$c['BIRLESEN_KURUM'] ?? ''; $x['OGRENCI_SAYISI']=$c['OGRENCI_SAYISI'] ?? ''; $x['KURUM_ADLARI']=''; $x['WEB_ADRES']=$c['WEB'] ?? ''; $x['OGRENCI_KAYNAK_URL']=$c['WEB'] ?? ''; $x['OGRENCI_SAYISI_WEB']=''; $out[]=$x; }
                     } elseif(count($parts)>1 || strpos($names,' / ')!==false) {
                         $r['_IMPORT_ERROR']='Birleşik kampüs için okul bazında öğrenci sayısı gerekli; toplam ayrı okullara kopyalanmadı.'; $out[]=$r;
                     } else $out[]=$r;

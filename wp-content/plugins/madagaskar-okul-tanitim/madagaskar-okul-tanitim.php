@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.8.3
+ * Version: 1.8.4
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.8.3');
+define('MAD_OKUL_VERSION', '1.8.4');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
@@ -188,7 +188,7 @@ function mad_okul_create_table() {
         KEY mmc_program_id (mmc_program_id)
     ) $charset;";
     dbDelta($sql);
-    // 1.8.0 (#195) student_count alanını 1.8.3 zengin öğrenci kaydıyla
+    // 1.8.0 (#195) student_count alanını 1.8.4 zengin öğrenci kaydıyla
     // çift yönlü ve idempotent tut; eski canlı veriyi kaybetme.
     delete_transient('mmc_school_source_detect_v1');
     $wpdb->query("UPDATE $table SET ogrenci_sayisi = student_count WHERE ogrenci_sayisi IS NULL AND student_count IS NOT NULL");
@@ -934,7 +934,7 @@ function mad_okul_csv_rows($path) {
 function mad_okul_header_key($value) {
     $value = mad_okul_norm($value);
     $value = strtr($value, ['İ'=>'I','Ş'=>'S','Ğ'=>'G','Ü'=>'U','Ö'=>'O','Ç'=>'C']);
-    return preg_replace('/[^A-Z0-9]+/', '_', trim($value));
+    return trim(preg_replace('/[^A-Z0-9]+/', '_', trim($value)), '_');
 }
 
 function mad_okul_canonical_row($row) {
