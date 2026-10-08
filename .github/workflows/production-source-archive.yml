@@ -6,6 +6,7 @@ on:
       - 'docs/live-captures/2026-10-04/plugin-versions/**'
       - 'docs/STAGE4_SOURCE_INVENTORY_20261004.json'
       - 'tests/validate-production-source-archive.py'
+      - 'tests/test-production-source-archive.py'
       - '.github/workflows/production-source-archive.yml'
       - 'wp-content/plugins/**'
 permissions:
@@ -15,9 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           coverage: none
       - name: Verify exact source hashes and lint without executing production code
-        run: python3 tests/validate-production-source-archive.py --lint
+        run: |
+          python3 tests/test-production-source-archive.py
+          python3 tests/validate-production-source-archive.py --lint

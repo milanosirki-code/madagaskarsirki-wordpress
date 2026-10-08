@@ -9,6 +9,24 @@ import shutil
 import subprocess
 import tempfile
 
+# Immutable reconciliation commit; evolving plugin files are not the 4 October archive.
+ARCHIVE_COMMIT = "3fbac3f58df2a676c1abad96bae57c48a336e8b7"
+
+def archive_bytes(root, entry):
+    path = entry["path"]
+    if path.startswith("wp-content/plugins/"):
+        result = subprocess.run(["git", "show", ARCHIVE_COMMIT + ":" + path],
+                                cwd=root, capture_output=True, check=True)
+        raw = result.stdout
+    else:
+        raw = (root / path).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == entry["sha256"], path
+    return raw
+
+def minimum_version(source, minimum):
+    match = re.search(r"Version:\s*(\d+\.\d+\.\d+)(?!\d)", source)
+    return bool(match) and tuple(map(int, match[1].split("."))) >= minimum
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--lint", action="store_true")
@@ -28,8 +46,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mdg-source-lint-") as tmp:
         for index, entry in enumerate(manifest["archived_files"]):
             path = root / entry["path"]
-            raw = path.read_bytes()
-            assert hashlib.sha256(raw).hexdigest() == entry["sha256"], entry["path"]
+            raw = archive_bytes(root, entry)
             text = raw.decode("utf-8")
             assert not re.search(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", text), entry["path"]
             checked += 1
@@ -45,13 +62,14 @@ def main():
                 linted += 1
     family = (root / "wp-content/plugins/madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php").read_text()
     assert "family_2_2" in family and "mmc_family_price_for_event" in family
-    assert re.search(r"Version:\s*1\.1\.3", family)
+    assert minimum_version(family, (1, 1, 3))
     ai = (root / "wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php").read_text()
-    assert re.search(r"Version:\s*0\.7\.0", ai)
+    assert minimum_version(ai, (0, 7, 0))
     school = (root / "wp-content/plugins/madagaskar-okul-tanitim/madagaskar-okul-tanitim.php").read_text()
-    assert re.search(r"Version:\s*1\.7\.9", school)
+    assert minimum_version(school, (1, 7, 9))
     print(json.dumps({"hashes_verified": checked, "php_files_linted": linted,
                       "active_snippets": len(snippets), "diagnostics_in_production": 0,
+                      "archive_commit": ARCHIVE_COMMIT,
                       "main_ahead_versions_preserved": True, "production_deployment": False}))
 if __name__ == "__main__":
     main()
