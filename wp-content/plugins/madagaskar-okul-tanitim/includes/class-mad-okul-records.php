@@ -132,9 +132,9 @@ class Mad_Okul_Records {
             return simplexml_load_string($s,'SimpleXMLElement',LIBXML_NONET|LIBXML_NOERROR|LIBXML_NOWARNING);
         };
         $shared=[]; $sx=$xml('xl/sharedStrings.xml');
-        if ($sx) foreach($sx->xpath('//*[local-name()="si"]') as $si) { $parts=[]; foreach($si->xpath('.//*[local-name()="t"]') as $t) $parts[]=(string)$t; $shared[]=implode('',$parts); }
+        if ($sx!==false) foreach($sx->xpath('//*[local-name()="si"]') as $si) { $parts=[]; foreach($si->xpath('.//*[local-name()="t"]') as $t) $parts[]=(string)$t; $shared[]=implode('',$parts); }
         $wx=$xml('xl/workbook.xml'); $rx=$xml('xl/_rels/workbook.xml.rels');
-        if (!$wx || !$rx) { $zip->close(); return new WP_Error('xml','Çalışma kitabı okunamadı.'); }
+        if ($wx===false || $rx===false) { $zip->close(); return new WP_Error('xml','Çalışma kitabı okunamadı.'); }
         $rels=[]; foreach($rx->xpath('//*[local-name()="Relationship"]') as $r) $rels[(string)$r['Id']]=(string)$r['Target'];
         $out=[];
         foreach($wx->xpath('//*[local-name()="sheet"]') as $sheet) {
@@ -143,7 +143,7 @@ class Mad_Okul_Records {
             if (strpos($target,'..')!==false) continue;
             $target=substr($target,0,1)==='/' ? ltrim($target,'/') : 'xl/'.$target;
             if (!preg_match('#^xl/worksheets/[^/]+\.xml$#D',$target)) continue;
-            $sx=$xml($target); if (!$sx) continue;
+            $sx=$xml($target); if ($sx===false) continue;
             $grid=[];
             foreach($sx->xpath('//*[local-name()="sheetData"]/*[local-name()="row"]') as $row) {
                 $vals=[];
