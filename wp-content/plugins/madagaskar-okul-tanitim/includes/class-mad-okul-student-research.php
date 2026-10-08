@@ -101,21 +101,14 @@ class Mad_Okul_Student_Research {
             wp_die( 'Aday öğrenci sayısı güvenli aralığın dışında.' );
         }
 
-        $wpdb->update(
-            mad_okul_table(),
-            array(
-                'student_count'            => $count,
-                'ogrenci_sayisi'           => $count,
-                'ogrenci_sayi_durumu'      => 'tam',
-                'ogrenci_kaynak_turu'      => 'Okul web sitesi',
-                'ogrenci_kaynak_url'       => esc_url_raw( $result['source_url'] ),
-                'ogrenci_dogrulama_tarihi' => current_time( 'mysql' ),
-                'updated_at'               => current_time( 'mysql' ),
-            ),
-            array( 'id'=>$school_id ),
-            array( '%d','%s','%s','%s','%s','%s' ),
-            array( '%d' )
-        );
+        $saved = Mad_Okul_Records::save_student($row, array(
+            'ogrenci_sayisi' => $count,
+            'ogrenci_sayi_durumu' => 'tam',
+            'ogrenci_kaynak_turu' => 'Okul web sitesi',
+            'ogrenci_kaynak_url' => esc_url_raw($result['source_url']),
+            'ogrenci_dogrulama_tarihi' => current_time('mysql'),
+        ), wp_date('Y'), 'Kullanıcı web araştırması adayını açıkça onayladı.');
+        if (is_wp_error($saved)) wp_die(esc_html($saved->get_error_message()));
 
         delete_transient( self::transient_key( $school_id ) );
         self::redirect_back( $row, 'Öğrenci sayısı ve kaynak bilgisi onaylanarak kaydedildi.', 'success' );

@@ -2,20 +2,22 @@
 /**
  * Plugin Name: Madagaskar Okul Tanıtım Yönetimi
  * Description: Madagaskar Sirki okul tanıtım listelerini tek merkezde yönetir. MEBBİS XLS/CSV aktarımı, ziyaret durumu, personel/etkinlik/not takibi ve Google Maps rota bağlantıları sağlar.
- * Version: 1.8.1
+ * Version: 1.8.2
  * Author: Dünya Organizasyon
  * Text Domain: madagaskar-okul-tanitim
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MAD_OKUL_VERSION', '1.8.1');
+define('MAD_OKUL_VERSION', '1.8.2');
 define('MAD_OKUL_FILE', __FILE__);
 define('MAD_OKUL_DIR', plugin_dir_path(__FILE__));
 
 require_once MAD_OKUL_DIR . 'includes/class-mad-okul-operations.php';
 require_once MAD_OKUL_DIR . 'includes/class-mad-okul-student-research.php';
 Mad_Okul_Student_Research::hooks();
+require_once MAD_OKUL_DIR . 'includes/class-mad-okul-records.php';
+Mad_Okul_Records::hooks();
 
 function mad_okul_table() {
     global $wpdb;
@@ -186,7 +188,7 @@ function mad_okul_create_table() {
         KEY mmc_program_id (mmc_program_id)
     ) $charset;";
     dbDelta($sql);
-    // 1.8.0 (#195) student_count alanını 1.8.1 zengin öğrenci kaydıyla
+    // 1.8.0 (#195) student_count alanını 1.8.2 zengin öğrenci kaydıyla
     // çift yönlü ve idempotent tut; eski canlı veriyi kaybetme.
     delete_transient('mmc_school_source_detect_v1');
     $wpdb->query("UPDATE $table SET ogrenci_sayisi = student_count WHERE ogrenci_sayisi IS NULL AND student_count IS NOT NULL");
@@ -715,7 +717,7 @@ function mad_okul_students_page() {
       <p><strong><?php echo number_format_i18n($unknown); ?></strong> okul biriminin öğrenci sayısı bilinmiyor. Bu sayı sıfırlanmadan baskı planında eksik veri uyarısı devam eder.</p>
 
       <table class="widefat striped">
-        <thead><tr><th>Okul</th><th>Adres</th><th>Web</th><th>Öğrenci</th><th>Durum</th><th>Kaynak</th><th>Doğrulama</th><th>Öncelik</th><th>Kaydet</th></tr></thead>
+        <thead><tr><th>Okul</th><th>Adres</th><th>Web</th><th>Öğrenci</th><th>Durum</th><th>Kaynak / Veri yılı</th><th>Doğrulama</th><th>Öncelik</th><th>Kaydet</th></tr></thead>
         <tbody>
         <?php if(!$rows): ?><tr><td colspan="9">Kayıt bulunamadı.</td></tr><?php else: foreach($rows as $r): $form_id='mad-student-'.(int)$r->id; ?>
           <tr>
@@ -748,7 +750,7 @@ function mad_okul_students_page() {
               <td><select form="<?php echo esc_attr($form_id); ?>" name="ogrenci_sayi_durumu">
                 <?php foreach([''=>'—','tam'=>'Tam','kismi'=>'Kısmi','ikincil'=>'İkincil','bulunamadi'=>'Bulunamadı'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->ogrenci_sayi_durumu,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?>
               </select></td>
-              <td><input form="<?php echo esc_attr($form_id); ?>" style="width:120px" name="ogrenci_kaynak_turu" value="<?php echo esc_attr($r->ogrenci_kaynak_turu); ?>" placeholder="MEB resmî"><br><input form="<?php echo esc_attr($form_id); ?>" style="width:180px" type="url" name="ogrenci_kaynak_url" value="<?php echo esc_attr($r->ogrenci_kaynak_url); ?>" placeholder="Kaynak URL"></td>
+              <td><input form="<?php echo esc_attr($form_id); ?>" style="width:120px" name="ogrenci_kaynak_turu" value="<?php echo esc_attr($r->ogrenci_kaynak_turu); ?>" placeholder="MEB resmî"><br><input form="<?php echo esc_attr($form_id); ?>" style="width:180px" type="url" name="ogrenci_kaynak_url" value="<?php echo esc_attr($r->ogrenci_kaynak_url); ?>" placeholder="Kaynak URL"><br><label>Veri yılı <input form="<?php echo esc_attr($form_id); ?>" type="number" min="2000" max="2099" name="student_data_year" value="<?php echo esc_attr($r->student_data_year ?: wp_date('Y')); ?>" style="width:85px"></label><br><input form="<?php echo esc_attr($form_id); ?>" name="student_source_note" value="<?php echo esc_attr($r->student_source_note ?? ''); ?>" placeholder="MEB müdürlüğü / evrak no / kaynak notu"></td>
               <td><input form="<?php echo esc_attr($form_id); ?>" type="date" name="ogrenci_dogrulama_tarihi" value="<?php echo esc_attr($r->ogrenci_dogrulama_tarihi ? substr($r->ogrenci_dogrulama_tarihi,0,10) : ''); ?>"></td>
               <td><select form="<?php echo esc_attr($form_id); ?>" name="oncelik"><?php foreach([''=>'—','cok_yuksek'=>'Çok Yüksek','yuksek'=>'Yüksek','orta'=>'Orta','dusuk'=>'Düşük'] as $k=>$v): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($r->oncelik,$k); ?>><?php echo esc_html($v); ?></option><?php endforeach; ?></select></td>
               <td><button form="<?php echo esc_attr($form_id); ?>" class="button button-primary">Kaydet</button></td>
@@ -773,13 +775,14 @@ add_action('admin_post_mad_okul_student_update', function() {
     if(!$row) wp_die('Okul bulunamadı.');
 
     $raw_count = trim((string)($_POST['ogrenci_sayisi'] ?? ''));
-    $count = mad_okul_nullable_int($raw_count);
+    $count = Mad_Okul_Records::count_value($raw_count);
+    if (is_wp_error($count)) wp_die(esc_html($count->get_error_message()));
     $date = sanitize_text_field($_POST['ogrenci_dogrulama_tarihi'] ?? '');
     $verified_at = $date ? $date.' 00:00:00' : null;
     $status = sanitize_key($_POST['ogrenci_sayi_durumu'] ?? '');
     if (null === $count && !$status) $status='bulunamadi';
 
-    $wpdb->update(mad_okul_table(),[
+    $result = Mad_Okul_Records::save_student($row,[
         'web_adresi'=>esc_url_raw($_POST['web_adresi'] ?? ''),
         'student_count'=>$count,
         'ogrenci_sayisi'=>$count,
@@ -789,7 +792,8 @@ add_action('admin_post_mad_okul_student_update', function() {
         'ogrenci_dogrulama_tarihi'=>$verified_at,
         'oncelik'=>sanitize_key($_POST['oncelik'] ?? ''),
         'updated_at'=>current_time('mysql'),
-    ],['id'=>$id]);
+    ],$_POST['student_data_year'] ?? wp_date('Y'),wp_unslash($_POST['student_source_note'] ?? ''));
+    if (is_wp_error($result)) wp_die(esc_html($result->get_error_message()));
 
     $args=['page'=>'mad-okul-students','student_saved'=>1,'il'=>$row->il,'ilce'=>$row->ilce];
     if(!empty($_POST['mmc_program_id'])) $args['mmc_program_id']=absint($_POST['mmc_program_id']);
@@ -1292,7 +1296,7 @@ function mad_okul_route_page() {
       <?php if($route_links): ?><div id="mad-route-result" class="mad-routes"><h2>Oluşturulan Rotalar</h2>
         <?php foreach($route_links as $route): ?><p><a class="button button-primary" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url($route['url']); ?>">Rota <?php echo (int)$route['number']; ?> — <?php echo (int)$route['count']; ?> okul Google Maps’te Aç</a></p><?php endforeach; ?>
         <?php if($route_program): ?>
-          <p><a class="button button-secondary" href="<?php echo esc_url(add_query_arg(array_filter(['page'=>'mad-okul-route-plan','program_id'=>(int)$route_program->id,'mmc_program_id'=>$mmc_program_id]),admin_url('admin.php'))); ?>">Rota Planını / PDF Olarak Getir</a></p>
+          <p><a class="button" href="<?php echo esc_url(Mad_Okul_Records::export_url('route',$mmc_program_id,(int)$route_program->id)); ?>">Rota Excel İndir</a> <a class="button button-secondary" href="<?php echo esc_url(add_query_arg(array_filter(['page'=>'mad-okul-route-plan','program_id'=>(int)$route_program->id,'mmc_program_id'=>$mmc_program_id]),admin_url('admin.php'))); ?>">Rota Planını / PDF Olarak Getir</a></p>
           <p class="description">PDF kaynağı: <?php echo esc_html($route_program->program_adi); ?>. Seçtiğiniz kurumlar bu programa bağlandı.</p>
         <?php else: ?>
           <div class="notice notice-warning inline"><p>Google Maps rotası oluşturuldu; ancak PDF için eşleşen bir program bulunamadı. Önce Program ve Salonlar ekranında bu il/ilçe için program oluşturun veya MMC programından gelin.</p></div>
