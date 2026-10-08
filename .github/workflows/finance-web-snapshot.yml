@@ -1,0 +1,22 @@
+name: Finance web snapshot contract
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-yonetim-merkezi-v5/**'
+      - 'tests/finance/**'
+      - '.github/workflows/finance-web-snapshot.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+      - run: |
+          php -l wp-content/plugins/madagaskar-yonetim-merkezi-v5/includes/class-mdg-v5-finance.php
+          php tests/finance/web-snapshot.php
+          php tests/finance/web-refunds.php

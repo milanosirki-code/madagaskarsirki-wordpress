@@ -198,33 +198,50 @@ final class MDG_V5_Finance {
         wp_safe_redirect(self::url(array('section'=>'attendance','month'=>$month,'finance_saved'=>'attendance')));exit;
     }
 
-    private static function web_revenues($from,$to){
-        global$wpdb;
-        if(!class_exists('MDG_DB'))return array();
+    /** Legacy web snapshots stay visible, but the paid order map owns web revenue. */
+    private static function is_web_snapshot($row) {
+        return 'woocommerce' === strtolower(trim((string)($row->channel ?? '')));
+    }
 
+    /** Returned ticket principal is a cash movement, not a second operating cost. */
+    private static function is_ticket_refund($row){
+        return 'program'===($row->scope??'') && ('İade / WooCommerce'===trim((string)($row->category??'')) || (15===(int)($row->event_id??0) && 'İade / Biletinial'===trim((string)($row->category??''))));
+    }
+
+    private static $web_unverified = false;
+
+    /** Read current WooCommerce state; the historical map only identifies program items. */
+    private static function web_revenues_for_events($event_ids){
+        global $wpdb;
+        $out=array();
+        $event_ids=array_values(array_unique(array_filter(array_map('absint',$event_ids))));
+        if(!$event_ids)return $out;
+        if(!class_exists('MDG_DB')||!function_exists('wc_get_order')){self::$web_unverified=true;return $out;}
+        $statuses=array('processing','completed','paid');
+        if(function_exists('wc_get_is_paid_statuses'))$statuses=array_merge($statuses,(array)wc_get_is_paid_statuses());
+        $placeholders=implode(',',array_fill(0,count($event_ids),'%d'));
+        $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT event_id,order_id,order_item_id,line_total FROM ".MDG_DB::table('order_map')." WHERE event_id IN ({$placeholders})",$event_ids));
+        $orders=array();
+        foreach($rows as $r){
+            $oid=(int)$r->order_id;$eid=(int)$r->event_id;
+            if(!array_key_exists($oid,$orders))$orders[$oid]=wc_get_order($oid);
+            $order=$orders[$oid];
+            if(!$order){self::$web_unverified=true;continue;}
+            if(!in_array($order->get_status(),$statuses,true)||!$order->get_date_paid())continue;
+            $item=$order->get_item((int)$r->order_item_id);
+            if(!$item){self::$web_unverified=true;continue;}
+            // MDG line_total excludes tax, so subtract only the matching item's tax-exclusive refund.
+            $refund=abs((float)$order->get_total_refunded_for_item((int)$r->order_item_id));
+            $net=max(0,(float)$r->line_total-$refund);
+            $out[$eid]=($out[$eid]??0)+$net;
+        }
+        return $out;
+    }
+
+    private static function web_revenues($from,$to){
         $month=substr((string)$from,0,7);
         $month_events=self::month_events(self::events(),$month);
-        $event_ids=array_values(array_filter(array_map('absint',array_keys($month_events))));
-        if(!$event_ids)return array();
-
-        $paid_statuses=array('processing','completed','paid','wc-processing','wc-completed','wc-paid');
-        if(function_exists('wc_get_is_paid_statuses')){
-            foreach((array)wc_get_is_paid_statuses()as$status){
-                $status=sanitize_key($status);
-                if($status){$paid_statuses[]=$status;$paid_statuses[]='wc-'.$status;}
-            }
-        }
-        $paid_statuses=array_values(array_unique($paid_statuses));
-
-        $map=MDG_DB::table('order_map');
-        $event_placeholders=implode(',',array_fill(0,count($event_ids),'%d'));
-        $status_placeholders=implode(',',array_fill(0,count($paid_statuses),'%s'));
-        $sql="SELECT event_id,COALESCE(SUM(line_total),0) revenue FROM {$map} WHERE event_id IN ({$event_placeholders}) AND order_status IN ({$status_placeholders}) AND paid_at IS NOT NULL AND paid_at<>'0000-00-00 00:00:00' GROUP BY event_id";
-        $prepared=$wpdb->prepare($sql,array_merge($event_ids,$paid_statuses));
-
-        $out=array();
-        foreach((array)$wpdb->get_results($prepared)as$r)$out[(int)$r->event_id]=(float)$r->revenue;
-        return$out;
+        return self::web_revenues_for_events(array_keys($month_events));
     }
     private static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
     private static function money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_price((float)$n)):number_format_i18n((float)$n,2).' TL';}
@@ -233,22 +250,67 @@ final class MDG_V5_Finance {
         if(!current_user_can(self::CAP))return;MDG_Yonetim_Merkezi_V5::css();global$wpdb;
         $section=sanitize_key($_GET['section']??'overview');$filter=sanitize_key($_GET['filter']??'all');$month=sanitize_text_field(wp_unslash($_GET['month']??wp_date('Y-m')));if(!self::month_ok($month))$month=wp_date('Y-m');$from=$month.'-01';$to=wp_date('Y-m-t',strtotime($from));$events=self::events();$names=array();$provinces=array();foreach($events as$e){$names[(int)$e->id]=self::event_name($e);if(!empty($e->province_name))$provinces[(string)$e->province_name]=(string)$e->province_name;}natcasesort($provinces);
         $expenses=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('expenses').' WHERE expense_date BETWEEN %s AND %s ORDER BY expense_date DESC,id DESC',$from,$to));$incomes=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('incomes').' WHERE income_date BETWEEN %s AND %s ORDER BY income_date DESC,id DESC',$from,$to));$fixed=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('fixed_costs').' WHERE cost_month=%s ORDER BY id DESC',$month));$attendance=(array)$wpdb->get_results('SELECT event_id,avg_ticket_price,manual_attendance,include_in_reports,notes,updated_at FROM '.self::table('attendance'),OBJECT_K);$web=self::web_revenues($from,$to);
-        $web_total=array_sum($web);$manual=0;foreach($incomes as$r)if('collected'===$r->collection_status)$manual+=(float)$r->net_amount;$direct=0;$general=0;foreach($expenses as$r){if('program'===$r->scope)$direct+=(float)$r->amount;else$general+=(float)$r->amount;}$fixed_total=0;foreach($fixed as$r)$fixed_total+=(float)$r->total_amount;$all_month_events=self::month_events($events,$month);$month_events=array_filter($all_month_events,static function($e)use($attendance){$id=(int)$e->id;return!isset($attendance[$id])||(int)$attendance[$id]->include_in_reports===1;});$count_map=(array)get_option(self::COUNT_OPTION,array());$detected=count($month_events);$count=isset($count_map[$month])?absint($count_map[$month]):$detected;$share=$count?$fixed_total/$count:0;
+        $web_total=array_sum($web);$manual=0;foreach($incomes as$r)if(!self::is_web_snapshot($r)&&'collected'===$r->collection_status)$manual+=(float)$r->net_amount;$direct=0;$general=0;foreach($expenses as$r){if(self::is_ticket_refund($r))continue;if('program'===$r->scope)$direct+=(float)$r->amount;else$general+=(float)$r->amount;}$fixed_total=0;foreach($fixed as$r)$fixed_total+=(float)$r->total_amount;$all_month_events=self::month_events($events,$month);$month_events=array_filter($all_month_events,static function($e)use($attendance){$id=(int)$e->id;return!isset($attendance[$id])||(int)$attendance[$id]->include_in_reports===1;});$count_map=(array)get_option(self::COUNT_OPTION,array());$detected=count($month_events);$count=isset($count_map[$month])?absint($count_map[$month]):$detected;$share=$count?$fixed_total/$count:0;
         echo'<div class="wrap mdgv5"><h1>Gelir, Gider ve Kârlılık Merkezi</h1>';if(!empty($_GET['finance_saved']))echo'<div class="notice notice-success is-dismissible"><p>Kayıt başarıyla kaydedildi.</p></div>';if(!empty($_GET['finance_deleted']))echo'<div class="notice notice-success is-dismissible"><p>Kayıt silindi. Yüklenen belge korunmuştur.</p></div>';if(!empty($_GET['finance_error']))echo'<div class="notice notice-error"><p>'.('duplicate'===$_GET['finance_error']?'Aynı kanal ve referans numarası daha önce kaydedilmiş.':'Zorunlu alanları ve tutarları kontrol edin.').'</p></div>';
+        self::render_program_summary($events);echo '<p class="mdgv5-note">WooCommerce kanalındaki eski gelir kayıtları inceleme için korunur; web gelirleri güncel WooCommerce sipariş durumu ve kalem iadeleriyle bir kez hesaplanır. Bilet iade hareketleri maliyete ikinci kez eklenmez; gider kayıtlarında korunur.</p>';
+        if(self::$web_unverified)echo '<div class="notice notice-warning"><p>Bazı web satışlarının güncel sipariş veya bilet kalemi doğrulanamadı. Bu kayıtlar toplama katılmadı; gelir ve kâr toplamları eksik olabilir.</p></div>';
         echo'<div class="nav-tab-wrapper">';foreach(array('overview'=>'Genel Bakış','attendance'=>'Seyirci','income'=>'Program / Diğer Gelir','corporate'=>'Kurumsal Satış','expense'=>'Giderler','fixed'=>'Aylık Sabit Giderler')as$k=>$v)echo'<a class="nav-tab '.($section===$k?'nav-tab-active':'').'" href="'.esc_url(self::url(array('section'=>$k,'month'=>$month))).'">'.esc_html($v).'</a>';echo'</div><form method="get" class="mdgv5-filter"><input type="hidden" name="page" value="mdg-v5-finance"><input type="hidden" name="section" value="'.esc_attr($section).'"><label><strong>Rapor ayı</strong> <input type="month" name="month" value="'.esc_attr($month).'"></label>';
         $filter_options=array();if(in_array($section,array('income','corporate'),true))$filter_options=array('all'=>'Tüm tahsilatlar','collected'=>'Tahsil edildi','pending'=>'Bekliyor');elseif('expense'===$section)$filter_options=array('all'=>'Tüm gider kapsamları','program'=>'Program','province'=>'İl','general'=>'Genel','person'=>'Personel','vehicle'=>'Araç');elseif('fixed'===$section)$filter_options=array('all'=>'Tüm sabit giderler','team'=>'Yabancı ekip','person'=>'Bireysel personel','operating'=>'Diğer sabit gider');if($filter_options){echo'<label><strong>Liste filtresi</strong><select name="filter">';foreach($filter_options as$k=>$v)echo'<option value="'.esc_attr($k).'" '.selected($filter,$k,false).'>'.esc_html($v).'</option>';echo'</select></label>';}echo'<button class="button">Göster</button></form>';
         $shown_incomes=$incomes;$shown_expenses=$expenses;$shown_fixed=$fixed;if('all'!==$filter){if(in_array($section,array('income','corporate'),true))$shown_incomes=array_values(array_filter($incomes,static function($r)use($filter){return$r->collection_status===$filter;}));elseif('expense'===$section)$shown_expenses=array_values(array_filter($expenses,static function($r)use($filter){return$r->scope===$filter;}));elseif('fixed'===$section)$shown_fixed=array_values(array_filter($fixed,static function($r)use($filter){return$r->cost_type===$filter;}));}
         if('attendance'===$section)self::render_attendance($month,$all_month_events,$attendance,$web,$incomes);elseif('income'===$section)self::render_income($names,$provinces,$shown_incomes,false);elseif('corporate'===$section)self::render_income($names,$provinces,$shown_incomes,true);elseif('expense'===$section)self::render_expense($names,$provinces,$shown_expenses);elseif('fixed'===$section)self::render_fixed($month,$shown_fixed,$detected,$count,$fixed_total,$share);else self::render_overview($names,$month_events,$web,$incomes,$expenses,$share,$web_total,$manual,$direct,$general,$fixed_total);echo'</div>';
     }
 
+
+    /** Read-only lifetime summary; MMC IDs are resolved through the verified bridge. */
+    private static function render_program_summary($events) {
+        global $wpdb;
+        $id=absint($_GET['summary_event']??0);
+        $pid=absint($_GET['program_id']??0);
+        if(!isset($_GET['summary_event']) && $pid && class_exists('MMC_MDG_Bridge_Service')) {
+            $bridge=MMC_MDG_Bridge_Service::bridge_for_program($pid);
+            if($bridge)$id=absint($bridge->mdg_event_id);
+        }
+        $selected=null;
+        echo '<div class="mdgv5-card"><h2>Program Gelir / Gider Durumu</h2><form method="get" class="mdgv5-filter"><input type="hidden" name="page" value="mdg-v5-finance"><label><strong>Program seçin</strong><select name="summary_event"><option value="0">Program seçin</option>';
+        foreach($events as $event){if((int)$event->id===$id)$selected=$event;echo '<option value="'.absint($event->id).'" '.selected($id,(int)$event->id,false).'>'.esc_html(self::event_name($event).' — '.self::event_date($event).' #'.$event->id).'</option>';}
+        echo '</select></label><button class="button button-primary">Programı Göster</button></form>';
+        if(!$selected){echo '<p>Programın bütün tarihlerdeki gelir ve giderlerini görmek için seçim yapın. MMC eşleşmesi yoksa program tahmin edilmez.</p></div>';return;}
+        $date=self::event_date($selected);$month=substr($date,0,7);
+        $inc=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('incomes').' WHERE event_id=%d AND scope=%s ORDER BY income_date DESC,id DESC',$id,'program'));
+        $exp=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('expenses').' WHERE event_id=%d AND scope=%s ORDER BY expense_date DESC,id DESC',$id,'program'));
+        $program_web=self::web_revenues_for_events(array($id));$web=(float)($program_web[$id]??0);
+        $refund_cash=0;$refund_channels=array();$collected=0;$pending=0;$total_exp=0;$unpaid=0;$unknown=0;$channels=array('Web sitesi'=>$web);$categories=array();
+        foreach($inc as $r){if(self::is_web_snapshot($r))continue;if('collected'===$r->collection_status){$collected+=(float)$r->net_amount;$channels[$r->channel]=($channels[$r->channel]??0)+(float)$r->net_amount;}else{$pending+=(float)$r->net_amount;}}
+        foreach($exp as $r){if(self::is_ticket_refund($r)){$refund_cash+=(float)$r->amount;$refund_channels[$r->category]=($refund_channels[$r->category]??0)+(float)$r->amount;continue;}$total_exp+=(float)$r->amount;$categories[$r->category]=($categories[$r->category]??0)+(float)$r->amount;if('Ödenmedi'===$r->payment_method)$unpaid+=(float)$r->amount;elseif(''===trim((string)$r->payment_method))$unknown+=(float)$r->amount;}
+        $fixed=0;$share=0;$count=0;
+        if(self::month_ok($month)){$fixed=(float)$wpdb->get_var($wpdb->prepare('SELECT COALESCE(SUM(total_amount),0) FROM '.self::table('fixed_costs').' WHERE cost_month=%s',$month));$attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);$eligible=array_filter(self::month_events($events,$month),static function($e)use($attendance){return !isset($attendance[$e->id])||(int)$attendance[$e->id]->include_in_reports===1;});$counts=(array)get_option(self::COUNT_OPTION,array());$count=isset($counts[$month])?absint($counts[$month]):count($eligible);$share=isset($eligible[$id])&&$count?$fixed/$count:0;}
+        $income=$web+$collected;$result=$income-$total_exp-$share;
+        if(15===$id)echo '<div class="notice notice-warning inline"><p>Kırıkkale iade mutabakatı: gerçekleşen WooCommerce geri ödemesi 13.250 TL (işletme teyidi); sipariş iade kaydı 13.750 TL. Aradaki 500 TL fark kâr veya gider olarak eklenmedi. Tarihsel web tahsilatı 17.750 TL ile gerçekleşen geri ödeme arasındaki 4.500 TL de mutabakat bekler; gelir sayılmadı. Biletinial geri ödemesi 6.250 TL. Banka/PayTR mutabakatı tamamlanana kadar nakit kapanışı kesin değildir.</p></div>';
+        echo '<h3>'.esc_html(self::event_name($selected).' — '.$date).'</h3><p>Programın tüm kayıt tarihleri · Son görüntüleme: '.esc_html(wp_date('d.m.Y H:i')).'</p><div class="mdgv5-grid">';
+        self::card(self::money($income),'Toplam tahsil edilmiş gelir','İadeler sonrası web + diğer tahsilatlar');
+        self::card(self::money($total_exp+$share),'Toplam program maliyeti','Doğrudan gider + aylık sabit gider payı');
+        self::card(self::money($result),'Kayıtlı verilere göre kâr / zarar','Tahsil edilmiş gelir − program maliyeti');
+        self::card(self::money($refund_cash),'Kayıtlı bilet iadeleri','Geri ödeme hareketi; maliyetten ayrıca düşülmez');
+        self::card(self::money($pending),'Tahsilat bekleyen gelir','Kâr hesabına eklenmedi');
+        self::card(self::money($unpaid),'Ödenmemiş gider','Maliyete dâhil; henüz ödeme yapılmamış');
+        self::card(self::money($share),'Sabit gider payı',$month.' · dağıtımda '.$count.' program');
+        echo '</div><p class="mdgv5-note">Bu sonuç mevcut kayıtlara dayanır; eksik gelir/giderler, iade mutabakatı ve programa dağıtılmamış genel/il/personel/araç giderleri sonucu değiştirebilir. Ödeme yöntemi boş olan gider: '.esc_html(self::money($unknown)).'. '.(!$fixed?'Bu ay sabit gider kaydı yok.':'').' Program tamamlanmadıysa sonuç geçicidir.</p><div class="mdgv5-grid">';
+        foreach(array('Gelir kanalları'=>$channels,'Gider kategorileri'=>$categories) as $heading=>$rows){echo '<div><h3>'.esc_html($heading).'</h3><table class="widefat striped"><thead><tr><th>Kalem</th><th>Tutar</th></tr></thead><tbody>';foreach($rows as $label=>$amount)echo '<tr><td>'.esc_html($label).'</td><td>'.esc_html(self::money($amount)).'</td></tr>';if(!$rows)echo '<tr><td colspan="2">Kayıt yok.</td></tr>';echo '</tbody></table></div>';}
+        echo '</div><details><summary>Programın gelir ve gider kayıtlarını göster</summary><table class="widefat striped"><thead><tr><th>Tarih</th><th>Tür / kategori</th><th>Açıklama</th><th>Tutar</th><th>Durum</th></tr></thead><tbody>';
+        foreach($inc as $r)echo '<tr><td>'.esc_html($r->income_date).'</td><td>Gelir · '.esc_html($r->channel).'</td><td>'.esc_html($r->description).'</td><td>'.esc_html(self::money($r->net_amount)).'</td><td>'.esc_html(self::is_web_snapshot($r)?'Web kaydı — toplama ayrıca eklenmez':('collected'===$r->collection_status?'Tahsil edildi':'Bekliyor')).'</td></tr>';
+        foreach($exp as $r)echo '<tr><td>'.esc_html($r->expense_date).'</td><td>Gider · '.esc_html($r->category).'</td><td>'.esc_html($r->description).'</td><td>'.esc_html(self::money($r->amount)).'</td><td>'.esc_html($r->payment_method?:'Ödeme bilgisi yok').'</td></tr>';
+        echo '</tbody></table></details></div><h2>Aylık İşletme Raporu</h2><p>Aşağıdaki alan bütün işletmenin seçilen aya ait raporudur.</p>';
+    }
+
     private static function render_overview($names,$month_events,$web,$incomes,$expenses,$share,$web_total,$manual,$direct,$general,$fixed_total){
-        echo'<div class="mdgv5-grid">';self::card(self::money($web_total),'Web sitesi geliri','WooCommerce / PayTR otomatik');self::card(self::money($manual),'Diğer tahsil edilmiş gelir','Bilet şirketi, kapı ve kantin');self::card(self::money($direct+$general+$fixed_total),'Toplam gider','Program + genel + sabit');self::card(self::money($web_total+$manual-$direct-$general-$fixed_total),'İşletme net sonucu','Tüm gelirler − tüm giderler');echo'</div><div class="mdgv5-card"><h2>Aylık gider dağılımı</h2><table class="widefat striped"><thead><tr><th>Doğrudan program gideri</th><th>Genel gider</th><th>Aylık sabit gider</th><th>Program başına sabit gider</th></tr></thead><tbody><tr><td>'.esc_html(self::money($direct)).'</td><td>'.esc_html(self::money($general)).'</td><td>'.esc_html(self::money($fixed_total)).'</td><td><strong>'.esc_html(self::money($share)).'</strong></td></tr></tbody></table></div>';
-        $mi=array();foreach($incomes as$r)if('collected'===$r->collection_status)$mi[(int)$r->event_id]=($mi[(int)$r->event_id]??0)+(float)$r->net_amount;$ex=array();foreach($expenses as$r)if('program'===$r->scope)$ex[(int)$r->event_id]=($ex[(int)$r->event_id]??0)+(float)$r->amount;
+        $refund_cash=0;foreach($expenses as $r)if(self::is_ticket_refund($r))$refund_cash+=(float)$r->amount;
+        echo'<div class="mdgv5-grid">';self::card(self::money($refund_cash),'Kayıtlı bilet iadeleri','Geri ödeme hareketi; maliyette tekrar sayılmaz');self::card(self::money($web_total),'Web sitesi geliri','WooCommerce / PayTR otomatik');self::card(self::money($manual),'Diğer tahsil edilmiş gelir','Bilet şirketi, kapı ve kantin');self::card(self::money($direct+$general+$fixed_total),'Toplam gider','Program + genel + sabit');self::card(self::money($web_total+$manual-$direct-$general-$fixed_total),'İşletme net sonucu','Tüm gelirler − tüm giderler');echo'</div><div class="mdgv5-card"><h2>Aylık gider dağılımı</h2><table class="widefat striped"><thead><tr><th>Doğrudan program gideri</th><th>Genel gider</th><th>Aylık sabit gider</th><th>Program başına sabit gider</th></tr></thead><tbody><tr><td>'.esc_html(self::money($direct)).'</td><td>'.esc_html(self::money($general)).'</td><td>'.esc_html(self::money($fixed_total)).'</td><td><strong>'.esc_html(self::money($share)).'</strong></td></tr></tbody></table></div>';
+        $mi=array();foreach($incomes as$r)if(!self::is_web_snapshot($r)&&'collected'===$r->collection_status)$mi[(int)$r->event_id]=($mi[(int)$r->event_id]??0)+(float)$r->net_amount;$ex=array();foreach($expenses as$r)if(!self::is_ticket_refund($r)&&'program'===$r->scope)$ex[(int)$r->event_id]=($ex[(int)$r->event_id]??0)+(float)$r->amount;
         echo'<div class="mdgv5-card"><h2>Program kârlılığı</h2><p class="mdgv5-sub">Faaliyet sonucu doğrudan giderleri; gerçek net sonuç ayrıca aylık sabit gider payını içerir.</p><table class="widefat striped"><thead><tr><th>Program</th><th>Web</th><th>Diğer gelir</th><th>Doğrudan gider</th><th>Faaliyet sonucu</th><th>Sabit gider payı</th><th>Gerçek net sonuç</th></tr></thead><tbody>';foreach($month_events as$id=>$e){$rev=($web[$id]??0)+($mi[$id]??0);$op=$rev-($ex[$id]??0);$net=$op-$share;echo'<tr><td><strong>#'.absint($id).' '.esc_html(self::event_name($e)).'</strong><div class="mdgv5-sub">'.esc_html(self::event_date($e)).'</div></td><td>'.esc_html(self::money($web[$id]??0)).'</td><td>'.esc_html(self::money($mi[$id]??0)).'</td><td>'.esc_html(self::money($ex[$id]??0)).'</td><td>'.esc_html(self::money($op)).'</td><td>'.esc_html(self::money($share)).'</td><td class="'.($net>=0?'mdgv5-ok':'mdgv5-bad').'">'.esc_html(self::money($net)).'</td></tr>';}if(!$month_events)echo'<tr><td colspan="7">Bu ay tarih bilgisi bulunan program bulunamadı. Program sayısını sabit gider ekranından elle girebilirsiniz.</td></tr>';echo'</tbody></table></div>';
     }
 
     private static function render_attendance($month,$events,$saved,$web,$incomes){
-        $manual_ticket_revenue=array();foreach($incomes as$r){if('collected'===$r->collection_status&&'Bilet Satışı'===$r->category&&$r->event_id)$manual_ticket_revenue[(int)$r->event_id]=($manual_ticket_revenue[(int)$r->event_id]??0)+(float)$r->gross_amount;}
+        $manual_ticket_revenue=array();foreach($incomes as$r){if(!self::is_web_snapshot($r)&&'collected'===$r->collection_status&&'Bilet Satışı'===$r->category&&$r->event_id)$manual_ticket_revenue[(int)$r->event_id]=($manual_ticket_revenue[(int)$r->event_id]??0)+(float)$r->gross_amount;}
         $total=0;$programs=0;$included=0;foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;if(!$is_included)continue;$included++;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$manual_count?:$estimated;if($used){$total+=$used;$programs++;}}
         echo'<div class="mdgv5-grid">';self::card(number_format_i18n($total),'Aylık toplam seyirci','Manuel sayı varsa o, yoksa tahmin');self::card(number_format_i18n($programs?round($total/$programs):0),'Program başına ortalama','Seyirci toplamı ÷ hesaplanan program');self::card(number_format_i18n($included),'Hesaba katılan program','İptal/taslak ve hariç tutulanlar yok');echo'</div>';
         echo'<div class="mdgv5-card"><h2>Seyirci Sayısı Hesabı</h2><div class="mdgv5-note">Tahmini seyirci = yalnız bilet geliri ÷ ortalama bilet fiyatı. Eski/test programlarda “Hesaba dâhil” işaretini kaldırın. Mobilde tüm alanları görmek için tabloyu sola kaydırabilirsiniz.</div><table class="widefat striped"><thead><tr><th>Program</th><th>Bilet geliri</th><th>Ortalama bilet</th><th>Tahmini seyirci</th><th>Manuel/gerçek</th><th>Kullanılan sayı</th><th>Dâhil</th><th>Kaydet</th></tr></thead><tbody>';

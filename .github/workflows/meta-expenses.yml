@@ -1,0 +1,24 @@
+name: Meta program expense contracts
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-yonetim-merkezi-v2-v3/**'
+      - 'tests/meta-expenses/**'
+      - '.github/workflows/meta-expenses.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+      - run: |
+          php -l wp-content/plugins/madagaskar-yonetim-merkezi-v2-v3/includes/class-mdgy-meta-expenses.php
+          php -l wp-content/plugins/madagaskar-yonetim-merkezi-v2-v3/includes/class-mdgy-core.php
+          php -l wp-content/plugins/madagaskar-yonetim-merkezi-v2-v3/madagaskar-yonetim-merkezi-v2-v3.php
+          php tests/meta-expenses/contract.php
