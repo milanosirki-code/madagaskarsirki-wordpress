@@ -34,10 +34,14 @@ check(count(Mad_Okul_Records::file_rows($path,'csv'))===1,'comma CSV accepted');
 
 // Minimal multi-sheet analogue of the supplied grouped research workbook.
 $bytes=Mad_Okul_Records::xlsx_bytes([['İl','İlçe','Ziyaret Noktası / Kampüs','Kurum Adları','Öğrenci Sayısı (Web)'],['UŞAK','MERKEZ','TEST KAMPÜSÜ','TEST İLKOKULU + TEST ORTAOKULU','795']]);file_put_contents($path,$bytes);
-$z=new ZipArchive();$z->open($path);$z->addFromString('xl/workbook.xml','<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Temiz Liste" sheetId="1" r:id="rId1"/><sheet name="Birleştirme Kontrolü" sheetId="2" r:id="rId2"/></sheets></workbook>');
+$z=new ZipArchive();$z->open($path);$z->addFromString('xl/workbook.xml','<x:workbook xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><x:sheets><x:sheet name="Temiz Liste" sheetId="1" r:id="rId1"/><x:sheet name="Birleştirme Kontrolü" sheetId="2" r:id="rId2"/></x:sheets></x:workbook>');
+$sheet_xml=$z->getFromName('xl/worksheets/sheet1.xml');
+$sheet_xml=str_replace('xmlns=','xmlns:x=',$sheet_xml);
+$sheet_xml=preg_replace('/<(\/?)([A-Za-z][A-Za-z0-9]*)(?=[\s>\/])/','<$1x:$2',$sheet_xml);
+$z->addFromString('xl/worksheets/sheet1.xml',$sheet_xml);
 $z->addFromString('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Target="worksheets/sheet2.xml"/></Relationships>');
 $comp=Mad_Okul_Records::xlsx_bytes([['Ziyaret Noktası / Kampüs','Birleşen Kurum','Öğrenci Sayısı'],['TEST KAMPÜSÜ','TEST İLKOKULU','295'],['TEST KAMPÜSÜ','TEST ORTAOKULU','500']]);$p2=wp_tempnam('component');file_put_contents($p2,$comp);$z2=new ZipArchive();$z2->open($p2);$z->addFromString('xl/worksheets/sheet2.xml',$z2->getFromName('xl/worksheets/sheet1.xml'));$z2->close();$z->close();unlink($p2);
-$rows=Mad_Okul_Records::file_rows($path,'xlsx');check(count($rows)===2,'grouped campus expands to school records');
+$rows=Mad_Okul_Records::file_rows($path,'xlsx');check(count($rows)===2,'prefixed workbook XML parses and expands grouped campus to school records');
 check(array_column($rows,'OGRENCI_SAYISI')===['295','500'],'campus aggregate never copied to both schools');
 $school=(object)['id'=>7,'il'=>'Uşak','ilce'=>'Merkez','kurum_adi'=>'TEST İLKOKULU','ogrenci_sayisi'=>100,'student_data_year'=>2026];
 $matched=Mad_Okul_Records::match_rows($rows,[$school]);check($matched[0]['error']==='' && $matched[1]['error']!=='','only exact existing schools accepted');

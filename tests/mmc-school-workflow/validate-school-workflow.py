@@ -12,7 +12,7 @@ planning = (ROOT / "wp-content/plugins/madagaskar-management-center/includes/cla
 admin = (ROOT / "wp-content/plugins/madagaskar-management-center/includes/class-mmc-school-planning-admin.php").read_text(encoding="utf-8")
 
 checks = {
-    "school plugin 1.8.2": "Version: 1.8.2" in school_plugin,
+    "school plugin 1.8.3": "Version: 1.8.3" in school_plugin,
     "imam hatip excluded": "İMAM HATİP ORTAOKULU" in school_plugin and "return false" in school_plugin,
     "MEBBIS import reports exclusions": all(x in school_plugin for x in ["imam_hatip", "visit_points", "Tahmini fiziksel ziyaret noktası"]),
     "student page registered": "'mad-okul-students'" in school_plugin,
