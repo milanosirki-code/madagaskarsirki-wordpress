@@ -60,7 +60,9 @@ check($wpdb->inserts[0]['data_year']===2027,'student snapshot retained by year')
 $wpdb=new FakeDB();Mad_Okul_Records::save_student($school,['ogrenci_sayisi'=>80],2025,'Eski yıl');
 check(count($wpdb->updates)===0 && $wpdb->inserts[0]['data_year']===2025,'historical input cannot overwrite newer current record');
 $wpdb=new FakeDB();Mad_Okul_Records::save_student($school,['ogrenci_sayisi'=>''],2026);
-check($wpdb->updates[0]['student_count']===100,'blank manual input never erases existing known count');
+check(count($wpdb->updates)===0 && count($wpdb->inserts)===0,'blank manual input never erases or relabels existing known count');
+$wpdb=new FakeDB();Mad_Okul_Records::save_student($school,['ogrenci_sayisi'=>''],2027);
+check(count($wpdb->updates)===0 && count($wpdb->inserts)===0,'missing new-year count never copies previous-year count');
 $wpdb=new FakeDB();$wpdb->fail=true;$saved=Mad_Okul_Records::save_student($school,['ogrenci_sayisi'=>120],2027);
 check(is_wp_error($saved) && in_array('ROLLBACK',$wpdb->queries,true),'history insert failure rolls back school update');
 $wpdb=new FakeDB();$wpdb->old=['student_count'=>120,'data_status'=>'','source_type'=>'','source_url'=>'','source_note'=>'','verified_at'=>null];

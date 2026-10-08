@@ -55,7 +55,7 @@ class Mad_Okul_Records {
         if (!in_array('student_source_note',$cols,true)) $wpdb->query("ALTER TABLE $main ADD student_source_note text NULL");
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$history)) === $history
             && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$stock)) === $stock
-            && in_array('student_source_note',$wpdb->get_col("SHOW COLUMNS FROM $main",0),true)) update_option('mad_okul_records_schema','1',false);
+            && count(array_intersect(['student_source_note','student_data_year'],$wpdb->get_col("SHOW COLUMNS FROM $main",0)))===2) update_option('mad_okul_records_schema','1',false);
     }
     private static function guard() { if (!current_user_can('manage_options')) wp_die('Bu işlem için yönetici yetkisi gerekli.'); }
     public static function year($value) {
@@ -78,7 +78,7 @@ class Mad_Okul_Records {
         $year=self::year($year); if (is_wp_error($year)) return $year;
         $count=self::count_value($data['ogrenci_sayisi'] ?? ''); if (is_wp_error($count)) return $count;
         // Missing input is not an instruction to erase a known student count.
-        if ($count===null && $school->ogrenci_sayisi!==null) $count=(int)$school->ogrenci_sayisi;
+        if ($count===null && ($school->ogrenci_sayisi!==null || isset($school->student_count))) return true;
         $now=current_time('mysql');
         $data['ogrenci_sayisi']=$count; $data['student_count']=$count;
         $data['student_data_year']=$year; $data['student_source_note']=sanitize_textarea_field($note); $data['updated_at']=$now;
