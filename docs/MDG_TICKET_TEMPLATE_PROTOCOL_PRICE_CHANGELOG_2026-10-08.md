@@ -233,3 +233,47 @@ Geri dönüş gerekirse:
 - Snippet #164 protokol fiyat istisnası öncesi #161 sürümünü içerir
 
 Bu kayıt 2026-10-08 canlı çalışmasının kalıcı teknik notudur.
+
+
+## 15. İşlem tarihi / bilet no satırı — 2026-10-08 gece güncellemesi
+
+Normal online satış biletlerinde MİSAFİR satırı ile fiyat/KDV özeti arasına yeni bir belge referans satırı eklendi:
+
+- `İŞLEM TARİHİ: dd.mm.YYYY`
+- `BİLET NO: <Tickera ticket_code>`
+
+Kaynaklar:
+- işlem tarihi = ilgili WooCommerce siparişinin `date_created` değeri
+- bilet no = Tickera `ticket_code` post meta
+
+Örnek doğrulama — ticket #5071:
+- İŞLEM TARİHİ: 08.10.2026
+- BİLET NO: 0000002108
+- KDV Hariç: 454,55 TL
+- KDV (%10): 45,45 TL
+- TOPLAM: 500,00 TL
+
+Şablon yerleşimi:
+- attendee_name: y300
+- mdg_document_line: y322 / h14 / 9.2 pt
+- mdg_price_summary: y342 / h44 / 9.3 pt
+
+Bu satır 9 aktif Tickera şablonunun tamamına eklendi:
+#15, #16, #17, #19, #20, #23, #24, #26, #27
+
+Yeni geri dönüş yedekleri:
+- Snippet #166 — `BACKUP — MDG Bilet Fiyat KDV before işlem tarihi bilet no 20261008`
+- template option: `mdg_ticket_template_<ID>_backup_20261008_docline`
+
+Protokol / davetiye istisnası:
+- `mdg_document_line` protokol biletinde üretilmez
+- `mdg_price_summary` protokol biletinde üretilmez
+- üst başlık `PROTOKOL DAVETİYESİ` olarak kalır
+
+PDF smoke test:
+- #5071 normal ücretli: OK
+- #5076 normal 0 TL: OK
+- #5078 protokol: document_line yok, price_summary yok
+
+Terminoloji notu:
+Bilet gerçek e-Fatura/e-Arşiv fatura numarası üretmediği için şablonda “Fatura Tarihi / Fatura No” yerine mali referans olarak “İşlem Tarihi / Bilet No” kullanılmıştır.
