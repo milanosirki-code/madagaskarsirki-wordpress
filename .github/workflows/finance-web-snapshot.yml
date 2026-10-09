@@ -20,3 +20,5 @@ jobs:
           php -l wp-content/plugins/madagaskar-yonetim-merkezi-v5/includes/class-mdg-v5-finance.php
           php tests/finance/web-snapshot.php
           php tests/finance/web-refunds.php
+
+          php tests/finance/allocations.php
