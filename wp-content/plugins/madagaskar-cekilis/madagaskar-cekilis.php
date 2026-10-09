@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Çekiliş Sistemi
  * Description: Instagram profesyonel hesap gönderilerindeki yorumları Meta Instagram API ile alır; çekiliş kampanyalarını, geçerli katılımları, asil/yedek seçimlerini ve denetim kayıtlarını kendi WordPress sitenizde yönetir.
- * Version: 3.3.0
+ * Version: 3.4.0
  * Author: Dünya Organizasyon
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) { exit; }
 require_once __DIR__ . '/includes/class-mck-reporting.php';
 
 final class Madagaskar_Cekilis_V2 {
-    const VERSION = '3.3.0';
+    const VERSION = '3.4.0';
     const API_VERSION = 'v26.0';
     const OPTION_TOKEN = 'mck2_ig_access_token';
     const OPTION_USERNAME = 'mck2_ig_username';
@@ -52,6 +52,9 @@ final class Madagaskar_Cekilis_V2 {
         add_action('admin_post_mck2_export_campaign', [$this, 'export_campaign']);
         add_action('admin_post_mck_report_export', ['MCK_Reporting', 'export']);
         add_action('admin_post_mck2_verify_result', [$this, 'verify_result']);
+        add_action('admin_post_mck2_publish_results', [$this, 'publish_results']);
+        add_action('admin_post_mck2_unpublish_results', [$this, 'unpublish_results']);
+        add_action('template_redirect', [$this, 'nocache_public_results'], -1000);
         add_action('admin_post_mck2_delete_campaign', [$this, 'delete_campaign']);
         add_action('admin_post_mck2_diagnose_campaign', [$this, 'diagnose_campaign']);
         add_action('admin_post_mck2_story_result', [$this, 'story_result']);
@@ -253,7 +256,8 @@ final class Madagaskar_Cekilis_V2 {
     private function current_verify_campaign() {
         $code = (string)get_query_var('mck_verify', '');
         if ($code === '' && !empty($_GET['mck_verify'])) $code = sanitize_text_field(wp_unslash($_GET['mck_verify']));
-        return $code ? $this->find_campaign_by_code($code) : null;
+        $campaign = $code ? $this->find_campaign_by_code($code) : null;
+        return $campaign && $this->public_results_published($campaign) ? $campaign : null;
     }
 
     public function seo_document_title($title) {
@@ -355,6 +359,7 @@ final class Madagaskar_Cekilis_V2 {
 
         $urls = [];
         foreach ((array)$rows as $c) {
+            if (!$this->public_results_published($c)) continue;
             $entry = [
                 'loc' => $this->verification_url($this->verification_code($c)),
             ];
@@ -367,7 +372,8 @@ final class Madagaskar_Cekilis_V2 {
 
     public function wp_sitemap_verification_max_pages() {
         global $wpdb;
-        $count = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$this->campaigns_table} WHERE status='drawn'");
+        $campaigns = (array)$wpdb->get_results("SELECT * FROM {$this->campaigns_table} WHERE status='drawn'");
+        $count = count(array_filter($campaigns, [$this, 'public_results_published']));
         $max_urls = function_exists('wp_sitemaps_get_max_urls') ? (int)wp_sitemaps_get_max_urls('cekilis') : 2000;
         if ($max_urls < 1) $max_urls = 2000;
         return $count > 0 ? (int)ceil($count / $max_urls) : 0;
@@ -398,7 +404,7 @@ final class Madagaskar_Cekilis_V2 {
 
     public function shortcode_results($atts = []) {
         global $wpdb;
-        $campaigns = $wpdb->get_results("SELECT * FROM {$this->campaigns_table} WHERE status='drawn' ORDER BY drawn_at DESC, id DESC LIMIT 50");
+        $campaigns = array_values(array_filter((array)$wpdb->get_results("SELECT * FROM {$this->campaigns_table} WHERE status='drawn' ORDER BY drawn_at DESC, id DESC LIMIT 50"), [$this, 'public_results_published']));
         ob_start();
         ?>
         <style>
@@ -424,6 +430,7 @@ final class Madagaskar_Cekilis_V2 {
         <?php else: ?><div class="mck-results-grid">
           <?php foreach ($campaigns as $c):
               $wins = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE campaign_id=%d AND result_type='winner' ORDER BY position_no ASC", $c->id));
+              if (!$this->public_results_published($c, $wins)) continue;
               $code = $this->verification_code($c); $verify_url = $this->verification_url($code); $display_title = mb_strtoupper(trim((string)$c->title));
           ?>
             <article class="mck-result-card"><div class="mck-result-label">ÇEKİLİŞ SONUCU</div><h2 class="mck-result-city"><?php echo esc_html($display_title); ?></h2>
@@ -965,16 +972,124 @@ final class Madagaskar_Cekilis_V2 {
         $this->redirect(['view'=>'campaign','campaign_id'=>$id,'mck_notice'=>'drawn']);
     }
 
+    private function result_snapshot($row) {
+        return hash('sha256', wp_json_encode([
+            (int)$row->id, (int)$row->campaign_id, (string)$row->result_type,
+            (int)$row->position_no, (string)$row->comment_id, (string)$row->username,
+            (string)$row->drawn_at, (string)$row->score_hash, (string)$row->verification_status
+        ]));
+    }
+
+    private function winner_rows($campaign_id, $lock = false) {
+        global $wpdb;
+        return (array)$wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$this->draws_table} WHERE campaign_id=%d AND result_type='winner' ORDER BY position_no ASC" . ($lock ? ' FOR UPDATE' : ''),
+            $campaign_id
+        ));
+    }
+
+    private function publication_ready($campaign, $rows) {
+        if (!$campaign || $campaign->status !== 'drawn' || (int)$campaign->winner_count < 1 || count($rows) !== (int)$campaign->winner_count) return false;
+        foreach (array_values($rows) as $i => $row) {
+            if ((int)$row->campaign_id !== (int)$campaign->id || $row->result_type !== 'winner' ||
+                (int)$row->position_no !== $i + 1 || $row->verification_status !== 'verified') return false;
+        }
+        return true;
+    }
+
+    private function publication_fingerprint($campaign, $rows) {
+        return hash('sha256', wp_json_encode([
+            (int)$campaign->id, (int)$campaign->winner_count, (string)$campaign->drawn_at,
+            (string)$campaign->eligible_hash, array_map([$this, 'result_snapshot'], $rows)
+        ]));
+    }
+
+    public function public_results_published($campaign, $rows = null) {
+        if (!$campaign) return false;
+        if ($rows === null) $rows = $this->winner_rows($campaign->id);
+        if (!$this->publication_ready($campaign, $rows)) return false;
+        $record = get_option('mck2_publication_' . (int)$campaign->id, []);
+        return is_array($record) && !empty($record['fingerprint']) &&
+            hash_equals((string)$record['fingerprint'], $this->publication_fingerprint($campaign, $rows));
+    }
+
+    public function nocache_public_results() {
+        if (is_admin()) return;
+        if (!$this->is_results_page() && !get_query_var('mck_verify', '') && empty($_GET['mck_verify'])) return;
+        if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+        nocache_headers();
+    }
+
+    public function publish_results() {
+        global $wpdb;
+        $this->require_admin();
+        if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') wp_die('Yayın için POST isteği gerekir.');
+        $id = absint($_POST['campaign_id'] ?? 0);
+        check_admin_referer('mck2_publish_results_' . $id);
+        $expected = sanitize_text_field(wp_unslash($_POST['expected_results'] ?? ''));
+        if (!$id || !$expected) $this->flash_error('Yayın ekranını yenileyin.', $id);
+        if ($wpdb->query('START TRANSACTION') === false) $this->flash_error('Yayın işlemi başlatılamadı.', $id);
+        $campaign = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->campaigns_table} WHERE id=%d FOR UPDATE", $id));
+        $rows = $this->winner_rows($id, true);
+        if (!$this->publication_ready($campaign, $rows) || !hash_equals($expected, $this->publication_fingerprint($campaign, $rows))) {
+            $wpdb->query('ROLLBACK');
+            $this->flash_error('Sonuçlar değişmiş veya asil adayların kontrolü tamamlanmamış. Ekranı yenileyin; tüm asil adayları doğruladıktan sonra yayımlayın.', $id);
+        }
+        if (!$this->public_results_published($campaign, $rows)) {
+            $saved = update_option('mck2_publication_' . $id, [
+                'fingerprint'=>$expected, 'published_at'=>$this->now(), 'published_by'=>get_current_user_id()
+            ], false);
+            if (!$saved) {
+                $wpdb->query('ROLLBACK');
+                $this->flash_error('Yayın kaydı yazılamadı.', $id);
+            }
+        }
+        if ($wpdb->query('COMMIT') === false) {
+            $wpdb->query('ROLLBACK');
+            wp_cache_delete('mck2_publication_' . $id, 'options');
+            $this->flash_error('Yayın kaydı onaylanamadı.', $id);
+        }
+        $this->redirect(['view'=>'campaign','campaign_id'=>$id,'mck_notice'=>'published']);
+    }
+
+    public function unpublish_results() {
+        $this->require_admin();
+        if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') wp_die('POST isteği gerekir.');
+        $id = absint($_POST['campaign_id'] ?? 0);
+        check_admin_referer('mck2_unpublish_results_' . $id);
+        update_option('mck2_publication_' . $id, [], false);
+        $this->redirect(['view'=>'campaign','campaign_id'=>$id,'mck_notice'=>'unpublished']);
+    }
+
     public function verify_result() {
         global $wpdb;
         $this->require_admin();
-        $draw_id=intval($_POST['draw_id'] ?? 0);
-        $campaign_id=intval($_POST['campaign_id'] ?? 0);
+        if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') wp_die('POST isteği gerekir.');
+        $draw_id = absint($_POST['draw_id'] ?? 0);
+        $campaign_id = absint($_POST['campaign_id'] ?? 0);
         check_admin_referer('mck2_verify_result_' . $draw_id);
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE id=%d AND campaign_id=%d", $draw_id, $campaign_id));
+        $expected = sanitize_text_field(wp_unslash($_POST['expected_result'] ?? ''));
+        if (!$row || !$expected || !hash_equals($this->result_snapshot($row), $expected)) {
+            $this->flash_error('Bu aday değişmiş. Ekranı yenileyip güncel adayı kontrol edin.', $campaign_id);
+        }
         $status = sanitize_key($_POST['verification_status'] ?? 'pending');
-        if (!in_array($status,['pending','verified','disqualified'],true)) $status='pending';
+        if (!in_array($status, ['pending','verified','disqualified'], true)) $this->flash_error('Geçersiz doğrulama durumu.', $campaign_id);
         $note = sanitize_textarea_field(wp_unslash($_POST['verification_note'] ?? ''));
-        $wpdb->update($this->draws_table,['verification_status'=>$status,'verification_note'=>$note],['id'=>$draw_id],['%s','%s'],['%d']);
+        $where = ['id'=>$draw_id, 'campaign_id'=>$campaign_id, 'comment_id'=>$row->comment_id,
+            'username'=>$row->username, 'drawn_at'=>$row->drawn_at, 'score_hash'=>$row->score_hash,
+            'verification_status'=>$row->verification_status];
+        $changed = $wpdb->update($this->draws_table, ['verification_status'=>$status,'verification_note'=>$note], $where,
+            ['%s','%s'], ['%d','%d','%s','%s','%s','%s','%s']);
+        if ($changed === false) $this->flash_error('Doğrulama kaydedilemedi.', $campaign_id);
+        if ($changed === 0) {
+            $current = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE id=%d AND campaign_id=%d", $draw_id, $campaign_id));
+            if (!$current || $current->comment_id !== $row->comment_id || $current->username !== $row->username ||
+                $current->drawn_at !== $row->drawn_at || $current->score_hash !== $row->score_hash ||
+                $current->verification_status !== $status || $current->verification_note !== $note) {
+                $this->flash_error('Aday kayıt sırasında değişmiş. Ekranı yenileyin.', $campaign_id);
+            }
+        }
         $this->redirect(['view'=>'campaign','campaign_id'=>$campaign_id,'mck_notice'=>'verified']);
     }
 
@@ -1062,11 +1177,14 @@ final class Madagaskar_Cekilis_V2 {
         if ($code === '') return;
         global $wpdb;
         $c = $this->find_campaign_by_code($code);
-        if (!$c) {
+        if (!$c || !$this->public_results_published($c)) {
             status_header(404); nocache_headers(); header('X-Robots-Tag: noindex, nofollow', true);
-            echo '<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Çekiliş sonucu bulunamadı</title></head><body style="font-family:Arial,sans-serif;background:#fbf7f2;padding:40px"><div style="max-width:760px;margin:auto;background:#fff;padding:30px;border-radius:18px;border:1px solid #eadfd7"><h1>Sonuç bulunamadı</h1><p>Doğrulama kodu geçersiz veya sonuç artık erişilebilir değil.</p></div></body></html>'; exit;
+            echo '<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Çekiliş sonucu bulunamadı</title></head><body style="font-family:Arial,sans-serif;background:#fbf7f2;padding:40px"><div style="max-width:760px;margin:auto;background:#fff;padding:30px;border-radius:18px;border:1px solid #eadfd7"><h1>Sonuç bulunamadı</h1><p>Sonuç henüz yayımlanmadı veya doğrulama kodu geçersiz.</p></div></body></html>'; exit;
         }
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE campaign_id=%d AND result_type='winner' ORDER BY position_no ASC", $c->id));
+        if (!$this->public_results_published($c, $rows)) {
+            status_header(404); nocache_headers(); wp_die('Sonuçlar henüz yayımlanmadı veya yeniden kontrol bekliyor.', '', ['response'=>404]);
+        }
         $code = $this->verification_code($c); $display_title = mb_strtoupper(trim((string)$c->title));
         header('X-Robots-Tag: index, follow', true); nocache_headers();
         $seo_title = $display_title . ' Çekiliş Sonucu | Madagaskar Sirki';
@@ -1087,9 +1205,10 @@ final class Madagaskar_Cekilis_V2 {
         $id = intval($_GET['campaign_id'] ?? 0);
         check_admin_referer('mck2_story_result_' . $id);
         $c = $this->get_campaign($id);
-        if (!$c || $c->status !== 'drawn') wp_die('Çekiliş sonucu bulunamadı.');
+        if (!$c || !$this->public_results_published($c)) wp_die('Story için önce tüm asil adayları doğrulayın ve çekiliş sonuçlarını yayımlayın.');
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->draws_table} WHERE campaign_id=%d AND result_type='winner' ORDER BY position_no ASC", $c->id));
         $winners = array_values($rows);
+        if (!$this->public_results_published($c, $winners)) wp_die('Sonuçlar değişmiş; kontrol edip yeniden yayımlayın.');
         $code = $this->verification_code($c);
         $verify_url = $this->verification_url($code);
         $account = get_option(self::OPTION_USERNAME,'madagaskarsirkiturkiye');
@@ -1140,9 +1259,9 @@ final class Madagaskar_Cekilis_V2 {
             echo '<circle cx="'.intval($x).'" cy="'.intval($y-25).'" r="72" fill="#7f1d1d"/><text x="'.intval($x).'" y="'.intval($y+2).'" text-anchor="middle" font-size="64" font-weight="800" fill="#fff">'.esc_html($initial).'</text>';
             echo '<text x="'.intval($x).'" y="'.intval($y+100).'" text-anchor="middle" font-size="'.intval($name_size).'" font-weight="800" fill="#111827">@'.esc_html($r->username).'</text>';
         }
-        echo '<text x="540" y="'.intval($entries_y).'" text-anchor="middle" font-size="54" font-weight="800" fill="#b91c1c">'.intval($c->valid_entries).'</text>';
-        echo '<text x="540" y="'.intval($entries_y+58).'" text-anchor="middle" font-size="43" fill="#111827">geçerli katılım arasından</text>';
-        echo '<text x="540" y="'.intval($entries_y+106).'" text-anchor="middle" font-size="28" fill="#6b7280">yapılan çekiliş sonucu belirlenmiştir.</text>';
+        echo '<text x="540" y="'.intval($entries_y).'" text-anchor="middle" font-size="54" font-weight="800" fill="#b91c1c">'.intval($c->total_comments).'</text>';
+        echo '<text x="540" y="'.intval($entries_y+58).'" text-anchor="middle" font-size="43" fill="#111827">yorum arasından</text>';
+        echo '<text x="540" y="'.intval($entries_y+106).'" text-anchor="middle" font-size="28" fill="#6b7280">yapılan çekiliş sonucunda '.intval(count($winners)).' kazanan belirlenmiştir.</text>';
         echo '<rect x="85" y="'.intval($note_y).'" width="910" height="320" rx="32" fill="#111827"/>';
         echo '<text x="540" y="'.intval($note_y+58).'" text-anchor="middle" font-size="31" font-weight="900" fill="#fff">🎟 ÜCRETSİZ GİRİŞ HAKKI</text>';
         echo '<text x="540" y="'.intval($note_y+112).'" text-anchor="middle" font-size="27" font-weight="700" fill="#fff">Her kazanan 1 veli + 1 çocuk için</text>';
@@ -1182,6 +1301,8 @@ final class Madagaskar_Cekilis_V2 {
             'synced'=>['success','Yorumlar Instagram’dan yeniden alındı.'],
             'drawn'=>['success','Çekiliş sonucu oluşturuldu ve katılım listesi donduruldu.'],
             'verified'=>['success','Kazanan doğrulama durumu kaydedildi.'],
+            'published'=>['success','Çekiliş sonuçları yayımlandı.'],
+            'unpublished'=>['success','Çekiliş sonuçları yayından kaldırıldı.'],
             'deleted'=>['success','Çekiliş kaydı silindi.'],
             'diagnostics_ready'=>['success','Instagram API teşhis testi tamamlandı. Sonuçlar aşağıda gösteriliyor.'],
         ];
@@ -1326,6 +1447,7 @@ final class Madagaskar_Cekilis_V2 {
                 $actor=$replacement ? ($replacement['actor_name'] ?: 'Admin #'.(int)$replacement['actor_user_id']) : 'Kayıt yok';
                 echo '<tr><td>'.intval($r->position_no).'</td><td><strong>@'.esc_html($r->username).'</strong></td><td><code>'.esc_html($r->comment_id).'</code></td><td>'.($replacement?'Replacement':'İlk seçim').'<br>'.esc_html($r->drawn_at).'</td><td>Kayıt yok</td><td>'.esc_html($reason).'<br>'.esc_html($actor).'</td><td>';
                 echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mck2_verify_result"><input type="hidden" name="draw_id" value="'.intval($r->id).'"><input type="hidden" name="campaign_id" value="'.intval($c->id).'">'; wp_nonce_field('mck2_verify_result_'.$r->id);
+                echo '<input type="hidden" name="expected_result" value="'.esc_attr($this->result_snapshot($r)).'">';
                 echo '<select name="verification_status"><option value="pending" '.selected($r->verification_status,'pending',false).'>Bekliyor</option><option value="verified" '.selected($r->verification_status,'verified',false).'>Doğrulandı</option><option value="disqualified" '.selected($r->verification_status,'disqualified',false).'>Şartı sağlamadı</option></select> ';
                 echo '<input name="verification_note" value="'.esc_attr($r->verification_note).'" placeholder="Not" style="width:180px"> <button class="button">Kaydet</button></form>';
                 echo '</td></tr>';
@@ -1337,6 +1459,22 @@ final class Madagaskar_Cekilis_V2 {
         echo '<details><summary>Tekrarlanabilir seçim tohumu (audit seed)</summary><code style="word-break:break-all">'.esc_html($c->audit_seed).'</code><p>Bu değer ve dondurulmuş geçerli yorum listesi kullanılarak sıralama teknik olarak yeniden hesaplanabilir.</p></details>';
         $code = $this->verification_code($c);
         $verify_url = $this->verification_url($code);
+        $winners = $this->winner_rows($c->id);
+        $published = $this->public_results_published($c, $winners);
+        $ready = $this->publication_ready($c, $winners);
+        echo '<div style="margin-top:18px;padding:14px;border:1px solid #dcdcde;border-radius:10px"><h3>Sonuç Yayını</h3><p><strong>'.($published ? 'Yayında' : 'Taslak — henüz yayımlanmadı').'</strong></p>';
+        echo '<p>Asil adayların takip/beğeni kontrolünü Instagram üzerinden yapıp her birini Doğrulandı olarak kaydedin. Ardından sonuçları yayımlayın. Aday değişirse yayın yeniden onay gerektirir.</p>';
+        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mck2_publish_results"><input type="hidden" name="campaign_id" value="'.intval($c->id).'"><input type="hidden" name="expected_results" value="'.esc_attr($this->publication_fingerprint($c, $winners)).'">';
+        wp_nonce_field('mck2_publish_results_'.$c->id);
+        echo '<button class="button button-primary"'.(!$ready || $published ? ' disabled' : '').'>Çekiliş sonuçlarını yayınla</button></form>';
+        if (!$ready) echo '<p>Tüm asil adaylar doğrulanmadan yayın yapılamaz.</p>';
+        if ($published) {
+            $publication = get_option('mck2_publication_'.intval($c->id), []);
+            echo '<p>Yayın zamanı: '.esc_html($publication['published_at'] ?? '').'</p><form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mck2_unpublish_results"><input type="hidden" name="campaign_id" value="'.intval($c->id).'">';
+            wp_nonce_field('mck2_unpublish_results_'.$c->id);
+            echo '<button class="button">Yayından kaldır</button></form>';
+        }
+        echo '</div>';
         $story_url = wp_nonce_url(admin_url('admin-post.php?action=mck2_story_result&campaign_id='.intval($c->id)), 'mck2_story_result_'.intval($c->id));
         echo '<div style="margin-top:18px;padding:14px;border:1px solid #e5e7eb;background:#f9fafb;border-radius:10px"><strong>Paylaşım / Doğrulama</strong><p style="margin:8px 0">Sonuç kodu: <code style="font-size:18px;letter-spacing:2px">'.esc_html($code).'</code></p><a class="button button-primary" href="'.esc_url($story_url).'" target="_blank">📱 Story Sonuç Görseli</a> <a class="button" href="'.esc_url($verify_url).'" target="_blank">🔎 Kamuya Açık Sonuç Doğrulama</a> <a class="button" href="'.esc_url($this->public_results_url()).'" target="_blank">🌐 Çekiliş Sonuçları Sayfası</a></div>';
         $this->card_end();
