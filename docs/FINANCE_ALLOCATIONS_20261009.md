@@ -13,5 +13,4 @@ Kurulum ve dağıtım öncesi/sonrası gider142 kayıt, toplam2.206.125,68 TL, s
 
 Aylık program tablosu ile tüm-tarih özeti ayrı kapsamlardır. Salon gideri başka ayda kayıtlıysa aylık tablodaki maliyet farklı olabilir; örneğin Kırıkkale aylık0 doğrudan/5.800 ortak/3.000 sabit=-8.800, tüm-tarih5.500 doğrudanla=-14.300. Bu değişiklik gelir tarihlerini veya gider tarihlerini taşımaz.
 
-Kanıt finance-allocation-live-20261009.jpg, dört program kartları finance-allocation-evidence-20261009.json. GitHub workflow sorgusu henüz run döndürmedi; PHP7.4 CI başarı iddia edilmedi. PHP8.3 testleri geçti.
-
+Kanıt finance-allocation-live-20261009.jpg, dört program kartları finance-allocation-evidence-20261009.json. Önceki PR202 merge edilmişti; güncel main kaynağı baseline ile karşılaştırılarak ayrı draft PR208 açıldı. Commit c8c462500ccc12b0e828b1374e5112138a613703 için PHP7.4 Finance web snapshot contract (allocation/web/refund) ve Changed PHP Syntax başarılı. PHP8.3 testleri de geçti.
