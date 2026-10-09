@@ -1,0 +1,16 @@
+name: Safe cache exclusions
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/snippet-20-safe-cache.php'
+      - 'tests/safe-cache-exclusions.php'
+      - '.github/workflows/safe-cache-exclusions.yml'
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: php -l docs/code-snippets/snippet-20-safe-cache.php
+      - name: Cache eligibility regression checks
+        run: php tests/safe-cache-exclusions.php
