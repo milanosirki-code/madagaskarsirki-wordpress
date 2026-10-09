@@ -1,0 +1,17 @@
+name: Raffle publication
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-cekilis/**'
+      - 'tests/raffle-publication.php'
+      - '.github/workflows/raffle-publication.yml'
+jobs:
+  publication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: php -l wp-content/plugins/madagaskar-cekilis/madagaskar-cekilis.php
+      - run: php -n tests/raffle-publication.php
