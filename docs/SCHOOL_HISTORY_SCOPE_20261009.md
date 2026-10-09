@@ -9,4 +9,6 @@ Fix: use one normalized, parameterized geographic scope helper for annual histor
 
 Validation: PHP syntax passed and regression passed for multi-district scope, duplicate/blank normalization, single district fallback, global view and invalid/missing context.
 
-Live deployment status: pending. Before writing, compare active file to main, save original, apply only scoped patch. Verify Manisa history53 /22,055, Aydın48 /16,407; export must include both Manisa districts. Preserve original file for rollback.
+Live deployment status: NOT applied. Native plugin editor file matches GitHub main blob53804a19b42ea13954cc148e25bbbc5bb39cabe7. Original backed up locally as /workspace/scratch/school-records-live-backup-20261009.php. CodeMirror fill did not update backing textarea; clipboard/native keyboard delivery blocked by browser credential protection (retained_data_restricted). No file update was submitted. Next controlled deployment must use supported plugin/file update or user-assisted browser editing, then verify Manisa history53 /22,055 and Aydın48 /16,407, and both districts in student export.
+
+Draft PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/211
