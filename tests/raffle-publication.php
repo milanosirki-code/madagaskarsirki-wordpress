@@ -28,7 +28,7 @@ function esc_html($v){return htmlspecialchars((string)$v,ENT_QUOTES);}
 function esc_attr($v){return esc_html($v);}
 function esc_url($v){return esc_html($v);}
 function home_url($p=''){return 'https://example.test'.$p;}
-function mb_strtoupper($v){return strtoupper($v);}
+if (!function_exists('mb_strtoupper')) { function mb_strtoupper($v){return strtoupper($v);} }
 function is_admin(){return false;}
 function is_page($p){return $GLOBALS['on_results_page']??false;}
 function get_query_var($k,$d=''){return $GLOBALS['query_vars'][$k]??$d;}
