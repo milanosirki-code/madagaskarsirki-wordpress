@@ -11,6 +11,6 @@ must(str_contains($src,"'child_campaign'=>self::price_input"),'child campaign va
 must(str_contains($src,'$effective=min($regular,(float)$pricing[$campaign_key]);'),'campaign cannot exceed live regular price');
 must(str_contains($src,'mdg_corporate_campaign_update'),'explicit campaign update action');
 must(str_contains($src,'mdg_corporate_campaign_save'),'explicit campaign create action');
-must(str_contains($src,'placeholder="Örn. OKUL26"'),'OKUL26 operator workflow visible');
+must(str_contains($src,'placeholder="Örn. demo-okul-c"'),'demo-okul-c operator workflow visible');
 must(str_contains($src,'Ücretsiz çocuk'),'free-child policy remains represented');
 echo "All live campaign price-menu contract checks passed.\n";

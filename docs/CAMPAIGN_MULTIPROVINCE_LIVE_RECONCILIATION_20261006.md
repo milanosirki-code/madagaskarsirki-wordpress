@@ -21,8 +21,8 @@ Code Snippets #124:
 
 Captured with WP-CLI option get; no write performed.
 
-### bms
-Name: Büro Memursen
+### demo-kurum-a
+Name: Örnek Kurum A
 Active: true
 schema_version: 2
 
@@ -31,12 +31,12 @@ Cities:
 - Ankara — active — adult_campaign 475 TL; child_campaign 250 TL
 - Eskişehir — active — adult_campaign 475 TL; child_campaign 250 TL
 
-### sagliksendenizli
+### demo-kurum-b
 - Denizli only
 - active
 - schema_version: 2
 
-### okul26
+### demo-okul-c
 - Eskişehir only
 - active
 - adult_campaign 490 TL
@@ -48,12 +48,12 @@ The registry itself is production data and is not changed by this GitHub reconci
 ## Public live verification
 
 Authenticated rendered-page inspection of:
-https://madagaskarsirki.com/kampanya/?kod=BMS
+https://madagaskarsirki.com/kampanya/?kod=demo-kurum-a
 
 The rendered main content shows:
-- institution: Büro Memursen
+- institution: Örnek Kurum A
 - heading: Denizli / Ankara / Eskişehir gösterileri
-- current campaign/event cards are rendered under the same BMS code
+- current campaign/event cards are rendered under the same demo-kurum-a code
 
 This proves the live public flow resolves a single campaign code across multiple configured provinces.
 
@@ -120,3 +120,5 @@ This reconciliation:
 - does not alter Woo regular prices.
 
 Production write count for this reconciliation: 0.
+
+> Güvenlik notu: Bu belgedeki demo-kurum/demo-okul değerleri gerçek kampanya kodlarının yerine kullanılan sentetik etiketlerdir. Canlı kodlar yalnız yetkili yönetim ekranında tutulur. Eski Git geçmişi hâlâ açığa çıkmış değerleri içerebilir; belge temizliği kodu iptal etmez.

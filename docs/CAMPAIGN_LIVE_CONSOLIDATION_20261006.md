@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The corporate/school campaign system evolved through stacked PRs #132–#139 and #143–#145. The live source continued to change after PR #145, specifically for the OKUL26 price-management workflow. Merging the historical stacked PRs independently would not reproduce current production.
+The corporate/school campaign system evolved through stacked PRs #132–#139 and #143–#145. The live source continued to change after PR #145, specifically for the demo-okul-c price-management workflow. Merging the historical stacked PRs independently would not reproduce current production.
 
 This consolidation backports the exact current live campaign source and the verified live sales-report source onto current main.
 
@@ -21,9 +21,9 @@ This consolidation backports the exact current live campaign source and the veri
 
 Read-only option check on 2026-10-06:
 
-- `bms`: Bmsdenizli / Denizli / active
-- `sagliksendenizli`: Sağlıksen / Denizli / active
-- `okul26`: Okul / Eskişehir / active
+- `demo-kurum-a`: Örnek Kurum A / Denizli / active
+- `demo-kurum-b`: Örnek Kurum B / Denizli / active
+- `demo-okul-c`: Okul / Eskişehir / active
   - adult_campaign = 490 TL
   - child_campaign = 250 TL
 
@@ -39,7 +39,7 @@ The final live #124 source is ahead of PR #145 and includes:
 - no manual normal-price fields in the campaign admin;
 - campaign effective price is capped with `min(live regular price, configured campaign price)`;
 - free-child rules remain in the existing birthdate/age flow;
-- OKUL26 operator workflow is supported;
+- demo-okul-c operator workflow is supported;
 - TEST codes remain isolated from real sale behavior;
 - existing Denizli corporate behavior is preserved where explicit campaign pricing is absent.
 
@@ -69,3 +69,5 @@ This GitHub consolidation performs no production write. It does not:
 - send WhatsApp/Kommo/email/SMS.
 
 After a green merge, historical campaign PRs represented by this final live state should be closed as superseded and not merged independently.
+
+> Güvenlik notu: Bu belgedeki demo-kurum/demo-okul değerleri gerçek kampanya kodlarının yerine kullanılan sentetik etiketlerdir. Canlı kodlar yalnız yetkili yönetim ekranında tutulur. Eski Git geçmişi hâlâ açığa çıkmış değerleri içerebilir; belge temizliği kodu iptal etmez.
