@@ -1,0 +1,18 @@
+name: Campaign code hygiene
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tests/security/campaign-code-hygiene-test.py
+      - run: python tests/security/campaign-code-hygiene.py

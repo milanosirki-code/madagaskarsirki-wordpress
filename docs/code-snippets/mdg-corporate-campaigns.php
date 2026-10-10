@@ -562,7 +562,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             <?php self::admin_form($key,'city_add'); self::city_fields($provinces); ?><p>Fiyatlar girilmeden yeni il kaydedilmez. Diğer illerin fiyatları değişmez.</p><button class="button button-primary">İli ekle</button></form></details>
             <?php else: ?>
             <h2>Yeni kampanya oluştur</h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mdg_corporate_campaign_save"><?php wp_nonce_field(self::ADMIN); ?>
-            <p><label>Kampanya adı <input name="name" required maxlength="120"></label></p><p><label>Kampanya kodu <input name="code" required maxlength="80" placeholder="Örn. OKUL26"></label></p>
+            <p><label>Kampanya adı <input name="name" required maxlength="120"></label></p><p><label>Kampanya kodu <input name="code" required maxlength="80" placeholder="Örn. demo-okul-c"></label></p>
             <?php self::city_fields($provinces); ?><button class="button button-primary">Kampanyayı oluştur</button></form>
             <?php endif; ?>
             <h2>Tanımlı kampanyalar</h2><table class="widefat striped"><thead><tr><th>Kod</th><th>Kampanya</th><th>İller</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>

@@ -22,22 +22,22 @@ class Order {
 }
 require __DIR__.'/../../docs/code-snippets/mdg-campaign-sales-report.php';
 $c='MDG_Campaign_Sales_Report_20261005';$o=new Order();
-$o->items=array(1=>new Item('bms','adult',1,500),2=>new Item('bms','free_child',2,0),3=>new Item('bms','paid_child',1,250),4=>new Item('','adult',1,900),5=>new Item('sagliksendenizli','adult',1,500));
+$o->items=array(1=>new Item('demo-kurum-a','adult',1,500),2=>new Item('demo-kurum-a','free_child',2,0),3=>new Item('demo-kurum-a','paid_child',1,250),4=>new Item('','adult',1,900),5=>new Item('demo-kurum-b','adult',1,500));
 function check($v,$name){if(!$v)throw new Exception($name);echo "PASS $name\n";}
-$g=$c::summarize($o,'bms');check(count($g)===1 && $g[0]['gross']===750.0 && $g[0]['net']===750.0,'campaign-only totals exclude ordinary and other code');
+$g=$c::summarize($o,'demo-kurum-a');check(count($g)===1 && $g[0]['gross']===750.0 && $g[0]['net']===750.0,'campaign-only totals exclude ordinary and other code');
 check($g[0]['roles']===array('adult'=>1,'paid_child'=>1,'free_child'=>2,'infant'=>0),'role quantities include free tickets');
-$o->paid=false;check($c::summarize($o,'bms')[0]['net']===0.0,'unpaid and failed excluded from receipts');
+$o->paid=false;check($c::summarize($o,'demo-kurum-a')[0]['net']===0.0,'unpaid and failed excluded from receipts');
 $o->paid=true;$o->refund[3]=250;$o->qtyrefund[3]=-1;
-$g=$c::summarize($o,'bms')[0];check($g['net']===500.0 && $g['refund']===250.0 && $g['refunded']===1,'partial refund separated and deducted');
+$g=$c::summarize($o,'demo-kurum-a')[0];check($g['net']===500.0 && $g['refund']===250.0 && $g['refunded']===1,'partial refund separated and deducted');
 $o->items[1]->tax=50;$o->refund[1]=500;$o->taxrefund[1]=50;
-check($c::summarize($o,'bms')[0]['net']===0.0,'full line refunds including tax deducted');
+check($c::summarize($o,'demo-kurum-a')[0]['net']===0.0,'full line refunds including tax deducted');
 check(count($c::summarize($o))===2,'multiple institution codes separated');
-$o->items[6]=new Item('bms','infant',1,0);check($c::summarize($o,'bms')[0]['roles']['infant']===1,'infants shown separately');
-$o->items[7]=new Item('bms','adult',1,500);$o->items[7]->m['_mdg_session_id']=100;
-check(count($c::summarize($o,'bms'))===2,'different sessions separated');
+$o->items[6]=new Item('demo-kurum-a','infant',1,0);check($c::summarize($o,'demo-kurum-a')[0]['roles']['infant']===1,'infants shown separately');
+$o->items[7]=new Item('demo-kurum-a','adult',1,500);$o->items[7]->m['_mdg_session_id']=100;
+check(count($c::summarize($o,'demo-kurum-a'))===2,'different sessions separated');
 echo "All 8 campaign sales report checks passed.\n";
-check(count($c::summarize($o,'bms',array(99)))===1,'program session filter excludes other session');
-check($c::summarize($o,'bms',array(200))===array(),'unrelated program cannot reveal campaign rows');
+check(count($c::summarize($o,'demo-kurum-a',array(99)))===1,'program session filter excludes other session');
+check($c::summarize($o,'demo-kurum-a',array(200))===array(),'unrelated program cannot reveal campaign rows');
 class MMC_MDG_Bridge_Service{static function bridge_for_program($id){return $id===10?(object)array('mdg_event_id'=>12):null;}}
 class MDG_Sessions{static function by_event($id){return array((object)array('id'=>99),(object)array('id'=>100));}}
 check($c::scope(10)===array('program'=>10,'event'=>12,'sessions'=>array(99,100)),'read-only canonical bridge resolves program sessions');

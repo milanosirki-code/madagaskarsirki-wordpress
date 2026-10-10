@@ -68,8 +68,8 @@ event_fixture(23,'Manisa','2026-10-18 09:00:00',500,true);
 event_fixture(40,'Ankara','2026-10-10 09:00:00',500);
 event_fixture(41,'Eskişehir','2026-10-11 09:00:00',500);
 $multi_registry=array(
- 'bms'=>array(
-  'name'=>'Büro Memursen','active'=>true,'end_date'=>'','schema_version'=>2,
+ 'demo-kurum-a'=>array(
+  'name'=>'Örnek Kurum A','active'=>true,'end_date'=>'','schema_version'=>2,
   'cities'=>array(
    'denizli'=>array('province'=>'Denizli','active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250)),
    'ankara'=>array('province'=>'Ankara','active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250)),
@@ -77,18 +77,18 @@ $multi_registry=array(
   )
  )
 );
-$multi=$c::resolve('BMS',$event_rows,$multi_registry,'2026-10-05');
-check($multi['name']==='Büro Memursen' && count($multi['cities'])===3,'one code resolves three active provinces');
+$multi=$c::resolve('demo-kurum-a',$event_rows,$multi_registry,'2026-10-05');
+check($multi['name']==='Örnek Kurum A' && count($multi['cities'])===3,'one code resolves three active provinces');
 $multi_cat=$c::catalogue($multi,$event_rows);
 check(isset($multi_cat[12],$multi_cat[40],$multi_cat[41]) && !isset($multi_cat[10],$multi_cat[23]),'multi-province catalogue includes only configured provinces');
 check($multi_cat[40]['sessions'][400]['types']['adult']['price']===475.0,'Ankara city-specific campaign price');
 check($multi_cat[41]['sessions'][410]['types']['adult']['price']===490.0,'Eskisehir city-specific campaign price');
-$multi_registry['bms']['cities']['ankara']['active']=false;
-$multi=$c::resolve('bms',$event_rows,$multi_registry,'2026-10-05');
+$multi_registry['demo-kurum-a']['cities']['ankara']['active']=false;
+$multi=$c::resolve('demo-kurum-a',$event_rows,$multi_registry,'2026-10-05');
 check(!isset($c::catalogue($multi,$event_rows)[40]) && isset($c::catalogue($multi,$event_rows)[41]),'disabled city hidden without disabling campaign');
-$multi_registry['bms']['cities']['ankara']['active']=true;
-$multi_registry['bms']['cities']['eskisehir']['end_date']='2026-10-04';
-$multi=$c::resolve('bms',$event_rows,$multi_registry,'2026-10-05');
+$multi_registry['demo-kurum-a']['cities']['ankara']['active']=true;
+$multi_registry['demo-kurum-a']['cities']['eskisehir']['end_date']='2026-10-04';
+$multi=$c::resolve('demo-kurum-a',$event_rows,$multi_registry,'2026-10-05');
 check(!isset($c::catalogue($multi,$event_rows)[41]) && isset($c::catalogue($multi,$event_rows)[40]),'expired city hidden independently');
 $legacy_row=array('name'=>'Legacy','province'=>'Denizli','active'=>true,'end_date'=>'2026-10-10','pricing'=>array('adult_campaign'=>475,'child_campaign'=>250));
 $adapted=$c::adapt($legacy_row);

@@ -7,7 +7,7 @@ Kapsam: Bu görüşmede yapılan kurumsal kampanya, biletleme, raporlama ve fiya
 - Sayfa ID: 4520; şifresiz, kurum kodu ile ilgili il/program açılır.
 - Kısa kod: [mdg_corporate_campaigns].
 - Aktif kampanya snippet: 124. Aktif satış raporu snippet: 125. İlk Denizli pilot snippet 123 pasif.
-- Kurum kodları: bms ve sagliksendenizli; Denizli kapsamlı.
+- Kurum kodları: demo-kurum-a ve demo-kurum-b; Denizli kapsamlı.
 - Normal Bilet Al kataloğunda satışa açık programlar/seanslar kampanya kataloğuna otomatik yansır. Kapalı, geçmiş veya kapasitesi tükenen seanslar gösterilmez.
 - Kod normalizasyonu büyük/küçük harf ve Türkçe harf farklılıklarını karşılar.
 - Afiş, kısa tanıtım, gösteri içeriği, salon ve seans bilgileri seçilen etkinliğin kendi verisinden gelir.
@@ -57,7 +57,7 @@ Bu çalışmalar draft PR zincirindedir; main'e birleştirilmiş olarak değerle
 
 ## Doğrulama
 Son değişiklik: PHP syntax geçti; 96 katalog/teklif/koruma kontrolü ve DOM etkileşim kontrolleri geçti.
-Canlı bms ve sagliksendenizli sayfalarında afiş ve 1.000 → 475 gösterimi doğrulandı. Canlı HTML ve yayınlanan script birlikte çalıştırılarak 2/1/0 çocuk normal toplamlarının 1.000/750/500 ve kampanya toplamının 475 olduğu doğrulandı.
+Canlı demo-kurum-a ve demo-kurum-b sayfalarında afiş ve 1.000 → 475 gösterimi doğrulandı. Canlı HTML ve yayınlanan script birlikte çalıştırılarak 2/1/0 çocuk normal toplamlarının 1.000/750/500 ve kampanya toplamının 475 olduğu doğrulandı.
 Native WooCommerce yetişkin variation 2427 fiyatı 500 TL olarak okundu.
 Önceki biletleme aşamasında izole sepet ve PayTR ödeme ekranı 475 TL ve ücretsiz çocuk satırlarıyla kontrol edildi. Gerçek sipariş/ödeme tamamlanmadı, gerçek QR okutma testi yapılmadı.
 Son fiyat gösterimi aşamasının HTTP POST canlı teklif kontrolü tamamlanamadı; sunucu hesaplaması otomatik PHP testleriyle doğrulandı.
@@ -74,3 +74,5 @@ JavaScript shortcode içeriğine gömülmemeli; WordPress içerik filtrelerindek
 Fiyat gösterimini geri almak için snippet 124 kaynağı codex/campaign-event-poster dalındaki önceki sürüme döndürülür; aktif tutulur. Kurum kayıtları, ürünler ve siparişler değiştirilmez.
 Daha kapsamlı geri alma için ilgili PR'ın önceki kaynağı ve bağımlılıkları birlikte incelenmelidir.
 Bu kayıt bir tam site/veritabanı yedeği değildir; kampanya işinin kaynak ve devir kaydıdır.
+
+> Güvenlik notu: Bu belgedeki demo-kurum/demo-okul değerleri gerçek kampanya kodlarının yerine kullanılan sentetik etiketlerdir. Canlı kodlar yalnız yetkili yönetim ekranında tutulur. Eski Git geçmişi hâlâ açığa çıkmış değerleri içerebilir; belge temizliği kodu iptal etmez.

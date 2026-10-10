@@ -16,7 +16,7 @@ Yalnız kampanya shortcode'unun bulunduğu sayfa için `template_redirect` aşam
 - Bütün kayıtlar yalnız `mdg_corporate_campaign_codes_v1` option'ında tutulur; kod tanımı dışındaki etkinlik/bilet/sipariş/ödeme verileri yazılmaz.
 - Kurum kodları yalnız yetkili `manage_woocommerce` kullanıcısının nonce korumalı admin formunda kaydedilir. TEST- öneki denemeye ayrılmıştır.
 - Satıştaki her ilin `TEST-<il>` kodu otomatik çalışır. Örnek: TEST-DENIZLI, TEST-İZMİR, test-manisa. Bu kodlar indirim yetkisi veya üyelik doğrulaması değildir.
-- Paylaşımda `?kod=kurum-kodu` kullanılabilir. Kodu olmayan ziyaretçi yalnız giriş formunu görür. Kod/nonce hatasında başka iller açılmaz.
+- Teknik örneklerde yalnız `?kod=DEMO-KURUM-A` gibi sentetik değerler kullanılır. Gerçek kodlu paylaşım bağlantıları açık depoya veya Drive çalışma arşivine yazılmaz. Kodu olmayan ziyaretçi yalnız giriş formunu görür. Kod/nonce hatasında başka iller açılmaz.
 
 ## Akış ve sınırlar
 
