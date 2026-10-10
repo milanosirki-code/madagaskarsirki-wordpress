@@ -70,7 +70,7 @@ class MMC_Integrity_Service {
             'MDG Bilet'  => class_exists('MMC_MDG_Bridge_Service') ? MMC_MDG_Bridge_Service::admin_url( $program_id ) : add_query_arg( array( 'page'=>'mdg-dashboard', 'mmc_program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Kommo'      => add_query_arg( array( 'page'=>'mmc-kommo', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Operasyon'  => add_query_arg( array( 'page'=>'mmc-operations', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
-            'Finans'     => add_query_arg( array( 'page'=>'mmc-finance', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
+            'Finans'     => add_query_arg( array( 'page'=>'mmc-finance-hub', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
             'Bütünlük'   => add_query_arg( array( 'page'=>'mmc-integrity', 'program_id'=>$program_id ), admin_url( 'admin.php' ) ),
         );
     }

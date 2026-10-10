@@ -456,6 +456,10 @@ class MMC_Navigation_Admin {
 
     public function finance_hub() {
         $this->guard( 'mmc_manage_finance' );
+        if (class_exists('MDG_V5_Finance') && current_user_can(MDG_V5_Finance::CAP)) {
+            MDG_V5_Finance::render();
+            return;
+        }
         $cards = array(
             $this->card( 'MMC Finans & Kapanış', 'mmc-finance', 'mmc_manage_finance', 'Program bazlı gelir, gider, fatura, teminat ve kapanış defteri.' ),
         );
