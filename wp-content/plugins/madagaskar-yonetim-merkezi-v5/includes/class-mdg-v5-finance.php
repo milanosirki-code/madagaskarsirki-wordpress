@@ -340,7 +340,7 @@ final class MDG_V5_Finance {
         $month_events=self::month_events(self::events(),$month);
         return self::web_revenues_for_events(array_keys($month_events));
     }
-    private static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
+    public static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
     private static function money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_price((float)$n)):number_format_i18n((float)$n,2).' TL';}
 
     public static function render(){
@@ -547,11 +547,11 @@ final class MDG_V5_Finance_Records {
         if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',(string)$value))return false;
         $p=explode('-',$value);return checkdate((int)$p[1],(int)$p[2],(int)$p[0]);
     }
-    private static function decimal($value) {
+    private static function decimal($value,$precision=2) {
         $value=trim((string)wp_unslash($value));
         if(strpos($value,',')!==false)$value=str_replace(',','.',str_replace('.','',$value));
-        if(!preg_match('/^\d{1,12}(?:\.\d{1,2})?$/',$value))return null;
-        return round((float)$value,2);
+        if(!preg_match('/^\d{1,12}(?:\.\d{1,'.(int)$precision.'})?$/',$value))return null;
+        return round((float)$value,$precision);
     }
     private static function text($name) { return sanitize_text_field(wp_unslash($_POST[$name]??'')); }
     private static function field($label,$name,$value='',$type='text',$required=true) {
@@ -656,7 +656,7 @@ final class MDG_V5_Finance_Records {
                 if(!hash_equals(hash('sha256',wp_json_encode($row)),self::text('expected_hash')))throw new RuntimeException('Kayıt başka kullanıcı tarafından değiştirildi. Sayfayı yenileyin.');
                 $data=array('notes'=>self::text('notes'),'updated_at'=>current_time('mysql'));
                 if($type==='fixed') {
-                    $pay=self::decimal($_POST['pay_amount']??'');$fx=self::decimal($_POST['fx_rate']??'');$tax=self::decimal($_POST['tax_per_person']??'');
+                    $pay=self::decimal($_POST['pay_amount']??'');$fx=self::decimal($_POST['fx_rate']??'',6);$tax=self::decimal($_POST['tax_per_person']??'');
                     if($pay===null||$fx===null||$fx<=0||$tax===null||!self::text('description'))throw new RuntimeException('Ücret, kur veya vergi geçersiz.');
                     $salary=round($pay*$fx*($row->pay_basis==='person'?max(1,(int)$row->headcount):1),2);$tax_total=round((int)$row->insured_count*$tax,2);
                     $data=array_merge($data,array('name'=>self::text('description'),'pay_amount'=>$pay,'fx_rate'=>$fx,'tax_per_person'=>$tax,'salary_total'=>$salary,'tax_total'=>$tax_total,'total_amount'=>$salary+$tax_total));$total=$salary+$tax_total;
@@ -710,9 +710,9 @@ final class MDG_V5_Finance_Records {
             echo '<div class="mdgv5-card"><h2>Ortak Gider Dağıtımı · '.esc_html($month).'</h2><p>'.esc_html('Ortak gider: '.self::money($common).' · Dağıtılmış: '.self::money($distributed).' · Dağıtılmamış: '.self::money(max(0,$common-$distributed))).'</p><p>Her gider tek kayıttır. Paylaştırmak işletme maliyetini artırmaz. Tutar değişirse eski dağıtım geçersiz olur ve yeniden onay gerekir.</p><table class="widefat striped"><tr><th>Kaynak gider</th><th>Program</th><th>Pay</th></tr>';
             $names=array();foreach($events as $event)$names[$event->id]=MDG_V5_Finance::event_name($event);
             foreach($parts as $part)echo '<tr><td>'.esc_html('#'.$part['source']->id.' '.$part['source']->description).'</td><td>'.esc_html($names[$part['event_id']]??('#'.$part['event_id'])).'</td><td>'.esc_html(self::money($part['amount'])).'</td></tr>';
-            echo '</table><p><a class="button" href="'.esc_url(MDG_V5_Finance::url(array('section'=>'expense','month'=>$month))).'">Giderleri ve Payları Düzenle</a></p><h3>Sabit gider dağıtımına giren programlar</h3><p>MDG durumları gösterilir. “closed” satış kapanışı olabilir; otomatik iptal sayılmaz. Listeyi kontrol edip Seyirci ekranından “Dâhil” seçimini düzenleyin. Elle girilmiş program sayısı da sabit gider ekranında görünür.</p><ul>';
-            $attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);
-            foreach($events as $event)if(strpos(MDG_V5_Finance::event_date($event),$month)===0)echo '<li>'.esc_html(($names[$event->id]??'#'.$event->id).' #'.$event->id.' · '.($event->status??'durum yok').' · '.(isset($attendance[$event->id])&&!(int)$attendance[$event->id]->include_in_reports?'elle hariç':'MDG durum filtresine bağlı')).'</li>';
+            echo '</table><p><a class="button" href="'.esc_url(MDG_V5_Finance::url(array('section'=>'expense','month'=>$month,'summary_event'=>0))).'">Giderleri ve Payları Düzenle</a></p><h3>Sabit gider dağıtımına giren programlar</h3><p>MDG durumları gösterilir. “closed” satış kapanışı olabilir; otomatik iptal sayılmaz. Listeyi kontrol edip Seyirci ekranından “Dâhil” seçimini düzenleyin. Elle girilmiş program sayısı da sabit gider ekranında görünür.</p><ul>';
+            $attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);$eligible=MDG_V5_Finance::month_events($events,$month);
+            foreach($events as $event)if(strpos(MDG_V5_Finance::event_date($event),$month)===0)echo '<li>'.esc_html(($names[$event->id]??'#'.$event->id).' #'.$event->id.' · '.($event->status??'durum yok').' · '.(!isset($eligible[$event->id])?'Hariç (MDG durumu)':(isset($attendance[$event->id])&&!(int)$attendance[$event->id]->include_in_reports?'Elle hariç':'Dâhil'))).'</li>';
             echo '</ul><a class="button" href="'.esc_url(MDG_V5_Finance::url(array('section'=>'attendance','month'=>$month))).'">Programları Kontrol Et</a></div>';
         } else {
             $id=MDG_V5_Finance::context_event();$pid=0;
