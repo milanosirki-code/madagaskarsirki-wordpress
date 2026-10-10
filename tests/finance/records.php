@@ -9,6 +9,10 @@ function wp_unslash($v){return $v;}
 function sanitize_key($v){return preg_replace('/[^a-z0-9_\-]/','',strtolower($v));}
 function sanitize_text_field($v){return trim(strip_tags($v));}
 function esc_html($v){return htmlspecialchars($v,ENT_QUOTES);}
+function esc_attr($v){return esc_html($v);}
+function esc_url($v){return esc_html($v);}
+function number_format_i18n($v,$n){return number_format($v,$n);}
+function selected($a,$b,$echo=false){return $a===$b?'selected':'';}
 function current_user_can($v){return $GLOBALS['can'];}
 function check_admin_referer($a,$b=null){if(!$GLOBALS['nonce'])wp_die('nonce');}
 function wp_die($v){throw new DomainException($v);}
@@ -80,4 +84,23 @@ $_REQUEST=array('summary_event'=>53,'program_id'=>99,'month'=>'2026-09');check(M
 $cent=MDG_V5_Finance_Records::amounts(0.03,0.01,0.01);check($cent['remaining']===0.01,'Cent math failed');
 $income=(object)array('id'=>7,'net_amount'=>80,'collection_status'=>'collected');check(MDG_V5_Finance_Records::state('income',$income,true)['settled']===80.0,'Historical collected income changed');
 $wpdb->readonly=true;$summary=MMC_Finance_Service::summary(99);check($summary['total_revenue']===0.0&&$summary['manual_paid_audience']===0,'Summary default/readonly failed');
+$legacy=(object)array_merge($wpdb->rows[1],array('id'=>81,'notes'=>'Ödendi - dekont ile teyit','document_no'=>'REF-1','attachment_id'=>0));
+$unknown=array('known'=>false,'tracked'=>false,'overpaid'=>false,'opening'=>0,'settled'=>0,'remaining'=>110);
+check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$unknown)==='declared','Paid note should enter review, not become verified');
+check(!MDG_V5_Finance_Records::state('expense',$legacy,true)['known'],'Paid note changed settlement');
+$legacy->notes='Ödenmedi';check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$unknown)==='unverified','Unpaid text misread as paid');
+$legacy->notes='';$legacy->attachment_id=42;check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$unknown)==='unverified','Attachment treated as proof');
+$legacy->document_no='META-123';check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$unknown)==='source','Automatic owner bypass');$legacy->document_no='REF-1';
+$legacyIncome=(object)array('id'=>82,'channel'=>'Biletinial','collection_status'=>'collected','net_amount'=>90,'gross_amount'=>100,'commission_amount'=>10,'description'=>'Biletinial','event_id'=>53,'scope'=>'program','source_ref'=>'BIL-1');
+check(MDG_V5_Finance_Records::reconciliation_status('income',$legacyIncome,$unknown)==='declared','Legacy income presented as bank confirmation');
+$known=$unknown;$known['known']=true;check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$known)==='pending','Pending classification failed');
+$known['tracked']=true;check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$known)==='tracked','Tracked classification failed');
+$known['overpaid']=true;check(MDG_V5_Finance_Records::reconciliation_status('expense',$legacy,$known)==='difference','Overpaid review hidden');
+$_GET=array('review_status'=>'all');$_REQUEST=array('summary_event'=>53);$beforeReview=serialize(array($wpdb->rows,$wpdb->payments,$wpdb->starts,$wpdb->history));
+$foreign=clone $legacy;$foreign->id=83;$foreign->event_id=99;$foreign->description='FOREIGN-PROGRAM';
+ob_start();MDG_V5_Finance_Records::render_reconciliation('2026-10',array(53=>'Test Program'),array($legacy,$foreign),array($legacyIncome),array((object)array('id'=>84,'name'=>'GLOBAL-FIXED')));$html=ob_get_clean();
+check(strpos($html,'FOREIGN-PROGRAM')===false&&strpos($html,'GLOBAL-FIXED')===false,'Program review leaked other program/fixed scope');
+check(strpos($html,'BIL-1')!==false&&strpos($html,'Komisyon:')!==false&&strpos($html,'banka ekstresi veya PayTR')!==false,'Income evidence/money distinction missing');
+check(serialize(array($wpdb->rows,$wpdb->payments,$wpdb->starts,$wpdb->history))===$beforeReview,'Review changed finance records');
+$_GET=array('review_status'=>'tracked');ob_start();MDG_V5_Finance_Records::render_reconciliation('2026-10',array(),array($legacy),array(),array());$html=ob_get_clean();check(strpos($html,'Bu kapsam ve inceleme durumunda kayıt yok.')!==false&&strpos($html,'Kaydı İncele')===false,'Review filter ignored');
 echo "Finance records: $assertions assertions passed\n";
