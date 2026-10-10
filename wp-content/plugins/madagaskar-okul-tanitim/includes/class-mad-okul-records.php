@@ -269,6 +269,22 @@ class Mad_Okul_Records {
         delete_transient($key);
         wp_safe_redirect(self::url('mad-okul-records',['saved'=>$saved,'changed'=>$changed,'mmc_program_id'=>absint($_POST['mmc_program_id'] ?? 0)])); exit;
     }
+    /** Shared geographic scope for history and student exports. */
+    private static function student_scope_where($mmc,$alias='') {
+        global $wpdb;
+        if (!$mmc) return '';
+        $ctx=Mad_Okul_Operations::mmc_program_context($mmc);
+        if (is_wp_error($ctx)) return $ctx;
+        $districts=class_exists('MMC_Region_Service') ? MMC_Region_Service::get_program_targets($mmc) : [];
+        if (!$districts && !empty($ctx->program->district_name)) $districts=[$ctx->program->district_name];
+        $districts=array_values(array_unique(array_filter(array_map('mad_okul_place_title',(array)$districts))));
+        $province=mad_okul_place_title($ctx->program->province_name);
+        // Invalid program geography must not fall through to an unfiltered export.
+        if (!$province || !$districts) return new WP_Error('scope','Program okul bölgesi bulunamadı.');
+        $prefix=$alias==='s' ? 's.' : '';
+        $placeholders=implode(',',array_fill(0,count($districts),'%s'));
+        return $wpdb->prepare(' WHERE '.$prefix.'il=%s AND '.$prefix.'ilce IN ('.$placeholders.')',array_merge([$province],$districts));
+    }
     public static function student_page() {
         self::guard(); global $wpdb; $mmc=absint($_GET['mmc_program_id'] ?? 0);
         echo '<div class="wrap"><h1>Öğrenci Aktarımı ve Yıllık Geçmiş</h1><p>Okul araştırması ve MEB il/ilçe müdürlüğü verisi aynı şablonla işlenir. Önce eşleşme/aday sayı gösterilir, açık onaydan sonra yalnız mevcut okulun öğrenci kaydı güncellenir. Boş sayılar mevcut sayıyı silmez. Kampüs toplamları ayrı okullara çoğaltılmaz.</p><p><a class="button" href="'.esc_url(self::export_url('student',$mmc)).'">Öğrenci Excel Şablonunu / Mevcut Veriyi İndir</a> <a class="button" href="'.esc_url(self::url('mad-okul-students',['mmc_program_id'=>$mmc])).'">Manuel Öğrenci Girişi</a></p>';
@@ -282,11 +298,8 @@ class Mad_Okul_Records {
             echo '</tbody></table><form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mad_okul_records_accept"><input type="hidden" name="preview" value="'.esc_attr($token).'"><input type="hidden" name="mmc_program_id" value="'.$mmc.'">'; wp_nonce_field('mad_okul_records_accept_'.$token);
             echo '<p><label><input type="checkbox" name="confirmed" value="1" required> Aday sayıları ve kaynaklarını kontrol ettim; uygun eşleşmeleri kaydet.</label></p><button class="button button-primary">Onaylanan Öğrenci Verilerini Kaydet</button></form>';
         }
-        $where='';
-        if ($mmc && class_exists('MMC_School_Source_Service')) {
-            $ctx=Mad_Okul_Operations::mmc_program_context($mmc);
-            if (!is_wp_error($ctx)) $where=$wpdb->prepare(' WHERE s.il=%s AND s.ilce=%s',mad_okul_place_title($ctx->program->province_name),mad_okul_place_title($ctx->program->district_name));
-        }
+        $where=self::student_scope_where($mmc,'s');
+        if (is_wp_error($where)) wp_die(esc_html($where->get_error_message()));
         $history=$wpdb->get_results('SELECT h.*,s.kurum_adi FROM '.self::history_table().' h JOIN '.mad_okul_table().' s ON s.id=h.school_id'.$where.' ORDER BY h.data_year DESC,h.id DESC LIMIT 200');
         echo '<h2>Geçmiş yıllar ve düzeltme kayıtları</h2><p>Son 200 kayıt. Yeni yıl girişi eski yılın kaydını silmez.</p><table class="widefat striped"><thead><tr><th>Okul</th><th>Veri yılı</th><th>Öğrenci</th><th>Kaynak</th><th>Kaynak notu</th><th>Kaydedildi</th></tr></thead><tbody>';
         foreach($history as $h) echo '<tr><td>'.esc_html($h->kurum_adi).'</td><td>'.esc_html($h->data_year).'</td><td>'.esc_html($h->student_count ?? 'Bilinmiyor').'</td><td>'.esc_html($h->source_type).'</td><td>'.esc_html($h->source_note).'</td><td>'.esc_html($h->recorded_at).'</td></tr>';
@@ -349,7 +362,8 @@ class Mad_Okul_Records {
             $grid=[['Program','Tarih','Başlangıç salonu','Salon adresi','Personel','Grup','Rota sırası','Okul','İl','İlçe','Adres','Telefon','Öğrenci','Google Maps']];
             foreach($rows as $r) $grid[]=[$r->program_adi,$r->etkinlik_tarihi,$r->salon_adi,$r->salon_adresi,$r->display_name,$r->route_group,$r->route_order,$r->kurum_adi,$r->il,$r->ilce,$r->adres,$r->telefon,$r->student_count,'https://www.google.com/maps/search/?api=1&query='.rawurlencode($r->kurum_adi.', '.$r->adres.', '.$r->ilce.'/'.$r->il)];
         } elseif($kind==='student') {
-            $where=''; if($mmc) { $ctx=Mad_Okul_Operations::mmc_program_context($mmc); if(is_wp_error($ctx)) wp_die(esc_html($ctx->get_error_message())); $where=$wpdb->prepare(' WHERE il=%s AND ilce=%s',mad_okul_place_title($ctx->program->province_name),mad_okul_place_title($ctx->program->district_name)); }
+            $where=self::student_scope_where($mmc);
+            if(is_wp_error($where)) wp_die(esc_html($where->get_error_message()));
             $rows=$wpdb->get_results('SELECT * FROM '.mad_okul_table().$where.' ORDER BY il,ilce,kurum_adi LIMIT 5000');
             $grid=[['IL_ADI','ILCE_ADI','KURUM_ADI','OGRENCI_SAYISI','OGRENCI_SAYI_DURUMU','OGRENCI_KAYNAK_TURU','OGRENCI_KAYNAK_URL','VERI_YILI','KAYNAK_NOTU']];
             foreach($rows as $r) $grid[]=[$r->il,$r->ilce,$r->kurum_adi,$r->ogrenci_sayisi,$r->ogrenci_sayi_durumu,$r->ogrenci_kaynak_turu,$r->ogrenci_kaynak_url,$r->student_data_year ?? wp_date('Y'),$r->student_source_note ?? ''];
