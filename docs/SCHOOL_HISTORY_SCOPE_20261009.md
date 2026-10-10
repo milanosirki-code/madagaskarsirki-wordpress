@@ -12,3 +12,9 @@ Validation: PHP syntax passed and regression passed for multi-district scope, du
 Live deployment status: NOT applied. Native plugin editor file matches GitHub main blob53804a19b42ea13954cc148e25bbbc5bb39cabe7. Original backed up locally as /workspace/scratch/school-records-live-backup-20261009.php. CodeMirror fill did not update backing textarea; clipboard/native keyboard delivery blocked by browser credential protection (retained_data_restricted). No file update was submitted. Next controlled deployment must use supported plugin/file update or user-assisted browser editing, then verify Manisa history53 /22,055 and Aydın48 /16,407, and both districts in student export.
 
 Draft PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/211
+
+## Live deployment — 10 October 2026
+
+Controlled deployment completed through the native WordPress plugin editor. Live before blob matched main 53804a19b42ea13954cc148e25bbbc5bb39cabe7; full backup retained. Clipboard/editor source verified before save; reload readback exactly matches PR source blob 434abb76395a9ebadb3a3f7499424385a4c5e9b9 (39,428 characters). PHP 8.3 syntax and program-scope regressions passed again.
+
+Current live data has additional imports after the earlier report: Manisa annual history has 89 unique schools, 2026, total 37,367. Native Excel export has Şehzadeler 60 school rows /24 known /9,381 students and Yunusemre 136 rows /65 known /27,986; combined196 rows /89 known /37,367. Aydın remains48 history records /16,407; Excel Efeler170 rows /48 known /16,407. Excel headers preserved. No school/count/import/stock/customer/order mutation. Rollback: restore exact pre-deployment records file. Earlier53/22,055 was the prior snapshot, not today's acceptance total.
