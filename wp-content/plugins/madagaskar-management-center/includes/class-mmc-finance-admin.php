@@ -19,15 +19,15 @@ class MMC_Finance_Admin {
     private function guard(){if(!current_user_can('mmc_manage_finance'))wp_die('Bu alan için yetkiniz yok.');}
 
     public function page(){
-        $this->guard(); $programs=MMC_Program_Service::all_programs(); $pid=absint($_GET['program_id']??0); if(!$pid&&$programs)$pid=(int)$programs[0]->id;
+        $this->guard(); $programs=MMC_Program_Service::all_programs(); $pid=absint($_GET['program_id']??0); if(!isset($_GET['program_id'])&&$programs)$pid=(int)$programs[0]->id;
         $program=$pid?MMC_Program_Service::get_program($pid):null;
-        if($program){MMC_Finance_Service::sync_external_sources($pid);MMC_Finance_Service::ensure_deposit_refunds($pid);}
         $summary=$program?MMC_Finance_Service::summary($pid):null; $entries=$program?MMC_Finance_Service::entries($pid):array(); $invoices=$program?MMC_Finance_Service::invoices($pid):array(); $refunds=$program?MMC_Finance_Service::deposit_refunds($pid):array(); $readiness=$program?MMC_Finance_Service::readiness($pid):null;
         $event=$program&&class_exists('MMC_Event_Service')?MMC_Event_Service::event_for_program($pid):null;
         $coverage=$event&&class_exists('MMC_Sales_Service')?MMC_Sales_Service::mapping_coverage($event->id):null;
         ?>
-        <div class="wrap mmc-wrap"><h1>Finans & Teminat Kapanış Modülü</h1><p class="mmc-lead">Programın gerçek gelir, gider, fatura ve teminat akışını tek finans defterinde toplar. Teminat gider sayılmaz; yalnız kesilen kısmı gider olur.</p><?php $this->notice(); ?>
+        <div class="wrap mmc-wrap"><h1>Finans & Teminat Kapanış Modülü</h1><p class="mmc-lead">MMC fatura, teminat ve kapanış kayıtları. V5 gelir/giderlerini bu deftere tekrar girmeyin. Kaynak yenilemesi yalnız ilgili düğmeyle yapılır. Teminat gider sayılmaz; yalnız kesilen kısmı gider olur.</p><?php $this->notice(); ?>
         <div class="mmc-panel"><form method="get" class="mmc-inline-form"><input type="hidden" name="page" value="mmc-finance"><label>Program<select name="program_id" onchange="this.form.submit()"><option value="">Seçin</option><?php foreach($programs as $p):?><option value="<?php echo esc_attr($p->id);?>" <?php selected($pid,$p->id);?>><?php echo esc_html($p->program_code.' — '.$p->province_name.' / '.($p->district_name?:'Genel'));?></option><?php endforeach;?></select></label></form></div>
+        <p><a class="button" href="<?php echo esc_url(add_query_arg(array('page'=>'mdg-v5-finance','program_id'=>$pid),admin_url('admin.php'))); ?>">Gelir, Gider ve Kârlılık Merkezine Dön</a></p>
         <?php if(!$program):?><div class="notice notice-info"><p>Program seçin.</p></div></div><?php return;endif;?>
         <?php if($coverage && !$coverage['complete']):?><div class="notice notice-warning inline"><p><strong>Satış eşleştirmesi eksik (<?php echo esc_html($coverage['mapped'].'/'.$coverage['required']);?>).</strong> Aşağıdaki sıfır gelir/sipariş rakamları satış yapılmadığını kanıtlamaz; henüz eşleşmeyen WooCommerce siparişleri finans defterine gelmez. <a href="<?php echo esc_url(admin_url('admin.php?page=mmc-sales&program_id='.$pid));?>">Satış eşleştirmesine git</a>.</p></div><?php endif;?>
 

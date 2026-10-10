@@ -108,6 +108,7 @@ class MMC_Finance_Service {
         if ( ! $title || $amount <= 0 ) return new WP_Error( 'mmc_fin_required', 'Başlık ve sıfırdan büyük tutar zorunludur.' );
         $status = sanitize_key( $data['status'] ?? 'planned' );
         if ( ! isset( self::entry_statuses()[ $status ] ) ) $status = 'planned';
+        if ('income' === $class && 'incurred' === $status) return new WP_Error('mmc_fin_income_status','Gerçekleşti (gider) gelir tahsilatı değildir.');
         $now = current_time( 'mysql' );
         $row = array(
             'program_id' => absint( $program_id ),
@@ -125,7 +126,7 @@ class MMC_Finance_Service {
             'created_at' => $now,
             'updated_at' => $now,
         );
-        if ( in_array( $status, array( 'paid','realized','incurred' ), true ) ) $row['paid_at'] = $now;
+        if ( in_array( $status, array( 'paid','realized' ), true ) ) $row['paid_at'] = $now;
         $ok = $wpdb->insert( $wpdb->prefix . 'mmc_finance_entries', $row );
         if ( ! $ok ) return new WP_Error( 'mmc_fin_insert', 'Finans kaydı eklenemedi.' );
         $id = (int) $wpdb->insert_id;
@@ -140,6 +141,8 @@ class MMC_Finance_Service {
         if ( ! $row ) return new WP_Error( 'mmc_fin_missing', 'Finans kaydı bulunamadı.' );
         $status = sanitize_key( $data['status'] ?? $row->status );
         if ( ! isset( self::entry_statuses()[ $status ] ) ) $status = $row->status;
+        if ('income' === $row->entry_class && 'incurred' === $status) return new WP_Error('mmc_fin_income_status','Gerçekleşti (gider) gelir tahsilatı değildir.');
+        if ('manual' !== $row->related_entity_type && isset($data['amount']) && abs(self::money($data['amount'])-(float)$row->amount)>0.005) return new WP_Error('mmc_fin_source','Otomatik kayıt tutarı kaynak sistemden yönetilir.');
         $amount = isset( $data['amount'] ) ? self::money( $data['amount'] ) : (float) $row->amount;
         $update = array(
             'amount' => $amount,
@@ -149,7 +152,7 @@ class MMC_Finance_Service {
             'notes' => sanitize_textarea_field( $data['notes'] ?? $row->notes ),
             'updated_at' => current_time( 'mysql' ),
         );
-        if ( in_array( $status, array( 'paid','realized','incurred' ), true ) && ! $row->paid_at ) $update['paid_at'] = current_time( 'mysql' );
+        if ( in_array( $status, array( 'paid','realized' ), true ) && ! $row->paid_at ) $update['paid_at'] = current_time( 'mysql' );
         if ( 'refunded' === $status && ! $row->refunded_at ) $update['refunded_at'] = current_time( 'mysql' );
         $ok = $wpdb->update( $table, $update, array( 'id'=>(int)$row->id ) );
         if ( false === $ok ) return new WP_Error( 'mmc_fin_update', 'Finans kaydı güncellenemedi.' );
@@ -379,12 +382,12 @@ class MMC_Finance_Service {
     }
 
     public static function summary( $program_id ) {
-        global $wpdb; $program_id=absint($program_id); self::sync_external_sources($program_id);
+        global $wpdb; $program_id=absint($program_id);
         $sales=$wpdb->get_row($wpdb->prepare("SELECT COUNT(DISTINCT external_order_id) orders_count,COALESCE(SUM(net_quantity),0) tickets,COALESCE(SUM(capacity_units),0) web_audience,COALESCE(SUM(gross_amount),0) gross_revenue,COALESCE(SUM(refunded_amount),0) refunds,COALESCE(SUM(net_amount),0) web_revenue FROM {$wpdb->prefix}mmc_sales_ledger WHERE program_id=%d",$program_id),ARRAY_A);
         $entries=self::entries($program_id); $manual_income=0;$actual_expense=0;$planned_expense=0;$pending_finance=0;$deposit_paid=0;$unpaid_deposits=0;
         foreach($entries as $e){
             if('cancelled'===$e->status)continue;
-            if('income'===$e->entry_class && in_array($e->status,array('paid','realized','incurred'),true))$manual_income+=(float)$e->amount;
+            if('income'===$e->entry_class && in_array($e->status,array('paid','realized'),true))$manual_income+=(float)$e->amount;
             if('expense'===$e->entry_class){if(in_array($e->status,array('paid','incurred','realized'),true))$actual_expense+=(float)$e->amount; else $planned_expense+=(float)$e->amount;}
             if('deposit_asset'===$e->entry_class && in_array($e->status,array('paid','refunded'),true))$deposit_paid+=(float)$e->amount;
             if('deposit_asset'===$e->entry_class && in_array($e->status,array('planned','pending'),true) && (float)$e->amount>0)$unpaid_deposits++;
@@ -393,7 +396,7 @@ class MMC_Finance_Service {
         $refund_rows=self::deposit_refunds($program_id);$dep_refunded=0;$dep_deducted=0;$dep_outstanding=0;$unresolved=0;
         foreach($refund_rows as $r){$dep_refunded+=(float)$r->refunded_amount;$dep_deducted+=(float)$r->deduction_amount;$remaining=max(0,(float)$r->deposit_amount-(float)$r->refunded_amount-(float)$r->deduction_amount);$dep_outstanding+=$remaining;if('resolved'!==$r->status&&'cancelled'!==$r->status)$unresolved++;}
         $pending_invoices=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mmc_invoices WHERE program_id=%d AND status='pending'",$program_id));
-        $closure=self::ensure_closure($program_id); $web_aud=(int)($sales['web_audience']??0);$manual=(int)$closure->manual_paid_audience;$free=(int)$closure->free_audience;$total_aud=$web_aud+$manual+$free;
+        $closure=self::closure($program_id) ?: (object)array('manual_paid_audience'=>0,'free_audience'=>0,'notes'=>''); $web_aud=(int)($sales['web_audience']??0);$manual=(int)$closure->manual_paid_audience;$free=(int)$closure->free_audience;$total_aud=$web_aud+$manual+$free;
         $total_rev=(float)($sales['web_revenue']??0)+$manual_income;$profit=$total_rev-$actual_expense;$margin=$total_rev>0?($profit/$total_rev)*100:0;
         return array('sales'=>$sales,'manual_income'=>$manual_income,'total_revenue'=>$total_rev,'actual_expense'=>$actual_expense,'planned_expense'=>$planned_expense,'pending_finance'=>$pending_finance,'net_profit'=>$profit,'profit_margin'=>$margin,'deposit_paid'=>$deposit_paid,'unpaid_deposits'=>$unpaid_deposits,'deposit_refunded'=>$dep_refunded,'deposit_deducted'=>$dep_deducted,'deposit_outstanding'=>$dep_outstanding,'unresolved_deposits'=>$unresolved,'pending_invoices'=>$pending_invoices,'web_audience'=>$web_aud,'manual_paid_audience'=>$manual,'free_audience'=>$free,'total_audience'=>$total_aud,'revenue_per_person'=>$total_aud>0?$total_rev/$total_aud:0,'expense_per_person'=>$total_aud>0?$actual_expense/$total_aud:0,'closure'=>$closure);
     }
@@ -440,9 +443,9 @@ class MMC_Finance_Service {
         return true;
     }
 
-    private static function set_close_status($program_id,$status){global $wpdb;$s=self::summary($program_id);$wpdb->update($wpdb->prefix.'mmc_financial_closures',array('total_revenue'=>$s['total_revenue'],'total_expense'=>$s['actual_expense'],'net_profit'=>$s['net_profit'],'profit_margin'=>$s['profit_margin'],'total_audience'=>$s['total_audience'],'revenue_per_person'=>$s['revenue_per_person'],'expense_per_person'=>$s['expense_per_person'],'outstanding_deposit'=>$s['deposit_outstanding'],'pending_invoice_count'=>$s['pending_invoices'],'close_status'=>$status,'snapshot_json'=>wp_json_encode($s,JSON_UNESCAPED_UNICODE),'updated_at'=>current_time('mysql')),array('program_id'=>absint($program_id)));}
+    private static function set_close_status($program_id,$status){global $wpdb;self::ensure_closure($program_id);$s=self::summary($program_id);$wpdb->update($wpdb->prefix.'mmc_financial_closures',array('total_revenue'=>$s['total_revenue'],'total_expense'=>$s['actual_expense'],'net_profit'=>$s['net_profit'],'profit_margin'=>$s['profit_margin'],'total_audience'=>$s['total_audience'],'revenue_per_person'=>$s['revenue_per_person'],'expense_per_person'=>$s['expense_per_person'],'outstanding_deposit'=>$s['deposit_outstanding'],'pending_invoice_count'=>$s['pending_invoices'],'close_status'=>$status,'snapshot_json'=>wp_json_encode($s,JSON_UNESCAPED_UNICODE),'updated_at'=>current_time('mysql')),array('program_id'=>absint($program_id)));}
     private static function refresh_closure_snapshot($program_id){$c=self::ensure_closure($program_id);if('closed'===$c->close_status)return; $s=self::summary_light($program_id);global $wpdb;$wpdb->update($wpdb->prefix.'mmc_financial_closures',array('total_revenue'=>$s['total_revenue'],'total_expense'=>$s['actual_expense'],'net_profit'=>$s['net_profit'],'profit_margin'=>$s['profit_margin'],'total_audience'=>$s['total_audience'],'revenue_per_person'=>$s['revenue_per_person'],'expense_per_person'=>$s['expense_per_person'],'outstanding_deposit'=>$s['deposit_outstanding'],'pending_invoice_count'=>$s['pending_invoices'],'snapshot_json'=>wp_json_encode($s,JSON_UNESCAPED_UNICODE),'updated_at'=>current_time('mysql')),array('program_id'=>absint($program_id)));}
-    private static function summary_light($program_id){global $wpdb;$sales=$wpdb->get_row($wpdb->prepare("SELECT COALESCE(SUM(capacity_units),0) web_audience,COALESCE(SUM(net_amount),0) web_revenue FROM {$wpdb->prefix}mmc_sales_ledger WHERE program_id=%d",absint($program_id)),ARRAY_A);$entries=self::entries($program_id);$inc=0;$exp=0;foreach($entries as $e){if('cancelled'===$e->status)continue;if('income'===$e->entry_class&&in_array($e->status,array('paid','realized','incurred'),true))$inc+=(float)$e->amount;if('expense'===$e->entry_class&&in_array($e->status,array('paid','incurred','realized'),true))$exp+=(float)$e->amount;}$dep=0;foreach(self::deposit_refunds($program_id) as $r)$dep+=max(0,(float)$r->deposit_amount-(float)$r->refunded_amount-(float)$r->deduction_amount);$pending=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mmc_invoices WHERE program_id=%d AND status='pending'",absint($program_id)));$c=self::ensure_closure($program_id);$aud=(int)($sales['web_audience']??0)+(int)$c->manual_paid_audience+(int)$c->free_audience;$rev=(float)($sales['web_revenue']??0)+$inc;$profit=$rev-$exp;return array('total_revenue'=>$rev,'actual_expense'=>$exp,'net_profit'=>$profit,'profit_margin'=>$rev>0?$profit/$rev*100:0,'total_audience'=>$aud,'revenue_per_person'=>$aud>0?$rev/$aud:0,'expense_per_person'=>$aud>0?$exp/$aud:0,'deposit_outstanding'=>$dep,'pending_invoices'=>$pending);}
+    private static function summary_light($program_id){global $wpdb;$sales=$wpdb->get_row($wpdb->prepare("SELECT COALESCE(SUM(capacity_units),0) web_audience,COALESCE(SUM(net_amount),0) web_revenue FROM {$wpdb->prefix}mmc_sales_ledger WHERE program_id=%d",absint($program_id)),ARRAY_A);$entries=self::entries($program_id);$inc=0;$exp=0;foreach($entries as $e){if('cancelled'===$e->status)continue;if('income'===$e->entry_class&&in_array($e->status,array('paid','realized'),true))$inc+=(float)$e->amount;if('expense'===$e->entry_class&&in_array($e->status,array('paid','incurred','realized'),true))$exp+=(float)$e->amount;}$dep=0;foreach(self::deposit_refunds($program_id) as $r)$dep+=max(0,(float)$r->deposit_amount-(float)$r->refunded_amount-(float)$r->deduction_amount);$pending=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mmc_invoices WHERE program_id=%d AND status='pending'",absint($program_id)));$c=self::ensure_closure($program_id);$aud=(int)($sales['web_audience']??0)+(int)$c->manual_paid_audience+(int)$c->free_audience;$rev=(float)($sales['web_revenue']??0)+$inc;$profit=$rev-$exp;return array('total_revenue'=>$rev,'actual_expense'=>$exp,'net_profit'=>$profit,'profit_margin'=>$rev>0?$profit/$rev*100:0,'total_audience'=>$aud,'revenue_per_person'=>$aud>0?$rev/$aud:0,'expense_per_person'=>$aud>0?$exp/$aud:0,'deposit_outstanding'=>$dep,'pending_invoices'=>$pending);}
 
     public static function on_program_log( $program_id, $action, $entity_type, $entity_id, $old_value, $new_value, $note ) {
         if(!$program_id || 0===strpos((string)$action,'finance_') || 0===strpos((string)$action,'deposit_refund_'))return;
