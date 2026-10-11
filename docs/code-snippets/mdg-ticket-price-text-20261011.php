@@ -14,10 +14,12 @@ add_action('rest_api_init', function () {
     if (!$e || 'onsale' !== $e->status) { return new WP_Error('scope','Event status changed',array('status'=>409)); }
     $data=array();
     foreach($fields as $field) {
-     $old=(string)$e->$field; $before[$id][$field]=$old;
+     $backup=get_option('mdg_price_text_20261011_backup',array());
+     $old=isset($backup[$id][$field]) ? (string)$backup[$id][$field] : (string)$e->$field; $before[$id][$field]=$old;
      $map=10===$id ? array('300 TL'=>'290 TL','600 TL'=>'585 TL') : array('250 TL'=>'245 TL','500 TL'=>'490 TL');
-     $new=strtr($old,$map);
-     if($new!==$old) { $data[$field]=$new; }
+     $new=$old;
+     foreach($map as $from=>$to) { $new=preg_replace('/(?<![0-9.,])'.preg_quote($from,'/').'/u',$to,$new); }
+     if($new!==(string)$e->$field) { $data[$field]=$new; }
     }
     $updates[$id]=$data;
    }
