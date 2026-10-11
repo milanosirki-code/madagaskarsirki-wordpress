@@ -151,6 +151,80 @@ if ( ! function_exists( 'mdg_ai_v5_attendance_list' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_v5_web_summary' ) ) {
+    function mdg_ai_v5_web_summary( $input = array() ) {
+        global $wpdb;
+        $scope = sanitize_key( $input['scope'] ?? '' );
+        if ( $scope && 'program' !== $scope ) {
+            return array( 'gross'=>0.0, 'net'=>0.0, 'tickets'=>0, 'event_count'=>0 );
+        }
+        if ( ! class_exists( 'MDG_DB' ) || ! class_exists( 'MDG_V5_Finance' ) ) {
+            return array( 'gross'=>0.0, 'net'=>0.0, 'tickets'=>0, 'event_count'=>0 );
+        }
+
+        $month = sanitize_text_field( $input['month'] ?? '' );
+        $event_id = absint( $input['event_id'] ?? 0 );
+        $province = sanitize_text_field( $input['province'] ?? '' );
+        $events_table = MDG_DB::table( 'events' );
+        $order_map = MDG_DB::table( 'order_map' );
+
+        $events = (array) $wpdb->get_results( 'SELECT * FROM ' . $events_table . ' ORDER BY id DESC LIMIT 1000' );
+        $event_ids = array();
+        foreach ( $events as $event ) {
+            $id = absint( $event->id ?? 0 );
+            if ( ! $id ) continue;
+            if ( $event_id && $id !== $event_id ) continue;
+            if ( $province && 0 !== strcasecmp( trim( (string) ( $event->province_name ?? '' ) ), $province ) ) continue;
+            if ( $month ) {
+                if ( ! mdg_ai_v5_month_ok( $month ) ) continue;
+                $date = MDG_V5_Finance::event_date( $event );
+                if ( 0 !== strpos( (string) $date, $month . '-' ) ) continue;
+            }
+            $event_ids[] = $id;
+        }
+        if ( ! $event_ids ) {
+            return array( 'gross'=>0.0, 'net'=>0.0, 'tickets'=>0, 'event_count'=>0 );
+        }
+
+        $paid_statuses = array( 'processing','completed','paid','wc-processing','wc-completed','wc-paid' );
+        if ( function_exists( 'wc_get_is_paid_statuses' ) ) {
+            foreach ( (array) wc_get_is_paid_statuses() as $status ) {
+                $status = sanitize_key( $status );
+                if ( $status ) {
+                    $paid_statuses[] = $status;
+                    $paid_statuses[] = 'wc-' . $status;
+                }
+            }
+        }
+        $paid_statuses = array_values( array_unique( $paid_statuses ) );
+
+        $event_ph = implode( ',', array_fill( 0, count( $event_ids ), '%d' ) );
+        $status_ph = implode( ',', array_fill( 0, count( $paid_statuses ), '%s' ) );
+        $sql = "SELECT event_id,
+                       COALESCE(SUM(line_total),0) gross,
+                       COALESCE(SUM(quantity),0) tickets
+                FROM {$order_map}
+                WHERE event_id IN ({$event_ph})
+                  AND order_status IN ({$status_ph})
+                  AND paid_at IS NOT NULL
+                  AND paid_at <> '0000-00-00 00:00:00'
+                GROUP BY event_id";
+        $rows = (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $event_ids, $paid_statuses ) ) );
+        $gross = 0.0;
+        $tickets = 0;
+        foreach ( $rows as $row ) {
+            $gross += (float) $row->gross;
+            $tickets += (int) $row->tickets;
+        }
+        return array(
+            'gross'       => round( $gross, 2 ),
+            'net'         => round( $gross, 2 ),
+            'tickets'     => $tickets,
+            'event_count' => count( $rows ),
+        );
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
     function mdg_ai_v5_finance_summary( $input = array() ) {
         global $wpdb;
@@ -159,12 +233,16 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
             $params=array();
             $where=mdg_ai_v5_finance_where($type,$input,$params);
             if('expenses'===$type)$sql='SELECT COUNT(*) c,COALESCE(SUM(amount),0) total FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where;
-            elseif('incomes'===$type)$sql='SELECT COUNT(*) c,COALESCE(SUM(gross_amount),0) gross,COALESCE(SUM(commission_amount),0) commission,COALESCE(SUM(net_amount),0) net,COALESCE(SUM(ticket_count),0) tickets FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where;
+            elseif('incomes'===$type)$sql='SELECT COUNT(*) c,COALESCE(SUM(gross_amount),0) gross,COALESCE(SUM(commission_amount),0) commission,COALESCE(SUM(net_amount),0) net,COALESCE(SUM(ticket_count),0) tickets FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where." AND LOWER(TRIM(channel))<>'woocommerce'";
             else $sql='SELECT COUNT(*) c,COALESCE(SUM(total_amount),0) total FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where;
             $row=$params?$wpdb->get_row($wpdb->prepare($sql,$params)):$wpdb->get_row($sql);
             $summary[$type]=$row;
         }
-        $income_net=(float)$summary['incomes']->net;
+        $web=mdg_ai_v5_web_summary($input);
+        $income_net=(float)$summary['incomes']->net+(float)$web['net'];
+        $income_gross=(float)$summary['incomes']->gross+(float)$web['gross'];
+        $income_tickets=(int)$summary['incomes']->tickets+(int)$web['tickets'];
+        $income_count=(int)$summary['incomes']->c+(int)$web['event_count'];
         $expenses=(float)$summary['expenses']->total;
         $fixed=(float)$summary['fixed_costs']->total;
         return array(
@@ -175,8 +253,9 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
                 'province'=>sanitize_text_field($input['province']??'')
             ),
             'income'=>array(
-                'count'=>(int)$summary['incomes']->c,'gross'=>(float)$summary['incomes']->gross,
-                'commission'=>(float)$summary['incomes']->commission,'net'=>$income_net,'ticket_count'=>(int)$summary['incomes']->tickets
+                'count'=>$income_count,'gross'=>$income_gross,
+                'commission'=>(float)$summary['incomes']->commission,'net'=>$income_net,'ticket_count'=>$income_tickets,
+                'web_gross'=>(float)$web['gross'],'web_event_count'=>(int)$web['event_count']
             ),
             'expenses'=>array('count'=>(int)$summary['expenses']->c,'total'=>$expenses),
             'fixed_costs'=>array('count'=>(int)$summary['fixed_costs']->c,'total'=>$fixed),
