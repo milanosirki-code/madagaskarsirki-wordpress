@@ -225,26 +225,85 @@ if ( ! function_exists( 'mdg_ai_v5_web_summary' ) ) {
     }
 }
 
+if ( ! function_exists( 'mdg_ai_v5_manual_income_summary' ) ) {
+    function mdg_ai_v5_manual_income_summary( $input = array() ) {
+        global $wpdb;
+        $params = array();
+        $where = mdg_ai_v5_finance_where( 'incomes', $input, $params );
+        $sql = 'SELECT * FROM ' . mdg_ai_v5_finance_table( 'incomes' ) . ' WHERE ' . $where . " AND LOWER(TRIM(channel))<>'woocommerce'";
+        $rows = $params ? (array) $wpdb->get_results( $wpdb->prepare( $sql, $params ) ) : (array) $wpdb->get_results( $sql );
+
+        $out = array( 'count'=>0, 'gross'=>0.0, 'commission'=>0.0, 'net'=>0.0, 'tickets'=>0 );
+        foreach ( $rows as $row ) {
+            $net_total = max( 0.0, (float) $row->net_amount );
+            $settled = 0.0;
+            if ( class_exists( 'MDG_V5_Finance_Records' ) && method_exists( 'MDG_V5_Finance_Records', 'collected' ) ) {
+                $settled = max( 0.0, (float) MDG_V5_Finance_Records::collected( $row ) );
+            } elseif ( 'collected' === (string) $row->collection_status ) {
+                $settled = $net_total;
+            }
+            if ( $settled <= 0 ) continue;
+
+            $ratio = $net_total > 0 ? min( 1.0, $settled / $net_total ) : 0.0;
+            $out['count']++;
+            $out['gross'] += (float) $row->gross_amount * $ratio;
+            $out['commission'] += (float) $row->commission_amount * $ratio;
+            $out['net'] += $settled;
+            $out['tickets'] += (int) $row->ticket_count;
+        }
+        foreach ( array( 'gross','commission','net' ) as $key ) $out[$key] = round( $out[$key], 2 );
+        return $out;
+    }
+}
+
+if ( ! function_exists( 'mdg_ai_v5_operating_expense_summary' ) ) {
+    function mdg_ai_v5_operating_expense_summary( $input = array() ) {
+        global $wpdb;
+        $params = array();
+        $where = mdg_ai_v5_finance_where( 'expenses', $input, $params );
+        $sql = 'SELECT * FROM ' . mdg_ai_v5_finance_table( 'expenses' ) . ' WHERE ' . $where;
+        $rows = $params ? (array) $wpdb->get_results( $wpdb->prepare( $sql, $params ) ) : (array) $wpdb->get_results( $sql );
+
+        $count = 0;
+        $total = 0.0;
+        $refunds = 0.0;
+        foreach ( $rows as $row ) {
+            $is_refund = 'program' === (string) $row->scope && (
+                'İade / WooCommerce' === trim( (string) $row->category ) ||
+                ( 15 === (int) $row->event_id && 'İade / Biletinial' === trim( (string) $row->category ) )
+            );
+            if ( $is_refund ) {
+                $refunds += (float) $row->amount;
+                continue;
+            }
+            $count++;
+            $total += (float) $row->amount;
+        }
+        return array( 'count'=>$count, 'total'=>round($total,2), 'refund_cash'=>round($refunds,2) );
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
     function mdg_ai_v5_finance_summary( $input = array() ) {
         global $wpdb;
-        $summary=array();
-        foreach(array('expenses','incomes','fixed_costs') as $type){
-            $params=array();
-            $where=mdg_ai_v5_finance_where($type,$input,$params);
-            if('expenses'===$type)$sql='SELECT COUNT(*) c,COALESCE(SUM(amount),0) total FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where;
-            elseif('incomes'===$type)$sql='SELECT COUNT(*) c,COALESCE(SUM(gross_amount),0) gross,COALESCE(SUM(commission_amount),0) commission,COALESCE(SUM(net_amount),0) net,COALESCE(SUM(ticket_count),0) tickets FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where." AND LOWER(TRIM(channel))<>'woocommerce'";
-            else $sql='SELECT COUNT(*) c,COALESCE(SUM(total_amount),0) total FROM '.mdg_ai_v5_finance_table($type).' WHERE '.$where;
-            $row=$params?$wpdb->get_row($wpdb->prepare($sql,$params)):$wpdb->get_row($sql);
-            $summary[$type]=$row;
-        }
-        $web=mdg_ai_v5_web_summary($input);
-        $income_net=(float)$summary['incomes']->net+(float)$web['net'];
-        $income_gross=(float)$summary['incomes']->gross+(float)$web['gross'];
-        $income_tickets=(int)$summary['incomes']->tickets+(int)$web['tickets'];
-        $income_count=(int)$summary['incomes']->c+(int)$web['event_count'];
-        $expenses=(float)$summary['expenses']->total;
-        $fixed=(float)$summary['fixed_costs']->total;
+
+        $manual = mdg_ai_v5_manual_income_summary( $input );
+        $web = mdg_ai_v5_web_summary( $input );
+        $expense_summary = mdg_ai_v5_operating_expense_summary( $input );
+
+        $params = array();
+        $fixed_where = mdg_ai_v5_finance_where( 'fixed_costs', $input, $params );
+        $fixed_sql = 'SELECT COUNT(*) c,COALESCE(SUM(total_amount),0) total FROM ' . mdg_ai_v5_finance_table( 'fixed_costs' ) . ' WHERE ' . $fixed_where;
+        $fixed_row = $params ? $wpdb->get_row( $wpdb->prepare( $fixed_sql, $params ) ) : $wpdb->get_row( $fixed_sql );
+
+        $income_net = (float) $manual['net'] + (float) $web['net'];
+        $income_gross = (float) $manual['gross'] + (float) $web['gross'];
+        $income_commission = (float) $manual['commission'];
+        $income_tickets = (int) $manual['tickets'] + (int) $web['tickets'];
+        $income_count = (int) $manual['count'] + (int) $web['event_count'];
+        $expenses = (float) $expense_summary['total'];
+        $fixed = (float) $fixed_row->total;
+
         return array(
             'filters'=>array(
                 'month'=>sanitize_text_field($input['month']??''),
@@ -253,14 +312,23 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
                 'province'=>sanitize_text_field($input['province']??'')
             ),
             'income'=>array(
-                'count'=>$income_count,'gross'=>$income_gross,
-                'commission'=>(float)$summary['incomes']->commission,'net'=>$income_net,'ticket_count'=>$income_tickets,
-                'web_gross'=>(float)$web['gross'],'web_event_count'=>(int)$web['event_count']
+                'count'=>$income_count,
+                'gross'=>round($income_gross,2),
+                'commission'=>round($income_commission,2),
+                'net'=>round($income_net,2),
+                'ticket_count'=>$income_tickets,
+                'web_gross'=>(float)$web['gross'],
+                'web_event_count'=>(int)$web['event_count'],
+                'manual_collected_net'=>(float)$manual['net']
             ),
-            'expenses'=>array('count'=>(int)$summary['expenses']->c,'total'=>$expenses),
-            'fixed_costs'=>array('count'=>(int)$summary['fixed_costs']->c,'total'=>$fixed),
-            'total_cost'=>$expenses+$fixed,
-            'profit'=>$income_net-$expenses-$fixed
+            'expenses'=>array(
+                'count'=>(int)$expense_summary['count'],
+                'total'=>$expenses,
+                'ticket_refund_cash'=>(float)$expense_summary['refund_cash']
+            ),
+            'fixed_costs'=>array('count'=>(int)$fixed_row->c,'total'=>$fixed),
+            'total_cost'=>round($expenses+$fixed,2),
+            'profit'=>round($income_net-$expenses-$fixed,2)
         );
     }
 }
