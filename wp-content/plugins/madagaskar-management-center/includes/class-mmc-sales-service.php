@@ -268,9 +268,15 @@ class MMC_Sales_Service {
         $net_qty = max( 0, $qty - $ref_qty );
 
         $gross = (float) $item->get_total() + (float) $item->get_total_tax();
+        $gross = self::apply_family22_discount_to_line( $order, $item_id, $item, $gross );
+
         $ref_amount = 0.0;
         if ( method_exists( $order, 'get_total_refunded_for_item' ) ) $ref_amount += abs( (float) $order->get_total_refunded_for_item( $item_id ) );
         if ( method_exists( $order, 'get_tax_refunded_for_item' ) ) $ref_amount += abs( (float) $order->get_tax_refunded_for_item( $item_id, 'line_item' ) );
+        // A family-package discount is stored as a separate negative fee in WooCommerce.
+        // Once that discount is allocated into the ledger line, a refund for the
+        // component line must never exceed the amount that was actually collected.
+        $ref_amount = min( max( 0, $gross ), $ref_amount );
         $paid_at_obj = method_exists( $order, 'get_date_paid' ) ? $order->get_date_paid() : null;
         $was_paid = (bool) $paid_at_obj;
         $net_amount = $was_paid ? max( 0, $gross - $ref_amount ) : 0;
@@ -315,6 +321,87 @@ class MMC_Sales_Service {
             self::set_integration_live( (int)$mapping->event_id, 'paytr', $method_id, '', 'Başarılı WooCommerce siparişinde PayTR ödeme yöntemi algılandı.' );
         }
         self::set_integration_live( (int)$mapping->event_id, 'woocommerce', (string)$mapping->wc_product_id, '', 'WooCommerce sipariş verisi MMC satış defterine senkronlandı.' );
+    }
+
+
+    /**
+     * WooCommerce stores the 2+2 family-package discount as a separate negative
+     * fee while the child/adult line items keep their nominal prices. MMC only
+     * persists mapped ticket lines, so ignoring that fee overstates revenue.
+     *
+     * Allocate only the family-package fee across line items marked with
+     * _mdg_family22, proportional to their nominal line gross. The final family
+     * line receives the rounding remainder so the per-order ledger total matches
+     * the WooCommerce order total exactly to the cent.
+     */
+    private static function apply_family22_discount_to_line( $order, $item_id, $item, $gross ) {
+        if ( ! method_exists( $item, 'get_meta' ) || ! $item->get_meta( '_mdg_family22', true ) ) {
+            return $gross;
+        }
+
+        $family_discount = 0.0;
+        foreach ( (array) $order->get_items( 'fee' ) as $fee ) {
+            if ( ! is_object( $fee ) || ! method_exists( $fee, 'get_name' ) || ! method_exists( $fee, 'get_total' ) ) {
+                continue;
+            }
+            $name = (string) $fee->get_name();
+            if ( false === stripos( $name, 'Aile Paketi 2+2' ) ) {
+                continue;
+            }
+            $fee_total = (float) $fee->get_total();
+            if ( method_exists( $fee, 'get_total_tax' ) ) {
+                $fee_total += (float) $fee->get_total_tax();
+            }
+            if ( $fee_total < 0 ) {
+                $family_discount += abs( $fee_total );
+            }
+        }
+
+        if ( $family_discount <= 0 ) {
+            return $gross;
+        }
+
+        $family_lines = array();
+        $family_gross_total = 0.0;
+        foreach ( (array) $order->get_items( 'line_item' ) as $family_item_id => $family_item ) {
+            if ( ! is_object( $family_item ) || ! method_exists( $family_item, 'get_meta' ) || ! $family_item->get_meta( '_mdg_family22', true ) ) {
+                continue;
+            }
+            $line_gross = (float) $family_item->get_total();
+            if ( method_exists( $family_item, 'get_total_tax' ) ) {
+                $line_gross += (float) $family_item->get_total_tax();
+            }
+            if ( $line_gross <= 0 ) {
+                continue;
+            }
+            $family_lines[ (int) $family_item_id ] = $line_gross;
+            $family_gross_total += $line_gross;
+        }
+
+        if ( $family_gross_total <= 0 || ! isset( $family_lines[ (int) $item_id ] ) ) {
+            return $gross;
+        }
+
+        $family_discount = min( $family_discount, $family_gross_total );
+        $line_ids = array_keys( $family_lines );
+        $last_id = (int) end( $line_ids );
+        $allocated_before = 0.0;
+
+        foreach ( $family_lines as $family_item_id => $line_gross ) {
+            if ( (int) $family_item_id === $last_id ) {
+                $allocation = round( $family_discount - $allocated_before, 2 );
+            } else {
+                $allocation = round( $family_discount * ( $line_gross / $family_gross_total ), 2 );
+            }
+
+            if ( (int) $family_item_id === (int) $item_id ) {
+                return max( 0, round( $gross - $allocation, 2 ) );
+            }
+
+            $allocated_before += $allocation;
+        }
+
+        return $gross;
     }
 
     private static function looks_like_paytr( $id, $title ) {
