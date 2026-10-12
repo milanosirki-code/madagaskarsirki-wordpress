@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types; do
+          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types missing_brand other_brand invalid_brand; do
             php integrations/milano/tests/feed-contract.php "$scenario"
           done
 
@@ -38,6 +38,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid; do
+          for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid missing_brand wrong_brand unknown_brand; do
             php integrations/milano/tests/consumer-contract.php "$scenario"
           done
