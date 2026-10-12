@@ -63,3 +63,14 @@ Doğrulama TXT değeri bir kimlik doğrulama sırrı değildir; yine de bu arşi
 ## Arşiv
 - Bu kayıt ayrı docs/milano-google-connections-20261012 branch'inde draft PR ile tutulur.
 - Kullanıcı GitHub ve Drive kaydını bu görevde açıkça istedi. Main'e merge/deploy yapılmaz.
+
+
+## 12 Ekim akşam — İşletme Profili adres takibi
+- Mevcut doğrulanmış Milano Sirki profili (17249573894815770009) açıldı.
+- Yönetim ekranında web sitesi https://milanosirki.com/ ve telefon 0536 358 33 81 doğrulandı. Kamuya açık panelde eski Facebook/telefon verileri hâlâ görünüyordu; yayınlandığı iddia edilmez.
+- Kullanıcının güncel işletme adresi: Kızılay Mahallesi, Menekşe 1 Caddesi, No: 3, Daire: 11, Çankaya / Ankara.
+- Google zorunlu posta kodu istedi. İlk 06420 gönderimi, 06430 ile kaynak çelişkisi nedeniyle otomatik incelemede engellendi. Ek aramada aynı Menekşe 1 No:3 binası için 06420 kayıtları bulundu (https://www.find.com.tr/Company/viyaparkturizminsaattaahhuttasimaciliksanayiticaretanonimsirketi ve https://www.tumisyeri.com/tevfik-k%C4%B1%C5%9F-pide-kebap-0312-418-42-28). Bunun ardından 06420 ile kaydetme işlemi izinli olarak denendi.
+- Kaydet sonrası yönetim özeti eski Şahintepe/Gaziantep adresini gösterdi. Harita Ankara'ya dönse de adres metninin kalıcı güncellendiği kanıtlanamadı. Son Onayla işlemi Kaydediliyor aşamasında kaldı; tek reload sonrası kamuya açık panel eski adresi gösterdi. Adres değişikliği TAMAMLANMADI / doğrulama bekliyor olarak kaydedildi.
+- WhatsApp sohbet ve Instagram alanları boş. Önceki WhatsApp yayınlama engeli aşılmadı; açık onay bekliyor. Bu turda bu alanlara yazılmadı.
+- Site yayını, Google Ads, kod, bilet, ödeme ve Madagaskar sitesi değiştirilmedi.
+- Sonraki adım: Google yönetim ekranında Ankara adresinin kalıcılığını kontrol etmek; eski adres devam ediyorsa Google adres değişikliği/doğrulama akışını tamamlamak.
