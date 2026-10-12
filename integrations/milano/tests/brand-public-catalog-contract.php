@@ -41,20 +41,31 @@ class MMC_Program_Service {
     public static function normalized_program_brand($name){return $name;}
 }
 class MMC_MDG_Bridge_Service {
+    public static function table(){return 'wp_mmc_mdg_event_bridge';}
     public static function program_for_mdg_event($id){
-        return $id === 22 ? 20 : ($id === 33 ? 30 : 0);
+        must(false,'unsafe legacy mapping called for brand gate');
     }
 }
+$bridgeLinks = array(22=>array(20),33=>array(30));
 class StubDB {
     public $queries=array();
     public function prepare($sql,...$args){
         $this->queries[]=$sql;
+        if (false !== strpos($sql,'SELECT program_id')) {
+            must(strpos($sql,'is_active=1 LIMIT 2')!==false,'bridge must require one active owner');
+            must(count($args)===1,'event lookup requires one identifier');
+            return 'BRIDGE:' . $args[0];
+        }
         // Table existence checks call prepare("SHOW TABLES LIKE %s", $table).
         // The mock must expand the table argument like WPDB would.
         if ( false !== strpos( $sql, 'SHOW TABLES LIKE %s' ) ) {
             return str_replace( '%s', (string) $args[0], $sql );
         }
         return $sql;
+    }
+    public function get_col($sql) {
+        global $bridgeLinks;
+        return 0===strpos($sql,'BRIDGE:') ? ($bridgeLinks[(int)substr($sql,7)]??array()) : array();
     }
     public function get_var($sql) {
         return strpos($sql,'wp_mdg_sessions')!==false?'wp_mdg_sessions':'wp_mdg_events';
@@ -91,6 +102,12 @@ if ($disabled) {
     must(count($cities)===1, 'wrong-brand or unmapped city exposed');
     must((int)$cities[0]['event']->id===$owned, 'wrong brand representative card');
     must($cities[0]['event_count']===1, 'city event count leaked a hidden brand');
+    $bridgeLinks[$owned]=array($expectMilano?20:30, $expectMilano?30:20);
+    must(apply_filters('dunya_brand_event_visible_on_site',true,$owned,'cities')===false,
+        'two active bridge rows allowed event visibility');
+    $bridgeLinks[$owned]=array();
+    must(apply_filters('dunya_brand_event_visible_on_site',true,$owned,'cities')===false,
+        'missing explicit active bridge fell back to legacy mapping');
 }
 $sourceCities = file_get_contents(dirname(__DIR__,3).'/wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-cities.php');
 $sourceEvent = file_get_contents(dirname(__DIR__,3).'/wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-event.php');
