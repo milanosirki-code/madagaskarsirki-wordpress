@@ -74,3 +74,9 @@ Doğrulama TXT değeri bir kimlik doğrulama sırrı değildir; yine de bu arşi
 - WhatsApp sohbet ve Instagram alanları boş. Önceki WhatsApp yayınlama engeli aşılmadı; açık onay bekliyor. Bu turda bu alanlara yazılmadı.
 - Site yayını, Google Ads, kod, bilet, ödeme ve Madagaskar sitesi değiştirilmedi.
 - Sonraki adım: Google yönetim ekranında Ankara adresinin kalıcılığını kontrol etmek; eski adres devam ediyorsa Google adres değişikliği/doğrulama akışını tamamlamak.
+
+## 12 Ekim 2026 22:31 — Devam onayı ve erişim engeli
+- Kullanıcı, Google profilinde 0536 358 33 81 numarasının herkese açık WhatsApp bağlantısı olarak yayımlanmasına yönelik açık soruya “devam” yanıtı verdi. Bu kullanım için onay alınmış kabul edilir; tekrar onay istenmez.
+- Google İşletme Profili yönetimine erişim denendi; hesap yönlendirmesi 502 Bad Gateway / Connection refused döndürdü. Tek reload aynı hata verdi. Bot engeli veya kullanıcı kaynaklı giriş hatası olarak sınıflandırılmadı.
+- WhatsApp ekleme ve Ankara adresinin kalıcılık kontrolü bu turda yapılamadı; tamamlandı denmez. Google profilinde yeni yazma olmadı.
+- Google erişimi düzeldiğinde WhatsApp https://wa.me/905363583381 ekleme ve Ankara adresini doğrulama devam edecek. Milano sitesi yayımlanmadı.
