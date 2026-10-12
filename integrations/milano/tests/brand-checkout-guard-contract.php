@@ -8,6 +8,7 @@ define( 'ABSPATH', __DIR__ );
 define( 'DUNYA_BRAND_GUARD_ENABLED', true );
 function expect_guard( $ok, $label ) { if ( ! $ok ) { fwrite( STDERR, "FAIL: {$label}\n" ); exit( 1 ); } }
 function add_filter( ...$args ) {}
+function add_action( ...$args ) {}
 function absint( $v ) { return abs( (int) $v ); }
 function home_url( $v ) { return 'https://milanosirki.com/'; }
 function wp_parse_url( $url, $component ) { return parse_url( $url, $component ); }
