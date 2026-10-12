@@ -1,0 +1,20 @@
+name: Kommo canonical source freshness
+on:
+  pull_request:
+    paths:
+      - docs/code-snippets/kommo-source-freshness.php
+      - tests/kommo-source-freshness-test.php
+      - .github/workflows/kommo-source-freshness.yml
+permissions:
+  contents: read
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l docs/code-snippets/kommo-source-freshness.php
+      - run: php tests/kommo-source-freshness-test.php
