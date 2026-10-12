@@ -45,6 +45,7 @@ $fixture = array(
     'timezone' => 'Europe/Istanbul',
     'sessions' => array( array(
         'event_id' => 12,
+        'event_owner_brand' => 'milano',
         'session_id' => 102,
         'province' => 'Aydın',
         'district' => 'Efeler',
@@ -65,6 +66,9 @@ switch ( $scenario ) {
     case 'stale': $fixture['generated_at'] = gmdate( 'Y-m-d\TH:i:s\Z', time() - 400 ); break;
     case 'over_limit':
         $fixture['sessions'] = array_fill( 0, 121, $fixture['sessions'][0] ); break;
+    case 'missing_brand': unset( $fixture['sessions'][0]['event_owner_brand'] ); break;
+    case 'wrong_brand': $fixture['sessions'][0]['event_owner_brand'] = 'madagaskar'; break;
+    case 'unknown_brand': $fixture['sessions'][0]['event_owner_brand'] = 'other'; break;
     case 'bad_capacity': $fixture['sessions'][0]['available_units'] = -1; break;
     case 'mismatched_soldout': $fixture['sessions'][0]['availability'] = 'sold_out'; break;
     case 'past': $fixture['sessions'][0]['start_utc'] = gmdate( 'Y-m-d H:i:s', time() - 400 ); break;
@@ -92,10 +96,12 @@ if ( 'no_key' === $scenario ) {
 $out = mso_events_source();
 $errors = array(
     'http_error', 'network_error', 'malformed_json', 'wrong_schema',
-    'missing_readonly', 'stale', 'over_limit', 'bad_capacity', 'mismatched_soldout'
+    'missing_readonly', 'stale', 'over_limit', 'bad_capacity', 'mismatched_soldout', 'missing_brand', 'unknown_brand'
 );
 if ( in_array( $scenario, $errors, true ) ) {
     expect( is_wp_error( $out ), 'invalid feed must fail closed' );
+} elseif ( 'wrong_brand' === $scenario ) {
+    expect( is_array( $out ) && count( $out ) === 0, 'Madagaskar event leaked to Milano' );
 } elseif ( 'past' === $scenario ) {
     expect( is_array( $out ) && count( $out ) === 0, 'past sessions must be filtered' );
 } else {
