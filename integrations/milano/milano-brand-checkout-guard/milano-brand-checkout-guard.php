@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Satış Koruması (Taslak)
  * Description: Milano/Madagaskar marka sınırını WooCommerce sepet girişinde doğrular. Varsayılan olarak devre dışı; yalnız test ortamı içindir.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -97,3 +97,31 @@ function dmbg_validate_checkout( $data, $errors ) {
 }
 add_action( 'woocommerce_check_cart_items', 'dmbg_validate_cart', 100 );
 add_action( 'woocommerce_after_checkout_validation', 'dmbg_validate_checkout', 100, 2 );
+
+/**
+ * WooCommerce Store API add-to-cart gate. Core throws errors returned via
+ * WP_Error; no notice-only workaround and no user-supplied brand override.
+ */
+function dmbg_store_api_add_to_cart( $product, $request ) {
+    if ( ! dmbg_enabled() ) { return; }
+    $product_id = method_exists( $product, 'get_parent_id' ) && (int) $product->get_parent_id()
+        ? (int) $product->get_parent_id() : (int) $product->get_id();
+    $variation_id = $product_id !== (int) $product->get_id() ? (int) $product->get_id() : 0;
+    $owner = dmbg_product_owner( $product_id, $variation_id );
+    if ( ! dmbg_site_brand() || $owner !== dmbg_site_brand() ) {
+        throw new \Exception( 'Bu etkinliğe yalnız ait olduğu marka üzerinden bilet alınabilir.' );
+    }
+}
+add_action( 'woocommerce_store_api_validate_add_to_cart', 'dmbg_store_api_add_to_cart', 100, 2 );
+
+/**
+ * Store API checkout updates must not save a cross-brand order.
+ * Product ownership is re-derived from canonical server mappings.
+ */
+function dmbg_store_api_checkout_order( $order, $request ) {
+    if ( ! dmbg_enabled() ) { return; }
+    if ( ! dmbg_cart_owners_valid( function_exists( 'WC' ) && WC() ? WC()->cart : null ) ) {
+        throw new \Exception( 'Bu sipariş bu marka üzerinden tamamlanamaz.' );
+    }
+}
+add_action( 'woocommerce_store_api_checkout_update_order_from_request', 'dmbg_store_api_checkout_order', 100, 2 );
