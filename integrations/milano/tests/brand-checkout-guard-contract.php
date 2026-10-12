@@ -67,6 +67,7 @@ $store_unknown = false;
 try { dmbg_store_api_add_to_cart( new GuardProduct( 999, 101 ), null ); }
 catch ( Exception $ex ) { $store_unknown = true; }
 expect_guard( $store_unknown, 'Store API unmapped must throw' );
+class GuardCart { private $items; public function __construct( $items ) { $this->items = $items; } public function get_cart() { return $this->items; } }
 class GuardWC { public $cart; public function __construct( $cart ) { $this->cart = $cart; } }
 $guard_wc = new GuardWC( new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>202 ) ) ) );
 function WC() { global $guard_wc; return $guard_wc; }
