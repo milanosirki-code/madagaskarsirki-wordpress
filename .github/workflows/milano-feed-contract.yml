@@ -42,6 +42,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
           php -l integrations/milano/tests/paytr-callback-preflight-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-settlement-claim.php
+          php -l integrations/milano/checkout-intent-protocol/milano-ticket-issuance-ledger.php
+          php -l integrations/milano/tests/tickera-issuance-ledger-contract.php
           php -l integrations/milano/tests/paytr-settlement-claim-contract.php
           php -l integrations/milano/tests/central-preflight-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
@@ -155,6 +157,14 @@ jobs:
           set -euo pipefail
           for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
+          done
+
+      - name: Milano per-admission Tickera ledger idempotency (review-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new duplicate attach_once already_issued wrong_token ticket_id_reused family4 crashed_worker identity_conflict stuck_after_issue other_brand order_brand_mismatch unsettled invalid_line bad_unit negative_index large_family bad_type bad_table db_unavailable; do
+            php integrations/milano/tests/tickera-issuance-ledger-contract.php "$scenario"
           done
 
       - name: Full Tickera invariant audit contract
