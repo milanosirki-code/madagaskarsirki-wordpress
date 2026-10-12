@@ -6,6 +6,7 @@
  */
 error_reporting( E_ALL );
 define( 'ABSPATH', __DIR__ );
+define( 'DUNYA_BRAND_GUARD_ENABLED', true );
 $scenario = $argv[1] ?? 'milano_denied';
 function demand( $v, $why ) { if ( ! $v ) { fwrite( STDERR, "FAIL: {$why}\n" ); exit( 1 ); } }
 $hookList = array();
@@ -13,7 +14,23 @@ function add_filter( $hook, $fn, $priority = 10, $args = 1 ) { global $hookList;
 function add_action( $hook, $fn, $priority = 10, $args = 1 ) { global $hookList; $hookList[] = array( $hook, $priority ); }
 function absint( $value ) { return abs( (int) $value ); }
 $owners = array( '19' => 'madagaskar', '22' => 'milano' );
-function get_option( $name, $fallback = array() ) { global $owners; return $name === 'dunya_event_owner_brand_map_v1' ? $owners : $fallback; }
+$program_links = array( 19 => array( 101 ), 22 => array( 102 ) );
+class MMC_MDG_Bridge_Service {
+    public static function table() { return 'wp_mmc_mdg_event_bridge'; }
+}
+class MMC_Program_Service {
+    public static function get_program( $id ) {
+        global $owners;
+        $event_id = 101 === $id ? '19' : ( 102 === $id ? '22' : null );
+        if ( null === $event_id || ! isset( $owners[$event_id] ) ) { return null; }
+        $brand = $owners[$event_id] === 'milano' ? 'Milano Sirki'
+            : ( $owners[$event_id] === 'madagaskar' ? 'Madagaskar Sirki' : $owners[$event_id] );
+        return (object) array( 'brand' => $brand );
+    }
+    public static function normalized_program_brand( $brand ) {
+        return in_array( $brand, array( 'Milano Sirki', 'Madagaskar Sirki' ), true ) ? $brand : '';
+    }
+}
 class MDG_DB {
     public static function table( $table ) { return 'wp_mdg_' . $table; }
 }
@@ -25,6 +42,12 @@ class StubDb {
         return vsprintf( $sql, $args );
     }
     public function get_col( $sql ) {
+        if ( false !== strpos( $sql, 'SELECT program_id' ) ) {
+            global $program_links;
+            demand( false !== strpos( $sql, 'is_active=1 LIMIT 2' ), 'bridge must detect multiple active owners' );
+            preg_match( '/mdg_event_id=(\\d+)/', $sql, $m );
+            return $program_links[ (int) ($m[1] ?? 0) ] ?? array();
+        }
         if ( false !== strpos( $sql, 'wc_variation_id=' ) ) {
             preg_match( '/wc_variation_id=(\d+)/', $sql, $m );
             return $this->variation_events[ (int) ($m[1] ?? 0) ] ?? array();
@@ -78,6 +101,21 @@ switch ( $scenario ) {
         $owners['19'] = 'both';
         demand( null === $guard::owner( 19 ), 'unrecognized owner accepted' );
         demand( $guard::is_denied_product( 500, 600 ), 'unknown brand can bypass' );
+        break;
+    case 'no_bridge':
+        unset( $program_links[19] );
+        demand( null === $guard::owner( 19 ), 'unbridged event accepted' );
+        demand( $guard::is_denied_product( 500, 600 ), 'unbridged product allowed' );
+        break;
+    case 'two_bridges':
+        $program_links[19] = array( 101, 102 );
+        demand( null === $guard::owner( 19 ), 'ambiguous active program ownership accepted' );
+        demand( $guard::is_denied_product( 500, 600 ), 'ambiguous owner purchase allowed' );
+        break;
+    case 'orphan_bridge':
+        $program_links[19] = array( 999 );
+        demand( null === $guard::owner( 19 ), 'missing source program accepted' );
+        demand( $guard::is_denied_product( 500, 600 ), 'orphan owner purchase allowed' );
         break;
     case 'shared_product':
         demand( 0 === $guard::resolve_mdg_event( 800, 0 ), 'product mapping ambiguity not detected' );
