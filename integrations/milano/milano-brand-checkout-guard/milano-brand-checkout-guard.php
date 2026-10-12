@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Satış Koruması (Taslak)
  * Description: Milano/Madagaskar marka sınırını WooCommerce sepet girişinde doğrular. Varsayılan olarak devre dışı; yalnız test ortamı içindir.
- * Version: 0.4.0
+ * Version: 0.5.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -140,6 +140,25 @@ function dmbg_order_owners_valid( $order ) {
         if ( dmbg_product_owner( (int) $item->get_product_id(), (int) $item->get_variation_id() ) !== $site ) {
             return false;
         }
+    }
+    return true;
+}
+
+/**
+ * Gateway-independent payment settlement preflight. This is deliberately
+ * NOT attached to a PayTR callback: signature verification, amount checks,
+ * idempotency and the gateway's actual hooks must be audited first.
+ * Returns false for unknown/mixed-brand orders and cannot trigger payment
+ * status changes, ticket or QR generation by itself.
+ */
+function dmbg_payment_settlement_allowed( $order ) {
+    if ( ! dmbg_enabled() ) { return false; }
+    if ( ! dmbg_order_owners_valid( $order ) ) { return false; }
+    if ( ! method_exists( $order, 'get_currency' ) || 'TRY' !== $order->get_currency() ) { return false; }
+    if ( ! method_exists( $order, 'get_total' ) || (float) $order->get_total() <= 0 ) { return false; }
+    if ( ! method_exists( $order, 'get_status' )
+        || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed', 'trash' ), true ) ) {
+        return false;
     }
     return true;
 }
