@@ -65,7 +65,11 @@ class MMC_Event_Service {
         $date = $venue && ! empty( $venue->requested_date ) ? $venue->requested_date : $program->planned_date;
         $event_code = self::generate_event_code( $program, $date );
         $now = current_time( 'mysql' );
-        $title = 'Madagaskar Sirki — ' . ( $program->district_name ?: $program->province_name );
+        $brand = MMC_Program_Service::normalized_program_brand( $program->brand ?? '' );
+        if ( '' === $brand ) {
+            return new WP_Error( 'mmc_event_brand_missing', 'Program satış markası geçersiz veya eksik.' );
+        }
+        $title = $brand . ' — ' . ( $program->district_name ?: $program->province_name );
 
         $ok = $wpdb->insert(
             $events,
