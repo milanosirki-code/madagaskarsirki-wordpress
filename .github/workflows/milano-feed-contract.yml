@@ -104,3 +104,8 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-ticket-dry-run.php
           php integrations/milano/tests/tickera-ticket-dry-run-contract.php
+
+      - name: Tickera per-line ticket reconciliation contract
+        run: |
+          php -l integrations/milano/tests/tickera-line-reconciliation.php
+          php integrations/milano/tests/tickera-line-reconciliation-contract.php
