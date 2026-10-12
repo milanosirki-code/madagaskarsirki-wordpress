@@ -49,6 +49,11 @@ class StubDB {
     public $queries=array();
     public function prepare($sql,...$args){
         $this->queries[]=$sql;
+        // Table existence checks call prepare("SHOW TABLES LIKE %s", $table).
+        // The mock must expand the table argument like WPDB would.
+        if ( false !== strpos( $sql, 'SHOW TABLES LIKE %s' ) ) {
+            return str_replace( '%s', (string) $args[0], $sql );
+        }
         return $sql;
     }
     public function get_var($sql) {
