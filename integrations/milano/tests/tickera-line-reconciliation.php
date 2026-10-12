@@ -8,7 +8,7 @@ function milano_ticket_line_reconcile( $expected, $issued ) {
     $ids = array();
     $hashes = array();
     foreach ( $expected as $line => $count ) {
-        if ( ! is_string( $line ) || ! preg_match( '/^[0-9]+$/', $line )
+        if ( ! preg_match( '/^[0-9]+$/', (string) $line )
             || ! is_int( $count ) || $count < 1 ) {
             return array( 'ok'=>false, 'reason'=>'invalid_expected_line' );
         }
