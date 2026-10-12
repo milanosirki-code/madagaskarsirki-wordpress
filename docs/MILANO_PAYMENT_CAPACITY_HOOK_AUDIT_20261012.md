@@ -25,3 +25,12 @@ Tarih: 12 Ekim 2026. Kaynak: mevcut GitHub kodu; canlı ödeme işlemi yapılmad
 - MDG merkezinin `commit_order` fonksiyonunun SQL transaction/idempotency kontrolü bu denetimde henüz ayrıntılı incelenmedi.
 - Tickera vendor otomasyonunun hangi sipariş statüsünde PDF/QR ürettiği hâlâ belirsiz.
 - Milano'nun ayrı domain WooCommerce siparişi ile Madagaskar'ın merkez MDG kapasite defterinin nasıl eşleşeceği planlanmalıdır. Bir siteye bağlı ödeme siparişi diğer sitenin checkout'u değildir.
+
+## Additional finding — MDG_Capacity::commit_order()
+File `wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php` was inspected:
+- Reads holds with `SELECT ... WHERE order_id=%d AND status='held'` **before** starting the per-row transaction.
+- For each selected row executes `START TRANSACTION`, increments `sold_units`, decrements `held_units`, then updates hold status to `sold`, commits.
+- With sequential callbacks, the second read sees no `held` rows and commonly does not increment twice.
+- **Potential concurrency race:** two simultaneous callbacks could both read the same `held` row before either transaction starts and each increment `sold_units`; no `SELECT ... FOR UPDATE` or conditional `UPDATE holds ... WHERE status='held'` gate was evident in this method. This is a code-level risk, **not evidence that a live double-sale occurred**.
+- No successful update/commit check of the hold status transition was seen in this method. Stage a two-worker same-order double-callback regression test, then design one atomic hold-state transition before capacity increment; verify rollback and refunds.
+- Do **not** hotpatch the active capacity service without data/transaction review and live approval.
