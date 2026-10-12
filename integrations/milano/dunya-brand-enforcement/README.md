@@ -8,7 +8,7 @@
 - Dünya Organizasyon'un merkezi MDG/WooCommerce/Tickera/PayTR altyapısı ortak olabilir; iki sitenin katalogları/checkout erişimleri ayrıdır.
 
 ## Kanonik sahiplik kaydı (tasarım)
-`dunya_event_owner_brand_map_v1` WordPress seçeneği `{ event_id: 'milano'|'madagaskar' }` şeklinde **tekil event ID -> tek marka** tutar. Bu modül seçenek değerini sadece okur, otomatik atama ya da marka değiştirme arayüzü içermez.
+Güncel kaynak, doğrulanmış etkinlik → **tek etkin MMC programı** bağlantısıdır: `MMC_MDG_Bridge_Service::table()` içinde `mdg_event_id`, `is_active=1`, tek `program_id`; ardından `MMC_Program_Service::get_program()->brand` değeri normalleştirilir. Önceden önerilen `dunya_event_owner_brand_map_v1` seçenek haritası **kaldırıldı**: iki farklı marka kaynağının çelişmesine izin verilmez. Boş/çift aktif bağlantı, kayıp program, bilinmeyen marka güvenli varsayılan olarak engellenir. Modül hiçbir marka ataması yapmaz.
 
 - **Hiçbir etkinlik bu sürümce otomatik sınıflandırılmaz.** Özellikle geçmiş satışta olan programların markası etiket/il/tarih adına bakılarak değiştirilemez.
 - Boş/bilinmeyen/çelişkili sahiplik = satış izni yok. Bu kural mevcut Madagaskar ürünlerini de engelleyebilir. Bu sebeple **tüm geçerli etkinlikler elle gözden geçirilip eşlenmeden canlıya alma yasak**.
