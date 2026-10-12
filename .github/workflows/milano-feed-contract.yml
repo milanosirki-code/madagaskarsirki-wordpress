@@ -39,6 +39,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
           php -l integrations/milano/tests/central-eligibility-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
+          php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
+          php -l integrations/milano/tests/paytr-callback-preflight-contract.php
           php -l integrations/milano/tests/central-preflight-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
           php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
@@ -91,6 +93,14 @@ jobs:
           set -euo pipefail
           for scenario in valid sort_items random_nonce tamper_event tamper_session tamper_quantity tamper_brand extra_price buyer_email wrong_key weak_key expired clock_skew future_within_skew ttl_override signature_garbage negative_id duplicate_ticket invalid_qty unknown_field_item untrusted_code reordered_fields empty_items duplicate_pre_sign too_many_units missing_items replay_contract; do
             php integrations/milano/tests/checkout-intent-contract.php "$scenario"
+          done
+
+      - name: PayTR signed callback order-attempt preflight contract (staging only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid wrong_brand empty_brand wrong_gateway wrong_order wrong_pending_oid missing_attempt duplicate_attempt failed_token other_attempt_oid attempt_amount_changed order_amount_changed wrong_currency attempt_currency tamper_status tamper_paid_total tamper_oid invalid_hash weak_key missing_field invalid_notice_total unsigned_payment_changed unsigned_currency_changed underpayment installment_difference failed_callback already_completed already_refunded already_cancelled failed_order invalid_order_total missing_stored_order_meta untrusted_extra_callback_field spoofed_meta_brand; do
+            php integrations/milano/tests/paytr-callback-preflight-contract.php "$scenario"
           done
 
       - name: MDG payment capacity duplicate callback contract
