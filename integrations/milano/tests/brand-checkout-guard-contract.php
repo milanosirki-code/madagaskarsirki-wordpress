@@ -23,16 +23,27 @@ class MMC_Program_Service {
     public static function normalized_program_brand( $v ) { return $v; }
 }
 class MMC_MDG_Bridge_Service {
+    public static function table() { return 'wp_mmc_mdg_event_bridge'; }
     public static function program_for_mdg_event( $event_id ) {
-        return 22 === $event_id ? 20 : ( 33 === $event_id ? 30 : 0 );
+        expect_guard( false, 'legacy fallback helper must never grant brand ownership' );
     }
 }
+$bridgeLinks = array( 22 => array( 20 ), 33 => array( 30 ) );
 class GuardMockDB {
     public function prepare( $sql, ...$args ) {
+        if ( false !== strpos( $sql, 'SELECT program_id' ) ) {
+            expect_guard( 1 === count( $args ), 'brand lookup requires event id' );
+            expect_guard( false !== strpos( $sql, 'is_active=1 LIMIT 2' ), 'brand lookup must reject multiple owners' );
+            return 'BRIDGE:' . $args[0];
+        }
         expect_guard( 2 === count( $args ), 'two product identifiers required' );
         return implode( ':', $args );
     }
     public function get_col( $prepared ) {
+        global $bridgeLinks;
+        if ( 0 === strpos( $prepared, 'BRIDGE:' ) ) {
+            return $bridgeLinks[ (int) substr( $prepared, 7 ) ] ?? array();
+        }
         if ( '202:101' === $prepared ) { return array( 22 ); }
         if ( '303:101' === $prepared ) { return array( 33 ); }
         if ( '404:101' === $prepared ) { return array( 22, 33 ); }
@@ -43,6 +54,12 @@ $wpdb = new GuardMockDB();
 require dirname( __DIR__ ) . '/milano-brand-checkout-guard/milano-brand-checkout-guard.php';
 expect_guard( 'milano' === dmbg_site_brand(), 'host to brand' );
 expect_guard( 'milano' === dmbg_product_owner( 101, 202 ), 'Milano ticket mapping' );
+$bridgeLinks[22] = array( 20, 30 );
+expect_guard( null === dmbg_event_owner( 22 ), 'ambiguous active bridges must deny owner' );
+expect_guard( null === dmbg_product_owner( 101, 202 ), 'ambiguous active bridges must deny product' );
+$bridgeLinks[22] = array();
+expect_guard( null === dmbg_event_owner( 22 ), 'missing active bridge must not use legacy fallback' );
+$bridgeLinks[22] = array( 20 );
 expect_guard( 'madagaskar' === dmbg_product_owner( 101, 303 ), 'Madagaskar ticket mapping' );
 expect_guard( null === dmbg_product_owner( 101, 404 ), 'ambiguous product mapping must fail' );
 expect_guard( null === dmbg_product_owner( 101, 999 ), 'unmapped product must fail' );
