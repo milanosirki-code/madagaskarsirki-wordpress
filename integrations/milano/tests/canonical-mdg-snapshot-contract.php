@@ -156,7 +156,12 @@ if($expected==='null'){
     demand_snapshot(is_array($snap),'valid central snapshot missing');
     demand_snapshot($snap['event']['owner_brand']==='milano','snapshot owner mismatch');
     demand_snapshot($snap['product']['currency']==='TRY','wrong currency');
-    demand_snapshot($snap['session']['start_utc']>$now,'session UTC conversion failed');
+    demand_snapshot(is_int($snap['session']['start_utc']) && $snap['session']['start_utc']>0,'UTC conversion invalid');
+    if ($scenario==='past_session') {
+        demand_snapshot($snap['session']['start_utc']<=$now,'fixture must be in the past');
+    } else {
+        demand_snapshot($snap['session']['start_utc']>$now,'future session UTC conversion failed');
+    }
     demand_snapshot($snap['tickets'][0]['price_cents']===49000,'price parser mismatch');
     $items=$scenario==='family4'
         ?array(array('code'=>'FAMILY4','quantity'=>1))
