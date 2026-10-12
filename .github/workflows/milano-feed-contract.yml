@@ -134,3 +134,8 @@ jobs:
           for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
           done
+
+      - name: Full Tickera invariant audit contract
+        run: |
+          php -l integrations/milano/tests/tickera-full-audit.php
+          php integrations/milano/tests/tickera-full-audit-contract.php
