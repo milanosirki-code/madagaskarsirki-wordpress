@@ -1,0 +1,120 @@
+<?php
+/**
+ * Composed central checkout preflight, pure fixtures only.
+ * php integrations/milano/tests/central-preflight-contract.php <scenario>
+ */
+error_reporting( E_ALL );
+define( 'ABSPATH', __DIR__ );
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-checkout-intent.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-order-claim-registry.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-eligibility.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-preflight.php';
+function expect_preflight( $v, $m ) {
+    if ( ! $v ) { fwrite(STDERR, "FAIL {$m}\n"); exit(1); }
+}
+class PreflightDB {
+    public $rows = array();
+    public $insertCount = 0;
+    public $selectKey = null;
+    public function insert( $table, $row, $formats ) {
+        ++$this->insertCount;
+        if ( isset($this->rows[$row['request_id']]) ) { return false; }
+        $this->rows[$row['request_id']] = $row;
+        return 1;
+    }
+    public function prepare( $sql, ...$args ) {
+        $this->selectKey = $args[0] ?? '';
+        return 'MOCK_SQL';
+    }
+    public function get_row( $sql ) {
+        return isset($this->rows[$this->selectKey]) ? (object) $this->rows[$this->selectKey] : null;
+    }
+}
+$case = $argv[1] ?? 'new';
+$now=1781000000;
+$key=str_repeat('only-mock-not-secret-', 3);
+$intent=mcpi_make_intent(72,93,array(array('code'=>'ADULT','quantity'=>2),array('code'=>'CHILD','quantity'=>2)),$now);
+$sig=mcpi_sign($intent,$key);
+$db=new PreflightDB();
+$table='wp_dunya_milano_checkout_intents';
+$snapshot=array(
+    'event'=>array('id'=>72,'owner_brand'=>'milano','status'=>'onsale','sale_start_utc'=>$now-1000,'sale_end_utc'=>null),
+    'session'=>array(
+        'id'=>93,'event_id'=>72,'status'=>'onsale','start_utc'=>$now+86400,
+        'closed_by_time'=>false,'wc_product_id'=>1234,'tickera_event_id'=>55,
+        'capacity_total'=>100,'available_units'=>20,'sale_start_utc'=>null,'sale_end_utc'=>null),
+    'product'=>array('id'=>1234,'published'=>true,'variable'=>true,'currency'=>'TRY'),
+    'tickets'=>array(
+        array('code'=>'ADULT','active'=>true,'variation_id'=>101,'variation_parent_id'=>1234,
+            'purchasable'=>true,'in_stock'=>true,'capacity_units'=>1,'price_cents'=>49000,'woo_price_cents'=>49000),
+        array('code'=>'CHILD','active'=>true,'variation_id'=>102,'variation_parent_id'=>1234,
+            'purchasable'=>true,'in_stock'=>true,'capacity_units'=>1,'price_cents'=>24500,'woo_price_cents'=>24500),
+    ),
+);
+$lookups=0;
+$lookup=function($eid,$sid)use(&$snapshot,&$lookups){
+    ++$lookups;
+    expect_preflight($eid===72 && $sid===93,'must use signed event/session IDs');
+    return $snapshot;
+};
+$expect='claimed';
+switch($case) {
+    case 'new':break;
+    case 'repeat_processing':break;
+    case 'existing_order':break;
+    case 'same_id_different_items':break;
+    case 'wrong_signature':
+        $sig=str_repeat('0',64);$expect='rejected';break;
+    case 'expired':
+        $now+=91;$expect='rejected';break;
+    case 'wrong_brand':
+        $snapshot['event']['owner_brand']='madagaskar';$expect='blocked';break;
+    case 'missing_brand':
+        unset($snapshot['event']['owner_brand']);$expect='blocked';break;
+    case 'out_of_stock':
+        $snapshot['session']['available_units']=0;$expect='blocked';break;
+    case 'price_mismatch':
+        $snapshot['tickets'][0]['woo_price_cents']=49900;$expect='blocked';break;
+    case 'cancelled_session':
+        $snapshot['session']['status']='cancelled';$expect='blocked';break;
+    case 'server_error':
+        $lookup=function($eid,$sid)use(&$lookups){++$lookups;throw new RuntimeException('unavailable');};
+        $expect='unavailable';break;
+    case 'no_lookup':$lookup='not_callable';$expect='rejected';break;
+    case 'invalid_db':$db=new stdClass();$expect='rejected';break;
+    default:expect_preflight(false,'unknown scenario');
+}
+if(in_array($case,array('repeat_processing','existing_order','same_id_different_items'),true)) {
+    $first=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
+    expect_preflight($first['status']==='claimed','initial claim missing');
+    if($case==='existing_order') {
+        $db->rows[$intent['request_id']]['state']='ready';
+        $db->rows[$intent['request_id']]['order_id']=5001;
+        $expect='existing_order';
+    } elseif($case==='repeat_processing') {
+        $expect='processing';
+    } else {
+        $intent['items'][0]['quantity']=3;
+        $sig=mcpi_sign($intent,$key);
+        $expect='conflict';
+    }
+}
+$r=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
+expect_preflight($r['status']===$expect,'status '.$r['status'].' rather than '.$expect);
+if('claimed'===$expect) {
+    expect_preflight(!empty($r['claim_token']) && $r['quote']['quote_only']===true,'claim/quote contract broken');
+    expect_preflight($r['quote']['admission_units']===4 && $r['quote']['total_cents']===147000,'central price/units mismatch');
+} else {
+    expect_preflight(!isset($r['claim_token'])&&!isset($r['quote']),'secret worker state leaked on non-claim');
+}
+if(in_array($case,array('wrong_signature','expired','no_lookup'),true)) {
+    expect_preflight($lookups===0 && $db->insertCount===0,'invalid request touched DB/snapshot');
+}
+if(in_array($case,array('wrong_brand','missing_brand','out_of_stock','price_mismatch','cancelled_session','server_error'),true)){
+    expect_preflight($db->insertCount===0,'blocked or unavailable created registry row');
+}
+if('repeat_processing'===$case || 'existing_order'===$case || 'same_id_different_items'===$case) {
+    expect_preflight(count($db->rows)===1,'duplicate created extra record');
+}
+if('existing_order'===$case){ expect_preflight($r['order_id']===5001,'failed to reuse single canonical order'); }
+echo "PASS {$case}\n";
