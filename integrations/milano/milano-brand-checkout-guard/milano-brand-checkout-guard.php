@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Satış Koruması (Taslak)
  * Description: Milano/Madagaskar marka sınırını WooCommerce sepet girişinde doğrular. Varsayılan olarak devre dışı; yalnız test ortamı içindir.
- * Version: 0.5.0
+ * Version: 0.6.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -14,6 +14,34 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 function dmbg_enabled() {
     return defined( 'DUNYA_BRAND_GUARD_ENABLED' ) && true === DUNYA_BRAND_GUARD_ENABLED;
 }
+/**
+ * Canonical event owner for public catalogue, deep link and sales guards.
+ * The ownership comes only from a verified MMC/MDG bridge relationship.
+ */
+function dmbg_event_owner( $event_id ) {
+    if ( ! class_exists( 'MMC_MDG_Bridge_Service' ) || ! class_exists( 'MMC_Program_Service' )
+        || ! method_exists( 'MMC_MDG_Bridge_Service', 'program_for_mdg_event' ) ) { return null; }
+    $pid = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( absint( $event_id ) );
+    $program = $pid > 0 ? MMC_Program_Service::get_program( $pid ) : null;
+    if ( ! $program || ! isset( $program->brand ) ) { return null; }
+    $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
+    if ( 'Milano Sirki' === $brand ) { return 'milano'; }
+    if ( 'Madagaskar Sirki' === $brand ) { return 'madagaskar'; }
+    return null;
+}
+
+/**
+ * Fail closed on owner mismatch only when the pilot has explicitly been
+ * enabled; other visibility-denying filters always win.
+ */
+function dmbg_public_event_visibility( $visible, $event_id, $context = '' ) {
+    if ( ! $visible ) { return false; }
+    if ( ! dmbg_enabled() ) { return $visible; }
+    $site = dmbg_site_brand();
+    return null !== $site && $site === dmbg_event_owner( (int) $event_id );
+}
+add_filter( 'dunya_brand_event_visible_on_site', 'dmbg_public_event_visibility', 10, 3 );
+
 function dmbg_site_brand() {
     $host = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
     $host = strtolower( (string) $host );
@@ -38,13 +66,7 @@ function dmbg_product_owner( $product_id, $variation_id = 0 ) {
         $target, absint( $product_id )
     ) );
     if ( count( $rows ) !== 1 ) { return null; }
-    $pid = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( (int) $rows[0] );
-    $program = $pid ? MMC_Program_Service::get_program( $pid ) : null;
-    if ( ! $program || ! isset( $program->brand ) ) { return null; }
-    $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
-    if ( 'Milano Sirki' === $brand ) { return 'milano'; }
-    if ( 'Madagaskar Sirki' === $brand ) { return 'madagaskar'; }
-    return null;
+    return dmbg_event_owner( (int) $rows[0] );
 }
 
 /**
