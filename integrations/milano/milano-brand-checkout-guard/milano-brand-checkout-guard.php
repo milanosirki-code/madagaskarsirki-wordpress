@@ -184,3 +184,15 @@ function dmbg_payment_settlement_allowed( $order ) {
     }
     return true;
 }
+
+/**
+ * Classic checkout: validate actual order lines before the order is saved.
+ * A late payment_complete hook cannot safely stop already-paid settlement.
+ */
+function dmbg_classic_checkout_create_order( $order, $data ) {
+    if ( ! dmbg_enabled() ) { return; }
+    if ( ! dmbg_order_owners_valid( $order ) ) {
+        throw new \Exception( 'Bu sipariş bu satış markasına ait değil.' );
+    }
+}
+add_action( 'woocommerce_checkout_create_order', 'dmbg_classic_checkout_create_order', 100, 2 );
