@@ -26,6 +26,8 @@ jobs:
           php -l integrations/milano/milano-shared-events/milano-shared-events.php
           php -l integrations/milano/tests/feed-contract.php
           php -l integrations/milano/tests/consumer-contract.php
+          php -l integrations/milano/dunya-brand-enforcement/dunya-brand-enforcement.php
+          php -l integrations/milano/tests/brand-enforcement-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -40,4 +42,12 @@ jobs:
           set -euo pipefail
           for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid missing_brand wrong_brand unknown_brand; do
             php integrations/milano/tests/consumer-contract.php "$scenario"
+          done
+
+      - name: Exclusive brand direct-cart and checkout guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
+            php integrations/milano/tests/brand-enforcement-contract.php "$scenario"
           done
