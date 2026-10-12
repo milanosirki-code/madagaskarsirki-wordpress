@@ -18,4 +18,7 @@ $missing=$issued; array_pop($missing);
 verify_line( milano_ticket_line_reconcile($expected,$missing)['reason']==='line_count_mismatch','missing ticket');
 $plaintext=$issued; $plaintext[0]['code_hash']='raw';
 verify_line( milano_ticket_line_reconcile($expected,$plaintext)['reason']==='invalid_ticket_record','no raw code');
+verify_line( milano_ticket_line_reconcile(array('0'=>1),array())['reason']==='invalid_expected_line','zero expected line denied');
+$bad_line = $issued; $bad_line[0]['line_id']='0';
+verify_line( milano_ticket_line_reconcile($expected,$bad_line)['reason']==='invalid_ticket_record','zero issued line denied');
 echo "PASS per-line ticket reconciliation\n";
