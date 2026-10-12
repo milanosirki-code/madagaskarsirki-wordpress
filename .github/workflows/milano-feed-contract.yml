@@ -25,10 +25,19 @@ jobs:
           php -l integrations/milano/dunya-milano-session-feed/dunya-milano-session-feed.php
           php -l integrations/milano/milano-shared-events/milano-shared-events.php
           php -l integrations/milano/tests/feed-contract.php
+          php -l integrations/milano/tests/consumer-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
           set -euo pipefail
           for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types; do
             php integrations/milano/tests/feed-contract.php "$scenario"
+          done
+
+      - name: Isolated Milano client contract cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid; do
+            php integrations/milano/tests/consumer-contract.php "$scenario"
           done
