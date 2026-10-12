@@ -84,3 +84,8 @@ jobs:
           for scenario in valid sort_items random_nonce tamper_event tamper_session tamper_quantity tamper_brand extra_price buyer_email wrong_key weak_key expired clock_skew future_within_skew ttl_override signature_garbage negative_id duplicate_ticket invalid_qty unknown_field_item untrusted_code reordered_fields empty_items duplicate_pre_sign too_many_units missing_items replay_contract; do
             php integrations/milano/tests/checkout-intent-contract.php "$scenario"
           done
+
+      - name: MDG payment capacity duplicate callback contract
+        run: |
+          php -l integrations/milano/tests/mdg-payment-capacity-contract.php
+          php integrations/milano/tests/mdg-payment-capacity-contract.php
