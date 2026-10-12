@@ -26,6 +26,8 @@ jobs:
           php -l integrations/milano/milano-shared-events/milano-shared-events.php
           php -l integrations/milano/tests/feed-contract.php
           php -l integrations/milano/tests/consumer-contract.php
+          php -l integrations/milano/milano-brand-checkout-guard/milano-brand-checkout-guard.php
+          php -l integrations/milano/tests/brand-checkout-guard-contract.php
           php -l integrations/milano/dunya-brand-enforcement/dunya-brand-enforcement.php
           php -l integrations/milano/tests/brand-enforcement-contract.php
       - name: Isolated feed contract cases
@@ -51,3 +53,6 @@ jobs:
           for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
             php integrations/milano/tests/brand-enforcement-contract.php "$scenario"
           done
+
+      - name: Isolated brand purchase gate contract
+        run: php integrations/milano/tests/brand-checkout-guard-contract.php
