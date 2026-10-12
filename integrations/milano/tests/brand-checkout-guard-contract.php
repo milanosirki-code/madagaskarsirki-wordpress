@@ -71,7 +71,26 @@ class GuardCart { private $items; public function __construct( $items ) { $this-
 class GuardWC { public $cart; public function __construct( $cart ) { $this->cart = $cart; } }
 $guard_wc = new GuardWC( new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>202 ) ) ) );
 function WC() { global $guard_wc; return $guard_wc; }
-dmbg_store_api_checkout_order( null, null );
+class GuardOrderItem {
+    private $product; private $variation;
+    public function __construct( $product, $variation ) { $this->product=$product; $this->variation=$variation; }
+    public function get_product_id() { return $this->product; }
+    public function get_variation_id() { return $this->variation; }
+}
+class GuardOrder {
+    private $items;
+    public function __construct( $items ) { $this->items=$items; }
+    public function get_items( $type = 'line_item' ) { return $this->items; }
+}
+$valid_order = new GuardOrder( array( new GuardOrderItem( 101, 202 ) ) );
+$invalid_order = new GuardOrder( array( new GuardOrderItem( 101, 303 ) ) );
+expect_guard( true === dmbg_order_owners_valid( $valid_order ), 'matching order lines accepted' );
+expect_guard( false === dmbg_order_owners_valid( $invalid_order ), 'cross-brand order lines refused' );
+dmbg_store_api_checkout_order( $valid_order, null );
+$wrong_order_denied = false;
+try { dmbg_store_api_checkout_order( $invalid_order, null ); }
+catch ( Exception $ex ) { $wrong_order_denied = true; }
+expect_guard( $wrong_order_denied, 'valid cart cannot override wrong order lines' );
 $guard_wc->cart = new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>303 ) ) );
 $checkout_denied = false;
 try { dmbg_store_api_checkout_order( null, null ); }
