@@ -31,3 +31,10 @@
 Resmî PayTR: https://dev.paytr.com/iframe-api/iframe-api-2-adim
 Kod/PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/235
 Durum: Milano Çok Yakında / satış kapalı; Madagaskar canlı satışları değişmedi.
+
+## Aynı merchant_oid için atomik callback claim (ek taslak)
+- `integrations/milano/checkout-intent-protocol/milano-paytr-settlement-claim.php`: ön kontrolün `ready_success / ready_failure` kararı sonrasında, `merchant_oid` PRIMARY KEY (InnoDB) için insert-first claim yapar. Başka worker'da aynı OID => `processing`; bitmiş => `already_final`; hash/order/status çatışması => `conflict`; bozuk/crash => `reconcile_required`. Tarihi geçmiş `claimed` satırı **otomatik devralınmaz**. DDL sadece metin üretir, tablo oluşturmaz.
+- `integrations/milano/tests/paytr-settlement-claim-contract.php`: tekrarlı worker, yanlış token, tek seferlik finalize, signed error, stale claim ve eksik bağlantı için izole testler. Gerçek InnoDB yarış testi değildir.
+- **Önemli ikinci koruma:** `merchant_oid` tekilliği **aynı Woo siparişinin iki ayrı PayTR ödeme denemesi** arasında yeterli değildir. Sipariş düzeyi atomik durum kilidi, nihai MDG stok hold/commit, son koltuk, tek Tickera QR kimliği ve çökme sonrası mutabakat hâlâ zorunludur.
+- **Daha önemli işlem sırası:** `finish()` yalnız merkezi Woo/MDG/Tickera etkileri tekillik garanti edilerek tamamlandıktan sonra ve doğrulanmış worker token ile çağrılmalıdır. Bu koşulu sağlayan canlı servis **henüz mevcut değil**. Bu kodu tek başına WordPress'e kurmak veya doğrudan callback'e bağlamak yasaktır.
+
