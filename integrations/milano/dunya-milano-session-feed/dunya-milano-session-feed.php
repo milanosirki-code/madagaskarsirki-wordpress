@@ -58,7 +58,21 @@ function dmsf_ready() {
  * MUST NEVER be exposed to Milano.
  */
 function dmsf_event_owner_brand( $event_id ) {
-    $owner = apply_filters( 'dunya_milano_canonical_event_owner', null, (int) $event_id );
+    // Verified MMC<->MDG bridge is the sole event-to-program identity.
+    // Do not guess from title or venue; ambiguous legacy events remain hidden.
+    $owner = null;
+    if ( class_exists( 'MMC_MDG_Bridge_Service' )
+        && class_exists( 'MMC_Program_Service' )
+        && method_exists( 'MMC_MDG_Bridge_Service', 'program_for_mdg_event' ) ) {
+        $program_id = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( (int) $event_id );
+        $program = $program_id > 0 ? MMC_Program_Service::get_program( $program_id ) : null;
+        if ( $program && isset( $program->brand ) ) {
+            $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
+            if ( 'Milano Sirki' === $brand ) { $owner = 'milano'; }
+            if ( 'Madagaskar Sirki' === $brand ) { $owner = 'madagaskar'; }
+        }
+    }
+    $owner = apply_filters( 'dunya_milano_canonical_event_owner', $owner, (int) $event_id );
     return in_array( $owner, array( 'milano', 'madagaskar' ), true ) ? $owner : null;
 }
 
