@@ -74,6 +74,15 @@ class MMC_Admin {
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mmc-form-grid">
                     <input type="hidden" name="action" value="mmc_create_program">
                     <?php wp_nonce_field( 'mmc_create_program', 'mmc_nonce' ); ?>
+                    <label>Satış Markası
+                        <select name="brand" required>
+                            <option value="">Marka seçin</option>
+                            <?php foreach ( MMC_Program_Service::brand_options() as $brand_value => $brand_label ) : ?>
+                                <option value="<?php echo esc_attr( $brand_value ); ?>"><?php echo esc_html( $brand_label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="description">Her program yalnız seçilen markanın sitesinde satılacaktır. Sonradan otomatik marka değişimi yapılmaz.</small>
+                    </label>
                     <label>İl
                         <select name="province_name" required>
                             <option value="">İl seçin</option>
