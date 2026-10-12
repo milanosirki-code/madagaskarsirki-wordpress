@@ -99,3 +99,8 @@ jobs:
           for scenario in new_claim insert_unavailable bad_signature expired weak_secret bad_table same_in_flight parallel_worker attach_once duplicate_ready different_payload_same_request changed_event_same_request unauthorized_worker invalid_order invalid_request reuse_order_other_request no_automatic_claim_timeout invalid_state broken_ready db_update_failure order_id_wrong_type; do
             php integrations/milano/tests/order-claim-contract.php "$scenario"
           done
+
+      - name: Tickera ticket dry-run duplicate fingerprint contract
+        run: |
+          php -l integrations/milano/tests/tickera-ticket-dry-run.php
+          php integrations/milano/tests/tickera-ticket-dry-run-contract.php
