@@ -12,8 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 final class Dunya_Event_Brand_Guard {
-    const OPTION = 'dunya_event_owner_brand_map_v1';
-
     public static function hooks() {
         add_filter( 'dunya_milano_canonical_event_owner', array( __CLASS__, 'owner_filter' ), 10, 2 );
         add_filter( 'woocommerce_add_to_cart_validation', array( __CLASS__, 'validate_add_to_cart' ), 1, 6 );
@@ -28,17 +26,44 @@ final class Dunya_Event_Brand_Guard {
     }
 
     /**
-     * Only an explicitly approved event-ID mapping is authoritative.
-     * No fallback based on titles, venues, referrers, domains or old labels.
-     * The map is read-only in this plugin; assignments need separate review.
+     * Read a SINGLE authoritative MMC -> MDG active program bridge.
+     * Never trust a second option map, the browser, event title or hostname.
+     * Unknown, inactive and duplicate program bridges must fail closed.
      */
     public static function owner_filter( $owner, $event_id ) {
         $id = absint( $event_id );
-        if ( ! $id ) { return null; }
-        $map = get_option( self::OPTION, array() );
-        if ( ! is_array( $map ) ) { return null; }
-        $brand = isset( $map[ (string) $id ] ) ? $map[ (string) $id ] : null;
-        return in_array( $brand, array( 'milano', 'madagaskar' ), true ) ? $brand : null;
+        if ( ! $id || ! class_exists( 'MMC_MDG_Bridge_Service' )
+            || ! class_exists( 'MMC_Program_Service' )
+            || ! method_exists( 'MMC_MDG_Bridge_Service', 'table' )
+            || ! method_exists( 'MMC_Program_Service', 'get_program' )
+            || ! method_exists( 'MMC_Program_Service', 'normalized_program_brand' ) ) {
+            return null;
+        }
+        global $wpdb;
+        if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'prepare' )
+            || ! method_exists( $wpdb, 'get_col' ) ) {
+            return null;
+        }
+        $table = MMC_MDG_Bridge_Service::table();
+        if ( ! is_string( $table ) || ! preg_match( '/\\A[A-Za-z0-9_]+\\z/D', $table ) ) {
+            return null;
+        }
+        $program_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT program_id FROM {$table} WHERE mdg_event_id=%d AND is_active=1 LIMIT 2",
+            $id
+        ) );
+        if ( ! is_array( $program_ids ) || 1 !== count( $program_ids )
+            || (int) $program_ids[0] < 1 ) {
+            return null;
+        }
+        $program = MMC_Program_Service::get_program( (int) $program_ids[0] );
+        if ( ! is_object( $program ) || ! isset( $program->brand ) ) {
+            return null;
+        }
+        $normalized = MMC_Program_Service::normalized_program_brand( $program->brand );
+        if ( 'Milano Sirki' === $normalized ) { return 'milano'; }
+        if ( 'Madagaskar Sirki' === $normalized ) { return 'madagaskar'; }
+        return null;
     }
 
     public static function owner( $event_id ) {
@@ -156,4 +181,8 @@ final class Dunya_Event_Brand_Guard {
         }
     }
 }
-Dunya_Event_Brand_Guard::hooks();
+// Never auto-attach a payment/cart guard merely because the draft plugin is
+// installed. A separate staging-only opt-in and reconciliation gate is needed.
+if ( defined( 'DUNYA_BRAND_GUARD_ENABLED' ) && true === DUNYA_BRAND_GUARD_ENABLED ) {
+    Dunya_Event_Brand_Guard::hooks();
+}
