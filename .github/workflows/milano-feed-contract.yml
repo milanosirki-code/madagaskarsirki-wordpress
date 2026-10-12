@@ -36,6 +36,8 @@ jobs:
           php -l integrations/milano/tests/checkout-intent-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-order-claim-registry.php
           php -l integrations/milano/tests/order-claim-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
+          php -l integrations/milano/tests/central-eligibility-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -109,3 +111,11 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-line-reconciliation.php
           php integrations/milano/tests/tickera-line-reconciliation-contract.php
+
+      - name: Canonical central MDG ticket and price eligibility contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid family_package wrong_brand unknown_brand event_draft event_id_mismatch session_id_mismatch session_event_mismatch session_closed session_past cutoff_closed event_sale_future event_sale_ended session_sale_future session_sale_ended missing_window product_mismatch unpublished_product simple_product wrong_currency no_tickera zero_capacity insufficient_capacity capacity_negative available_greater_than_total unknown_type inactive_type unavailable_variation unpurchasable_variation variation_parent_mismatch wrong_price float_price negative_price duplicate_codes free_checkout overpriced too_many_admissions malformed_intent missing_snapshot; do
+            php integrations/milano/tests/central-eligibility-contract.php "$scenario"
+          done
