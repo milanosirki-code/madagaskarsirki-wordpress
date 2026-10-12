@@ -1,147 +1,125 @@
 <?php
 /**
  * Plugin Name: Milano Sirki - Ortak Etkinlikler (Taslak)
- * Description: Ortak Madagaskar/Milano seanslarini salt-okunur olarak yonetici onizlemesinde gosterir. Satis/odeme yapmaz.
- * Version: 0.1.0
+ * Description: Madagaskar'in kanonik MDG seans beslemesini yoneticilere salt okunur gosterir. Satis, odeme veya QR uretmez.
+ * Version: 0.2.0
  * Requires PHP: 7.4
  * Text Domain: milano-shared-events
+ *
+ * WARNING: Draft only. Do not deploy without server-side secret setup and tests.
  */
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-/**
- * This is a deliberate pilot gate: public visitors never see the source-derived
- * event cards until a canonical, capacity-aware feed is verified.
- */
 function mso_events_public_enabled() {
+    // This milestone never renders inventory to public visitors.
     return false;
 }
 
+/**
+ * Server-to-server only. No endpoint override from request parameters.
+ * No cache: inventory information must not be treated as checkout authority.
+ * Neither token nor source payload is written to WordPress options or logs.
+ */
 function mso_events_source() {
-    $cached = get_transient( 'mso_events_readonly_v1' );
-    if ( is_array( $cached ) ) {
-        return $cached;
+    if ( ! defined( 'DUNYA_MILANO_FEED_TOKEN' ) || strlen( (string) DUNYA_MILANO_FEED_TOKEN ) < 32 ) {
+        return new WP_Error( 'mso_token_missing', 'Besleme baglantisi hazir degil.' );
     }
-
-    // Fixed public WordPress REST resource. No arbitrary URL/user input.
-    $url = 'https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content';
-    $response = wp_safe_remote_get( $url, array(
-        'timeout'     => 8,
-        'redirection' => 2,
-        'headers'     => array( 'Accept' => 'application/json' ),
-    ) );
-    if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-        return new WP_Error( 'mso_feed_unavailable', 'Etkinlik kaynagi su anda kullanilamiyor.' );
-    }
-    $payload = json_decode( wp_remote_retrieve_body( $response ), true );
-    if ( ! is_array( $payload ) || ! isset( $payload['content']['rendered'] )
-        || ! is_string( $payload['content']['rendered'] ) ) {
-        return new WP_Error( 'mso_feed_invalid', 'Etkinlik kaynagi beklenmedik bicimde.' );
-    }
-
-    $result = mso_events_parse_html( $payload['content']['rendered'] );
-    if ( is_wp_error( $result ) ) {
-        return $result;
-    }
-
-    set_transient( 'mso_events_readonly_v1', $result, 5 * MINUTE_IN_SECONDS );
-    return $result;
-}
-
-function mso_events_clean( $text ) {
-    $text = html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES, 'UTF-8' );
-    return trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
-}
-
-function mso_events_node_by_class( $xpath, $node, $name ) {
-    $found = $xpath->query(
-        ".//*[contains(concat(' ', normalize-space(@class), ' '), ' " . $name . " ')]",
-        $node
+    $response = wp_safe_remote_get(
+        'https://madagaskarsirki.com/wp-json/dunya-milano/v1/sessions',
+        array(
+            'timeout'             => 8,
+            'redirection'         => 0,
+            'limit_response_size' => 262144,
+            'sslverify'           => true,
+            'headers'             => array(
+                'Accept'             => 'application/json',
+                'Cache-Control'      => 'no-store',
+                'X-Dunya-Milano-Key' => (string) DUNYA_MILANO_FEED_TOKEN,
+            ),
+        )
     );
-    return $found && $found->length ? $found->item( 0 ) : null;
-}
-
-function mso_events_parse_html( $html ) {
-    if ( ! class_exists( 'DOMDocument' ) ) {
-        return new WP_Error( 'mso_dom_missing', 'DOMDocument kullanilamiyor.' );
+    if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+        return new WP_Error( 'mso_feed_unavailable', 'Etkinlik servisine su anda erisilemiyor.' );
     }
-    $previous = libxml_use_internal_errors( true );
-    $dom      = new DOMDocument();
-    $loaded   = $dom->loadHTML( '<?xml encoding="utf-8" ?>' . (string) $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-    libxml_clear_errors();
-    libxml_use_internal_errors( $previous );
-    if ( ! $loaded ) {
-        return new WP_Error( 'mso_parse_failed', 'Etkinlik kartlari okunamadi.' );
+    $raw = wp_remote_retrieve_body( $response );
+    $data = json_decode( $raw, true );
+    if ( ! is_array( $data ) || 1 !== ( $data['schema_version'] ?? null )
+        || true !== ( $data['read_only'] ?? null ) || ! isset( $data['sessions'] )
+        || ! is_array( $data['sessions'] ) || ! isset( $data['generated_at'] )
+        || ! is_string( $data['generated_at'] ) ) {
+        return new WP_Error( 'mso_schema_invalid', 'Etkinlik servisi beklenmedik veri dondurdu.' );
     }
 
-    $xpath = new DOMXPath( $dom );
-    $cards = $xpath->query( "//*[contains(concat(' ', normalize-space(@class), ' '), ' msc-live-card ')]" );
-    if ( ! $cards || ! $cards->length ) {
-        return new WP_Error( 'mso_no_cards', 'Etkinlik karti bulunamadi.' );
+    // Reject stale responses and grossly skewed source clocks.
+    $generated = strtotime( $data['generated_at'] );
+    if ( ! $generated || abs( time() - $generated ) > 180 ) {
+        return new WP_Error( 'mso_stale_feed', 'Etkinlik servisi guncel degil.' );
+    }
+    if ( count( $data['sessions'] ) > 120 ) {
+        return new WP_Error( 'mso_too_many', 'Etkinlik servisi veri sinirini asti.' );
     }
 
-    $events = array();
-    foreach ( $cards as $card ) {
-        $city_node = $xpath->query( './/h3', $card )->item( 0 );
-        $date_node = mso_events_node_by_class( $xpath, $card, 'msc-live-date' );
-        $venue_node = mso_events_node_by_class( $xpath, $card, 'msc-live-venue' );
-        $times = $xpath->query(
-            ".//*[contains(concat(' ', normalize-space(@class), ' '), ' msc-session-row ')]//span",
-            $card
-        );
-
-        $city = $city_node ? mso_events_clean( $city_node->textContent ) : '';
-        $date = $date_node ? mso_events_clean( $date_node->textContent ) : '';
-        $venue = $venue_node ? mso_events_clean( $venue_node->textContent ) : '';
-        $sessions = array();
-        if ( $times ) {
-            foreach ( $times as $time ) {
-                $value = mso_events_clean( $time->textContent );
-                if ( '' !== $value ) {
-                    $sessions[] = $value;
-                }
-            }
+    $output = array();
+    foreach ( $data['sessions'] as $row ) {
+        if ( ! is_array( $row )
+            || ! isset( $row['session_id'], $row['event_id'], $row['date'],
+                        $row['time'], $row['province'], $row['venue'],
+                        $row['available_units'], $row['availability'], $row['start_utc'] )
+            || ! is_int( $row['session_id'] ) || $row['session_id'] < 1
+            || ! is_int( $row['event_id'] ) || $row['event_id'] < 1
+            || ! is_string( $row['date'] ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $row['date'] )
+            || ! is_string( $row['time'] ) || ! preg_match( '/^\d{2}:\d{2}$/', $row['time'] )
+            || ! is_int( $row['available_units'] ) || $row['available_units'] < 0
+            || ! in_array( $row['availability'], array( 'available', 'sold_out' ), true )
+            || ( 0 === $row['available_units'] ) !== ( 'sold_out' === $row['availability'] )
+            || ! is_string( $row['start_utc'] )
+            || ! is_string( $row['province'] ) || ! is_string( $row['venue'] ) ) {
+            return new WP_Error( 'mso_invalid_session', 'Seans bilgileri dogrulanamadi.' );
         }
-        $sessions = array_values( array_unique( $sessions ) );
-        if ( '' === $city || '' === $date || '' === $venue || ! $sessions ) {
+        $start = strtotime( $row['start_utc'] . ' UTC' );
+        if ( ! $start || $start <= time() ) {
             continue;
         }
-        $events[] = array(
-            'city'     => $city,
-            'date'     => $date,
-            'venue'    => $venue,
-            'sessions' => $sessions,
+        $output[] = array(
+            'session_id'      => $row['session_id'],
+            'event_id'        => $row['event_id'],
+            'province'        => sanitize_text_field( $row['province'] ),
+            'district'        => sanitize_text_field( (string) ( $row['district'] ?? '' ) ),
+            'venue'           => sanitize_text_field( $row['venue'] ),
+            'date'            => $row['date'],
+            'time'            => $row['time'],
+            'available_units' => $row['available_units'],
+            'availability'    => $row['availability'],
         );
     }
-    if ( ! $events ) {
-        return new WP_Error( 'mso_empty_feed', 'Gecerli etkinlik karti bulunamadi.' );
-    }
-    return $events;
+    return $output;
 }
 
 function mso_events_shortcode() {
     if ( ! mso_events_public_enabled() && ! current_user_can( 'manage_options' ) ) {
         return '<p class="mso-events-pending">Etkinlik takvimi hazirlaniyor. Bilet satisi henuz aktif degildir.</p>';
     }
-    $events = mso_events_source();
-    if ( is_wp_error( $events ) ) {
-        return '<p class="mso-events-pending">Etkinlik listesi su anda yuklenemiyor.</p>';
+    $sessions = mso_events_source();
+    if ( is_wp_error( $sessions ) ) {
+        return '<p class="mso-events-pending">Etkinlik verisi henuz dogrulanamiyor. Bilet satisi kapali.</p>';
+    }
+    if ( ! $sessions ) {
+        return '<p class="mso-events-pending">Satisa uygun gelecek seans bulunamadi.</p>';
     }
 
-    $output  = '<div class="mso-event-preview">';
-    $output .= '<p><strong>Yonetici onizlemesi:</strong> Kaynak, canli kapasite veya satis uygunlugu icin dogrulanmamistir.</p>';
-    $output .= '<div class="mso-event-preview__grid">';
-    foreach ( $events as $event ) {
+    $output = '<div class="mso-event-preview">';
+    $output .= '<p><strong>Yonetici test gorunumu:</strong> Salt okunur kapasite anlik degisebilir. Buradan bilet satin alinamaz.</p>';
+    foreach ( $sessions as $session ) {
         $output .= '<article class="mso-event-preview__card">';
-        $output .= '<h3>' . esc_html( $event['city'] ) . '</h3>';
-        $output .= '<p>' . esc_html( $event['date'] ) . '</p>';
-        $output .= '<p>' . esc_html( $event['venue'] ) . '</p>';
-        $output .= '<p>Seanslar: ' . esc_html( implode( ', ', $event['sessions'] ) ) . '</p>';
+        $output .= '<h3>' . esc_html( $session['province'] ) . '</h3>';
+        $output .= '<p>' . esc_html( $session['district'] . ' · ' . $session['venue'] ) . '</p>';
+        $output .= '<p>' . esc_html( $session['date'] . ' ' . $session['time'] ) . '</p>';
+        $output .= '<p>' . esc_html( $session['availability'] === 'sold_out' ? 'Kontenjan dolu' : 'Kalan birim: ' . $session['available_units'] ) . '</p>';
         $output .= '</article>';
     }
-    $output .= '</div></div>';
+    $output .= '</div>';
     return $output;
 }
 
