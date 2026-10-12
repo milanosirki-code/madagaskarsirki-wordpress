@@ -44,6 +44,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-settlement-claim.php
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-order-settlement-lock.php
           php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
+          php -l integrations/milano/tests/tickera-fulfillment-audit-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-issuance-ledger.php
           php -l integrations/milano/tests/tickera-issuance-ledger-contract.php
           php -l integrations/milano/tests/paytr-settlement-claim-contract.php
@@ -175,6 +177,14 @@ jobs:
           set -euo pipefail
           for scenario in new duplicate attach_once already_issued wrong_token ticket_id_reused family4 crashed_worker identity_conflict stuck_after_issue other_brand order_brand_mismatch unsettled invalid_line bad_unit negative_index large_family bad_type bad_table db_unavailable; do
             php integrations/milano/tests/tickera-issuance-ledger-contract.php "$scenario"
+          done
+
+      - name: Family package commercial quantity versus physical tickets (staging only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family4 two_families split_2adults_2children one_ticket_for_family three_of_four five_of_four duplicate_ticket_id duplicate_qr_hash incorrect_hash invalid_ticket_id different_order wrong_ticket_item different_event wrong_ticket_type ticket_trashed brand_leak event_owner_leak payment_pending mdg_hold_not_committed wrong_order_id wrong_woo_quantity wrong_woo_variation wrong_woo_session extra_woo_line missing_woo_line wrong_admission_math capacity_zero negative_quantity duplicate_quote_line unknown_order large_admissions untrusted_line_key; do
+            php integrations/milano/tests/tickera-fulfillment-audit-contract.php "$scenario"
           done
 
       - name: Full Tickera invariant audit contract
