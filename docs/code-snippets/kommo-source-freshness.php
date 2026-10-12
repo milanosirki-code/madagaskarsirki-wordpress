@@ -26,6 +26,8 @@ add_action('admin_menu', function() {
 add_action('admin_notices', function() {
     if (!current_user_can('manage_options')) { return; }
     $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+    // This page renders its own status after handling confirmation; avoid an obsolete pre-save notice.
+    if ($page === 'mdg-kommo-freshness') { return; }
     if (strpos($page, 'mmc-') !== 0 && strpos($page, 'mdg-kommo') !== 0) { return; }
     $snapshot = mdg_kf_snapshot();
     $verified = get_option('mdg_kommo_canonical_verified_v1', array());
