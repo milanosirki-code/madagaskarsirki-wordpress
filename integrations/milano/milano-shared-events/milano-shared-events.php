@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Sirki - Ortak Etkinlikler (Taslak)
  * Description: Madagaskar'in kanonik MDG seans beslemesini yoneticilere salt okunur gosterir. Satis, odeme veya QR uretmez.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 7.4
  * Text Domain: milano-shared-events
  *
@@ -63,6 +63,17 @@ function mso_events_source() {
 
     $output = array();
     foreach ( $data['sessions'] as $row ) {
+        // A session must belong exclusively to Milano; unknown or other-brand
+        // ownership is never inferred from a venue, domain, query or label.
+        // Fail closed until the canonical MDG feed supplies event_owner_brand.
+        if ( ! is_array( $row ) || ! isset( $row['event_owner_brand'] )
+            || ! is_string( $row['event_owner_brand'] )
+            || ! in_array( $row['event_owner_brand'], array( 'milano', 'madagaskar' ), true ) ) {
+            return new WP_Error( 'mso_brand_missing', 'Etkinlik marka sahipligi dogrulanamadi.' );
+        }
+        if ( 'milano' !== $row['event_owner_brand'] ) {
+            continue;
+        }
         if ( ! is_array( $row )
             || ! isset( $row['session_id'], $row['event_id'], $row['date'],
                         $row['time'], $row['province'], $row['venue'],
