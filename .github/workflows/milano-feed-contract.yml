@@ -32,6 +32,8 @@ jobs:
           php -l integrations/milano/tests/brand-enforcement-contract.php
           php -l integrations/milano/tests/mmc-program-brand-contract.php
           php -l integrations/milano/tests/brand-public-catalog-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-checkout-intent.php
+          php -l integrations/milano/tests/checkout-intent-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -73,4 +75,12 @@ jobs:
           set -euo pipefail
           for scenario in milano madagaskar disabled; do
             php integrations/milano/tests/brand-public-catalog-contract.php "$scenario"
+          done
+
+      - name: Signed Milano central-checkout intent contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid sort_items random_nonce tamper_event tamper_session tamper_quantity tamper_brand extra_price buyer_email wrong_key weak_key expired clock_skew future_within_skew ttl_override signature_garbage negative_id duplicate_ticket invalid_qty unknown_field_item untrusted_code reordered_fields empty_items duplicate_pre_sign too_many_units missing_items replay_contract; do
+            php integrations/milano/tests/checkout-intent-contract.php "$scenario"
           done
