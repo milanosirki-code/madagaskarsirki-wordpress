@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
+          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand no_bridge two_bridges orphan_bridge shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
             php integrations/milano/tests/brand-enforcement-contract.php "$scenario"
           done
 
