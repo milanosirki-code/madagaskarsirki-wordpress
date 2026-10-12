@@ -84,19 +84,37 @@ final class MDG_Capacity {
             $order_id
         ) );
         foreach ( $rows as $row ) {
-            $wpdb->query( 'START TRANSACTION' );
+            // The initial SELECT may be stale if PayTR invokes concurrent callbacks.
+            // Only a single worker can atomically claim a still-held row.
+            if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+                return false;
+            }
+            $claimed = $wpdb->query( $wpdb->prepare(
+                "UPDATE {$holds}
+                 SET status = 'sold', updated_at = %s
+                 WHERE id = %d AND order_id = %d AND status = 'held'",
+                $now, $row->id, $order_id
+            ) );
+            if ( 1 !== (int) $claimed ) {
+                $wpdb->query( 'ROLLBACK' );
+                // Another callback already committed this row; do not double-count it.
+                if ( 0 === (int) $claimed ) { continue; }
+                return false;
+            }
             $updated = $wpdb->query( $wpdb->prepare(
                 "UPDATE {$sessions}
-                 SET held_units = GREATEST(held_units - %d, 0), sold_units = sold_units + %d, updated_at = %s
-                 WHERE id = %d",
-                $row->units, $row->units, $now, $row->session_id
+                 SET held_units = held_units - %d, sold_units = sold_units + %d, updated_at = %s
+                 WHERE id = %d AND held_units >= %d",
+                $row->units, $row->units, $now, $row->session_id, $row->units
             ) );
-            if ( false === $updated ) {
+            if ( 1 !== (int) $updated ) {
                 $wpdb->query( 'ROLLBACK' );
-                continue;
+                return false;
             }
-            $wpdb->update( $holds, array( 'status' => 'sold', 'updated_at' => $now ), array( 'id' => $row->id ) );
-            $wpdb->query( 'COMMIT' );
+            if ( false === $wpdb->query( 'COMMIT' ) ) {
+                $wpdb->query( 'ROLLBACK' );
+                return false;
+            }
         }
         return true;
     }
