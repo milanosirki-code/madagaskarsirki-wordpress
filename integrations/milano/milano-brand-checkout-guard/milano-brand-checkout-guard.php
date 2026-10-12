@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Satış Koruması (Taslak)
  * Description: Milano/Madagaskar marka sınırını WooCommerce sepet girişinde doğrular. Varsayılan olarak devre dışı; yalnız test ortamı içindir.
- * Version: 0.3.0
+ * Version: 0.4.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -120,8 +120,26 @@ add_action( 'woocommerce_store_api_validate_add_to_cart', 'dmbg_store_api_add_to
  */
 function dmbg_store_api_checkout_order( $order, $request ) {
     if ( ! dmbg_enabled() ) { return; }
-    if ( ! dmbg_cart_owners_valid( function_exists( 'WC' ) && WC() ? WC()->cart : null ) ) {
+    if ( ! dmbg_cart_owners_valid( function_exists( 'WC' ) && WC() ? WC()->cart : null )
+        || ! dmbg_order_owners_valid( $order ) ) {
         throw new \Exception( 'Bu sipariş bu marka üzerinden tamamlanamaz.' );
     }
 }
 add_action( 'woocommerce_store_api_checkout_update_order_from_request', 'dmbg_store_api_checkout_order', 100, 2 );
+
+/** Verify saved order lines independently of the cart (draft only). */
+function dmbg_order_owners_valid( $order ) {
+    if ( ! $order || ! is_object( $order ) || ! method_exists( $order, 'get_items' ) ) { return false; }
+    $site = dmbg_site_brand();
+    if ( ! $site ) { return false; }
+    $items = $order->get_items( 'line_item' );
+    if ( ! $items ) { return false; }
+    foreach ( $items as $item ) {
+        if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' )
+            || ! method_exists( $item, 'get_variation_id' ) ) { return false; }
+        if ( dmbg_product_owner( (int) $item->get_product_id(), (int) $item->get_variation_id() ) !== $site ) {
+            return false;
+        }
+    }
+    return true;
+}
