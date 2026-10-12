@@ -125,4 +125,9 @@ expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $wr
 expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'USD' ) ), 'wrong currency rejected' );
 expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'TRY', 0 ) ), 'zero amount rejected' );
 expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'TRY', 490, 'refunded' ) ), 'refunded order rejected' );
+dmbg_classic_checkout_create_order( $valid_order, array() );
+$classic_wrong_denied = false;
+try { dmbg_classic_checkout_create_order( $invalid_order, array() ); }
+catch ( Exception $ex ) { $classic_wrong_denied = true; }
+expect_guard( $classic_wrong_denied, 'classic WooCommerce order creation must reject wrong brand before save' );
 echo "PASS brand-checkout-guard contract\n";
