@@ -119,3 +119,8 @@ jobs:
           for scenario in valid family_package wrong_brand unknown_brand event_draft event_id_mismatch session_id_mismatch session_event_mismatch session_closed session_past cutoff_closed event_sale_future event_sale_ended session_sale_future session_sale_ended missing_window product_mismatch unpublished_product simple_product wrong_currency no_tickera zero_capacity insufficient_capacity capacity_negative available_greater_than_total unknown_type inactive_type unavailable_variation unpurchasable_variation variation_parent_mismatch wrong_price float_price negative_price duplicate_codes free_checkout overpriced too_many_admissions malformed_intent missing_snapshot; do
             php integrations/milano/tests/central-eligibility-contract.php "$scenario"
           done
+
+      - name: Tickera event ticket-type mapping contract
+        run: |
+          php -l integrations/milano/tests/tickera-mapping-audit.php
+          php integrations/milano/tests/tickera-mapping-audit-contract.php
