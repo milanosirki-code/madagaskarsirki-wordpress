@@ -77,4 +77,14 @@ $checkout_denied = false;
 try { dmbg_store_api_checkout_order( null, null ); }
 catch ( Exception $ex ) { $checkout_denied = true; }
 expect_guard( $checkout_denied, 'Store API checkout wrong brand must throw' );
+$guard_wc->cart = new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>202 ), array( 'product_id'=>101, 'variation_id'=>303 ) ) );
+$mixed_denied = false;
+try { dmbg_store_api_checkout_order( null, null ); }
+catch ( Exception $ex ) { $mixed_denied = true; }
+expect_guard( $mixed_denied, 'Store API checkout mixed-brand cart must throw' );
+$guard_wc->cart = new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>999 ) ) );
+$unmapped_denied = false;
+try { dmbg_store_api_checkout_order( null, null ); }
+catch ( Exception $ex ) { $unmapped_denied = true; }
+expect_guard( $unmapped_denied, 'Store API checkout unmapped cart must throw' );
 echo "PASS brand-checkout-guard contract\n";
