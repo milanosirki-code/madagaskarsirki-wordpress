@@ -38,6 +38,8 @@ jobs:
           php -l integrations/milano/tests/order-claim-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
           php -l integrations/milano/tests/central-eligibility-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
+          php -l integrations/milano/tests/central-preflight-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -124,3 +126,11 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-mapping-audit.php
           php integrations/milano/tests/tickera-mapping-audit-contract.php
+
+      - name: Signed intent plus central eligibility plus atomic claim contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+            php integrations/milano/tests/central-preflight-contract.php "$scenario"
+          done
