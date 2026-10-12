@@ -109,10 +109,17 @@ class MMC_Admin {
 
             <div class="mmc-panel">
                 <h2>Program Listesi</h2>
-                <table class="widefat striped"><thead><tr><th>Kod</th><th>İl</th><th>Ana İlçe</th><th>Plan Tarihi</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>
-                <?php if ( ! $programs ) : ?><tr><td colspan="6">Henüz program yok.</td></tr><?php else : foreach ( $programs as $p ) : ?>
+                <p class="description">Satış markası her programda tekildir. Marka bilgisi eksik eski kayıtlar otomatik olarak Milano veya Madagaskar satışına atanmaz.</p>
+                <table class="widefat striped"><thead><tr><th>Kod</th><th>Satış Markası</th><th>İl</th><th>Ana İlçe</th><th>Plan Tarihi</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>
+                <?php if ( ! $programs ) : ?><tr><td colspan="7">Henüz program yok.</td></tr><?php else : foreach ( $programs as $p ) : ?>
                     <tr>
                         <td><strong><?php echo esc_html( $p->program_code ); ?></strong></td>
+                        <?php $owner_brand = MMC_Program_Service::normalized_program_brand( $p->brand ?? '' ); ?>
+                        <td><?php if ( '' !== $owner_brand ) : ?>
+                            <strong><?php echo esc_html( $owner_brand ); ?></strong>
+                        <?php else : ?>
+                            <span style="color:#a11;" title="Bu eski programın markası doğrulanmalı.">Markası Belirsiz — İnceleme Gerekli</span>
+                        <?php endif; ?></td>
                         <td><?php echo esc_html( MMC_Region_Service::normalize_place_name( $p->province_name ) ); ?></td>
                         <td><?php echo esc_html( $p->district_name ? MMC_Region_Service::normalize_place_name( $p->district_name ) : 'Genel' ); ?></td>
                         <td><?php echo esc_html( $p->planned_date ?: '-' ); ?></td>
