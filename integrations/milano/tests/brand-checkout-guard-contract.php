@@ -51,4 +51,29 @@ expect_guard( false === dmbg_validate_add_to_cart( true, 101, 1, 303 ), 'Madagas
 expect_guard( false === dmbg_validate_add_to_cart( true, 101, 1, 404 ), 'ambiguous blocked' );
 expect_guard( false === dmbg_validate_add_to_cart( true, 101, 1, 999 ), 'unmapped blocked' );
 expect_guard( false === dmbg_validate_add_to_cart( false, 101, 1, 202 ), 'preserve earlier denial' );
+class GuardProduct {
+    private $id;
+    private $parent;
+    public function __construct( $id, $parent ) { $this->id = $id; $this->parent = $parent; }
+    public function get_id() { return $this->id; }
+    public function get_parent_id() { return $this->parent; }
+}
+dmbg_store_api_add_to_cart( new GuardProduct( 202, 101 ), null );
+$store_denied = false;
+try { dmbg_store_api_add_to_cart( new GuardProduct( 303, 101 ), null ); }
+catch ( Exception $ex ) { $store_denied = true; }
+expect_guard( $store_denied, 'Store API cross brand must throw' );
+$store_unknown = false;
+try { dmbg_store_api_add_to_cart( new GuardProduct( 999, 101 ), null ); }
+catch ( Exception $ex ) { $store_unknown = true; }
+expect_guard( $store_unknown, 'Store API unmapped must throw' );
+class GuardWC { public $cart; public function __construct( $cart ) { $this->cart = $cart; } }
+$guard_wc = new GuardWC( new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>202 ) ) ) );
+function WC() { global $guard_wc; return $guard_wc; }
+dmbg_store_api_checkout_order( null, null );
+$guard_wc->cart = new GuardCart( array( array( 'product_id'=>101, 'variation_id'=>303 ) ) );
+$checkout_denied = false;
+try { dmbg_store_api_checkout_order( null, null ); }
+catch ( Exception $ex ) { $checkout_denied = true; }
+expect_guard( $checkout_denied, 'Store API checkout wrong brand must throw' );
 echo "PASS brand-checkout-guard contract\n";
