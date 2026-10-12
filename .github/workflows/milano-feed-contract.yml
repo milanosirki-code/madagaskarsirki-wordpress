@@ -30,6 +30,7 @@ jobs:
           php -l integrations/milano/tests/brand-checkout-guard-contract.php
           php -l integrations/milano/dunya-brand-enforcement/dunya-brand-enforcement.php
           php -l integrations/milano/tests/brand-enforcement-contract.php
+          php -l integrations/milano/tests/mmc-program-brand-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -56,3 +57,11 @@ jobs:
 
       - name: Isolated brand purchase gate contract
         run: php integrations/milano/tests/brand-checkout-guard-contract.php
+
+      - name: MMC program brand selection contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure; do
+            php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
+          done
