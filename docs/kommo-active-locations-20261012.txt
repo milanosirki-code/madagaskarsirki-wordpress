@@ -1,0 +1,7 @@
+MADAGASKAR SİRKİ — GÜNCEL ETKİNLİK KONUMLARI
+Konum sorularında salon + açık adres + kayıtlı Google Maps bağlantısını kullan; bağlantı yoksa uydurma.
+Uşak | Merkez Spor salonu | Fatih, Yavuz Sultan Selim Cd No:46, 64100 Uşak | https://maps.app.goo.gl/QEoBiRWN6qehcpPT7
+Aydın / Didim | Didim Spor Salonu | Efeler, 09270 Yalıköy Köyü/Didim/Aydın | https://maps.app.goo.gl/gxZuyJhKh6RRTy679
+Aydın / Efeler | Mimar Sinan Kapalı Spor Salonu | No:, Mimar Sinan, Ünal Özgödek Blv. No:16, 09100 Aydın | https://maps.app.goo.gl/3T8Mv8Fdzfw5tcaS7
+Manisa / Şehzadeler | Atatürk Kapalı Spor Salonu | Ahmet Bedevi Mahallesi, 19 Mayıs Stadyumu yanı, Merkez/Manisa. | https://maps.app.goo.gl/9dvhgCR4EK9TraTEA
+İzmir / Konak | Halkapınar Spor Salonu | Halkapınar Mah Fatih cad Atatürk Spor Kompleksi, D:1, 35170 Konak/İzmir | https://maps.app.goo.gl/qgs4BtrWPiT2bnka8
