@@ -119,7 +119,8 @@ switch ( $case ) {
     default: ensure_case(false,'unknown test scenario');
 }
 $result=MCPI_Central_Eligibility::validate($intent,$central,$now);
-ensure_case( $result['status']===$expected, $case.' expected '.$expected.' got '.($result['reason']??$result['status']) );
+$actual = $result['status'] === 'eligible' ? 'eligible' : ( $result['reason'] ?? $result['status'] );
+ensure_case( $actual === $expected, $case.' expected '.$expected.' got '.$actual );
 if($expected==='eligible') {
     ensure_case($result['quote_only']===true, 'must remain quote-only');
     ensure_case($result['owner_brand']==='milano', 'not a Milano quote');
