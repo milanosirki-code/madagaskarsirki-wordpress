@@ -108,6 +108,13 @@ final class MDG_Public_Cities {
 
         $cities = array();
         foreach ( $rows as $event ) {
+            // Optional brand ownership gate. Defaults to visible until the
+            // verified, opt-in guard is intentionally enabled on this site.
+            // Filter BEFORE grouping: otherwise a hidden Milano event could
+            // become the representative card for a Madagaskar city.
+            if ( ! apply_filters( 'dunya_brand_event_visible_on_site', true, (int) $event->id, 'cities' ) ) {
+                continue;
+            }
             $key = (string) $event->province_code;
             if ( ! $key ) { $key = sanitize_title( (string) $event->province_name ); }
             if ( ! isset( $cities[ $key ] ) ) {
