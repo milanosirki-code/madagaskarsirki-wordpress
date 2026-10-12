@@ -17,6 +17,38 @@ function mdg_kr_request($method, $path, $body = null) {
     return $status>=200 && $status<300 ? json_decode(wp_remote_retrieve_body($response),true) : false;
 }
 
+function mdg_kr_survey_timestamp($start, $paid, $status, $source_valid, $now) {
+    return $source_valid && $paid && in_array($status,array('processing','completed'),true)
+        && $start>0 && $start >= $now-7*86400 ? $start : null;
+}
+
+function mdg_kr_survey_date($order, $context) {
+    if (in_array($context['reason_code'],array('MAPPING_MISSING','EVENT_CANCELLED'),true)
+        || count($context['session_ids'])!==1 || count($context['event_ids'])!==1) { return null; }
+    global $wpdb;
+    $session=$wpdb->get_row($wpdb->prepare('SELECT start_at,status,event_id FROM '.MDG_DB::table('sessions').' WHERE id=%d',(int)$context['session_ids'][0]));
+    if ($wpdb->last_error || !$session || (int)$session->event_id!==(int)$context['event_ids'][0]) { return null; }
+    $event=MDG_Events::get((int)$session->event_id);
+    if (!$event) { return null; }
+    $statuses=array((string)$session->status,(string)$event->status);
+    foreach ($context['program_ids'] as $program_id) {
+        $program=MMC_Program_Service::get_program((int)$program_id);
+        if (!$program) { return null; }
+        $statuses[]=(string)$program->status;
+        $event_ids=$wpdb->get_col($wpdb->prepare("SELECT DISTINCT event_id FROM {$wpdb->prefix}mmc_sales_mappings WHERE is_active=1 AND program_id=%d",(int)$program_id));
+        if ($wpdb->last_error || !$event_ids) { return null; }
+        foreach ($event_ids as $event_id) {
+            $mmc_event=MMC_Event_Service::get_event((int)$event_id);
+            if (!$mmc_event) { return null; }
+            $statuses[]=(string)$mmc_event->status;
+        }
+    }
+    foreach ($statuses as $status) {
+        if (!$status || in_array($status,array('cancelled','postponed'),true)) { return null; }
+    }
+    return mdg_kr_survey_timestamp(mdg_kr_utc_timestamp((string)$session->start_at),$order->is_paid(),$order->get_status(),true,time());
+}
+
 function mdg_kr_sync($order_id) {
     try {
         if (!function_exists('wc_get_order') || !function_exists('ms_oh_order_context') || !class_exists('MDG_DB')) { return; }
@@ -40,6 +72,8 @@ function mdg_kr_sync($order_id) {
         // Clearing invalid dates prevents reminders for cancelled or started sessions.
         $date=$order->is_paid() && in_array($order->get_status(),array('processing','completed'),true) && $start>time() ? $start : null;
         if (($current[2460832]??null)!=$date) { $fields[]=array('field_id'=>2460832,'values'=>$date===null?null:array(array('value'=>$date))); }
+        $survey_date=mdg_kr_survey_date($order,$context);
+        if (($current[2460854]??null)!=$survey_date) { $fields[]=array('field_id'=>2460854,'values'=>$survey_date===null?null:array(array('value'=>$survey_date))); }
         $state='EXCLUDED'; $link=null;
         if (function_exists('ms_oh_dry_run_report') && $order->needs_payment()) {
             $report=ms_oh_dry_run_report($order);
