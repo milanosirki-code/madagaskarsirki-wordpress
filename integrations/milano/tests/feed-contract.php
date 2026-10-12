@@ -45,6 +45,16 @@ class MockResponse {
     public function get_data() { return $this->data; }
 }
 function add_action( $name, $callback ) { /* registered on the real WP instance */ }
+function apply_filters( $name, $value, $event_id ) {
+    global $scenario;
+    if ( 'dunya_milano_canonical_event_owner' !== $name || 16 !== $event_id ) {
+        return null;
+    }
+    if ( 'missing_brand' === $scenario ) { return null; }
+    if ( 'other_brand' === $scenario ) { return 'madagaskar'; }
+    if ( 'invalid_brand' === $scenario ) { return 'unknown'; }
+    return 'milano';
+}
 function register_rest_route( $namespace, $path, $definition ) {}
 function rest_ensure_response( $data ) { return new MockResponse( $data ); }
 function current_time( $format, $gmt = false ) { return '2026-10-12 18:30:00'; }
@@ -157,13 +167,14 @@ $eventSql = $wpdb->queries[0];
 foreach ( array( 'e.status=%s', 's.status=%s', 's.start_at>%s', 'e.sale_start', 'e.sale_end', 's.sale_start', 's.sale_end', 'LIMIT %d' ) as $requiredSql ) {
     expect( false !== strpos( $eventSql, $requiredSql ), 'missing mandatory status/time gate ' . $requiredSql );
 }
-$shouldBeHidden = in_array( $scenario, array( 'empty', 'closed', 'zero_capacity', 'no_ticket_event', 'missing_product', 'wrong_parent', 'price_mismatch', 'variation_out_of_stock', 'no_ticket_types' ), true );
+$shouldBeHidden = in_array( $scenario, array( 'empty', 'closed', 'zero_capacity', 'no_ticket_event', 'missing_product', 'wrong_parent', 'price_mismatch', 'variation_out_of_stock', 'no_ticket_types', 'missing_brand', 'other_brand', 'invalid_brand' ), true );
 if ( $shouldBeHidden ) {
     expect( count( $data['sessions'] ) === 0, 'invalid session was exposed' );
 } else {
     expect( count( $data['sessions'] ) === 1, 'valid session missing' );
     $session = $data['sessions'][0];
     expect( $session['session_id'] === 107, 'wrong session identity' );
+    expect( $session['event_owner_brand'] === 'milano', 'brand owner missing from feed' );
     expect( $session['available_units'] === ( 'sold_out' === $scenario ? 0 : 42 ), 'wrong capacity count' );
     expect( $session['availability'] === ( 'sold_out' === $scenario ? 'sold_out' : 'available' ), 'wrong availability flag' );
     expect( count( $session['ticket_types'] ) === 1, 'wrong ticket catalogue' );
