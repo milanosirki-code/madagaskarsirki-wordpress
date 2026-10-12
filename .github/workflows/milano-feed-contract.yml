@@ -40,6 +40,8 @@ jobs:
           php -l integrations/milano/tests/central-eligibility-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
           php -l integrations/milano/tests/central-preflight-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
+          php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -139,3 +141,11 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-full-audit.php
           php integrations/milano/tests/tickera-full-audit-contract.php
+
+      - name: Trusted central MMC MDG Woo read-only snapshot adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid family4 no_brand wrong_brand no_bridge two_bridges bridge_error orphan_bridge malformed_brand missing_event wrong_event_id event_draft session_missing wrong_session_id wrong_session_event closed_session time_closed past_session invalid_start impossible_date invalid_window sale_future sale_ended no_product unpublished simple_product wrong_currency no_tickera bad_parent_id out_of_stock unavailable_variation inactive_type duplicated_code invalid_code no_tickets wrong_woo_price fractional_subcents trailing_zero_price zero_capacity low_capacity invalid_available no_capacity_total invalid_request_id; do
+            php integrations/milano/tests/canonical-mdg-snapshot-contract.php "$scenario"
+          done
