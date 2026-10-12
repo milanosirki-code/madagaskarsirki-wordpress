@@ -34,6 +34,8 @@ jobs:
           php -l integrations/milano/tests/brand-public-catalog-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-checkout-intent.php
           php -l integrations/milano/tests/checkout-intent-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-order-claim-registry.php
+          php -l integrations/milano/tests/order-claim-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -89,3 +91,11 @@ jobs:
         run: |
           php -l integrations/milano/tests/mdg-payment-capacity-contract.php
           php integrations/milano/tests/mdg-payment-capacity-contract.php
+
+      - name: Atomic checkout request registry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new_claim insert_unavailable bad_signature expired weak_secret bad_table same_in_flight parallel_worker attach_once duplicate_ready different_payload_same_request changed_event_same_request unauthorized_worker invalid_order invalid_request reuse_order_other_request no_automatic_claim_timeout invalid_state broken_ready db_update_failure order_id_wrong_type; do
+            php integrations/milano/tests/order-claim-contract.php "$scenario"
+          done
