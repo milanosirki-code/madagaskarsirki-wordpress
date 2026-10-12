@@ -64,3 +64,12 @@ Alternatifler gerçek dağıtım/PayTR/WordPress.com kabiliyet doğrulamasına b
 
 - Geliştirme: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/235
 - Google Drive proje çalışma kaydı: https://docs.google.com/document/d/1GSV-_niF39NTkB45--sqodofxDVH25S7XeKxefzUa4Q/edit
+
+
+## 12.10.2026 — çift bağlantı ve eski fallback denetimi (ek düzeltme)
+
+- Kod taramasında `MMC_MDG_Bridge_Service::program_for_mdg_event()` fonksiyonunun aktif bridge için `LIMIT 1` dönebildiği ve bulunmazsa eski Woo satış eşlemesine geri döndüğü görüldü. Bu davranış genel MMC uyumluluğu için korunmuştur; **kesin marka sahipliği yetkilendirmesinde kullanılması güvenli değildir**.
+- GitHub taslağındaki iki pilot koruma `Dunya_Event_Brand_Guard::owner_filter()` ve `dmbg_event_owner()`, yalnız `MMC_MDG_Bridge_Service::table()` içindeki **bir adet aktif MDG event → MMC program** satırını (LIMIT 2 ile çakışma kontrolü) kabul edecek şekilde ayrıştırıldı. Başlık, URL, ayrı option haritası ve eski ürün-eşleşme fallback'i kullanılmaz.
+- Eksik, iki aktif veya programı bulunamayan bağlantılarda marka ve satın alma izni yoktur. Eski koruma modülü yanlışlıkla yüklenirse kendi satış hook'larını yalnız açık `DUNYA_BRAND_GUARD_ENABLED === true` koşulunda bağlar.
+- İzole testler `brand-enforcement-contract.php`, `brand-checkout-guard-contract.php`, `brand-public-catalog-contract.php` içinde yeni olumsuz durumları kapsar. Bunlar gerçek eşzamanlı Woo/PayTR/Tickera testleri değildir.
+- **Önemli:** Tüm değişiklikler PR #235 taslağındadır; canlı Madagaskar'ın MMC bridge fonksiyonu, siparişler, biletler, PayTR ve Milano yayını değiştirilmedi. `DUNYA_BRAND_GUARD_ENABLED` canlıda etkinleştirilmedi. Dağıtım engelleri geçerlidir.
