@@ -19,10 +19,36 @@ function dmbg_enabled() {
  * The ownership comes only from a verified MMC/MDG bridge relationship.
  */
 function dmbg_event_owner( $event_id ) {
-    if ( ! class_exists( 'MMC_MDG_Bridge_Service' ) || ! class_exists( 'MMC_Program_Service' )
-        || ! method_exists( 'MMC_MDG_Bridge_Service', 'program_for_mdg_event' ) ) { return null; }
-    $pid = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( absint( $event_id ) );
-    $program = $pid > 0 ? MMC_Program_Service::get_program( $pid ) : null;
+    if ( ! class_exists( 'MMC_MDG_Bridge_Service' )
+        || ! class_exists( 'MMC_Program_Service' )
+        || ! method_exists( 'MMC_MDG_Bridge_Service', 'table' )
+        || ! method_exists( 'MMC_Program_Service', 'get_program' )
+        || ! method_exists( 'MMC_Program_Service', 'normalized_program_brand' ) ) {
+        return null;
+    }
+    global $wpdb;
+    $id = absint( $event_id );
+    if ( ! $id || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'prepare' )
+        || ! method_exists( $wpdb, 'get_col' ) ) {
+        return null;
+    }
+    $bridge_table = MMC_MDG_Bridge_Service::table();
+    if ( ! is_string( $bridge_table )
+        || ! preg_match( '/\\A[A-Za-z0-9_]+\\z/D', $bridge_table ) ) {
+        return null;
+    }
+    // Unlike the legacy program_for_mdg_event() helper, do not accept the
+    // first of multiple active bridges and do not fall back to old sales maps.
+    $program_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT program_id FROM {$bridge_table}
+         WHERE mdg_event_id=%d AND is_active=1 LIMIT 2",
+        $id
+    ) );
+    if ( ! is_array( $program_ids ) || 1 !== count( $program_ids )
+        || (int) $program_ids[0] < 1 ) {
+        return null;
+    }
+    $program = MMC_Program_Service::get_program( (int) $program_ids[0] );
     if ( ! $program || ! isset( $program->brand ) ) { return null; }
     $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
     if ( 'Milano Sirki' === $brand ) { return 'milano'; }
