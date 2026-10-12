@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Milano Ortak Seans Beslemesi (Hazırlık)
  * Description: MDG'nin kanonik kapasite defterinden salt okunur ve anahtar korumalı seans bilgisi verir. Sipariş veya stok değiştirmez.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires PHP: 7.4
  * Text Domain: dunya-milano-session-feed
  *
@@ -51,7 +51,18 @@ function dmsf_ready() {
         && function_exists( 'wc_get_product' );
 }
 
-/** Only future, on-sale sessions with valid native product/variation mapping. */
+/**
+ * Resolve the canonical event owner. No heuristic fallback to Madagaskar.
+ * The authoritative MDG/MMC brand adapter must be installed and tested
+ * separately before this feed can return any session. An unverified event
+ * MUST NEVER be exposed to Milano.
+ */
+function dmsf_event_owner_brand( $event_id ) {
+    $owner = apply_filters( 'dunya_milano_canonical_event_owner', null, (int) $event_id );
+    return in_array( $owner, array( 'milano', 'madagaskar' ), true ) ? $owner : null;
+}
+
+/** Only future, on-sale Milano-owned sessions with native mappings. */
 function dmsf_get_sessions( WP_REST_Request $request ) {
     if ( ! dmsf_ready() ) {
         return new WP_Error( 'dmsf_dependencies', 'Feed unavailable.', array( 'status' => 503 ) );
@@ -89,6 +100,10 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
 
     $sessions = array();
     foreach ( (array) $rows as $row ) {
+        // Critical brand boundary; no implicit fallback for existing events.
+        if ( 'milano' !== dmsf_event_owner_brand( (int) $row->event_id ) ) {
+            continue;
+        }
         if ( (int) $row->capacity_total < 1
             || (int) $row->wc_product_id < 1
             || (int) $row->tickera_event_id < 1
@@ -142,6 +157,7 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
         $available = MDG_Capacity::available( (int) $row->session_id );
         $sessions[] = array(
             'event_id'       => (int) $row->event_id,
+            'event_owner_brand' => 'milano',
             'session_id'     => (int) $row->session_id,
             'province'       => sanitize_text_field( (string) $row->province_name ),
             'district'       => sanitize_text_field( (string) $row->district ),
