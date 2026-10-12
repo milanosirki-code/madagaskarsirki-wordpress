@@ -1,35 +1,29 @@
-# Milano Sirki — ortak etkinlik akışı (pilot)
+# Milano / Madagaskar — ayrı marka, tek etkinlik tek satış sitesi
 
-Durum: **GitHub taslağı; Milano sitesine yüklenmedi.** Hedef: `https://milanosirki.com` (WordPress.com Premium / Atomic).
+**Durum:** Yalnız geliştirme dalı / taslak PR #235. Canlıya deploy edilmedi. Milano sitesi Coming Soon; bilet satışları kapalı.
 
-## Amaç
-Madagaskar Sirki ve Milano Sirki, **aynı fiziksel program, aynı seanslar ve aynı kapasiteyi** kullanacaktır. Marka yalnız ön yüzde ve satış kanalına ait kayıtlarda ayrılmalıdır. İkinci WooCommerce ürün, bilet stoğu veya Tickera QR üretmek kesinlikle yasaktır.
+## Kesin iş modeli (12.10.2026)
+- **Her fiziksel etkinlik bir markaya** atanır: `milano` veya `madagaskar`.
+- Milano'ya atanan etkinlik yalnız `milanosirki.com`; Madagaskar'a atanan etkinlik yalnız `madagaskarsirki.com` üzerinden satılır.
+- Dünya Organizasyon ortak yönetim, finans, CRM ve WooCommerce/Tickera/PayTR altyapısını kullanabilir; ancak etkinlikler iki sitede birden **satılamaz**.
+- Ayrı marka sitelerindeki teklif, e-posta, bilet tasarımı ve müşteri iletişimi ait olduğu markaya uygun olmalıdır.
 
-## v0.1.0 uygulanan
-- `[milano_ortak_etkinlikler]` shortcode — WordPress yönetici önizlemesi.
-- Salt okunur, sabit URL: mevcut `/wp-json/wp/v2/pages/1311?_fields=content` yayındaki şehirler sayfası.
-- Yalnız şehir, tarih, salon, seans alanlarını ayrıştırır. Fiyat, checkout bağlantısı, müşteri, sipariş, bilet ve QR verisi çekmez.
-- Beş dakika başarılı yanıt önbelleği.
-- **Halka açık veri akışı kapalı:** yönetici olmayanlarda "Etkinlik takvimi hazırlanıyor" mesajı. Yönetici önizlemesinde verinin *kapasite ve güncellik açısından doğrulanmadığı* açıkça gösterilir.
-- Kaynak kesilirse checkout'a yönlendirme ya da sahte stok yerine güvenli mesaj.
-- Kaynakta geçen diğer marka adı UI'da gösterilmez.
+## Mevcut kod
+- **Canlı Milano v0.1.0:** yalnız yöneticiye salt okunur HTML tabanlı önizleme. Güvenilir stok, satış ya da QR sağlamaz. Başlangıçta 5 etkinlik / 13 seans okunmuş olması yeni iş modeline uygun olduğu anlamına gelmez.
+- **Bu daldaki Milano consumer v0.2.1:** JWT/checkout değil, sunucu tarafı secret ile salt okunur kaynak; `event_owner_brand='milano'` değilse göstermez; marka alanı yoksa fail-closed. **Canlıya kurulmadı**.
+- **Bu daldaki merkez kaynak API v0.2.0:** sadece kanonik marka doğrulama adaptörünün `dunya_milano_canonical_event_owner` filtresinden `milano` döndürdüğü MDG eventlerini besler. Diğerlerini dışlar. **Adaptör henüz yazılıp MDG/MMC veri modelinde doğrulanmadı; bu yüzden gerçek veride boş besleme beklenir.**
+- Kaynak API doğru kapasite ve WC variation uyumluluğunu kontrol etmeye çalışır; bu, checkout sırasında nihai stok yetkilendirmesi yerine geçmez.
 
-## Henüz yapılmayanlar
-1. MMC/MDG satışa açık seanslardan **yapısal ve güncel** `GET /dunya/v1/public-sessions` tarzında yetki ve gereksiz veri sınırları belirlenmiş, salt-okunur kaynak geliştirilecek. Mevcut HTML parse yöntemi nihai kaynak kabul edilmez.
-2. `sales_open`, iptal, erteleme, gerçek saat/dilimi, satış kilidi ve kalan kapasite sunucu tarafında doğrulanmadan program halka açılmayacak.
-3. Milano müşteri siparişlerinde `_dunya_sales_brand=milano` gibi **değişmez sipariş-meta alanı** kaydı (öneri), payment callback ve tekrar işlemde idempotency testleri.
-4. Aynı WooCommerce ürün/varyasyon, aynı Tickera event+QR, aynı kapasite servisi. Farklı stok kesinlikle oluşturulmayacak.
-5. PayTR ikinci alan adı / callback / dönüş adresleri, PCI/kişisel veri, bilet PDF logo, ödeme e-postası ve Kommo gönderici kimliği ayrı pilotta incelenecek.
-6. İade, aile paketi 2+2 (4 gerçek bilet), çakışan eşzamanlı satın alma, satışı kapanmış seans, başarısız ödeme için testler.
-7. Milano logo ve kurumsal renkleri sağlanınca final tasarım.
+## Doğrulanması gereken marka kaynağı
+Mevcut notlara göre `MMC_Program_Service::create_program()` yeni programlara `brand=Madagaskar Sirki` yazar; ancak MDG event kaydı ile MMC program markasının 1:1 bağlandığı ve tek kanonik kaynak olduğu **henüz doğrulanmadı**. Canlı şema ve eşleştirme görülmeden bu bilgiyi MDG event owner olarak doğrudan okumak **yasaktır**. Eski/eksik/hatalı marka etkinlikleri manuel eşleştirilir; otomatik Milano kabul edilmez.
 
-## Canlıya alma güvenliği
-- Bu prototip **aktif ödemeye bağlanamaz**; shortcode hiç satış yapmaz.
-- GitHub ayrı branch ve draft PR üzerinden inceleme; `main`e otomatik merge veya WordPress.com otomatik deploy yok.
-- Önce statik önizleme, sonra güvenilir MMC salt-okunur kaynak, en son checkout pilotu.
-- Madagaskar canlı WooCommerce/Tickera/PayTR/Kommo hook'ları bu dosyadan etkilenmez.
+## Devam geliştirme kapıları
+1. MMC program → MDG event → WC ürün/varyasyon → Tickera event bağlarını kanıtla; mevcut satışlı programları değiştirme.
+2. Etkinlik oluşturma ekranında zorunlu marka seçimi; yeni etkinlikte otomatik varsayılan yerine bilinçli seçim, mevcut aktif Madagaskar etkinliklerine regresyon koruması.
+3. Kanonik owner adaptörünü yaz; end-to-end ve yanlış marka testleriyle doğrula.
+4. **Sadece katalog filtresi yetmez:** ürün URL, add-to-cart, WC REST/AJAX, checkout, kampanya, PayTR dönüş, QR ve iade akışları marka/site sahipliğini server-side doğrulasın.
+5. Gizli server token sadece server-side yapılandırmaya konur, repo/Drive/JS/HTML'e yazılmaz. Dış Biletinial satışlarının marka politikası ayrıca kontrol edilir.
+6. İki markanın arayüz, müşteri iletişimi ve raporlarına ayrıştırma uygula. İkinci bir gereksiz WooCommerce ürün ve QR yaratma.
+7. CI negatif marka testleri; eşzamanlı kapasite, iade ve PayTR 3DS testi; ayrı canlı onay, rollback planı, sonra deploy.
 
-## Kaynak notları
-- `MMC_Program_Service::create_program()` yeni programlar için `brand=Madagaskar Sirki` alanı yazıyor. **Aynı fiziksel programı Milano için çoğaltmayın**; marka, satış siparişi/kaynağı seviyesinde ayrı tutulmalı.
-- `MMC_Sales_Service::mappings()` MMC event/session/ticket type ile WooCommerce ürünü/varyasyonu ve Tickera kayıtlarını bağlıyor.
-- Mevcut USKD entegrasyonu da kamuya açık şehirler HTML'ini okuyor; burada sadece *taslak/önizleme* amaçlı yeniden kullanıldı.
+**Kaynak:** `docs/MILANO_EXCLUSIVE_BRAND_ROUTING_20261012.md`. Bu belge eski aynı etkinliği iki sitede satma varsayımının yerini alır.
