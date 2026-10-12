@@ -29,7 +29,9 @@ Güncel kaynak, doğrulanmış etkinlik → **tek etkin MMC programı** bağlant
 3. `milanosirki.com` üzerinde güvenli Woo ödeme tasarımı; MDG alan adına müşteriyi göndermeden PayTR ve 3DS dönüşü gerekir. Henüz yok.
 4. Yetkili marka atama paneli, denetim günlüğü, geri alma planı ve mevcut satış/kanal mutabakatı yapılmalı.
 5. Biletinial, gişe ve dış kanallar için tek-marka satış politikası ayrıca onaylanmalı.
-6. Bu kod kesinlikle **canlı siteye doğrudan kurulamaz**; geçmiş/aktif MDG event sahipliği yoksa çalışan bilet satışı engellenir.
+6. Eklenti yüklenmiş olsa bile kendi hook'larını yalnız sunucu tarafı `DUNYA_BRAND_GUARD_ENABLED === true` açıkça ayarlanırsa kaydeder; bu, dağıtım onayı veya canlı etkinleştirme izni değildir.
+
+Bu kod kesinlikle **canlı siteye doğrudan kurulamaz**; geçmiş/aktif MDG event sahipliği yoksa çalışan bilet satışı engellenir.
 7. Kontroller izolasyonlu PHP fixture testleridir; gerçek Woo/PayTR regresyon testi değildir.
 
 ## Testler
