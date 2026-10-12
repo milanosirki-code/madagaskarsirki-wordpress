@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Satış Koruması (Taslak)
  * Description: Milano/Madagaskar marka sınırını WooCommerce sepet girişinde doğrular. Varsayılan olarak devre dışı; yalnız test ortamı içindir.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -65,3 +65,35 @@ function dmbg_validate_add_to_cart( $passed, $product_id, $quantity = 1, $variat
     return true;
 }
 add_filter( 'woocommerce_add_to_cart_validation', 'dmbg_validate_add_to_cart', 100, 4 );
+
+/**
+ * Re-check canonical ownership at cart and checkout, not only add-to-cart.
+ * This is an opt-in experimental WooCommerce classic cart/checkout gate.
+ */
+function dmbg_cart_owners_valid( $cart ) {
+    if ( ! $cart || ! is_object( $cart ) || ! method_exists( $cart, 'get_cart' ) ) { return false; }
+    $site = dmbg_site_brand();
+    if ( ! $site ) { return false; }
+    foreach ( (array) $cart->get_cart() as $item ) {
+        if ( ! is_array( $item ) || empty( $item['product_id'] ) ) { return false; }
+        $owner = dmbg_product_owner( (int) $item['product_id'], (int) ( $item['variation_id'] ?? 0 ) );
+        if ( $owner !== $site ) { return false; }
+    }
+    return true;
+}
+function dmbg_validate_cart() {
+    if ( ! dmbg_enabled() ) { return; }
+    $cart = function_exists( 'WC' ) && WC() ? WC()->cart : null;
+    if ( ! dmbg_cart_owners_valid( $cart ) && function_exists( 'wc_add_notice' ) ) {
+        wc_add_notice( 'Sepette farklı markaya ait veya doğrulanamayan bir bilet var. Lütfen yetkili satış kanalını kullanın.', 'error' );
+    }
+}
+function dmbg_validate_checkout( $data, $errors ) {
+    if ( ! dmbg_enabled() ) { return; }
+    $cart = function_exists( 'WC' ) && WC() ? WC()->cart : null;
+    if ( ! dmbg_cart_owners_valid( $cart ) && $errors && method_exists( $errors, 'add' ) ) {
+        $errors->add( 'dmbg_brand_mismatch', 'Bu sepet seçilen markanın satış kanalında tamamlanamaz.' );
+    }
+}
+add_action( 'woocommerce_check_cart_items', 'dmbg_validate_cart', 100 );
+add_action( 'woocommerce_after_checkout_validation', 'dmbg_validate_checkout', 100, 2 );
