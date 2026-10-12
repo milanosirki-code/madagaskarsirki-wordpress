@@ -31,6 +31,7 @@ jobs:
           php -l integrations/milano/dunya-brand-enforcement/dunya-brand-enforcement.php
           php -l integrations/milano/tests/brand-enforcement-contract.php
           php -l integrations/milano/tests/mmc-program-brand-contract.php
+          php -l integrations/milano/tests/brand-public-catalog-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -64,4 +65,12 @@ jobs:
           set -euo pipefail
           for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure; do
             php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
+          done
+
+      - name: Native public cities and direct event brand gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano madagaskar disabled; do
+            php integrations/milano/tests/brand-public-catalog-contract.php "$scenario"
           done
