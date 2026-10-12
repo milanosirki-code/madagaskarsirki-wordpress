@@ -106,4 +106,23 @@ $unmapped_denied = false;
 try { dmbg_store_api_checkout_order( null, null ); }
 catch ( Exception $ex ) { $unmapped_denied = true; }
 expect_guard( $unmapped_denied, 'Store API checkout unmapped cart must throw' );
+class GuardPaidOrder extends GuardOrder {
+    private $currency;
+    private $total;
+    private $status;
+    public function __construct( $items, $currency='TRY', $total=490, $status='pending' ) {
+        parent::__construct( $items );
+        $this->currency=$currency; $this->total=$total; $this->status=$status;
+    }
+    public function get_currency() { return $this->currency; }
+    public function get_total() { return $this->total; }
+    public function get_status() { return $this->status; }
+}
+$milano_line = array( new GuardOrderItem( 101, 202 ) );
+$wrong_line = array( new GuardOrderItem( 101, 303 ) );
+expect_guard( true === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line ) ), 'owned TRY order can pass gateway preflight' );
+expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $wrong_line ) ), 'other brand cannot settle' );
+expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'USD' ) ), 'wrong currency rejected' );
+expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'TRY', 0 ) ), 'zero amount rejected' );
+expect_guard( false === dmbg_payment_settlement_allowed( new GuardPaidOrder( $milano_line, 'TRY', 490, 'refunded' ) ), 'refunded order rejected' );
 echo "PASS brand-checkout-guard contract\n";
