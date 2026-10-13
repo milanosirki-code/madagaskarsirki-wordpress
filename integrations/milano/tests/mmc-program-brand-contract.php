@@ -66,6 +66,14 @@ contract_assert( false !== strpos( $adminSrc, 'MMC_Program_Service::brand_option
 contract_assert( false === strpos( $adminSrc, '<option value="Milano Sirki" selected' ), 'unsafe Milano default found' );
 contract_assert( false === strpos( $adminSrc, '<option value="Madagaskar Sirki" selected' ), 'unsafe Madagaskar default found' );
 
+
+$abilityFile = dirname( __DIR__, 3 ) . '/wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php';
+$abilitySrc = file_get_contents( $abilityFile );
+contract_assert( false !== strpos( $abilitySrc, "'madagaskar/program-create'" ), 'MMC create ability missing' );
+contract_assert( false !== strpos( $abilitySrc, "'brand'         => sanitize_text_field( " ), 'API callback drops sales brand' );
+contract_assert( false !== strpos( $abilitySrc, "'brand' => array( 'type' => 'string', 'enum' => array( 'Madagaskar Sirki', 'Milano Sirki' ) )" ), 'API schema lacks canonical sales brand allowlist' );
+contract_assert( false !== strpos( $abilitySrc, "'required' => array( 'province_name', 'brand' )" ), 'API schema does not require brand' );
+
 $data = array(
     'brand' => 'Milano Sirki',
     'province_name' => 'Ankara',
