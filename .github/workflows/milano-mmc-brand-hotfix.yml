@@ -1,4 +1,4 @@
-name: Milano MMC Brand-Only Hotfix Staging ZIPs
+name: Milano Program Brand and Public Copy Staging ZIPs
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   brand-hotfix:
-    name: Brand-only MMC/AI contract and staging package
+    name: Program brand and public copy contract and staging package
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -81,7 +81,9 @@ jobs:
             sha256sum *.zip > SHA256SUMS
           )
           cat > release-staging/READ_THIS_FIRST.txt <<'INFO'
-          Milano MMC BRAND-ONLY hotfix: STAGING / REVIEW ONLY.
+          Milano program brand selection and generated public copy: STAGING / REVIEW ONLY.
+          Includes event/MDG titles, Excel fields, marketing and Kommo source copy.
+          Milano links use its official homepage pending dedicated sales-route validation.
           DO NOT deploy either ZIP to production without backup, rollback,
           WordPress/Madagascar plugin integration review, and explicit approval.
 
