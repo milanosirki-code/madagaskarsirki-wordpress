@@ -113,6 +113,13 @@ function dmsf_get_upcoming( WP_REST_Request $request ) {
             || 'milano' !== dmsf_event_owner_brand( $event_id ) ) {
             continue;
         }
+        // A cached or inconsistently filtered query result must not leak an
+        // expired announcement, even when the DB WHERE clause was correct.
+        $start_utc = (string) ( $row->start_at ?? '' );
+        if ( ! preg_match( '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/D', $start_utc )
+            || strcmp( $start_utc, $now ) <= 0 ) {
+            continue;
+        }
         $province = sanitize_text_field( (string) $row->province_name );
         $venue = sanitize_text_field( (string) $row->venue_name );
         if ( '' === $province || '' === $venue ) { continue; }
