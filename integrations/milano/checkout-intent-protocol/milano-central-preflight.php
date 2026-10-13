@@ -6,7 +6,8 @@
  * The snapshot provider is injected by the future authenticated CENTRAL
  * server. Never use browser-supplied or Milano-cached event/price/stock.
  *
- * Valid signature -> fresh central snapshot -> eligibility -> atomic claim.
+ * Valid signature -> existing request inspect -> fresh central snapshot ->
+ * eligibility -> atomic claim. Duplicate retry cannot create an extra order.
  * Claim alone is NOT a booking or permission to use a previously shown quote.
  * The future order-worker must revalidate in its own central hold transaction.
  */
@@ -19,6 +20,19 @@ final class MCPI_Central_Preflight {
             || ! is_callable( $lookup ) || ! class_exists( 'MCPI_Central_Eligibility' )
             || ! class_exists( 'MCPI_Order_Claim_Registry' ) ) {
             return array( 'status' => 'rejected' );
+        }
+
+        // Authenticated retries recover the SAME central Woo order even when
+        // a session's current stock/price/window has changed. Read-only
+        // inspection is not order access authorization for the end customer.
+        $prior = MCPI_Order_Claim_Registry::inspect(
+            $db, $table, $intent, $signature, $secret, $now
+        );
+        if ( 'absent' !== ( $prior['status'] ?? '' ) ) {
+            return array( 'status' => $prior['status'] ?? 'unavailable' )
+                + ( 'existing_order' === ( $prior['status'] ?? '' )
+                    && isset( $prior['order_id'] )
+                    ? array( 'order_id' => $prior['order_id'] ) : array() );
         }
 
         try {
