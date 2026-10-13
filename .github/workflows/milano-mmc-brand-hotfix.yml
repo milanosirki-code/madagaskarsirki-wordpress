@@ -28,6 +28,7 @@ jobs:
           php -l wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/admin-brand-smoke.php
           php -l wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
           php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
           php -l wp-content/plugins/madagaskar-ai-abilities/modules/legacy-mdg-mmc-migrate.php
