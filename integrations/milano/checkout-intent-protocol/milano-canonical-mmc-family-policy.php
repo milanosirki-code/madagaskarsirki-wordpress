@@ -2,8 +2,9 @@
 /**
  * Milano trusted MMC family-price adapter — REVIEW-ONLY / READ-ONLY.
  *
- * Gets the 2+2 price ONLY from the unique MMC event associated with the
- * already verified Milano program and the identical MDG event. Unlike the
+ * Gets the 2+2 price ONLY from a unique MMC event under the already
+ * verified Milano program, with one active bidirectional MDG bridge. A NULL
+ * mmc_events.mdg_event_id is tolerated ONLY after that bridge is proven. Unlike the
  * installed legacy family plugin, no global/default/option price fallback.
  *
  * No WordPress hook, route, Woo order, ticket, payment, hold or DB writes.
@@ -31,8 +32,23 @@ final class MCPI_Canonical_MMC_Family_Policy {
         global $wpdb;
         $events_table = self::table( 'mmc_events' );
         $types_table = self::table( 'mmc_ticket_types' );
-        if ( ! $events_table || ! $types_table
+        $bridge_table = self::table( 'mmc_mdg_event_bridge' );
+        if ( ! $events_table || ! $types_table || ! $bridge_table
             || ! method_exists( $wpdb, 'prepare' ) || ! method_exists( $wpdb, 'get_results' ) ) {
+            return null;
+        }
+
+        // The live MMC event's mdg_event_id can be NULL even for a genuinely
+        // linked MDG event. The authoritative 1:1 identity is the ACTIVE
+        // bridge. Check the INVERSE direction too: the program must not own
+        // multiple active MDG events. No historical sales mapping fallback.
+        $links = $wpdb->get_results( $wpdb->prepare(
+            "SELECT mdg_event_id FROM {$bridge_table}
+             WHERE program_id=%d AND is_active=1 LIMIT 2", $program_id
+        ) );
+        if ( ! is_array( $links ) || 1 !== count( $links )
+            || ! is_object( $links[0] )
+            || (int) ( $links[0]->mdg_event_id ?? 0 ) !== $mdg_event_id ) {
             return null;
         }
 
@@ -45,7 +61,8 @@ final class MCPI_Canonical_MMC_Family_Policy {
         if ( ! is_array( $events ) || count( $events ) !== 1
             || ! is_object( $events[0] )
             || (int) ( $events[0]->id ?? 0 ) < 1
-            || (int) ( $events[0]->mdg_event_id ?? 0 ) !== $mdg_event_id ) {
+            || ( null !== ( $events[0]->mdg_event_id ?? null )
+                && (int) $events[0]->mdg_event_id !== $mdg_event_id ) ) {
             return null;
         }
         $mmc_event_id = (int) $events[0]->id;
