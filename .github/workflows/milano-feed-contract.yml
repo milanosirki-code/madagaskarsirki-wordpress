@@ -67,6 +67,8 @@ jobs:
           php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
           php -l integrations/milano/tests/mmc-draft-brand-contract.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          php -l integrations/milano/tests/mmc-legacy-draft-fallback-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -258,6 +260,14 @@ jobs:
           set -euo pipefail
           for scenario in milano milano_alias milano_district madagaskar madagaskar_alias missing_brand unknown_brand missing_program; do
             php integrations/milano/tests/mmc-draft-brand-contract.php "$scenario"
+          done
+
+      - name: Legacy MMC fallback rejects Milano and ownerless drafts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano alias_milano missing_brand invalid_brand orphan_program; do
+            php integrations/milano/tests/mmc-legacy-draft-fallback-contract.php "$scenario"
           done
 
       - name: Milano canonical MMC family event and real MDG ticket price source
