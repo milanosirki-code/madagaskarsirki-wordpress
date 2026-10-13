@@ -61,6 +61,23 @@ class MMC_Program_Service {
         return isset( self::brand_options()[ $value ] ) ? $value : '';
     }
 
+    /**
+     * Public copy follows the program brand. Missing legacy fields retain
+     * Madagaskar copy; an unknown explicit brand never gets a sales link.
+     * Milano uses its official home until its dedicated sales route is verified.
+     */
+    public static function public_brand_profile( $program ) {
+        $raw = trim( (string) ( $program->brand ?? '' ) );
+        $brand = '' === $raw ? 'Madagaskar Sirki' : self::normalized_program_brand( $raw );
+        if ( 'Milano Sirki' === $brand ) {
+            return array( 'name'=>$brand, 'domain'=>'milanosirki.com', 'ticket_url'=>'https://milanosirki.com/', 'phone'=>'0536 358 33 81', 'instagram'=>'@milanosirkiturkiye' );
+        }
+        if ( 'Madagaskar Sirki' === $brand ) {
+            return array( 'name'=>$brand, 'domain'=>'madagaskarsirki.com', 'ticket_url'=>'https://madagaskarsirki.com/bilet-al/', 'phone'=>'0312 911 37 10', 'instagram'=>'@madagaskarsirkiturkiye' );
+        }
+        return array( 'name'=>'Markası doğrulanmamış program', 'domain'=>'', 'ticket_url'=>'', 'phone'=>'', 'instagram'=>'' );
+    }
+
     public static function create_program( $data ) {
         global $wpdb;
         $table = $wpdb->prefix . 'mmc_programs';
