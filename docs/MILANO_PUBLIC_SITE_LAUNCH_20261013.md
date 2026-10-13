@@ -1,3 +1,5 @@
+> **AÇILIŞ SONRASI GÜNCEL QA (13.10.2026):** Bağlı WordPress aracıyla gerçek ana/alt sayfa HTML çıktıları alındı, mobil Google PageSpeed/Lighthouse skorları **81 Performans / 95 Erişilebilirlik / 100 İyi Uygulamalar / 100 SEO**. Artık gerçek sayfa çıktısı doğrulanmış olmakla birlikte tüm istemci ağları için kesintisiz HTTP garantisi verilmez. **Önemli:** Complianz çerez banner'ı yok (banner_version 0, optout/us) ve Jetpack GA4 yükleme kodu izin altyapısı kurulana dek **geçici olarak devre dışı** bırakıldı, aynı kod/kimlik korundu. Jetpack Stats izleme/hukuki temeli ayrı kontroldür. Detay: [MILANO_PUBLIC_QA_COOKIE_CONSENT_20261013.md](MILANO_PUBLIC_QA_COOKIE_CONSENT_20261013.md).
+
 # Uluslararası Milano Sirki — tanıtım sitesi yayına alma kaydı
 
 **Tarih:** 13 Ekim 2026 · **Canlı site:** https://milanosirki.com · **WordPress.com blog ID:** 257916618.
