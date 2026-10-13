@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid missing_brand wrong_brand unknown_brand empty two_cards; do
+          for scenario in public public_enabled public_empty public_wrong_brand public_missing_brand no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid missing_brand wrong_brand unknown_brand empty two_cards; do
             php integrations/milano/tests/consumer-contract.php "$scenario"
           done
 
