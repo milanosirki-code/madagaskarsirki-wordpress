@@ -221,7 +221,14 @@ $data = $result->get_data();
 expect( 1 === $data['schema_version'], 'schema version' );
 expect( true === $data['read_only'], 'read only flag' );
 expect( false !== strpos( $result->headers['Cache-Control'], 'no-store' ), 'must not cache available inventory' );
-$eventSql = $wpdb->queries[0];
+$eventSql = '';
+foreach ( $wpdb->queries as $query ) {
+    if ( false !== strpos( $query, 'e.status=%s' ) ) {
+        $eventSql = $query;
+        break;
+    }
+}
+expect( '' !== $eventSql, 'missing MDG event listing query' );
 foreach ( array( 'e.status=%s', 's.status=%s', 's.start_at>%s', 'e.sale_start', 'e.sale_end', 's.sale_start', 's.sale_end', 'LIMIT %d' ) as $requiredSql ) {
     expect( false !== strpos( $eventSql, $requiredSql ), 'missing mandatory status/time gate ' . $requiredSql );
 }
