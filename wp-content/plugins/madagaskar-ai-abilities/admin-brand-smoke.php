@@ -32,6 +32,10 @@ function mdg_ai_brand_smoke_results() {
     foreach ( array( '', 'both', 'Milano+Madagaskar' ) as $brand ) {
         $add( 'Geçersiz marka reddedildi: ' . ( $brand ?: '(boş)' ), is_wp_error( $ability->validate_input( $base + array( 'brand'=>$brand ) ) ) );
     }
+    if ( ! in_array( 'legacy-mdg-mmc-migrate', mdg_ai_abilities_enabled_modules(), true ) ) {
+        $rows[] = array( 'label'=>'Legacy taşıma modülü kapalı: şema kontrolleri atlandı', 'ok'=>null );
+        return $rows;
+    }
     foreach ( array( 'one', 'batch' ) as $kind ) {
         $legacy = wp_get_ability( 'madagaskar/legacy-mdg-mmc-migrate-' . $kind );
         $add( 'Legacy ' . $kind . ' API kayıtlı', null !== $legacy );
@@ -54,9 +58,9 @@ function mdg_ai_brand_smoke_page() {
     $passed = count( array_filter( $rows, static fn( $row ) => $row['ok'] ) );
     echo '<div class="wrap"><h1>Milano marka API prova doğrulaması</h1>';
     echo '<p>Yalnız kayıtlı API şeması ve giriş doğrulaması sınanır. Program, sipariş, ödeme, bilet veya QR oluşturulmaz.</p>';
-    echo '<h2>' . esc_html( $passed . ' / ' . count( $rows ) . ' kontrol başarılı' ) . '</h2><table class="widefat striped"><thead><tr><th>Kontrol</th><th>Sonuç</th></tr></thead><tbody>';
+    echo '<h2>' . esc_html( $passed . ' / ' . count( array_filter( $rows, static fn( $row ) => null !== $row['ok'] ) ) . ' kontrol başarılı' ) . '</h2><table class="widefat striped"><thead><tr><th>Kontrol</th><th>Sonuç</th></tr></thead><tbody>';
     foreach ( $rows as $row ) {
-        echo '<tr><td>' . esc_html( $row['label'] ) . '</td><td>' . esc_html( $row['ok'] ? 'PASS' : 'FAIL' ) . '</td></tr>';
+        echo '<tr><td>' . esc_html( $row['label'] ) . '</td><td>' . esc_html( null === $row['ok'] ? 'SKIP' : ( $row['ok'] ? 'PASS' : 'FAIL' ) ) . '</td></tr>';
     }
     echo '</tbody></table><p>Bu kontrol ödeme / QR uçtan uca testi değildir.</p></div>';
 }
