@@ -45,6 +45,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-order-settlement-lock.php
           php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
+          php -l integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php
+          php -l integrations/milano/tests/family22-normalizer-contract.php
           php -l integrations/milano/tests/tickera-fulfillment-audit-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-issuance-ledger.php
           php -l integrations/milano/tests/tickera-issuance-ledger-contract.php
@@ -177,6 +179,14 @@ jobs:
           set -euo pipefail
           for scenario in new duplicate attach_once already_issued wrong_token ticket_id_reused family4 crashed_worker identity_conflict stuck_after_issue other_brand order_brand_mismatch unsettled invalid_line bad_unit negative_index large_family bad_type bad_table db_unavailable; do
             php integrations/milano/tests/tickera-issuance-ledger-contract.php "$scenario"
+          done
+
+      - name: Milano virtual family 2+2 real child adult cart contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family_one two_families ten_families extra_child extra_adult extra_both combined_two no_discount nonstandard_event_price child_zero_price different_catalogue_codes inactive_other_type wrong_source_brand wrong_owner_brand event_mismatch session_mismatch zero_families eleven_families fractional_family child_unknown virtual_family_as_real_type real_capacity_four adult_multi_unit two_children missing_adult duplicate_type_code inactive_child expensive_family free_family too_many_child too_many_adult full_child_20 wrong_price_type wrong_qty_type missing_variation invalid_role duplicate_normal_lines missing_request unknown_metadata injected_code; do
+            php integrations/milano/tests/family22-normalizer-contract.php "$scenario"
           done
 
       - name: Family package commercial quantity versus physical tickets (staging only)
