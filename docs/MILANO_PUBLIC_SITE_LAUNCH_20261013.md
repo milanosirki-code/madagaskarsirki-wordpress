@@ -41,3 +41,12 @@ WordPress.com `manage-site.set-visibility` işleminde `previous_state=coming_soo
 - Google Drive Milano çalışma günlüğü: https://docs.google.com/document/d/1GSV-_niF39NTkB45--sqodofxDVH25S7XeKxefzUa4Q/edit
 
 **Açılış kapsamı:** yalnız Milano tanıtım sitesi. Çevrimiçi bilet satışı hâlâ kapalı.
+
+
+## Son kontrol — görünürlük değişikliği sonrası geri dönüş ve yeniden açma
+
+WordPress.com ilk başarılı `public` yanıtını ve `blog_public=1` değerini vermesine rağmen bir sonraki kontrolde `coming_soon` / `blog_public=0` görüldü. `activity.get` salt-okunur kayıtları, **2026-10-13T03:28:46.417Z** anında `blog_public` değerinin **1'den 0'a** `openai-mcp` istemcisinden bağlı yönetici hesabıyla değiştirildiğini gösterdi. Bu işlem kim tarafından/niçin yapıldı kesinleştirilmedi; otomatik bir çerez ayarı değişikliği olduğu varsayılmamalıdır.
+
+Kullanıcının yayın yönündeki talimatı korunarak `manage-site.set-visibility(public)` **ikinci kez** yapıldı ve `previous_state=coming_soon`, `new_state=public`, `success=true` döndü. Hemen sonraki üç bağımsız WordPress.com API okuması: `manage-site.status visibility=public launch_status=launched`, `wpcom_user_sites is_site_launched=true is_coming_soon=false`, `settings.get blog_public=1 page_on_front=5`.
+
+**Önemli:** Görünürlüğü değiştirebilen başka yönetici/oturum/otomasyon bu değeri yeniden 0'a çekerse, alan adının tekrar coming-soon olması mümkündür. Bu kayıt **daimi kesintisiz erişilebilirlik garantisi değildir**; yayından sonraki görünürlük değişiklikleri ve cookie-izin uygulaması izlenmelidir. Harici web aracı bu yeni alan adı için sayfa HTML'sini hâlâ bağımsız doğrulayamadı.
