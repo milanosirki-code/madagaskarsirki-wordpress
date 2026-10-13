@@ -53,3 +53,24 @@ Madagaskar etkinlikleri başka markaya geçirilmez, mevcut QR/bilet/kapasite/sat
 - PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/235
 - Proje günlük kayıtları: https://docs.google.com/document/d/1GSV-_niF39NTkB45--sqodofxDVH25S7XeKxefzUa4Q/edit
 - **Bu dosyanın hazırlanması site yayını değildir.** WordPress.com içerik, ayarlar, menü, site launch yazma işlemleri kullanıcı onayı bekler.
+
+
+## D. 13.10.2026 — Yayın planı 4. adım: bilet satışını kapalı tutma (uygulanan kontrol ve kod hazırlığı)
+
+Kullanıcı "4 yapmaya başla" diyerek **yalnızca** önceki dört maddelik yayın planının 4. maddesi olan **Milano çevrimiçi satışını güvenli entegrasyon bitene kadar kapalı tutma** adımına başladı. Bu istek **6 taslak sayfayı yayınlama, ana sayfa atama, sitenin coming-soon modunu kaldırma ya da checkout açma** onayı olarak yorumlanmadı.
+
+**Canlı Milano sitesi (WP.com ID 257916618) anlık doğrulama:**
+- WordPress.com plugin listesinde **WooCommerce, PayTR, Tickera KURULU DEĞİL**. 10 plugin yüklü, 6 plugin etkin. Tek etkinlik plugin'i `Milano Sirki - Ortak Etkinlikler (Taslak)` 0.1.0; açıklamasına göre salt okunur, satış/ödeme yok.
+- 7 Milano sayfasının gerçek Gutenberg içeriklerinden çıkarılan `href` linklerinde Woo cart/checkout/product, PayTR, Biletinial veya Madagaskar satın alma linki bulunmadı; yalnız Milano site-içi `/sehirler/`, `/gosterilerimiz/`, `/sikca-sorulan-sorular/`, `/kurumsal-organizasyonlar/` bağlantıları, Instagram, WhatsApp ve e-posta var. Taslak ana sayfa ve şehirler sayfasında online satışın henüz aktif olmadığı açık yazıyor. Hakkında yayımlı fakat tüm site coming-soon.
+- `milano-shared-events` geliştirme kodu `mso_events_public_enabled()` için her zaman false; halka açık besleme checkout veya satış CTA üretmez. Ancak GitHub sürümü 0.2.1 **CANLI plugin 0.1.0 yerine dağıtılmadı**, bu nedenle çalışma anında GitHub sürümü uygulanmış gibi rapor verilmez.
+- Site envanteri: `is_site_launched=false`, `is_coming_soon=true`. Satış şu anda **fiilen mevcut değil**, ancak ileride Woo/özel ödeme eklentisi yüklenirse yalnız bugünkü eklenti yokluğuna güvenmek yeterli olmaz.
+
+**Yeni taslak koruma (sadece GitHub PR #235, canlı kurulu değil):**
+- `integrations/milano/milano-sales-freeze/milano-sales-freeze.php`. Geçici Woo checkout kilidi. Yalnız `milanosirki.com` ve `www.milanosirki.com` için geçerli, diğer hostları (özellikle Madagaskar) değiştirmez.
+- Ziyaretçi veya admin tarafından izin açan flag, query parametresi, ayar ya da yönetim düğmesi **yok**. Kurulursa ve Woo bulunursa: classic add-to-cart, `is_purchasable`, variation purchasability, eski sepet kontrolü, classic checkout validation/order creation, Woo Blocks/Store API add-to-cart + checkout ve payment gateway görünürlüğü reddedilir.
+- `integrations/milano/tests/milano-sales-freeze-contract.php` — 21 sentetik test (varolan sepet, Store API, classic checkout, bypass girişimleri, Madagaskar no-op). CI: `.github/workflows/milano-feed-contract.yml`.
+- Plugin bir ödeme provider callback'inin sonradan statü değiştirmesini veya merkezi WordPress/Madagaskar Woo işletmesini otomatik durdurmaz; ödeme settlement, MDG koltuk ve Tickera QR kaynak garantilerini **asla ikame etmez**.
+- **Önemli mevcut bağlanırlık sınırı:** WordPress.com plugin.install yalnız WP.org/Marketplace slug'ı kabul ediyor, GitHub'daki bu özel PHP plugin'ini doğrudan yükleme yolu sunmuyor. Bu nedenle `milano-sales-freeze.php` **çalışan canlı koruma değildir**; yalnızca yeni Woo kurulumu öncesi staging'de incelenecek fail-closed taslaktır.
+- Şu anda canlı satışı fiilen kapalı tutan asıl unsurlar **satış eklentisi bulunmaması, checkout/ödeme linki bulunmaması ve site coming-soon** durumudur; kesintisiz kalıcı güvenlik kontrolü iddia edilmez.
+
+**Sonraki dağıtım engelleri:** Woo/PayTR/Tickera yüklemeden önce merkezi merchant doğrulaması, tek-olay-tek-marka izolasyonu, PayTR callback ve per-order atomik payment fence, canonical MDG kapasite hold, Tickera bilet issuance ve giriş kontrolü, refund/idempotency, staging concurrency testleri, bu gerçek durdurma eklentisinin güvenli kurulum/söküm planı tamamlanmalı. Milano'ya satış erişimi ancak ayrı kullanıcı onayı ile açılır. Madagaskar canlı sistemine müdahale yok.
