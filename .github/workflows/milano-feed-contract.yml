@@ -42,6 +42,7 @@ jobs:
           php -l integrations/milano/tests/order-claim-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
           php -l integrations/milano/tests/central-eligibility-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-order-retry-verifier.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
           php -l integrations/milano/tests/paytr-callback-preflight-contract.php
@@ -196,7 +197,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in new repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+          for scenario in new repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out existing_order_wrong_brand existing_order_wrong_event existing_order_wrong_session existing_order_wrong_payload existing_order_wrong_request existing_order_wrong_currency existing_order_wrong_order_id existing_order_refunded existing_order_unauthorized existing_order_no_lookup existing_order_lookup_error existing_order_missing_source_order read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
           done
 
