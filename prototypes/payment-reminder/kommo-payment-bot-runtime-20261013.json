@@ -1,0 +1,245 @@
+{
+  "0": {
+    "question": [
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 2,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "lead.tags",
+              "term2": "mdg_odeme_hatirlatma_baslatildi",
+              "operation": "not_in"
+            },
+            {
+              "term1": "lead.tags",
+              "term2": "WooCommerce Ödeme Başarılı",
+              "operation": "not_in"
+            },
+            {
+              "term1": "{{lead.status_id}}",
+              "term2": "110416823,143",
+              "operation": "in"
+            },
+            {
+              "term1": "{{lead.cf.2460836}}",
+              "term2": "ALLOW_SEND",
+              "operation": "="
+            },
+            {
+              "term1": "{{lead.cf.2460834}}",
+              "term2": "",
+              "operation": "!="
+            },
+            {
+              "term1": "{{lead.status_id}}",
+              "term2": "110416827",
+              "operation": "!="
+            },
+            {
+              "term1": "{{lead.status_id}}",
+              "term2": "142",
+              "operation": "!="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "step": 10,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "2": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "mdg_odeme_hatirlatma_baslatildi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": "SEND_STARTED",
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2460836}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Ödeme hatırlatma başlatıldı. Yalnız tek sipariş için ALLOW_SEND doğrulaması, ödeme başarı etiketi bulunmaması ve özel ödeme bağlantısı varlığı kontrol edildi. Aynı sipariş için tekrar başlatma kilidi kondu.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "tag": "",
+          "type": "external",
+          "footer": null,
+          "on_error": {
+            "params": {
+              "step": 8,
+              "type": "question"
+            },
+            "handler": "goto"
+          },
+          "products": null,
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "over_all"
+          },
+          "template_id": 86871,
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "is_in_starting_block": false,
+          "create_chat_if_not_exists": true
+        },
+        "handler": "send_message"
+      },
+      {
+        "params": {
+          "step": 3,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "3": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "mdg_odeme_hatirlatma_gonderildi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Ödeme hatırlatma şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "step": 10,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "8": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "mdg_odeme_hatirlatma_hata"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Ödeme hatırlatma gönderilemedi. Otomatik tekrar yapılmaz; sorumlu WhatsApp hata durumunu ve etkinlik bilgilerini kontrol etmelidir.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "trigger": {
+            "delay": 0,
+            "action": "create_task",
+            "segments": [
+              ""
+            ],
+            "settings": {
+              "task_text": "Ödeme hatırlatma gönderim hatası: WhatsApp mesaj durumunu, telefon ve etkinlik bilgilerini kontrol edin. Yeniden başlatmadan önce önceki gönderim kaydını inceleyin.",
+              "task_type": "1",
+              "deadline-days": "",
+              "deadline-hours": "",
+              "task_type_name": "Takip",
+              "within-deadline": "0",
+              "deadline-minutes": "",
+              "responsible_user": "current"
+            },
+            "date_exec": 0,
+            "handler_code": "amocrm",
+            "execution_condition": {
+              "id": 45,
+              "name": "execute_trigger"
+            }
+          },
+          "element_type": "lead"
+        },
+        "handler": "trigger"
+      },
+      {
+        "params": {
+          "step": 10,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "10": {
+    "question": [
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Ödeme hatırlatma akışı sonlandırıldı. Otomatik tekrar gönderimi kapalı.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      }
+    ]
+  },
+  "conversation": false
+}
