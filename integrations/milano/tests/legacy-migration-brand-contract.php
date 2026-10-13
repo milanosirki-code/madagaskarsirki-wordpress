@@ -5,6 +5,7 @@ class WP_Error {
     private $code;
     public function __construct($code, $message) { $this->code = $code; }
     public function get_error_code() { return $this->code; }
+    public function get_error_message() { return $this->code; }
 }
 function is_wp_error($v) { return $v instanceof WP_Error; }
 function absint($v) { return abs((int)$v); }
