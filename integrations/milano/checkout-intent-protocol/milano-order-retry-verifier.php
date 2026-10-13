@@ -54,7 +54,7 @@ final class MCPI_Order_Retry_Verifier {
             || ! preg_match( '/\\A[a-f0-9]{64}\\z/D', $order['intent_payload_hash'] ) ) {
             return false;
         }
-        $digest = hash( 'sha256', "milano.checkout-intent.v1\\n" . $encoded );
+        $digest = hash( 'sha256', "milano.checkout-intent.v1\n" . $encoded );
         return hash_equals( $digest, $order['intent_payload_hash'] );
     }
 }
