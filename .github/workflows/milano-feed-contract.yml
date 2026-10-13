@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types missing_brand other_brand invalid_brand; do
+          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types missing_brand other_brand invalid_brand no_bridge two_bridges orphan_bridge bad_bridge_table no_db_owner zero_event_owner filter_promote filter_cross_brand filter_reject filter_promote_no_bridge legacy_fallback; do
             php integrations/milano/tests/feed-contract.php "$scenario"
           done
 
