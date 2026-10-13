@@ -10,7 +10,7 @@ class MMC_Program_Service{
   return '';
  }
 }
-$path=dirname(__DIR__).'/../wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php';
+$path=dirname(__DIR__,3).'/wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php';
 assert_draft_brand(is_file($path),'source not found');
 require $path;
 $method=new ReflectionMethod('MMC_MDG_Draft_Sync_Service','public_event_title');
@@ -31,7 +31,7 @@ switch($scenario){
 $title=$method->invoke(null,$program);
 assert_draft_brand($title===$expected,'wrong MDG title: '.(string)$title);
 $src=file_get_contents($path);
-assert_draft_brand(strpos($src,"if ( ! $brand ) {")!==false
+assert_draft_brand(strpos($src,"if ( ! \$brand ) {")!==false
  && strpos($src,"'mmc_mdg_brand_required'")!==false,
  'draft sync does not reject unknown brand before writing');
 assert_draft_brand(strpos($src,"if ( 'Madagaskar Sirki' === \$brand ) {\n            self::sync_family_package_option")!==false,
