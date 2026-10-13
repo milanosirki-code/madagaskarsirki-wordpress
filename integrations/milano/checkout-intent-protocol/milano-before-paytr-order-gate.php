@@ -32,7 +32,7 @@ final class MCPI_Before_PayTR_Order_Gate {
     }
 
     /** Fail closed before requesting PayTR iFrame token. */
-    public static function check( $quote, $order, $hold, $tax_calculation_enabled ) {
+    public static function check( $quote, $order, $hold, $tax_calculation_enabled, $signed_request_id ) {
         if ( ! is_array( $quote ) || ! is_array( $order )
             || ! is_array( $hold ) || ! is_bool( $tax_calculation_enabled )
             || ! isset( $quote['owner_brand'], $quote['event_id'],
@@ -73,8 +73,10 @@ final class MCPI_Before_PayTR_Order_Gate {
             || $quote['admission_units'] < 1
             || $quote['admission_units'] > 100
             || $hold['units'] !== $quote['admission_units']
+            || ! is_string( $signed_request_id )
+            || ! preg_match( '/\\A[a-f0-9]{32}\\z/D', $signed_request_id )
             || ! is_string( $order['checkout_request_id'] )
-            || ! preg_match( '/\\A[a-f0-9]{32}\\z/D', $order['checkout_request_id'] )
+            || ! hash_equals( $signed_request_id, $order['checkout_request_id'] )
             || ! is_array( $quote['lines'] ) || ! is_array( $order['lines'] )
             || ! is_array( $order['fees'] ) || ! $quote['lines'] ) {
             return self::reject( 'wrong_order_identity_or_hold' );
