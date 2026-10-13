@@ -84,6 +84,11 @@ jobs:
             php integrations/milano/tests/upcoming-feed-contract.php "$scenario"
           done
 
+      - name: Yalova first-event price, capacity and family ticket contract
+        run: |
+          php -l integrations/milano/tests/yalova-config-contract.php
+          php integrations/milano/tests/yalova-config-contract.php
+
       - name: Isolated Milano client contract cases
         shell: bash
         run: |
