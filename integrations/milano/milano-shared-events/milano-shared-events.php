@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Sirki - Ortak Etkinlikler (Taslak)
  * Description: Dogrulanmis Milano seanslarini guvenli, varsayilan olarak kapali salt-okunur katalogda gosterir. Satis, odeme veya QR uretmez.
- * Version: 0.2.3
+ * Version: 0.3.0
  * Requires PHP: 7.4
  * Text Domain: milano-shared-events
  *
@@ -111,6 +111,98 @@ function mso_events_source() {
     return $output;
 }
 
+
+/**
+ * Read the announcement-only, manually approved Milano calendar.
+ *
+ * Unlike the transactional /sessions feed, this route can represent approved
+ * DRAFT shows without opening checkout. No inventory, price or ticket mapping
+ * is fetched, cached or transmitted to the visitor.
+ */
+function mso_upcoming_source() {
+    if ( ! defined( 'DUNYA_MILANO_FEED_TOKEN' )
+        || strlen( (string) DUNYA_MILANO_FEED_TOKEN ) < 32 ) {
+        return new WP_Error( 'mso_upcoming_no_key', 'Etkinlik takvimi henuz dogrulanamiyor.' );
+    }
+    $response = wp_safe_remote_get(
+        'https://madagaskarsirki.com/wp-json/dunya-milano/v1/upcoming',
+        array(
+            'timeout'             => 8,
+            'redirection'         => 0,
+            'limit_response_size' => 262144,
+            'sslverify'           => true,
+            'headers'             => array(
+                'Accept'             => 'application/json',
+                'Cache-Control'      => 'no-store',
+                'X-Dunya-Milano-Key' => (string) DUNYA_MILANO_FEED_TOKEN,
+            ),
+        )
+    );
+    if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+        return new WP_Error( 'mso_upcoming_unavailable', 'Onayli Milano takvimine erisilemiyor.' );
+    }
+    $payload = json_decode( wp_remote_retrieve_body( $response ), true );
+    if ( ! is_array( $payload )
+        || ( $payload['schema_version'] ?? null ) !== 1
+        || ( $payload['read_only'] ?? null ) !== true
+        || ( $payload['catalog_mode'] ?? null ) !== 'announcement_only'
+        || ! isset( $payload['sessions'], $payload['generated_at'] )
+        || ! is_array( $payload['sessions'] )
+        || ! is_string( $payload['generated_at'] )
+        || count( $payload['sessions'] ) > 120 ) {
+        return new WP_Error( 'mso_upcoming_schema', 'Etkinlik takvimi beklenmedik bicimde.' );
+    }
+    $generated = strtotime( $payload['generated_at'] );
+    if ( ! $generated || abs( time() - $generated ) > 180 ) {
+        return new WP_Error( 'mso_upcoming_stale', 'Etkinlik takvimi guncel degil.' );
+    }
+
+    $output = array();
+    $allowed_fields = array(
+        'event_id', 'event_owner_brand', 'session_id', 'province', 'district',
+        'venue', 'venue_address', 'date', 'time', 'start_utc',
+    );
+    foreach ( $payload['sessions'] as $row ) {
+        if ( ! is_array( $row ) || ! isset( $row['event_owner_brand'] )
+            || ! is_string( $row['event_owner_brand'] )
+            || ! in_array( $row['event_owner_brand'], array( 'milano', 'madagaskar' ), true ) ) {
+            return new WP_Error( 'mso_upcoming_brand', 'Etkinlik markasi dogrulanamadi.' );
+        }
+        if ( 'milano' !== $row['event_owner_brand'] ) { continue; }
+        foreach ( array_keys( $row ) as $field ) {
+            if ( ! in_array( $field, $allowed_fields, true ) ) {
+                return new WP_Error( 'mso_upcoming_extra', 'Etkinlik takvimine beklenmeyen alan eklendi.' );
+            }
+        }
+        if ( ! isset( $row['event_id'], $row['session_id'],
+                    $row['province'], $row['venue'],
+                    $row['date'], $row['time'], $row['start_utc'] )
+            || ! is_int( $row['event_id'] ) || $row['event_id'] < 1
+            || ! is_int( $row['session_id'] ) || $row['session_id'] < 1
+            || ! is_string( $row['province'] ) || '' === trim( $row['province'] )
+            || ! is_string( $row['venue'] ) || '' === trim( $row['venue'] )
+            || ! is_string( $row['date'] )
+            || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $row['date'] )
+            || ! is_string( $row['time'] )
+            || ! preg_match( '/^\d{2}:\d{2}$/', $row['time'] )
+            || ! is_string( $row['start_utc'] )
+            || ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $row['start_utc'] )
+            || ( isset( $row['district'] ) && ! is_string( $row['district'] ) )
+            || ( isset( $row['venue_address'] ) && ! is_string( $row['venue_address'] ) ) ) {
+            return new WP_Error( 'mso_upcoming_invalid', 'Etkinlik takvimi dogrulanamadi.' );
+        }
+        if ( strtotime( $row['start_utc'] . ' UTC' ) <= time() ) { continue; }
+        $output[] = array(
+            'province' => sanitize_text_field( $row['province'] ),
+            'district' => sanitize_text_field( (string) ( $row['district'] ?? '' ) ),
+            'venue'    => sanitize_text_field( $row['venue'] ),
+            'date'     => $row['date'],
+            'time'     => $row['time'],
+        );
+    }
+    return $output;
+}
+
 function mso_events_shortcode() {
     // Public visitors see only a generic pending message unless the operator
     // explicitly enables a server-side, Milano-only read-only public catalog.
@@ -120,7 +212,7 @@ function mso_events_shortcode() {
         return '<p class="mso-events-pending">Etkinlik takvimi hazirlaniyor. Bilet satisi henuz aktif degildir.</p>';
     }
 
-    $sessions = mso_events_source();
+    $sessions = $is_admin ? mso_events_source() : mso_upcoming_source();
     if ( is_wp_error( $sessions ) ) {
         return '<p class="mso-events-pending">Etkinlik verisi henuz dogrulanamiyor. Bilet satisi kapali.</p>';
     }
@@ -161,13 +253,13 @@ function mso_events_shortcode() {
     $output .= '<div class="mso-preview__grid">';
 
     foreach ( $sessions as $session ) {
-        $sold_out = 'sold_out' === $session['availability'];
+        $sold_out = $is_admin && 'sold_out' === $session['availability'];
         $city = $session['province'];
         $district = $session['district'];
         $venue = $session['venue'];
         $date = $session['date'];
         $time = $session['time'];
-        $capacity = $session['available_units'];
+        $capacity = $is_admin ? $session['available_units'] : null;
         $output .= '<article class="mso-preview__card"><div class="mso-preview__bar" aria-hidden="true"></div><div class="mso-preview__card-body">';
         $output .= '<div class="mso-preview__meta"><span class="mso-preview__label">Türkiye Turnesi · Seans Önizleme</span>';
         $output .= '<span class="mso-preview__status' . ( $sold_out ? ' mso-preview__status--soldout' : '' ) . '">' . ( $sold_out ? 'Kontenjan dolu' : ( $is_admin ? 'Satış uygunluğu testte' : 'Gösteri duyurusu' ) ) . '</span></div>';
