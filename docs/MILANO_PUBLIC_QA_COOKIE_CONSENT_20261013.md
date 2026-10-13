@@ -33,7 +33,7 @@ Ancak JavaScript sonrası gerçek HTML:
 - `/complianz/v1/cookie_data` ve `/complianz/v1/documents` GET cevapları boş listeler.
 - `/complianz/v1/manage_consent_html` rıza kategorilerini döndürüyor ama bu tek başına ziyaretçiye onay banner'ı gösterildiği anlamına gelmez.
 - Eski sayfa HTML'sinde Jetpack Google Analytics `gtag/js?id=G-DD2ZXC383D` komut dosyası otomatik yükleniyordu ve `gtag('consent', 'default', ...)` veya `analytics_storage` consent etiketi HTML'de yoktu. Önceden tercih doğrulaması yokken doğrudan GA4 yükleme **potansiyel sorun**.
-- Jetpack Stats `stats.wp.com/e-202642.js` dosyası mevcut; bu hizmetin kategori/çerez davranışı **incelenmedi**. Tam çerez uyumu iddia edilmez.
+- Jetpack Stats `stats.wp.com/e-202642.js` dosyası mevcut. Jetpack'in resmî teknik açıklamasına göre bu hizmet ziyaretçi IP adresi, user-agent, görüntülenen URL, yönlendirme URL'si, zaman ve dil gibi veri kullanır; olay logları 28 gün tutulabilir. Sitedeki **gerçek çerez/çerez dışı izleme işlevinin rıza ve hukuki dayanak bakımından ayrıca incelenmesi gerekir**; yalnızca GA4'ü kapatmak tüm analitik veri işlemenin durduğu anlamına gelmez. Resmî kaynak: https://jetpack.com/support/jetpack-stats/ . Tam çerez uyumu iddia edilmez.
 
 ## 4. CANLI DÜZELTME — Jetpack GA4 geçici kapalı
 
