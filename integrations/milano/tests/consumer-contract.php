@@ -1,6 +1,6 @@
 <?php
 /**
- * Isolated v0.2.2 Milano consumer / safe design preview tests.
+ * Isolated v0.2.3 Milano consumer / safe public read-only catalog tests.
  * Run: php integrations/milano/tests/consumer-contract.php <scenario>
  */
 error_reporting( E_ALL );
@@ -8,6 +8,9 @@ define( 'ABSPATH', __DIR__ );
 $scenario = isset( $argv[1] ) ? $argv[1] : 'valid';
 if ( 'no_key' !== $scenario ) {
     define( 'DUNYA_MILANO_FEED_TOKEN', str_repeat( 'm', 40 ) );
+}
+if ( in_array( $scenario, array( 'public_enabled', 'public_empty', 'public_wrong_brand', 'public_missing_brand' ), true ) ) {
+    define( 'DUNYA_MILANO_PUBLIC_CATALOG_ENABLED', true );
 }
 function expect( $ok, $label ) {
     if ( ! $ok ) { fwrite( STDERR, "FAIL {$label}\n" ); exit( 1 ); }
@@ -21,7 +24,7 @@ function is_wp_error( $v ) { return $v instanceof WP_Error; }
 function add_shortcode( $name, $function ) {}
 function sanitize_text_field( $v ) { return trim( strip_tags( (string) $v ) ); }
 function esc_html( $v ) { return htmlspecialchars( (string) $v, ENT_QUOTES, 'UTF-8' ); }
-$admin = 'public' !== $scenario;
+$admin = ! in_array( $scenario, array( 'public', 'public_enabled', 'public_empty', 'public_wrong_brand', 'public_missing_brand' ), true );
 function current_user_can( $cap ) { global $admin; return $admin; }
 $httpCalls = 0;
 $capturedUrl = '';
@@ -66,8 +69,10 @@ switch ( $scenario ) {
     case 'stale': $fixture['generated_at'] = gmdate( 'Y-m-d\TH:i:s\Z', time() - 400 ); break;
     case 'over_limit':
         $fixture['sessions'] = array_fill( 0, 121, $fixture['sessions'][0] ); break;
-    case 'missing_brand': unset( $fixture['sessions'][0]['event_owner_brand'] ); break;
-    case 'empty': $fixture['sessions'] = array(); break;
+    case 'missing_brand':
+    case 'public_missing_brand': unset( $fixture['sessions'][0]['event_owner_brand'] ); break;
+    case 'empty':
+    case 'public_empty': $fixture['sessions'] = array(); break;
     case 'two_cards':
         $other = $fixture['sessions'][0];
         $other['session_id'] = 103;
@@ -76,7 +81,8 @@ switch ( $scenario ) {
         $other['availability'] = 'sold_out';
         $fixture['sessions'][] = $other;
         break;
-    case 'wrong_brand': $fixture['sessions'][0]['event_owner_brand'] = 'madagaskar'; break;
+    case 'wrong_brand':
+    case 'public_wrong_brand': $fixture['sessions'][0]['event_owner_brand'] = 'madagaskar'; break;
     case 'unknown_brand': $fixture['sessions'][0]['event_owner_brand'] = 'other'; break;
     case 'bad_capacity': $fixture['sessions'][0]['available_units'] = -1; break;
     case 'mismatched_soldout': $fixture['sessions'][0]['availability'] = 'sold_out'; break;
@@ -95,6 +101,25 @@ if ( 'public' === $scenario ) {
     expect( false !== strpos( $out, 'hazirlaniyor' ), 'public visitor must get disabled message' );
     expect( $httpCalls === 0, 'public visitor must never call the feed' );
     echo "PASS public\n"; exit( 0 );
+}
+if ( in_array( $scenario, array( 'public_enabled', 'public_empty', 'public_wrong_brand', 'public_missing_brand' ), true ) ) {
+    expect( mso_events_public_enabled(), 'explicit public catalogue flag ignored' );
+    $html = mso_events_shortcode();
+    expect( $httpCalls === 1, 'public read-only catalogue must use one server-side feed request' );
+    expect( false === strpos( $html, 'href=' ), 'public catalogue cannot link to checkout' );
+    expect( false === strpos( $html, '<script' ), 'public catalogue cannot embed executable scripts' );
+    expect( false === strpos( $html, 'Anlık kalan kapasite birimi:' ), 'public catalogue leaked exact stock' );
+    expect( false === strpos( $html, 'Yonetici test gorunumu' ), 'public catalogue leaked admin-only message' );
+    expect( false === strpos( $html, 'Satış uygunluğu testte' ), 'public catalogue leaked admin-only state' );
+    expect( false === strpos( $html, 'Madagaskar Sirki' ), 'cross-brand catalogue leak' );
+    if ( 'public_enabled' === $scenario ) {
+        expect( false !== strpos( $html, 'mso-preview__grid' ), 'authorized public catalogue was not rendered' );
+        expect( false !== strpos( $html, 'Gösteri duyurusu' ), 'public catalogue missing safe status' );
+        expect( substr_count( $html, '<article' ) === 1, 'public catalogue must render only one Milano card' );
+    } else {
+        expect( false === strpos( $html, '<article' ), 'unauthorized or missing data rendered card' );
+    }
+    echo "PASS {$scenario}\n"; exit( 0 );
 }
 if ( 'no_key' === $scenario ) {
     $out = mso_events_source();
