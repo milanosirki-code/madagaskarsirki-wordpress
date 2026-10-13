@@ -196,7 +196,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+          for scenario in new repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
           done
 
