@@ -1,0 +1,63 @@
+/* Milano Sirki · mobil menü erişilebilirliği · 2026-10-13 */
+.wp-block-navigation .wp-block-navigation-item__content {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  min-width:44px;
+  padding:10px 12px;
+  box-sizing:border-box;
+  line-height:1.45;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container-open,
+.wp-block-navigation .wp-block-navigation__responsive-container-close {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:44px;
+  min-height:44px;
+  box-sizing:border-box;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open {
+  background-color:#091746 !important;
+  color:#FFFFFF !important;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation-item__content,
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation__responsive-container-close {
+  color:#FFFFFF !important;
+}
+.wp-block-navigation .wp-block-navigation-item__content:focus-visible,
+.wp-block-navigation .wp-block-navigation__responsive-container-open:focus-visible,
+.wp-block-navigation .wp-block-navigation__responsive-container-close:focus-visible {
+  outline:3px solid #F5C04A;
+  outline-offset:3px;
+}
+@media (max-width:782px) {
+  .wp-block-navigation .wp-block-navigation__responsive-container-content .wp-block-navigation-item__content {
+    padding:12px 14px;
+    justify-content:flex-start;
+    text-align:left;
+  }
+}
+
+/* Milano Sirki · 44px site kimliği ve skip-link hedefleri */
+.wp-block-site-title a {
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  box-sizing:border-box;
+}
+.wp-block-site-logo a {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:44px;
+  min-height:44px;
+}
+.skip-link:focus {
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  padding:10px 18px;
+  box-sizing:border-box;
+}
