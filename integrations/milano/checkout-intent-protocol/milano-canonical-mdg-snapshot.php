@@ -91,8 +91,12 @@ final class MCPI_Canonical_MDG_Snapshot {
         $program = MMC_Program_Service::get_program( (int) $pids[0] );
         if ( ! is_object( $program ) || ! isset( $program->brand ) ) { return null; }
         $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
-        if ( 'Milano Sirki' === $brand ) { return 'milano'; }
-        if ( 'Madagaskar Sirki' === $brand ) { return 'madagaskar'; }
+        if ( 'Milano Sirki' === $brand ) {
+            return array( 'brand' => 'milano', 'program_id' => (int) $pids[0] );
+        }
+        if ( 'Madagaskar Sirki' === $brand ) {
+            return array( 'brand' => 'madagaskar', 'program_id' => (int) $pids[0] );
+        }
         return null;
     }
 
@@ -107,7 +111,10 @@ final class MCPI_Canonical_MDG_Snapshot {
             return null;
         }
         $now = null === $now ? time() : $now;
-        if ( 'milano' !== self::canonical_owner( $event_id ) ) { return null; }
+        $ownership = self::canonical_owner( $event_id );
+        if ( ! is_array( $ownership ) || ( $ownership['brand'] ?? null ) !== 'milano'
+            || ! is_int( $ownership['program_id'] ?? null )
+            || $ownership['program_id'] < 1 ) { return null; }
 
         $event = MDG_Events::get( $event_id );
         if ( ! is_object( $event ) || ! isset( $event->id, $event->status ) ||
@@ -161,6 +168,7 @@ final class MCPI_Canonical_MDG_Snapshot {
             if ( null === $mdg_price || ( $variation && null === $woo_price ) ) { return null; }
             $tickets[] = array(
                 'code' => $type->code,
+                'ticket_type_id' => (int) ( $type->id ?? 0 ),
                 'active' => (int) ( $type->is_active ?? 0 ) === 1,
                 'variation_id' => $variation_id,
                 'variation_parent_id' => $variation ? (int) $variation->get_parent_id() : 0,
@@ -177,7 +185,15 @@ final class MCPI_Canonical_MDG_Snapshot {
         if ( $capacity_total < 1 || ! is_int( $available ) || $available < 0
             || $available > $capacity_total ) { return null; }
 
-        return array(
+        // Family pricing must originate from the one verified matching MMC
+        // event, not the legacy global default/option fallback. Absence means
+        // the family offer is NOT eligible; normal adult/child sales remain.
+        $family = class_exists( 'MCPI_Canonical_MMC_Family_Policy' )
+            ? MCPI_Canonical_MMC_Family_Policy::lookup(
+                $ownership['program_id'], $event_id, $tickets
+            ) : null;
+
+        $snapshot = array(
             'event' => array(
                 'id' => $event_id,
                 'owner_brand' => 'milano',
@@ -206,5 +222,7 @@ final class MCPI_Canonical_MDG_Snapshot {
             ),
             'tickets' => $tickets,
         );
+        if ( is_array( $family ) ) { $snapshot['family'] = $family; }
+        return $snapshot;
     }
 }
