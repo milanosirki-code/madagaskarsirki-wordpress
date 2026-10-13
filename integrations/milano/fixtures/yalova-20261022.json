@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "source": "owner_confirmed_milano_2026_10_13",
+  "stage": "staging_input_only",
+  "brand": "Milano Sirki",
+  "site_origin": "https://milanosirki.com",
+  "event_name": "Uluslararası Milano Sirki - Yalova",
+  "city": "Yalova",
+  "district": "Merkez",
+  "venue_name": "90. Yıl Kapalı Spor Salonu",
+  "venue_address": "Bahçelievler Mahallesi, Turhan Koçal Caddesi No:13, Yalova",
+  "venue_master_candidate_id": 181,
+  "maps_url": "https://maps.app.goo.gl/RnN2pZFTMoMD2W237?g_st=ac",
+  "show_date": "2026-10-22",
+  "timezone": "Europe/Istanbul",
+  "sessions": [
+    {
+      "local_start": "2026-10-22T18:00:00",
+      "capacity_admissions": 500
+    },
+    {
+      "local_start": "2026-10-22T19:30:00",
+      "capacity_admissions": 500
+    }
+  ],
+  "currency": "TRY",
+  "ticket_prices": {
+    "adult": 490,
+    "child": 245,
+    "family_2_2": 1100
+  },
+  "family_2_2_admissions": {
+    "adult": 2,
+    "child": 2,
+    "total": 4
+  },
+  "seating_mode": "pending_confirmation",
+  "sales_enabled": false,
+  "checkout_enabled": false,
+  "requires_live_brand_aware_mmc_upgrade": true,
+  "requires_paytr_domain_approval": true,
+  "requires_canonical_event_id": true,
+  "internal_notes": "Do not create a Madagaskar-branded MMC record or sell on both brands. User explicitly confirmed each session capacity 500 and ticket prices. Venue address needs master venue ID 181 address confirmation. The Google Maps short link is user-supplied; its destination has not been independently verified."
+}
