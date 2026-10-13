@@ -70,10 +70,10 @@ class MDG_Sessions {
     public static function local_parts( $datetime ) { return self::$local; }
 }
 class FakeDb {
-    public $rows, $sql = '', $params = array();
+    public $rows, $sql = '', $queries = array(), $params = array();
     public function prepare( $sql, ...$args ) {
         check( substr_count( $sql, '%d' ) + substr_count( $sql, '%s' ) === count( $args ), 'SQL placeholder count' );
-        $this->sql = $sql; $this->params = $args;
+        $this->sql = $sql; $this->queries[] = $sql; $this->params = $args;
         return $sql;
     }
     public function get_results( $sql ) { return $this->rows; }
@@ -131,10 +131,11 @@ check( $resp->headers['Cache-Control'] === 'private, no-store, max-age=0', 'cach
 check( $resp->headers['X-Robots-Tag'] === 'noindex, nofollow', 'server-to-server endpoint must not index' );
 $one = 'approved_draft' === $scenario;
 check( count( $data['sessions'] ) === ( $one ? 1 : 0 ), 'unapproved/cross-brand event exposed' );
-check( false !== strpos( $wpdb->sql, 'e.id IN (%d)' ), 'DB SQL not bounded to explicit event allowlist' );
-check( false !== strpos( $wpdb->sql, 'e.status IN (%s,%s)' ), 'draft events must not be published without status constraints' );
-check( false !== strpos( $wpdb->sql, 's.status IN (%s,%s)' ), 'draft sessions must not be published without status constraints' );
-check( false !== strpos( $wpdb->sql, 's.start_at > %s' ), 'time filter missing' );
+$announcement_query = $wpdb->queries[0] ?? '';
+check( false !== strpos( $announcement_query, 'e.id IN (%d)' ), 'DB SQL not bounded to explicit event allowlist' );
+check( false !== strpos( $announcement_query, 'e.status IN (%s,%s)' ), 'draft events must not be published without status constraints' );
+check( false !== strpos( $announcement_query, 's.status IN (%s,%s)' ), 'draft sessions must not be published without status constraints' );
+check( false !== strpos( $announcement_query, 's.start_at > %s' ), 'time filter missing' );
 if ( $one ) {
     check( $data['sessions'][0]['event_owner_brand'] === 'milano', 'wrong brand emitted' );
     check( $data['sessions'][0]['venue'] === 'Örnek Onaylı Salon', 'wrong approved venue' );
