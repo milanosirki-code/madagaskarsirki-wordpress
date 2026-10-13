@@ -32,6 +32,14 @@ function mdg_ai_brand_smoke_results() {
     foreach ( array( '', 'both', 'Milano+Madagaskar' ) as $brand ) {
         $add( 'Geçersiz marka reddedildi: ' . ( $brand ?: '(boş)' ), is_wp_error( $ability->validate_input( $base + array( 'brand'=>$brand ) ) ) );
     }
+    $brand_copy_available = is_callable( array( 'MMC_Program_Service', 'public_brand_profile' ) );
+    $add( 'Program marka içerik profili yüklü', $brand_copy_available );
+    if ( $brand_copy_available ) {
+        foreach ( array( 'Milano Sirki'=>'milanosirki.com', 'Madagaskar Sirki'=>'madagaskarsirki.com' ) as $brand_name=>$domain ) {
+            $profile = MMC_Program_Service::public_brand_profile( (object) array( 'brand'=>$brand_name ) );
+            $add( $brand_name . ' içerik adı ve resmî sitesi doğru', $brand_name === $profile['name'] && $domain === wp_parse_url( $profile['ticket_url'], PHP_URL_HOST ) );
+        }
+    }
     if ( ! in_array( 'legacy-mdg-mmc-migrate', mdg_ai_abilities_enabled_modules(), true ) ) {
         $rows[] = array( 'label'=>'Legacy taşıma modülü kapalı: şema kontrolleri atlandı', 'ok'=>null );
         return $rows;
