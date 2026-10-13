@@ -8,6 +8,8 @@ on:
       - 'integrations/milano/tests/mmc-program-brand-contract.php'
       - 'integrations/milano/tests/legacy-migration-brand-contract.php'
       - 'integrations/milano/tests/program-brand-copy-contract.php'
+      - 'integrations/milano/tests/mmc-draft-family-isolation-contract.php'
+      - 'integrations/milano/tests/mmc-legacy-draft-fallback-contract.php'
       - '.github/workflows/milano-mmc-brand-hotfix.yml'
   workflow_dispatch:
 
@@ -53,6 +55,14 @@ jobs:
         run: php integrations/milano/tests/legacy-migration-brand-contract.php
       - name: Check generated copy follows program brand
         run: php integrations/milano/tests/program-brand-copy-contract.php
+      - name: Check actual MDG draft brand and family isolation
+        run: php integrations/milano/tests/mmc-draft-family-isolation-contract.php
+      - name: Reject unsafe legacy fallback
+        run: |
+          set -e
+          for scenario in milano alias_milano missing_brand invalid_brand orphan_program; do
+            php integrations/milano/tests/mmc-legacy-draft-fallback-contract.php "$scenario"
+          done
       - name: Check correct two-plugin versions
         shell: bash
         run: |
