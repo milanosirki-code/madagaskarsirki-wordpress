@@ -8,6 +8,7 @@ define( 'ABSPATH', __DIR__ );
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-checkout-intent.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-order-claim-registry.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-eligibility.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-order-retry-verifier.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-preflight.php';
 function expect_preflight( $v, $m ) {
     if ( ! $v ) { fwrite(STDERR, "FAIL {$m}\n"); exit(1); }
@@ -58,6 +59,21 @@ $lookup=function($eid,$sid)use(&$snapshot,&$lookups){
     expect_preflight($eid===72 && $sid===93,'must use signed event/session IDs');
     return $snapshot;
 };
+$orderLookups=0;
+$order=array(
+    'id'=>5001, 'source_brand'=>'milano', 'event_id'=>72,
+    'session_id'=>93, 'request_id'=>$intent['request_id'],
+    'intent_payload_hash'=>hash('sha256',
+        "milano.checkout-intent.v1\n" . json_encode(
+            $intent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
+    'currency'=>'TRY', 'status'=>'pending',
+);
+$orderLookup=function($id)use(&$order,&$orderLookups){
+    ++$orderLookups;
+    expect_preflight($id===5001,'must load the authoritative existing Woo order');
+    return $order;
+};
+$authorized=true;
 $expect='claimed';
 switch($case) {
     case 'new':break;
@@ -69,6 +85,18 @@ switch($case) {
     case 'existing_order_cancelled_session':break;
     case 'processing_sold_out':break;
     case 'claim_conflict_sold_out':break;
+    case 'existing_order_wrong_brand':break;
+    case 'existing_order_wrong_event':break;
+    case 'existing_order_wrong_session':break;
+    case 'existing_order_wrong_payload':break;
+    case 'existing_order_wrong_request':break;
+    case 'existing_order_wrong_currency':break;
+    case 'existing_order_wrong_order_id':break;
+    case 'existing_order_refunded':break;
+    case 'existing_order_unauthorized':break;
+    case 'existing_order_no_lookup':break;
+    case 'existing_order_lookup_error':break;
+    case 'existing_order_missing_source_order':break;
     case 'read_failure':
         $db->last_error='simulated SQL failure';
         $expect='unavailable';break;
@@ -97,12 +125,26 @@ $retryCases=array(
     'repeat_processing','existing_order','same_id_different_items',
     'existing_order_sold_out','existing_order_changed_price',
     'existing_order_cancelled_session','processing_sold_out','claim_conflict_sold_out',
+    'existing_order_wrong_brand','existing_order_wrong_event',
+    'existing_order_wrong_session','existing_order_wrong_payload',
+    'existing_order_wrong_request','existing_order_wrong_currency',
+    'existing_order_wrong_order_id','existing_order_refunded',
+    'existing_order_unauthorized','existing_order_no_lookup',
+    'existing_order_lookup_error','existing_order_missing_source_order',
 );
 if(in_array($case,$retryCases,true)) {
-    $first=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
+    $first=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup,$orderLookup,$authorized);
     expect_preflight($first['status']==='claimed','initial claim missing');
-    if(in_array($case,array('existing_order','existing_order_sold_out',
-          'existing_order_changed_price','existing_order_cancelled_session'),true)) {
+    if(in_array($case,array(
+          'existing_order','existing_order_sold_out',
+          'existing_order_changed_price','existing_order_cancelled_session',
+          'existing_order_wrong_brand','existing_order_wrong_event',
+          'existing_order_wrong_session','existing_order_wrong_payload',
+          'existing_order_wrong_request','existing_order_wrong_currency',
+          'existing_order_wrong_order_id','existing_order_refunded',
+          'existing_order_unauthorized','existing_order_no_lookup',
+          'existing_order_lookup_error','existing_order_missing_source_order',
+       ),true)) {
         $db->rows[$intent['request_id']]['state']='ready';
         $db->rows[$intent['request_id']]['order_id']=5001;
         $expect='existing_order';
@@ -123,8 +165,26 @@ if(in_array($case,$retryCases,true)) {
     if('existing_order_cancelled_session'===$case) {
         $snapshot['session']['status']='cancelled';
     }
+    if('existing_order_wrong_brand'===$case) {$order['source_brand']='madagaskar';$expect='reconcile_required';}
+    if('existing_order_wrong_event'===$case) {$order['event_id']=404;$expect='reconcile_required';}
+    if('existing_order_wrong_session'===$case) {$order['session_id']=404;$expect='reconcile_required';}
+    if('existing_order_wrong_payload'===$case) {$order['intent_payload_hash']=str_repeat('0',64);$expect='reconcile_required';}
+    if('existing_order_wrong_request'===$case) {$order['request_id']=str_repeat('f',32);$expect='reconcile_required';}
+    if('existing_order_wrong_currency'===$case) {$order['currency']='USD';$expect='reconcile_required';}
+    if('existing_order_wrong_order_id'===$case) {$order['id']=777;$expect='reconcile_required';}
+    if('existing_order_refunded'===$case) {$order['status']='refunded';$expect='reconcile_required';}
+    if('existing_order_unauthorized'===$case) {$authorized=false;$expect='reconcile_required';}
+    if('existing_order_no_lookup'===$case) {$orderLookup=null;$expect='reconcile_required';}
+    if('existing_order_lookup_error'===$case) {
+        $orderLookup=function($id)use(&$orderLookups){++$orderLookups;throw new RuntimeException('DB temporarily down');};
+        $expect='unavailable';
+    }
+    if('existing_order_missing_source_order'===$case) {
+        $orderLookup=function($id)use(&$orderLookups){++$orderLookups;return null;};
+        $expect='reconcile_required';
+    }
 }
-$r=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
+$r=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup,$orderLookup,$authorized);
 expect_preflight($r['status']===$expect,'status '.$r['status'].' rather than '.$expect);
 if('claimed'===$expect) {
     expect_preflight(!empty($r['claim_token']) && $r['quote']['quote_only']===true,'claim/quote contract broken');
@@ -148,5 +208,11 @@ if(in_array($case,$retryCases,true)) {
 }
 if('existing_order'===$expect) {
     expect_preflight($r['order_id']===5001,'failed to reuse same central order');
+}
+if(in_array($case,$retryCases,true) && 'existing_order'!==$expect) {
+    expect_preflight(!isset($r['order_id']),'unverified Woo order identity leaked');
+}
+if(in_array($case,array('existing_order_unauthorized','existing_order_no_lookup'),true)){
+    expect_preflight($orderLookups===0,'unverified caller must not read central order');
 }
 echo "PASS {$case}\n";
