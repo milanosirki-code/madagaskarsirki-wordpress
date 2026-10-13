@@ -1,0 +1,88 @@
+name: Milano MMC Brand-Only Hotfix Staging ZIPs
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/**'
+      - 'wp-content/plugins/madagaskar-ai-abilities/**'
+      - 'integrations/milano/tests/mmc-program-brand-contract.php'
+      - '.github/workflows/milano-mmc-brand-hotfix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brand-hotfix:
+    name: Brand-only MMC/AI contract and staging package
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout hotfix branch
+        uses: actions/checkout@v4
+      - name: PHP lint for affected plugin files
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+          php -l integrations/milano/tests/mmc-program-brand-contract.php
+      - name: Run brand and Yalova preparation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure yalova_milano; do
+            php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
+          done
+      - name: Check correct two-plugin versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 1.3.50' wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Fq "define( 'MMC_VERSION', '1.3.50' );" wp-content/plugins/madagaskar-management-center/madagaskar-management-center.php
+          grep -Fq 'Version: 0.7.1' wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
+          grep -Fq "define( 'MDG_AI_ABILITIES_VERSION', '0.7.1' );" wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
+          grep -Fq '<select name="brand" required>' wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+          grep -Fq "'required' => array( 'province_name', 'brand' )" wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+      - name: Build complete plugins for isolated staging review only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-staging
+          for plugin in madagaskar-management-center madagaskar-ai-abilities; do
+            test -f "wp-content/plugins/$plugin/$plugin.php"
+            (
+              cd wp-content/plugins
+              zip -q -r "../../../release-staging/$plugin-STAGING-ONLY.zip" "$plugin" \
+                -x '*/.git/*' '*/vendor/.git/*' '*/node_modules/*' '*/.env*' '*.bak'
+            )
+          done
+          (
+            cd release-staging
+            sha256sum *.zip > SHA256SUMS
+          )
+          cat > release-staging/READ_THIS_FIRST.txt <<'INFO'
+          Milano MMC BRAND-ONLY hotfix: STAGING / REVIEW ONLY.
+          DO NOT deploy either ZIP to production without backup, rollback,
+          WordPress/Madagascar plugin integration review, and explicit approval.
+
+          Install both complete plugins only to isolated staging first:
+          - Madagaskar Management Center v1.3.50
+          - Madagaskar AI Abilities v0.7.1
+
+          Production currently runs MMC v1.3.49 and AI Abilities v0.7.0.
+          These packages change mandatory program-create API inputs;
+          any old API caller that omits brand must be migrated and will fail
+          closed. No program, tickets, prices, Woo orders, QR or PayTR
+          transactions are created by building this artifact.
+          INFO
+      - name: Upload review-only full plugin packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: milano-mmc-brand-only-staging-installable-zips
+          path: release-staging/
+          if-no-files-found: error
+          retention-days: 30
