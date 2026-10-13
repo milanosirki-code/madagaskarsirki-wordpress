@@ -1,0 +1,20 @@
+name: Kommo payment recovery
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/ms-incomplete-payment-dryrun.php'
+      - 'prototypes/payment-reminder/**'
+      - 'tests/payment-reminder/**'
+      - '.github/workflows/kommo-payment-recovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  payment-recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: php -l docs/code-snippets/ms-incomplete-payment-dryrun.php
+      - run: php -l prototypes/payment-reminder/kommo-reminder-field-sync.php
+      - run: php -l tests/payment-reminder/recovery.php
+      - run: php tests/payment-reminder/recovery.php
