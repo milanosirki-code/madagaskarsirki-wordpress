@@ -10,6 +10,7 @@ function check_mmc($v,$why){if(!$v){fwrite(STDERR,"FAIL ".$why."\n");exit(1);}}
 class FamilyMMCDB {
     public $prefix='wp_';
     public $events=array();
+    public $links=array();
     public $tickets=array();
     public $queries=array();
     public function prepare($sql,...$args){
@@ -22,6 +23,7 @@ class FamilyMMCDB {
         return $sql;
     }
     public function get_results($sql){
+        if(strpos($sql,'FROM wp_mmc_mdg_event_bridge')!==false)return $this->links;
         if(strpos($sql,'FROM wp_mmc_events')!==false)return $this->events;
         if(strpos($sql,'FROM wp_mmc_ticket_types')!==false)return $this->tickets;
         check_mmc(false,'unexpected untrusted source SQL');
@@ -29,6 +31,7 @@ class FamilyMMCDB {
 }
 $wpdb=new FamilyMMCDB();
 $wpdb->events=array((object)array('id'=>301,'mdg_event_id'=>72));
+$wpdb->links=array((object)array('mdg_event_id'=>72));
 $wpdb->tickets=array(
  (object)array('id'=>401,'ticket_code'=>'child','price'=>'245.00','capacity_units'=>1,'is_active'=>1),
  (object)array('id'=>402,'ticket_code'=>'adult','price'=>'490.00','capacity_units'=>1,'is_active'=>1),
@@ -49,6 +52,12 @@ $expected=true;
 switch($case){
  case 'valid':break;
  case 'turkish_codes':$mdg[0]['code']='COCUK';$mdg[1]['code']='YETISKIN';break;
+ case 'mmc_event_null_mdgevent':$wpdb->events[0]->mdg_event_id=null;break;
+ case 'bridge_missing':$wpdb->links=array();$expected=false;break;
+ case 'bridge_two_events':
+   $wpdb->links[]=(object)array('mdg_event_id'=>73);$expected=false;break;
+ case 'bridge_wrong_event':
+   $wpdb->links[0]->mdg_event_id=73;$expected=false;break;
  case 'missing_mmc_event':$wpdb->events=array();$expected=false;break;
  case 'duplicate_mmc_event':
    $wpdb->events[]=(object)array('id'=>302,'mdg_event_id'=>72);$expected=false;break;
@@ -125,8 +134,9 @@ if($expected){
   $result['adult_code']===$mdg[1]['code'],'wrong ticket codes');
  check_mmc($result['child_ticket_type_id']===201 && $result['adult_ticket_type_id']===202,
     'ticket IDs must come from exact MDG session');
- check_mmc(count($wpdb->queries)===2,'price lookup not strict and bounded');
- check_mmc($wpdb->queries[0]['args']===array(20),'did not select exact verified MMC program');
- check_mmc($wpdb->queries[1]['args']===array(301),'did not select unique MMC event');
+ check_mmc(count($wpdb->queries)===3,'price lookup not strict and bounded');
+ check_mmc($wpdb->queries[0]['args']===array(20),'did not verify inverse active bridge');
+ check_mmc($wpdb->queries[1]['args']===array(20),'did not select exact verified MMC program');
+ check_mmc($wpdb->queries[2]['args']===array(301),'did not select unique MMC event');
 }
 echo "PASS {$case}\n";
