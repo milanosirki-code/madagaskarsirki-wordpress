@@ -62,6 +62,8 @@ jobs:
           php -l integrations/milano/tests/paytr-settlement-claim-contract.php
           php -l integrations/milano/tests/central-preflight-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
+          php -l integrations/milano/checkout-intent-protocol/milano-canonical-mmc-family-policy.php
+          php -l integrations/milano/tests/canonical-mmc-family-policy-contract.php
           php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
       - name: Isolated feed contract cases
         shell: bash
@@ -247,6 +249,14 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-full-audit.php
           php integrations/milano/tests/tickera-full-audit-contract.php
+
+      - name: Milano canonical MMC family event and real MDG ticket price source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid turkish_codes missing_mmc_event duplicate_mmc_event wrong_mdg_event missing_family disabled_family duplicate_family price_change_mmc price_over_components default_price_fallback_forbidden mmc_adult_price_mismatch woo_adult_price_mismatch mdg_child_price_mismatch unknown_mdg_role duplicate_mdg_role real_four_unit_type unmapped_ticket duplicate_ticket_id wrong_adult_units family_units_wrong inactive_child unavailable_adult untrusted_program_id untrusted_event_id no_db_method bad_prefix missing_ticket_rows inactive_other_type; do
+            php integrations/milano/tests/canonical-mmc-family-policy-contract.php "$scenario"
+          done
 
       - name: Trusted central MMC MDG Woo read-only snapshot adapter
         shell: bash
