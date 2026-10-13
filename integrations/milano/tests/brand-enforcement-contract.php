@@ -10,8 +10,11 @@ define( 'DUNYA_BRAND_GUARD_ENABLED', true );
 $scenario = $argv[1] ?? 'milano_denied';
 function demand( $v, $why ) { if ( ! $v ) { fwrite( STDERR, "FAIL: {$why}\n" ); exit( 1 ); } }
 $hookList = array();
+$actions = array();
+function wp_die($message,$title='', $args=array()){demand(($args['response']??0)===403,'payment denial needs HTTP403');throw new RuntimeException('PAY_BRAND_DENIED');}
+
 function add_filter( $hook, $fn, $priority = 10, $args = 1 ) { global $hookList; $hookList[] = array( $hook, $priority ); }
-function add_action( $hook, $fn, $priority = 10, $args = 1 ) { global $hookList; $hookList[] = array( $hook, $priority ); }
+function add_action( $hook, $fn, $priority = 10, $args = 1 ) { global $hookList,$actions; $hookList[] = array( $hook, $priority ); $actions[$hook][]=$fn; }
 function absint( $value ) { return abs( (int) $value ); }
 $owners = array( '19' => 'madagaskar', '22' => 'milano' );
 $program_links = array( 19 => array( 101 ), 22 => array( 102 ) );
@@ -159,6 +162,34 @@ switch ( $scenario ) {
         break;
     case 'cart_preserve_upstream_error':
         demand( ! $guard::validate_add_to_cart( false, 500, 1, 600 ), 'upstream error incorrectly cleared' );
+        break;
+    case 'order_pay_milano':
+    case 'order_pay_madagaskar':
+    case 'order_pay_mixed':
+    case 'order_pay_unknown':
+    case 'order_pay_unrelated':
+    case 'order_pay_invalid':
+    case 'order_pay_ambiguous':
+        demand(isset($actions['woocommerce_before_pay_action']),'order-pay hook missing');
+        $o=new StubOrder();
+        $o->items=array(new StubItem(501,601));
+        if('order_pay_madagaskar'===$scenario)$o->items=array(new StubItem(500,600));
+        if('order_pay_mixed'===$scenario)$o->items=array(new StubItem(500,600),new StubItem(501,601));
+        if('order_pay_unknown'===$scenario)unset($owners['22']);
+        if('order_pay_unrelated'===$scenario)$o->items=array(new StubItem(9000,0));
+        if('order_pay_invalid'===$scenario)$o=null;
+        if('order_pay_ambiguous'===$scenario)$program_links[22]=array(101,102);
+        $before=serialize($o);$payment_calls=0;$blocked=false;
+        try {
+            foreach($actions['woocommerce_before_pay_action'] as $callback)call_user_func($callback,$o);
+            $payment_calls++;
+        } catch(RuntimeException $e) {
+            demand($e->getMessage()==='PAY_BRAND_DENIED','unexpected payment denial');
+            $blocked=true;
+        }
+        $allowed=in_array($scenario,array('order_pay_madagaskar','order_pay_unrelated'),true);
+        demand($allowed ? (!$blocked && $payment_calls===1) : ($blocked && $payment_calls===0),'gateway reached across brand boundary');
+        demand(serialize($o)===$before,'order-pay guard changed order');
         break;
     default:
         demand( false, 'unexpected test case ' . $scenario );
