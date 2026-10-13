@@ -43,6 +43,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
           php -l integrations/milano/tests/central-eligibility-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-order-retry-verifier.php
+          php -l integrations/milano/checkout-intent-protocol/milano-woo-order-resume-reader.php
+          php -l integrations/milano/tests/woo-order-resume-reader-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
           php -l integrations/milano/tests/paytr-callback-preflight-contract.php
@@ -200,6 +202,14 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-mapping-audit.php
           php integrations/milano/tests/tickera-mapping-audit-contract.php
+
+      - name: Woo HPOS order resume requires verified owner, brand and payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid_pending valid_on_hold valid_processing valid_completed other_customer guest_order guest_identity negative_identity unsigned_identity overflow_identity wrong_woo_order zero_order_id wrong_brand missing_brand wrong_event wrong_session bad_event_id wrong_request bad_request wrong_hash bad_hash missing_hash other_currency failed cancelled refunded trash legacy_order meta_exception other_intent_same_order same_customer_different_session; do
+            php integrations/milano/tests/woo-order-resume-reader-contract.php "$scenario"
+          done
 
       - name: Signed intent plus central eligibility plus atomic claim contract
         shell: bash
