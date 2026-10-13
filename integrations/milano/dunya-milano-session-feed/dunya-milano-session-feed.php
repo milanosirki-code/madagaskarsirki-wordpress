@@ -58,22 +58,56 @@ function dmsf_ready() {
  * MUST NEVER be exposed to Milano.
  */
 function dmsf_event_owner_brand( $event_id ) {
-    // Verified MMC<->MDG bridge is the sole event-to-program identity.
-    // Do not guess from title or venue; ambiguous legacy events remain hidden.
-    $owner = null;
-    if ( class_exists( 'MMC_MDG_Bridge_Service' )
-        && class_exists( 'MMC_Program_Service' )
-        && method_exists( 'MMC_MDG_Bridge_Service', 'program_for_mdg_event' ) ) {
-        $program_id = (int) MMC_MDG_Bridge_Service::program_for_mdg_event( (int) $event_id );
-        $program = $program_id > 0 ? MMC_Program_Service::get_program( $program_id ) : null;
-        if ( $program && isset( $program->brand ) ) {
-            $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
-            if ( 'Milano Sirki' === $brand ) { $owner = 'milano'; }
-            if ( 'Madagaskar Sirki' === $brand ) { $owner = 'madagaskar'; }
-        }
+    // Never use MMC_MDG_Bridge_Service::program_for_mdg_event() here:
+    // its legacy first-match / fallback behavior is not an authority.
+    $event_id = (int) $event_id;
+    if ( $event_id < 1
+        || ! class_exists( 'MMC_MDG_Bridge_Service' )
+        || ! class_exists( 'MMC_Program_Service' )
+        || ! method_exists( 'MMC_MDG_Bridge_Service', 'table' )
+        || ! method_exists( 'MMC_Program_Service', 'get_program' )
+        || ! method_exists( 'MMC_Program_Service', 'normalized_program_brand' ) ) {
+        return null;
     }
-    $owner = apply_filters( 'dunya_milano_canonical_event_owner', $owner, (int) $event_id );
-    return in_array( $owner, array( 'milano', 'madagaskar' ), true ) ? $owner : null;
+
+    global $wpdb;
+    if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'prepare' )
+        || ! method_exists( $wpdb, 'get_col' ) ) {
+        return null;
+    }
+    $bridge_table = MMC_MDG_Bridge_Service::table();
+    if ( ! is_string( $bridge_table )
+        || ! preg_match( '/\\A[A-Za-z0-9_]+\\z/D', $bridge_table ) ) {
+        return null;
+    }
+
+    // LIMIT 2 is deliberate: zero or multiple active links means NO owner.
+    // Do not fall back to historical sale mappings or trust a browser brand.
+    $program_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT program_id FROM {$bridge_table} WHERE mdg_event_id=%d AND is_active=1 LIMIT 2",
+        $event_id
+    ) );
+    if ( ! is_array( $program_ids ) || 1 !== count( $program_ids )
+        || (int) $program_ids[0] < 1 ) {
+        return null;
+    }
+
+    $program = MMC_Program_Service::get_program( (int) $program_ids[0] );
+    if ( ! is_object( $program ) || ! isset( $program->brand ) ) {
+        return null;
+    }
+    $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
+    $verified = 'Milano Sirki' === $brand ? 'milano'
+        : ( 'Madagaskar Sirki' === $brand ? 'madagaskar' : null );
+    if ( null === $verified ) {
+        return null;
+    }
+
+    // Extensions may VETO an owner, but cannot supply/replace the verified
+    // owner. This preserves compatibility with strict brand guard filters,
+    // without allowing an unknown owner to be made Milano by a plugin.
+    $filtered = apply_filters( 'dunya_milano_canonical_event_owner', $verified, $event_id );
+    return $filtered === $verified ? $verified : null;
 }
 
 /** Only future, on-sale Milano-owned sessions with native mappings. */
