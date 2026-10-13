@@ -27,6 +27,8 @@ jobs:
           php -l integrations/milano/tests/upcoming-contract.php
           php -l integrations/milano/milano-shared-events/milano-shared-events.php
           php -l integrations/milano/tests/feed-contract.php
+          php -l integrations/milano/dunya-milano-session-feed/dunya-milano-upcoming.php
+          php -l integrations/milano/tests/upcoming-feed-contract.php
           php -l integrations/milano/tests/consumer-contract.php
           php -l integrations/milano/milano-brand-checkout-guard/milano-brand-checkout-guard.php
           php -l integrations/milano/tests/brand-checkout-guard-contract.php
@@ -72,6 +74,14 @@ jobs:
           set -euo pipefail
           for scenario in disabled no_key short_key wrong_key no_allowlist empty_allowlist duplicate_allowlist string_allowlist oversize_allowlist approved_draft other_brand missing_bridge two_bridges orphan_bridge unapproved_event missing_venue missing_province invalid_local expired_row empty db_error; do
             php integrations/milano/tests/upcoming-contract.php "$scenario"
+          done
+
+      - name: Milano announcement-only producer security contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid disabled missing_ids invalid_ids duplicate_ids wrong_key missing_key bad_table query_error empty wrong_brand unknown_brand unapproved_event invalid_local empty_venue html_input; do
+            php integrations/milano/tests/upcoming-feed-contract.php "$scenario"
           done
 
       - name: Isolated Milano client contract cases
