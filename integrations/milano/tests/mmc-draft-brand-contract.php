@@ -3,6 +3,8 @@
 error_reporting(E_ALL);
 define('ABSPATH',__DIR__);
 function assert_draft_brand($truth,$why){if(!$truth){fwrite(STDERR,"FAIL ".$why."\n");exit(1);}}
+// WordPress text helper stub needed by the isolated draft-title fixture.
+function remove_accents($value){return $value;}
 class MMC_Program_Service{
  public static function normalized_program_brand($v){
   if('milano'===$v||'Milano Sirki'===$v)return 'Milano Sirki';
