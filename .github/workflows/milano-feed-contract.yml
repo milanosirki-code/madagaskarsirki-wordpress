@@ -51,6 +51,8 @@ jobs:
           php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
           php -l integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-family-quote.php
+          php -l integrations/milano/tests/central-family-quote-contract.php
           php -l integrations/milano/milano-sales-freeze/milano-sales-freeze.php
           php -l integrations/milano/tests/milano-sales-freeze-contract.php
           php -l integrations/milano/tests/family22-normalizer-contract.php
@@ -197,7 +199,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in new repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out existing_order_wrong_brand existing_order_wrong_event existing_order_wrong_session existing_order_wrong_payload existing_order_wrong_request existing_order_wrong_currency existing_order_wrong_order_id existing_order_refunded existing_order_unauthorized existing_order_no_lookup existing_order_lookup_error existing_order_missing_source_order read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+          for scenario in new family_22 family_22_missing_price family_22_soldout repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out existing_order_wrong_brand existing_order_wrong_event existing_order_wrong_session existing_order_wrong_payload existing_order_wrong_request existing_order_wrong_currency existing_order_wrong_order_id existing_order_refunded existing_order_unauthorized existing_order_no_lookup existing_order_lookup_error existing_order_missing_source_order read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
           done
 
@@ -223,6 +225,14 @@ jobs:
           set -euo pipefail
           for scenario in family_one two_families ten_families extra_child extra_adult extra_both combined_two no_discount nonstandard_event_price child_zero_price different_catalogue_codes inactive_other_type wrong_source_brand wrong_owner_brand event_mismatch session_mismatch zero_families eleven_families fractional_family child_unknown virtual_family_as_real_type real_capacity_four adult_multi_unit two_children missing_adult duplicate_type_code inactive_child expensive_family free_family too_many_child too_many_adult full_child_20 wrong_price_type wrong_qty_type missing_variation invalid_role duplicate_normal_lines missing_request unknown_metadata injected_code; do
             php integrations/milano/tests/family22-normalizer-contract.php "$scenario"
+          done
+
+      - name: Milano canonical family 2+2 payable quote and physical tickets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family two_families extra_child extra_adult soldout wrong_brand wrong_session wrong_currency invalid_parent price_mismatch disabled_family missing_family price_above_components free_family wrong_adult_code invalid_family_ticket_id inactive_child multi_unit_child too_many_families too_many_with_extra fake_family_variation unknown_extra_code tampered_client_amount; do
+            php integrations/milano/tests/central-family-quote-contract.php "$scenario"
           done
 
       - name: Family package commercial quantity versus physical tickets (staging only)
