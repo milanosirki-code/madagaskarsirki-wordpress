@@ -14,6 +14,7 @@ function expect_preflight( $v, $m ) {
 }
 class PreflightDB {
     public $rows = array();
+    public $last_error = '';
     public $insertCount = 0;
     public $selectKey = null;
     public function insert( $table, $row, $formats ) {
@@ -63,6 +64,14 @@ switch($case) {
     case 'repeat_processing':break;
     case 'existing_order':break;
     case 'same_id_different_items':break;
+    case 'existing_order_sold_out':break;
+    case 'existing_order_changed_price':break;
+    case 'existing_order_cancelled_session':break;
+    case 'processing_sold_out':break;
+    case 'claim_conflict_sold_out':break;
+    case 'read_failure':
+        $db->last_error='simulated SQL failure';
+        $expect='unavailable';break;
     case 'wrong_signature':
         $sig=str_repeat('0',64);$expect='rejected';break;
     case 'expired':
@@ -84,19 +93,35 @@ switch($case) {
     case 'invalid_db':$db=new stdClass();$expect='rejected';break;
     default:expect_preflight(false,'unknown scenario');
 }
-if(in_array($case,array('repeat_processing','existing_order','same_id_different_items'),true)) {
+$retryCases=array(
+    'repeat_processing','existing_order','same_id_different_items',
+    'existing_order_sold_out','existing_order_changed_price',
+    'existing_order_cancelled_session','processing_sold_out','claim_conflict_sold_out',
+);
+if(in_array($case,$retryCases,true)) {
     $first=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
     expect_preflight($first['status']==='claimed','initial claim missing');
-    if($case==='existing_order') {
+    if(in_array($case,array('existing_order','existing_order_sold_out',
+          'existing_order_changed_price','existing_order_cancelled_session'),true)) {
         $db->rows[$intent['request_id']]['state']='ready';
         $db->rows[$intent['request_id']]['order_id']=5001;
         $expect='existing_order';
-    } elseif($case==='repeat_processing') {
+    } elseif(in_array($case,array('repeat_processing','processing_sold_out'),true)) {
         $expect='processing';
     } else {
         $intent['items'][0]['quantity']=3;
         $sig=mcpi_sign($intent,$key);
         $expect='conflict';
+    }
+    if(in_array($case,array('existing_order_sold_out',
+        'processing_sold_out','claim_conflict_sold_out'),true)) {
+        $snapshot['session']['available_units']=0;
+    }
+    if('existing_order_changed_price'===$case) {
+        $snapshot['tickets'][0]['woo_price_cents']=99999;
+    }
+    if('existing_order_cancelled_session'===$case) {
+        $snapshot['session']['status']='cancelled';
     }
 }
 $r=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup);
@@ -107,14 +132,21 @@ if('claimed'===$expect) {
 } else {
     expect_preflight(!isset($r['claim_token'])&&!isset($r['quote']),'secret worker state leaked on non-claim');
 }
-if(in_array($case,array('wrong_signature','expired','no_lookup'),true)) {
-    expect_preflight($lookups===0 && $db->insertCount===0,'invalid request touched DB/snapshot');
+if(in_array($case,array('wrong_signature','expired','no_lookup','read_failure'),true)) {
+    expect_preflight($lookups===0 && $db->insertCount===0,'invalid/unavailable request touched quote or inserted DB');
+}
+if(in_array($case,$retryCases,true)) {
+    // First valid request generates quote; retry NEVER re-looks up stale/changed snapshot.
+    expect_preflight($lookups===1,'repeat request re-quoted instead of resolving original state');
+    expect_preflight($db->insertCount===1,'repeat created extra order request claim');
 }
 if(in_array($case,array('wrong_brand','missing_brand','out_of_stock','price_mismatch','cancelled_session','server_error'),true)){
     expect_preflight($db->insertCount===0,'blocked or unavailable created registry row');
 }
-if('repeat_processing'===$case || 'existing_order'===$case || 'same_id_different_items'===$case) {
+if(in_array($case,$retryCases,true)) {
     expect_preflight(count($db->rows)===1,'duplicate created extra record');
 }
-if('existing_order'===$case){ expect_preflight($r['order_id']===5001,'failed to reuse single canonical order'); }
+if('existing_order'===$expect) {
+    expect_preflight($r['order_id']===5001,'failed to reuse same central order');
+}
 echo "PASS {$case}\n";
