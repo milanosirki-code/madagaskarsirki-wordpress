@@ -60,3 +60,30 @@ Tests: `integrations/milano/tests/tickera-fulfillment-audit-contract.php` — 32
 6. Milano açılışı için ayrı kullanıcı onayı. Önceki üretim verileri ve Madagaskar satışları **asla otomatik değiştirilmez**.
 
 PR: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/235
+
+
+## 13.10.2026 — GERÇEK AİLE 2+2 PLUGIN KEŞFİ / ÖNEMLİ DÜZELTME
+
+Canlı Madagaskar WPVibe salt okunur kaynak incelemesiyle **aktif** `madagaskar-aile-paketi-22/madagaskar-aile-paketi-22.php` **sürüm 1.1.3** doğrulandı. Daha önce yalnız isme göre Woo aile ürünü/satırı aradığımız için bunun bulunmadığını raporlamıştık: nedeni fiili modelin **sanal ürün** olması. `MDG_FAMILY_2_2` AJAX satırı `preprocess_family_line` ile gerçek `child` + `adult` bilet türlerine **2+2** dönüştürülüyor. Fiyat indirimi `woocommerce_cart_calculate_fees` ile **negatif fee**; gerçek WC satırları 2 çocuk ve 2 yetişkin `_qty` üzerinden Tickera QR üretiyor. `_mdg_family22_*` meta işaretleri siparişe kaydediliyor. Yanıltıcı eski `FAMILY4` varyasyonlu tek ticari satır **bugünkü canlı yöntem değildir** ve Milano'ya aynen uygulanmamalıdır.
+
+Güvenlik sınırları kurulu kaynakta: her seans için tek aktif çocuk ve yetişkin kodu, gerçek `capacity_units>1` aile tipiyle aynı anda kullanımı reddetme, tek işlemde en fazla 10 aile ve her gerçek çocuk/yetişkin türünde en fazla 20 satır miktarı, fiyatı merkezî MMC'de `family_2_2` kodundan (varsa) alma ve sepet miktarı azaldığında haksız indirim almamayı hedefleyen uygulama.
+
+Buna karşılık mevcut aile eklentisinin `MMC_MDG_Bridge_Service::program_for_mdg_event()` ile ilk eşleşmeye düşen eski geriye dönük fiyat seçimi, Milano'nun **münhasır marka** güvenlik kuralına uygun değil. Milano'ya eklenti kopyalanmayacak; merkezi **tekil aktif MMC bridge** ve marka doğrulamasıyla ayrı adaptör oluşturulacak.
+
+**Yeni GitHub yalnız staging kod:** `integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php` sunucu doğrulanmış fiyat/katalog/marka ile 1 sanal paket için 2 gerçek çocuk + 2 gerçek yetişkin satırı, 4 admission/QR beklentisi ve negatif ücret indiriminin kuruş hesabını yapar. `integrations/milano/tests/family22-normalizer-contract.php` içinde 40 senaryo vardır. Woo sepeti/PayTR/bilet üretimi **yoktur**. Eski `FAMILY4=4` kapasite soyut fixture'ları yayıma esas alınamaz; fiziksel 2+2 satırları ile plan uyuşması test edilir.
+
+### Canlı aile paketi anonim toplu denetim (13.10.2026; anlık sayılar)
+
+- `woocommerce_order_itemmeta` üzerinden aile işaretli **271** WC satırı, **136** aile grup anahtarı; **125 grup** tam beyan edilen `2 çocuk + 2 yetişkin` oranını taşıyor. Diğer **11** grup, ek normal bilet/miktar değişimi/yarım sepet gibi nedenlerle ayrışabilir; tek başına hata diye sayılmaz.
+- Bu satırların toplamı **569** gerçek bilet miktarı; **511** yayımlanmış Tickera kaydı. Durum kırılımı:
+  - `wc-processing`: 110 sipariş, 220 satır, **457 beklenen = 457 yayımlanmış**; satır farkı 0.
+  - `wc-refunded`: 8 sipariş, 16 satır, **42 sipariş miktarı**, 0 yayımlanmış.
+  - `wc-cancelled`: 4 sipariş, 8 satır, **16 sipariş miktarı**, 0 yayımlanmış.
+  - **`wc-failed`: 14 sipariş, 27 satır, 54 sipariş miktarı ve 54 yayımlanmış Tickera bilet.** Bu 14 başarısız siparişin `paytr_pending_order_id` metası var, fakat `paytr_order_id` (başarılı işlem kimliği) metası **yok**. Bu 54 yayımlanmış bilette `_mdg_invalidated`, `_cancelled_order` ve `tc_checkins` meta kayıtları görülmedi. **YÜKSEK ÖNCELİKLİ SALT-OKUNUR İNCELEME**: bunun fiilen girişe izin verip vermediği doğrulanmalı; canlı biletler burada iptal edilmedi.
+- `checkinera-premium/index.php` uygulaması doğrulama için Tickera `tc-api/{api_key}/check_in` çağrısını iletir. `tickera-event-ticketing-system/includes/classes/class.checkin_api.php` satır 694–706 içinde `tickera_order_is_paid` filtresinin sonucu yanlışsa giriş bloklanıyor. **WooCommerce Bridge'in HPOS `wc-failed` için filtreyi nasıl uyguladığı bilinmiyor**. Bu 54 kaydın geçerli olduğunu veya girişten reddedildiğini iddia etmeyin.
+- Bu sorgularda müşteri adı, telefon, ham QR/ticket_code veya sipariş kimliği **çıktıya alınmadı**; yalnız toplu sayımlar.
+- Kurulu Checkinera/Tickera, WC veya ödeme ayarlarında **hiçbir değişiklik yapılmadı**.
+
+### Canlıya geçiş açısından yeni zorunlu kapı
+
+Münhasır Milano marka yetkisi + gerçek çocuk/yetişkin varyasyonları + **ödemesi kanıtlanmış sipariş** + Tickera `tickera_order_is_paid` durum eşlemesi + MDG kesinleşen 4 kişilik kontenjan + 4 ayrı geçerli QR; bunların tamamı staging'de doğrulanmadan aktif Milano checkout yapılandırılmayacak.
