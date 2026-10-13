@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Milano Sirki - Ortak Etkinlikler (Taslak)
- * Description: Madagaskar'in kanonik MDG seans beslemesini yoneticilere salt okunur gosterir. Satis, odeme veya QR uretmez.
- * Version: 0.2.2
+ * Description: Dogrulanmis Milano seanslarini guvenli, varsayilan olarak kapali salt-okunur katalogda gosterir. Satis, odeme veya QR uretmez.
+ * Version: 0.2.3
  * Requires PHP: 7.4
  * Text Domain: milano-shared-events
  *
@@ -13,8 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function mso_events_public_enabled() {
-    // This milestone never renders inventory to public visitors.
-    return false;
+    // Two independent gates are required to show real Milano sessions publicly:
+    // (1) the host's explicit server-side opt-in, and (2) a valid authenticated
+    // canonical feed. A missing constant always keeps the catalogue closed.
+    return defined( 'DUNYA_MILANO_PUBLIC_CATALOG_ENABLED' )
+        && true === DUNYA_MILANO_PUBLIC_CATALOG_ENABLED;
 }
 
 /**
@@ -109,9 +112,11 @@ function mso_events_source() {
 }
 
 function mso_events_shortcode() {
-    // The preview is strictly administrator-only. No inventory, city or
-    // availability values are requested or rendered for public visitors.
-    if ( ! mso_events_public_enabled() && ! current_user_can( 'manage_options' ) ) {
+    // Public visitors see only a generic pending message unless the operator
+    // explicitly enables a server-side, Milano-only read-only public catalog.
+    // Admins may inspect the same data without enabling public catalogue.
+    $is_admin = current_user_can( 'manage_options' );
+    if ( ! $is_admin && ! mso_events_public_enabled() ) {
         return '<p class="mso-events-pending">Etkinlik takvimi hazirlaniyor. Bilet satisi henuz aktif degildir.</p>';
     }
 
@@ -123,8 +128,8 @@ function mso_events_shortcode() {
         return '<div class="mso-events-pending" role="status"><strong>Milano Sirki etkinlik hazırlığı</strong><p>Milano markasına atanmış, doğrulanmış gelecek seans bulunamadı. Bilet satışları kapalı.</p></div>';
     }
 
-    // Self-contained scoped styles for the admin-only staging preview.
-    // No third-party scripts, links, prices, checkout or QR actions.
+    // Self-contained scoped styles for a secure read-only catalogue. No
+    // third-party scripts, links, prices, checkout or QR actions.
     $output = '<style>
     .mso-preview{--mso-navy:#091746;--mso-red:#c72528;--mso-gold:#f5c04a;--mso-cream:#fff8ed;font-family:inherit;color:var(--mso-navy);border:1px solid #e4e8f0;border-radius:26px;background:linear-gradient(140deg,#fff8ed 0%,#fff 60%,#f4f6fb 100%);padding:clamp(18px,3vw,34px)}
     .mso-preview *{box-sizing:border-box}
@@ -147,9 +152,12 @@ function mso_events_shortcode() {
     .mso-preview__foot{margin-top:18px;border-top:1px solid #edf0f5;padding-top:14px;font-size:12px;color:#58637b}
     @media(max-width:600px){.mso-preview{border-radius:17px;padding:16px}.mso-preview__card-body{padding:17px}.mso-preview__city{font-size:22px}}
     </style>';
-    $output .= '<section class="mso-preview" aria-label="Milano Sirki yönetici seans önizlemesi">';
+    $output .= '<section class="mso-preview" aria-label="Milano Sirki doğrulanmış seans takvimi">';
     $output .= '<div class="mso-preview__top"><div><span class="mso-preview__eyebrow">Uluslararası Milano Sirki</span><h2 class="mso-preview__heading">Şehirler ve seanslar</h2></div>';
-    $output .= '<p class="mso-preview__hint"><strong>Yonetici test gorunumu:</strong> Salt okunur önizleme. Kapasite anlık değişebilir; bilet satışı, ödeme ve QR işlemi yapılmaz.</p></div>';
+    $output .= '<p class="mso-preview__hint">' . ( $is_admin
+        ? '<strong>Yonetici test gorunumu:</strong> Salt okunur önizleme. Kapasite anlık değişebilir; bilet satışı, ödeme ve QR işlemi yapılmaz.'
+        : 'Kesinleşen Milano Sirki gösterilerinin bilgilendirme takvimi. Bilet satışı henüz açık değildir.'
+    ) . '</p></div>';
     $output .= '<div class="mso-preview__grid">';
 
     foreach ( $sessions as $session ) {
@@ -162,11 +170,14 @@ function mso_events_shortcode() {
         $capacity = $session['available_units'];
         $output .= '<article class="mso-preview__card"><div class="mso-preview__bar" aria-hidden="true"></div><div class="mso-preview__card-body">';
         $output .= '<div class="mso-preview__meta"><span class="mso-preview__label">Türkiye Turnesi · Seans Önizleme</span>';
-        $output .= '<span class="mso-preview__status' . ( $sold_out ? ' mso-preview__status--soldout' : '' ) . '">' . ( $sold_out ? 'Kontenjan dolu' : 'Satış uygunluğu testte' ) . '</span></div>';
+        $output .= '<span class="mso-preview__status' . ( $sold_out ? ' mso-preview__status--soldout' : '' ) . '">' . ( $sold_out ? 'Kontenjan dolu' : ( $is_admin ? 'Satış uygunluğu testte' : 'Gösteri duyurusu' ) ) . '</span></div>';
         $output .= '<h3 class="mso-preview__city">' . esc_html( $city ) . '</h3>';
         $output .= '<p class="mso-preview__venue">' . esc_html( ( $district ? $district . ' · ' : '' ) . $venue ) . '</p>';
         $output .= '<div class="mso-preview__date"><span>' . esc_html( $date ) . '</span><span class="mso-preview__time">' . esc_html( $time ) . '</span></div>';
-        $output .= '<div class="mso-preview__foot">' . esc_html( $sold_out ? 'Kalan birim: 0' : 'Anlık kalan kapasite birimi: ' . $capacity ) . '</div>';
+        $output .= '<div class="mso-preview__foot">' . ( $is_admin
+            ? esc_html( $sold_out ? 'Kalan birim: 0' : 'Anlık kalan kapasite birimi: ' . $capacity )
+            : 'Bilet satışı henüz aktif değildir.'
+        ) . '</div>';
         $output .= '</div></article>';
     }
 
