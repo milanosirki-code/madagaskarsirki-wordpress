@@ -56,7 +56,7 @@ jobs:
             test -f "wp-content/plugins/$plugin/$plugin.php"
             (
               cd wp-content/plugins
-              zip -q -r "../../../release-staging/$plugin-STAGING-ONLY.zip" "$plugin" \
+              zip -q -r "../../release-staging/$plugin-STAGING-ONLY.zip" "$plugin" \
                 -x '*/.git/*' '*/vendor/.git/*' '*/node_modules/*' '*/.env*' '*.bak'
             )
           done
