@@ -6,6 +6,7 @@ on:
       - 'wp-content/plugins/madagaskar-management-center/**'
       - 'wp-content/plugins/madagaskar-ai-abilities/**'
       - 'integrations/milano/tests/mmc-program-brand-contract.php'
+      - 'integrations/milano/tests/legacy-migration-brand-contract.php'
       - '.github/workflows/milano-mmc-brand-hotfix.yml'
   workflow_dispatch:
 
@@ -29,6 +30,8 @@ jobs:
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
           php -l wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php
           php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/modules/legacy-mdg-mmc-migrate.php
+          php -l integrations/milano/tests/legacy-migration-brand-contract.php
           php -l integrations/milano/tests/mmc-program-brand-contract.php
       - name: Run brand and Yalova preparation tests
         shell: bash
@@ -37,6 +40,8 @@ jobs:
           for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure yalova_milano; do
             php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
           done
+      - name: Check legacy brand migration safety
+        run: php integrations/milano/tests/legacy-migration-brand-contract.php
       - name: Check correct two-plugin versions
         shell: bash
         run: |
