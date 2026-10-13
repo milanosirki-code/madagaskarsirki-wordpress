@@ -49,4 +49,4 @@ Kontroller:
 5. Tickera aile 2+2 → 4 gerçek QR, doğru Milano PDF/WhatsApp/Kommo, doğru seans, iade ve check-in; Biletinial/gişe dış kanal kapasitesinin de ayrı kontrol edilmesi.
 6. KVKK Türkiye opt-in çerez/analitik tercihi, ödeme/bilet yasal metinleri, doğru KDV/fatura tutarları ve açık **canlı satış aktivasyon onayı**. Bunlar olmadan Milano frontend satın alma bağlantısı, WordPress Woo/PayTR kurulum ve Madagaskar üretim Woo hook'ları açılmaz.
 
-**Gerçek durum:** Milwaukee/Milano satış entegrasyonundaki bu kontrol, markaya özgü ödeme açılışından **önceki güvenlik katmanıdır**. Mevcut canlı Milano site tanıtım amaçlı yayındadır; **satış hâlâ kapalı**. Gerçek test amaçlı para tahsil edilmedi, QR veya Woo order yaratılmadı.
+**Gerçek durum:** Milano satış entegrasyonundaki bu kontrol, markaya özgü ödeme açılışından **önceki güvenlik katmanıdır**. Mevcut canlı Milano site tanıtım amaçlı yayındadır; **satış hâlâ kapalı**. Gerçek test amaçlı para tahsil edilmedi, QR veya Woo order yaratılmadı.
