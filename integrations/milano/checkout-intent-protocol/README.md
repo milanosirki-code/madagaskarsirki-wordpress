@@ -58,7 +58,7 @@ PHP dosyası WordPress'te hiçbir endpoint/hook oluşturmuyor; sipariş başlatm
 ## 5. Mevcut canlı durum
 
 - Madagaskar, normal satışlarına devam ediyor. 13 MMC programının marka değeri `Madagaskar Sirki` olarak salt-okunur doğrulandı.
-- Milano WordPress sitesi `Çok Yakında`, ödeme kapalı.
+- Milano WordPress tanıtım sitesi **herkese açık**, çevrimiçi bilet satışı **kapalı**. WooCommerce, PayTR ve Tickera Milano'da henüz kurulu değil.
 - Bu PR #235 **draft**. Henüz birleştirilmedi ve canlı ödeme/QR/Woo siparişleri değiştirilmedi.
 
 GitHub: https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/235  
