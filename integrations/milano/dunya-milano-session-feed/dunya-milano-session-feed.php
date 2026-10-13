@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Milano Ortak Seans Beslemesi (Hazırlık)
  * Description: MDG'nin kanonik kapasite defterinden salt okunur ve anahtar korumalı seans bilgisi verir. Sipariş veya stok değiştirmez.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Requires PHP: 7.4
  * Text Domain: dunya-milano-session-feed
  *
@@ -231,3 +231,7 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
     $response->header( 'X-Robots-Tag', 'noindex, nofollow' );
     return $response;
 }
+
+// Separate, independently approved announcement-only feed. The existing
+// /sessions stock/pricing contract is unchanged and remains private.
+require_once __DIR__ . '/dunya-milano-upcoming.php';
