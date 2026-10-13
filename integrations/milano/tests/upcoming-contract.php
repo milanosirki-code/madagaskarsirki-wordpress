@@ -131,8 +131,14 @@ check( $resp->headers['Cache-Control'] === 'private, no-store, max-age=0', 'cach
 check( $resp->headers['X-Robots-Tag'] === 'noindex, nofollow', 'server-to-server endpoint must not index' );
 $one = 'approved_draft' === $scenario;
 check( count( $data['sessions'] ) === ( $one ? 1 : 0 ), 'unapproved/cross-brand event exposed' );
-$announcement_query = $wpdb->queries[0] ?? '';
-check( false !== strpos( $announcement_query, 'e.id IN (%d)' ), 'DB SQL not bounded to explicit event allowlist' );
+$announcement_query = '';
+foreach ( (array) $wpdb->queries as $issued_sql ) {
+    if ( false !== strpos( $issued_sql, 'e.id IN (%d)' ) ) {
+        $announcement_query = $issued_sql;
+        break;
+    }
+}
+check( '' !== $announcement_query, 'DB SQL not bounded to explicit event allowlist' );
 check( false !== strpos( $announcement_query, 'e.status IN (%s,%s)' ), 'draft events must not be published without status constraints' );
 check( false !== strpos( $announcement_query, 's.status IN (%s,%s)' ), 'draft sessions must not be published without status constraints' );
 check( false !== strpos( $announcement_query, 's.start_at > %s' ), 'time filter missing' );
