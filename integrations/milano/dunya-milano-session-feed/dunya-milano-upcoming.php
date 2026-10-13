@@ -103,6 +103,12 @@ function dmsf_get_upcoming( WP_REST_Request $request ) {
     $result = array();
     foreach ( (array) $rows as $row ) {
         $event_id = (int) $row->event_id;
+        // Defense in depth: never trust SQL alone for time eligibility.
+        if ( ! isset( $row->start_at ) || ! is_string( $row->start_at )
+            || ! strtotime( $row->start_at . ' UTC' )
+            || strtotime( $row->start_at . ' UTC' ) <= time() ) {
+            continue;
+        }
         if ( ! isset( $approved_set[ $event_id ] )
             || 'milano' !== dmsf_event_owner_brand( $event_id ) ) {
             continue;
