@@ -1,3 +1,5 @@
+> **DURUM GÜNCELLEMESİ — 13.10.2026:** Milano Sirki tanıtım sitesi **https://milanosirki.com** WordPress.com üzerinde **HERKESE AÇIK** (`launch_status=launched`, `visibility=public`, `coming_soon=false`). Ana sayfa ID 5, yedi tanıtım sayfası ve üç KVKK/gizlilik/çerez sayfası yayında. Çevrimiçi bilet satışı kapalı; Woo/PayTR/Tickera Milano sitesinde kurulu değil. Aşağıdaki "henüz açılmadı" bilgileri yayına çıkmadan ÖNCE yapılan tarihsel kontroldür. Güncel işlem kaydı: [MILANO_PUBLIC_SITE_LAUNCH_20261013.md](MILANO_PUBLIC_SITE_LAUNCH_20261013.md). Bağımsız HTTP smoke testi bu ortamda teyit edilemedi; çerez rıza widget doğrulaması açık kontrol maddesi olarak kaldı.
+
 # Milano Sirki — 13.10.2026 yayın öncesi doğrulanmış durum ve geçiş kapıları
 
 **Kaynaklar:** WordPress.com kullanıcı site envanteri, site `settings.get`, `domains.list` / `domains.get`, `plugin.list`, `pages.list`, `pages.get`, blok `navigation.list` ve `template-parts.list` — Milano site blog ID **257916618**. Salt okunur; bu denetim sırasında site yayınlanmadı, satış açılmadı.
