@@ -570,7 +570,7 @@ class MMC_MDG_Bridge_Service {
         $short = 'Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.';
         $long  = '';
         $district_key = self::normalize_text( $program->district_name );
-        $title = 'Madagaskar Sirki — ' . $program->province_name;
+        $title = MMC_Program_Service::public_brand_profile( $program )['name'] . ' — ' . $program->province_name;
         if ( $program->district_name && 'merkez' !== $district_key ) {
             $title .= ' / ' . $program->district_name;
         }
