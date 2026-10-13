@@ -210,7 +210,8 @@ class MMC_Kommo_Service {
         $cancelled = 'cancelled' === $program->status || ( $event && 'cancelled' === $event->status );
 
         $lines = array();
-        $lines[] = 'MADAGASKAR SİRKİ — GÜNCEL PROGRAM KAYNAĞI';
+        $brand = MMC_Program_Service::public_brand_profile( $program );
+        $lines[] = mb_strtoupper( $brand['name'], 'UTF-8' ) . ' — GÜNCEL PROGRAM KAYNAĞI';
         $lines[] = 'Program Kodu: ' . $program->program_code;
         $lines[] = 'Program Durumu: ' . ( $statuses[$program->status] ?? $program->status );
         $lines[] = 'Son Güncelleme: ' . wp_date( 'd.m.Y H:i' );
@@ -224,7 +225,7 @@ class MMC_Kommo_Service {
             return implode( "\n", $lines );
         }
 
-        $lines[] = 'Marka: Madagaskar Sirki';
+        $lines[] = 'Marka: ' . $brand['name'];
         $lines[] = 'Konsept: Uluslararası sanatçılarla hazırlanan, tamamen hayvansız, ailelere uygun canlı sirk deneyimi.';
         $lines[] = 'İl: ' . $program->province_name;
         $lines[] = 'İlçe: ' . ( $program->district_name ?: 'Genel' );
@@ -259,14 +260,14 @@ class MMC_Kommo_Service {
         $lines[] = '- Çocuklar yetişkin eşliğinde katılır.';
         foreach ( $tickets as $t ) {
             if ( ! (int)$t->is_active ) continue;
-            $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (madagaskarsirki.com)';
+            $row = '- ' . $t->ticket_name . ': ' . number_format_i18n((float)$t->price, 2) . ' TL (' . $brand['domain'] . ')';
             if ( isset($bmap[(int)$t->id]) && null !== $bmap[(int)$t->id]->channel_price ) {
                 $row .= ' | Biletinial: ' . number_format_i18n((float)$bmap[(int)$t->id]->channel_price, 2) . ' TL + varsa hizmet bedeli';
             }
             if ( 'family_2_2' === $t->ticket_code ) $row .= ' | 2 yetişkin + 2 çocuk, 4 kişi kapasite tüketir';
             $lines[] = $row;
         }
-        $lines[] = 'Resmî merkezi bilet sayfası: https://madagaskarsirki.com/bilet-al/';
+        $lines[] = 'Resmî marka sitesi / bilet bağlantısı: ' . $brand['ticket_url'];
         $lines[] = 'Kapıda nakit ve kredi kartı ile ödeme yapılabilir.';
 
         if ( $sales ) {
@@ -346,16 +347,17 @@ class MMC_Kommo_Service {
         }
 
         $program = MMC_Program_Service::get_program( $program_id );
+        $brand = MMC_Program_Service::public_brand_profile( $program );
         $title = $program
-            ? 'Madagaskar Sirki — ' . $program->province_name . ( $program->district_name ? ' / ' . $program->district_name : '' )
-            : 'Madagaskar Sirki — Güncel Program Bilgileri';
+            ? $brand['name'] . ' — ' . $program->province_name . ( $program->district_name ? ' / ' . $program->district_name : '' )
+            : 'Güncel Program Bilgileri';
 
         return '<!doctype html>' .
             '<html lang="tr"><head>' .
             '<meta charset="utf-8">' .
             '<meta name="viewport" content="width=device-width,initial-scale=1">' .
             '<title>' . esc_html( $title ) . '</title>' .
-            '<meta name="description" content="Madagaskar Sirki güncel program, salon, seans, bilet ve müşteri iletişim bilgileri.">' .
+            '<meta name="description" content="' . esc_attr( $brand['name'] . ' güncel program, salon, seans, bilet ve müşteri iletişim bilgileri.' ) . '">' .
             '</head><body><main><article>' .
             '<h1>' . esc_html( $title ) . '</h1>' .
             implode( "\n", $body ) .
