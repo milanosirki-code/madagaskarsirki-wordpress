@@ -7,6 +7,7 @@ on:
       - 'wp-content/plugins/madagaskar-ai-abilities/**'
       - 'integrations/milano/tests/mmc-program-brand-contract.php'
       - 'integrations/milano/tests/legacy-migration-brand-contract.php'
+      - 'integrations/milano/tests/program-brand-copy-contract.php'
       - '.github/workflows/milano-mmc-brand-hotfix.yml'
   workflow_dispatch:
 
@@ -33,6 +34,13 @@ jobs:
           php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
           php -l wp-content/plugins/madagaskar-ai-abilities/modules/legacy-mdg-mmc-migrate.php
           php -l integrations/milano/tests/legacy-migration-brand-contract.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-event-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-publish-content-excel.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-marketing-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-kommo-service.php
+          php -l integrations/milano/tests/program-brand-copy-contract.php
           php -l integrations/milano/tests/mmc-program-brand-contract.php
       - name: Run brand and Yalova preparation tests
         shell: bash
@@ -43,6 +51,8 @@ jobs:
           done
       - name: Check legacy brand migration safety
         run: php integrations/milano/tests/legacy-migration-brand-contract.php
+      - name: Check generated copy follows program brand
+        run: php integrations/milano/tests/program-brand-copy-contract.php
       - name: Check correct two-plugin versions
         shell: bash
         run: |
