@@ -33,7 +33,48 @@ ensure( ( $data['checkout_enabled'] ?? null ) === false, 'checkout enabled befor
 ensure( ( $data['requires_live_brand_aware_mmc_upgrade'] ?? null ) === true, 'brand migration gate missing' );
 ensure( ( $data['requires_paytr_domain_approval'] ?? null ) === true, 'PayTR domain gate missing' );
 ensure( ( $data['requires_canonical_event_id'] ?? null ) === true, 'canonical ID gate missing' );
-ensure( ( $data['seating_mode'] ?? '' ) === 'pending_confirmation', 'invented seating plan' );
+ensure( ( $data['seating_mode'] ?? '' ) === 'free', 'must be unnumbered free seating' );
+ensure( ( $data['seat_numbers_required'] ?? null ) === false, 'ticket cannot require seat number' );
+ensure( ( $data['venue_doors_open_before_minutes'] ?? null ) === 30, 'doors should open around 30 minutes before start' );
+ensure( ( $data['show_duration_minutes'] ?? null ) === 60, 'Madagaskar-standard show duration is around 60 minutes' );
+$policy = $data['ticket_rules'] ?? null;
+ensure( is_array( $policy ), 'operational rules missing' );
+ensure( ( $policy['infant']['age_from'] ?? null ) === 0
+    && ( $policy['infant']['age_through'] ?? null ) === 2
+    && ( $policy['infant']['price_try'] ?? null ) === 0
+    && ( $policy['infant']['accompanied_by_adult'] ?? null ) === true,
+    '0-2 free infant policy mismatch' );
+ensure( ( $policy['infant']['physical_headcount_control'] ?? '' ) === 'requires_staging_validation',
+    'physical occupancy and free infants must be validated before launch' );
+ensure( ( $policy['child']['age_from'] ?? null ) === 3
+    && ( $policy['child']['age_through'] ?? null ) === 12
+    && ( $policy['child']['ticket_key'] ?? '' ) === 'child'
+    && ( $policy['child']['accompanied_by_adult'] ?? null ) === true,
+    '3-12 child policy mismatch' );
+ensure( ( $policy['adult']['age_from'] ?? null ) === 13
+    && ( $policy['adult']['ticket_key'] ?? '' ) === 'adult',
+    '13+ adult policy mismatch' );
+ensure( ( $policy['checkin']['method'] ?? '' ) === 'QR'
+    && ( $policy['checkin']['phone_ticket_display_allowed'] ?? null ) === true
+    && ( $policy['checkin']['valid_only_for_selected_session'] ?? null ) === true
+    && ( $policy['checkin']['qr_generation'] ?? '' ) === 'only_after_verified_payment',
+    'QR must be created after verified payment for selected session only' );
+ensure( ( $policy['seats']['mode'] ?? '' ) === 'free'
+    && ( $policy['seats']['reserved_seats'] ?? null ) === false
+    && ( $policy['seats']['seat_number_on_ticket'] ?? null ) === false,
+    'free seating/unnumbered ticket mismatch' );
+$family_entry = $data['family_2_2_fulfillment'] ?? null;
+ensure( is_array( $family_entry )
+    && ( $family_entry['sale_quantity'] ?? null ) === 1
+    && ( $family_entry['physical_admissions'] ?? null ) === 4
+    && ( $family_entry['qr_tickets'] ?? null ) === 4
+    && ( $family_entry['status'] ?? '' ) === 'staging_contract_only'
+    && ( $family_entry['must_not_copy_madagaskar_event_settings'] ?? null ) === true,
+    'family fulfillment must be four individual QR tickets and brand isolated' );
+ensure( ( $family_entry['component_tickets'] ?? null ) === array(
+    array( 'ticket_key' => 'adult', 'quantity' => 2 ),
+    array( 'ticket_key' => 'child', 'quantity' => 2 ),
+), '2 adult and 2 child real ticket lines required' );
 
 $sessions = $data['sessions'] ?? null;
 ensure( is_array( $sessions ) && count( $sessions ) === 2, 'exactly two Yalova sessions required' );
