@@ -1,6 +1,6 @@
 # Milano / Madagaskar — ayrı marka, tek etkinlik tek satış sitesi
 
-**Durum:** Yalnız geliştirme dalı / taslak PR #235. Canlıya deploy edilmedi. Milano sitesi Coming Soon; bilet satışları kapalı.
+**Durum (13.10.2026):** Milano **tanıtım sitesi** https://milanosirki.com **herkese açık**; **bilet satışı kapalı**. Ortak satış/katalog akışı sadece PR #235 geliştirme dalında, canlıya dağıtılmadı.
 
 ## Kesin iş modeli (12.10.2026)
 - **Her fiziksel etkinlik bir markaya** atanır: `milano` veya `madagaskar`.
