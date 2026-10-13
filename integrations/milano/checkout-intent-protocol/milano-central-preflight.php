@@ -72,7 +72,22 @@ final class MCPI_Central_Preflight {
         } catch ( Throwable $e ) {
             return array( 'status' => 'unavailable' );
         }
-        $quote = MCPI_Central_Eligibility::validate( $intent, $snapshot, $now );
+        $family_requested = false;
+        foreach ( $intent['items'] as $item ) {
+            if ( ( $item['code'] ?? null ) === 'FAMILY22' ) {
+                $family_requested = true;
+                break;
+            }
+        }
+        if ( $family_requested ) {
+            // FAMILY22 is NEVER a real four-seat variation. The central
+            // trusted family price must be normalized to 2+2 real units.
+            $quote = class_exists( 'MCPI_Milano_Central_Family_Quote' )
+                ? MCPI_Milano_Central_Family_Quote::validate( $intent, $snapshot, $now )
+                : array( 'status' => 'blocked', 'reason' => 'family_policy_unavailable' );
+        } else {
+            $quote = MCPI_Central_Eligibility::validate( $intent, $snapshot, $now );
+        }
         if ( ! isset( $quote['status'] ) || 'eligible' !== $quote['status'] ) {
             return array(
                 'status' => 'blocked',
