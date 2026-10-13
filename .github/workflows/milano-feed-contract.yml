@@ -65,6 +65,8 @@ jobs:
           php -l integrations/milano/checkout-intent-protocol/milano-canonical-mmc-family-policy.php
           php -l integrations/milano/tests/canonical-mmc-family-policy-contract.php
           php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
+          php -l integrations/milano/tests/mmc-draft-brand-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -249,6 +251,14 @@ jobs:
         run: |
           php -l integrations/milano/tests/tickera-full-audit.php
           php integrations/milano/tests/tickera-full-audit-contract.php
+
+      - name: Brand-safe MMC to MDG draft sync titles and family boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano milano_alias milano_district madagaskar madagaskar_alias missing_brand unknown_brand missing_program; do
+            php integrations/milano/tests/mmc-draft-brand-contract.php "$scenario"
+          done
 
       - name: Milano canonical MMC family event and real MDG ticket price source
         shell: bash
