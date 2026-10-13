@@ -40,6 +40,20 @@ Kontroller:
 - Kapalı: yanlış brand/owner/MDG hold, farklı order/event/session/product, eksik/başka siparişe ait rezervasyon, held dışı durum, tutar farkı, yanlış fee veya ikinci kupon, Woo ile quote miktar/kod/varyasyon uyuşmazlığı, tekrar Woo order item ID, 4-unit sahte aile varyasyonu, yanlış/sahte signed request ID, para birimi, gateway, paid/on-hold order, bilinmeyen vergi modu, hatalı seans veya fiziki bilet sayısı.
 - Commit `65ec4ee3d5c61c1eb018c2cf0576729e3fbf724a` için GitHub Actions **Changed PHP Syntax SUCCESS** ve **Milano read-only session feed contract SUCCESS**. Bu tamamlama yalnız izole PHP fixture'ları kapsar; canlı/paytr test ödeme kanıtı değildir.
 
+## PayTR'ye iletilecek teyit talebi — mağaza paneli / Destek & Kurulum
+
+PayTR [resmî iFrame dokümanı](https://dev.paytr.com/iframe-api) destek taleplerini **Mağaza Paneli > Destek & Kurulum > Destek** üzerinden iletmeyi söylüyor. Bu kanaldan henüz talep gönderilmedi; bağlantı kullanıcı tarafındaki yetkili mağaza hesabında yapılmalı. Bağlı Gmail'de 2026 Eylül–Ekim tarihli `milanosirki.com PayTR` ve domain onayı aramalarında yazılı onay bulunmadı (bu, PayTR panelinde daha önce talep açılmadığını kanıtlamaz).
+
+**Destek talebi metni (taslak):**
+
+> Konu: Aynı şirketin ikinci markası milanosirki.com için iFrame API ve callback alan adı kullanım yetkisi
+>
+> Merhaba, mevcut PayTR üye işyeri hesabımız `madagaskarsirki.com` sitesi için kullanılmaktadır. Aynı tüzel kişi Dünya Organizasyon Ltd. Şti. tarafından ayrıca `milanosirki.com` alan adında “Milano Sirki” markasıyla etkinlik bileti satışı planlıyoruz. Her etkinlik yalnız bir markanın sitesinde satılacak, müşteriler `milanosirki.com` sitesinde PayTR iFrame ile ödeme yaparken tek WooCommerce/MDG bilet ve kapasite defterini merkezî olarak kullanacağız. Mevcut PayTR mağazamızın aynı tüzel kişiye ait ikinci marka/alan adında bu yöntemle kullanılmasına izin veriliyor mu? İkinci alan adının kayıt/onay süreci, iFrame V2 ve 3DS destek koşulları, `merchant_ok_url`/`merchant_fail_url` yönlendirmeleri, mevcut `madagaskarsirki.com` bildirim URL'sinden merkezi doğrulanmış callback işleme, test modu ve muhasebe/fatura adı açısından gereken değişiklikleri yazılı olarak bildirmenizi rica ederiz. Yeni alan adını yetkiniz/onayınız olmadan canlı ödeme kabulüne açmayacağız.
+>
+> Saygılarımızla, Dünya Organizasyon
+
+**Kesin kısıt:** Mağaza ID/merchant key/salt, canlı API gizli bilgileri bu GitHub/Drive dosyasına eklenmez. PayTR'nin yazılı yanıtı teknik onay kanıtı olarak güvenli proje kaydına yalnız karar ve kapsamıyla aktarılır.
+
 ## 4. Kalan uçtan uca bağlama işleri / canlı engeller
 
 1. Yalova kanonik **Milano** MMC programı, bağlı tek MDG event ve 18.00–19.30 ayrı seansları diğer sohbette tamamlanmalı. Var olan Madagaskar 13 programı korunmalı.
