@@ -85,3 +85,6 @@ function mdg_ai_abilities_status() {
         'supported_modules' => array_keys( mdg_ai_abilities_module_map() ),
     );
 }
+
+// Browser-only staging validation without executing write abilities.
+require_once MDG_AI_ABILITIES_DIR . 'admin-brand-smoke.php';
