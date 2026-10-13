@@ -230,8 +230,8 @@ final class MMC_MDG_Draft_Sync_Service {
     }
 
     private static function public_event_title( $program ) {
-        if ( ! $program ) { return 'Madagaskar Sirki'; }
-        $title = 'Madagaskar Sirki — ' . (string) $program->province_name;
+        if ( ! $program ) { return 'Program bulunamadı'; }
+        $title = MMC_Program_Service::public_brand_profile( $program )['name'] . ' — ' . (string) $program->province_name;
         $district = trim( (string) $program->district_name );
         if ( $district && 'merkez' !== self::normalize_text( $district ) ) {
             $title .= ' / ' . $district;
