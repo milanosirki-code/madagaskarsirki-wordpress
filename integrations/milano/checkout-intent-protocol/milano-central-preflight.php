@@ -14,7 +14,39 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class MCPI_Central_Preflight {
-    public static function begin( $db, $table, $intent, $signature, $secret, $now, $lookup ) {
+    /**
+     * Validate a previously attached order on the trusted central server.
+     * No public caller gets a raw central order_id merely for knowing a
+     * server-side request ID or being able to resubmit an old signed intent.
+     */
+    private static function resume( $candidate, $intent, $order_lookup, $caller_authorized ) {
+        $status = $candidate['status'] ?? 'unavailable';
+        if ( 'existing_order' !== $status ) {
+            return array( 'status' => $status );
+        }
+        $order_id = $candidate['order_id'] ?? null;
+        if ( ! is_int( $order_id ) || $order_id < 1
+            || ! is_callable( $order_lookup )
+            || ! class_exists( 'MCPI_Order_Retry_Verifier' )
+            || true !== $caller_authorized ) {
+            return array( 'status' => 'reconcile_required' );
+        }
+        try {
+            $order = call_user_func( $order_lookup, $order_id );
+        } catch ( Throwable $e ) {
+            return array( 'status' => 'unavailable' );
+        }
+        if ( ! MCPI_Order_Retry_Verifier::allows(
+            $order, $intent, $order_id, $caller_authorized
+        ) ) {
+            return array( 'status' => 'reconcile_required' );
+        }
+        // SERVER INTERNAL only: the public API must not return raw order_id.
+        return array( 'status' => 'existing_order', 'order_id' => $order_id );
+    }
+
+    public static function begin( $db, $table, $intent, $signature, $secret,
+        $now, $lookup, $order_lookup = null, $caller_authorized = false ) {
         if ( ! function_exists( 'mcpi_verify' )
             || ! mcpi_verify( $intent, $signature, $secret, $now )
             || ! is_callable( $lookup ) || ! class_exists( 'MCPI_Central_Eligibility' )
@@ -29,10 +61,9 @@ final class MCPI_Central_Preflight {
             $db, $table, $intent, $signature, $secret, $now
         );
         if ( 'absent' !== ( $prior['status'] ?? '' ) ) {
-            return array( 'status' => $prior['status'] ?? 'unavailable' )
-                + ( 'existing_order' === ( $prior['status'] ?? '' )
-                    && isset( $prior['order_id'] )
-                    ? array( 'order_id' => $prior['order_id'] ) : array() );
+            return self::resume(
+                $prior, $intent, $order_lookup, $caller_authorized
+            );
         }
 
         try {
@@ -52,9 +83,9 @@ final class MCPI_Central_Preflight {
         if ( 'claimed' !== ( $claim['status'] ?? '' ) ) {
             // Never disclose the central pricing snapshot on a duplicate,
             // failed claim, stale state or conflict.
-            return array( 'status' => $claim['status'] ?? 'unavailable' )
-                + ( isset( $claim['order_id'] ) && 'existing_order' === $claim['status']
-                    ? array( 'order_id' => $claim['order_id'] ) : array() );
+            return self::resume(
+                $claim, $intent, $order_lookup, $caller_authorized
+            );
         }
         return array(
             'status' => 'claimed',
