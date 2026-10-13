@@ -46,6 +46,8 @@ jobs:
           php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
           php -l integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php
+          php -l integrations/milano/milano-sales-freeze/milano-sales-freeze.php
+          php -l integrations/milano/tests/milano-sales-freeze-contract.php
           php -l integrations/milano/tests/family22-normalizer-contract.php
           php -l integrations/milano/tests/tickera-fulfillment-audit-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-issuance-ledger.php
@@ -179,6 +181,14 @@ jobs:
           set -euo pipefail
           for scenario in new duplicate attach_once already_issued wrong_token ticket_id_reused family4 crashed_worker identity_conflict stuck_after_issue other_brand order_brand_mismatch unsettled invalid_line bad_unit negative_index large_family bad_type bad_table db_unavailable; do
             php integrations/milano/tests/tickera-issuance-ledger-contract.php "$scenario"
+          done
+
+      - name: Milano temporary Woo checkout freeze, never affect Madagaskar
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano_default www uppercase_host trailing_dot host_spoofing query_switch admin_switch constant_switch add_cart_true add_cart_false purchasable variation old_cart checkout_validation classic_order store_cart store_checkout gateway_hidden madagaskar_unchanged other_domain_unchanged lookalike_domain; do
+            php integrations/milano/tests/milano-sales-freeze-contract.php "$scenario"
           done
 
       - name: Milano virtual family 2+2 real child adult cart contract
