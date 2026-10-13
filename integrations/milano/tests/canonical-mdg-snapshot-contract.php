@@ -28,12 +28,13 @@ $catalogue=array(
     (object)array('id'=>201,'code'=>'CHILD','is_active'=>1,'wc_variation_id'=>102,'capacity_units'=>1,'price'=>'245.00')
 );
 $available=25;$siteCurrency='TRY';$productStatus='publish';$closedByTime=false;
-$mmcFamilyEvents=array();$mmcFamilyTickets=array();
+$mmcFamilyEvents=array();$mmcFamilyLinks=array();$mmcFamilyTickets=array();
 class SnapshotDB {
     public $prefix='wp_';
     public $getRowCalls=0,$getColCalls=0,$requests=array();
     public function get_results($sql){
-        global $mmcFamilyEvents,$mmcFamilyTickets;
+        global $mmcFamilyEvents,$mmcFamilyLinks,$mmcFamilyTickets;
+        if(strpos($sql,'FROM wp_mmc_mdg_event_bridge')!==false)return $mmcFamilyLinks;
         if(strpos($sql,'FROM wp_mmc_events')!==false)return $mmcFamilyEvents;
         if(strpos($sql,'FROM wp_mmc_ticket_types')!==false)return $mmcFamilyTickets;
         demand_snapshot(false,'unrecognized MMC policy SELECT');
@@ -120,9 +121,12 @@ case 'valid':break;
 case 'verified_family':
 case 'verified_family_wrong_mmc_price':
 case 'verified_family_duplicate_mmc_event':
+case 'verified_family_wrong_bridge':
+case 'verified_family_duplicate_bridge':
 case 'verified_family_wrong_mdg_event':
 case 'verified_family_inactive':
-    $mmcFamilyEvents=array((object)array('id'=>301,'mdg_event_id'=>72));
+    $mmcFamilyEvents=array((object)array('id'=>301,'mdg_event_id'=>null));
+    $mmcFamilyLinks=array((object)array('mdg_event_id'=>72));
     $mmcFamilyTickets=array(
       (object)array('id'=>401,'ticket_code'=>'child','price'=>'245.00','capacity_units'=>1,'is_active'=>1),
       (object)array('id'=>402,'ticket_code'=>'adult','price'=>'490.00','capacity_units'=>1,'is_active'=>1),
@@ -132,6 +136,10 @@ case 'verified_family_inactive':
         $mmcFamilyTickets[1]->price='500.00';
     }elseif($scenario==='verified_family_duplicate_mmc_event'){
         $mmcFamilyEvents[]=(object)array('id'=>302,'mdg_event_id'=>72);
+    }elseif($scenario==='verified_family_wrong_bridge'){
+        $mmcFamilyLinks[0]->mdg_event_id=919;
+    }elseif($scenario==='verified_family_duplicate_bridge'){
+        $mmcFamilyLinks[]=(object)array('mdg_event_id'=>73);
     }elseif($scenario==='verified_family_wrong_mdg_event'){
         $mmcFamilyEvents[0]->mdg_event_id=919;
     }elseif($scenario==='verified_family_inactive'){
