@@ -8,6 +8,8 @@ define( 'ABSPATH', __DIR__ );
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-checkout-intent.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-order-claim-registry.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-eligibility.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-family22-normalizer.php';
+require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-family-quote.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-order-retry-verifier.php';
 require dirname( __DIR__ ) . '/checkout-intent-protocol/milano-central-preflight.php';
 function expect_preflight( $v, $m ) {
@@ -77,6 +79,22 @@ $authorized=true;
 $expect='claimed';
 switch($case) {
     case 'new':break;
+    case 'family_22':
+    case 'family_22_missing_price':
+    case 'family_22_soldout':
+        $intent=mcpi_make_intent(72,93,array(
+            array('code'=>'FAMILY22','quantity'=>1)), $now);
+        $sig=mcpi_sign($intent,$key);
+        $snapshot['family']=array('enabled'=>true,'price_cents'=>110000,
+            'adult_code'=>'ADULT','child_code'=>'CHILD',
+            'adult_ticket_type_id'=>201,'child_ticket_type_id'=>202);
+        if('family_22_missing_price'===$case){
+            unset($snapshot['family']['price_cents']);$expect='blocked';
+        }
+        if('family_22_soldout'===$case){
+            $snapshot['session']['available_units']=3;$expect='blocked';
+        }
+        break;
     case 'repeat_processing':break;
     case 'existing_order':break;
     case 'same_id_different_items':break;
@@ -188,7 +206,15 @@ $r=MCPI_Central_Preflight::begin($db,$table,$intent,$sig,$key,$now,$lookup,$orde
 expect_preflight($r['status']===$expect,'status '.$r['status'].' rather than '.$expect);
 if('claimed'===$expect) {
     expect_preflight(!empty($r['claim_token']) && $r['quote']['quote_only']===true,'claim/quote contract broken');
-    expect_preflight($r['quote']['admission_units']===4 && $r['quote']['total_cents']===147000,'central price/units mismatch');
+    $payable='family_22'===$case ? 110000 : 147000;
+    expect_preflight($r['quote']['admission_units']===4
+        && $r['quote']['total_cents']===$payable,'central price/units mismatch');
+    if('family_22'===$case) {
+        expect_preflight($r['quote']['family_discount_cents']===37000,
+            'one family 2+2 must discount 370 TL');
+        expect_preflight(count($r['quote']['lines'])===2,
+            'one family must produce real ADULT+CHILD product lines');
+    }
 } else {
     expect_preflight(!isset($r['claim_token'])&&!isset($r['quote']),'secret worker state leaked on non-claim');
 }
@@ -200,7 +226,8 @@ if(in_array($case,$retryCases,true)) {
     expect_preflight($lookups===1,'repeat request re-quoted instead of resolving original state');
     expect_preflight($db->insertCount===1,'repeat created extra order request claim');
 }
-if(in_array($case,array('wrong_brand','missing_brand','out_of_stock','price_mismatch','cancelled_session','server_error'),true)){
+if(in_array($case,array('wrong_brand','missing_brand','out_of_stock','price_mismatch',
+    'cancelled_session','server_error','family_22_missing_price','family_22_soldout'),true)){
     expect_preflight($db->insertCount===0,'blocked or unavailable created registry row');
 }
 if(in_array($case,$retryCases,true)) {
