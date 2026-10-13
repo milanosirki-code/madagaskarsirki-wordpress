@@ -51,7 +51,7 @@ function apply_filters( $name, $value, $event_id ) {
         return $value;
     }
     if ( 'missing_brand' === $scenario || 'filter_reject' === $scenario ) { return null; }
-    if ( 'filter_promote' === $scenario ) { return 'milano'; }
+    if ( 'filter_promote' === $scenario || 'filter_promote_no_bridge' === $scenario ) { return 'milano'; }
     if ( 'filter_cross_brand' === $scenario ) { return 'madagaskar'; }
     if ( 'invalid_brand' === $scenario ) { return 'unknown'; }
     return $value;
