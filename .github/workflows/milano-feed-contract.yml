@@ -101,7 +101,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand no_bridge two_bridges orphan_bridge shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
+          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand no_bridge two_bridges orphan_bridge shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error order_pay_milano order_pay_madagaskar order_pay_mixed order_pay_unknown order_pay_unrelated order_pay_invalid order_pay_ambiguous; do
             php integrations/milano/tests/brand-enforcement-contract.php "$scenario"
           done
 
