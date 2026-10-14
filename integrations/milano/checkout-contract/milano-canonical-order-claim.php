@@ -107,7 +107,7 @@ final class Milano_Canonical_Order_Claim {
             || (int) $r->session_id !== $session_id
             || (int) $r->amount_minor !== $amount
             || (int) $r->capacity_units !== $units
-            || ! in_array( (string) $r->state, array( 'claimed', 'bound' ), true ) ) {
+            || ! in_array( (string) $r->state, array( 'claimed', 'bound', 'reserving', 'ready' ), true ) ) {
             return new WP_Error(
                 'milano_claim_conflict',
                 'This purchase-intent key is already bound to a different canonical request.'
@@ -185,6 +185,45 @@ final class Milano_Canonical_Order_Claim {
             'wc_order_id' => $r->wc_order_id ? (int) $r->wc_order_id : null,
             'intent_key' => (string) $r->intent_key,
         );
+    }
+
+
+    /**
+     * Claim the MDG reservation lifecycle once for one immutable central order.
+     *
+     * bound -> reserving: only the winning caller may invoke MDG core.
+     * reserving -> ready: only after the complete order_map and hold audit.
+     *
+     * An ambiguous "reserving" state is intentionally NOT retried; reconcile
+     * the central Woo/MDG order under administrative control. Never expire a
+     * claim just to permit a second ticket, hold or charge.
+     */
+    public static function reservation_transition( $intent, $woo_order_id, $from, $to ) {
+        global $wpdb;
+        $allowed = ( 'bound' === $from && 'reserving' === $to )
+            || ( 'reserving' === $from && 'ready' === $to );
+        if ( ! $allowed
+            || ! is_string( $intent )
+            || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $intent )
+            || ! is_int( $woo_order_id ) || $woo_order_id < 1
+            || ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
+            return new WP_Error( 'milano_reservation_transition_invalid', 'Invalid canonical reservation transition.' );
+        }
+        $affected = $wpdb->query( $wpdb->prepare(
+            'UPDATE ' . self::table() .
+            ' SET state = %s, updated_at = %s WHERE intent_key = %s
+              AND brand = %s AND wc_order_id = %d AND state = %s',
+            $to, gmdate( 'Y-m-d H:i:s' ), $intent, 'milano', $woo_order_id, $from
+        ) );
+        if ( false === $affected ) {
+            return new WP_Error( 'milano_reservation_transition_db', 'Reservation state write failed.' );
+        }
+        if ( 1 !== (int) $affected ) {
+            // A duplicate call is NEVER permitted to re-enter MDG reservation.
+            // It must inspect the existing bound order and return safely.
+            return new WP_Error( 'milano_reservation_transition_conflict', 'Order is already being prepared or has changed state.' );
+        }
+        return array( 'state' => $to, 'wc_order_id' => $woo_order_id, 'won_transition' => true );
     }
 
 }
