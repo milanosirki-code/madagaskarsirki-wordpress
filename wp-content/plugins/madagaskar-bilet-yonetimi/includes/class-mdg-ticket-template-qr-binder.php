@@ -286,13 +286,65 @@ final class MDG_Ticket_Template_QR_Binder {
         $out['event_date'] = $dates ? min( $dates ) : '';
         if ( ! $out['product_ids'] || ! $out['variation_ids'] ) { $out['errors'][]='WooCommerce mapping eksik.'; }
 
-        $out['base_template_id'] = self::detect_base_template_id( $out['product_ids'], $out['variation_ids'] );
+        $detected_id = self::detect_base_template_id( $out['product_ids'], $out['variation_ids'] );
+        $base_result = self::base_template_for_existing_binding(
+            (int) $event_id, $detected_id, $out['product_ids'], $out['variation_ids']
+        );
+        if ( is_wp_error( $base_result ) ) {
+            $out['errors'][] = $base_result->get_error_message();
+            return $out;
+        }
+        $out['base_template_id'] = absint( $base_result );
         if ( ! $out['base_template_id'] ) { $out['errors'][]='Kullanılan Ticket Designer şablonu bulunamadı.'; return $out; }
 
         $out['candidate'] = self::detect_static_qr_candidate( $out['base_template_id'] );
         if ( ! $out['candidate'] ) { $out['errors'][]='Temel şablonun sağ-alt bölümünde statik QR görseli güvenle tespit edilemedi.'; }
         $out['ready'] = empty( $out['errors'] );
         return $out;
+    }
+
+    /**
+     * A second venue QR binding pass MUST use the original designer base,
+     * not the currently-selected event clone. An existing binding is authoritative
+     * only when the exact same mapped Woo objects still point to its clone.
+     * Any drift fails closed, protecting existing purchased tickets and brands.
+     *
+     * @return int|WP_Error
+     */
+    private static function base_template_for_existing_binding( $event_id, $detected_id, array $products, array $variations ) {
+        $binding_map = self::bindings();
+        $record = $binding_map[ (int) $event_id ] ?? null;
+        if ( ! is_array( $record ) || empty( $record['clone_template_id'] ) ) {
+            return absint( $detected_id );
+        }
+        $original_base = absint( $record['base_template_id'] ?? 0 );
+        $clone_id = absint( $record['clone_template_id'] ?? 0 );
+        if ( ! $original_base || ! $clone_id
+            || ! in_array( absint( $detected_id ), array( $original_base, $clone_id ), true ) ) {
+            return new WP_Error( 'mdg_qr_binding_base_changed', 'QR şablonu veya temel tasarım beklenmedik biçimde değişmiş; otomatik güncelleme durduruldu.' );
+        }
+
+        $actual_products = array_values( array_unique( array_map( 'absint', $products ) ) );
+        $actual_variations = array_values( array_unique( array_map( 'absint', $variations ) ) );
+        $expected_products = array_values( array_unique( array_map( 'absint', (array) ( $record['product_ids'] ?? array() ) ) ) );
+        $expected_variations = array_values( array_unique( array_map( 'absint', (array) ( $record['variation_ids'] ?? array() ) ) ) );
+        sort( $actual_products, SORT_NUMERIC );
+        sort( $actual_variations, SORT_NUMERIC );
+        sort( $expected_products, SORT_NUMERIC );
+        sort( $expected_variations, SORT_NUMERIC );
+        if ( $actual_products !== $expected_products || $actual_variations !== $expected_variations ) {
+            return new WP_Error( 'mdg_qr_binding_mapping_changed', 'Etkinlik seans veya bilet eşleşmesi değişti; QR yeniden bağlama manuel inceleme gerektiriyor.' );
+        }
+        foreach ( array_merge( $actual_products, $actual_variations ) as $object_id ) {
+            $current_designer = absint( get_post_meta( $object_id, 'tc_designer_template_id', true ) );
+            $current_classic = (string) get_post_meta( $object_id, '_ticket_template', true );
+            // Both selectors are required to prevent silent PDF fallback
+            // to the original template after venue QR changes.
+            if ( $current_designer !== $clone_id || $current_classic !== 'd_' . $clone_id ) {
+                return new WP_Error( 'mdg_qr_binding_selector_drift', 'WooCommerce bilet şablonu seçimi tutarsız; QR güncellemesi iptal edildi.' );
+            }
+        }
+        return $original_base;
     }
 
     private static function detect_base_template_id( array $product_ids, array $variation_ids ) {
