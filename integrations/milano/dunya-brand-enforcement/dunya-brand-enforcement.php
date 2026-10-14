@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Marka Sahipliği Kontrolü (Geliştirme)
  * Description: MDG etkinliklerinin marka sahipliğini tek kaynaktan okur; Madagaskar alan adında yanlış markalı biletin satın alınmasını engeller.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  *
  * GITHUB DRAFT ONLY. DO NOT INSTALL/ACTIVATE ON THE LIVE SITE UNTIL ALL
@@ -17,6 +17,7 @@ final class Dunya_Event_Brand_Guard {
         add_filter( 'woocommerce_add_to_cart_validation', array( __CLASS__, 'validate_add_to_cart' ), 1, 6 );
         add_action( 'woocommerce_check_cart_items', array( __CLASS__, 'validate_cart' ), 1 );
         add_action( 'woocommerce_store_api_validate_cart_item', array( __CLASS__, 'validate_store_cart_item' ), 1, 2 );
+        add_action( 'woocommerce_before_pay_action', array( __CLASS__, 'validate_pay_order' ), 1, 1 );
         add_action( 'woocommerce_checkout_process', array( __CLASS__, 'validate_cart' ), 1 );
         add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'validate_order' ), 1, 3 );
         add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'validate_store_order' ), 1 );
@@ -143,6 +144,35 @@ final class Dunya_Event_Brand_Guard {
         if ( self::is_denied_product( $item['product_id'] ?? 0, $item['variation_id'] ?? 0 ) ) {
             self::throw_checkout_error();
         }
+    }
+
+    /**
+     * Woo checks the nonce, order key and needs_payment before this hook.
+     * This hook is OUTSIDE Woo's gateway try/catch: use wp_die, not an
+     * uncaught checkout exception. Stop before customer/order/gateway writes.
+     */
+    public static function validate_pay_order( $order ) {
+        if ( ! is_object( $order ) || ! method_exists( $order, 'get_items' ) ) {
+            self::deny_pay_action();
+        }
+        $items = $order->get_items( 'line_item' );
+        if ( ! is_array( $items ) ) { self::deny_pay_action(); }
+        foreach ( $items as $item ) {
+            if ( ! is_object( $item )
+                || ! method_exists( $item, 'get_product_id' )
+                || ! method_exists( $item, 'get_variation_id' )
+                || self::is_denied_product( $item->get_product_id(), $item->get_variation_id() ) ) {
+                self::deny_pay_action();
+            }
+        }
+    }
+
+    private static function deny_pay_action() {
+        wp_die(
+            'Bu siparişin etkinlik markası bu sitede ödeme yapılmasına uygun değil veya doğrulanamadı.',
+            'Ödeme başlatılamadı',
+            array( 'response'=>403, 'back_link'=>true )
+        );
     }
 
     public static function validate_order( $order_id, $posted_data = array(), $order = null ) {
