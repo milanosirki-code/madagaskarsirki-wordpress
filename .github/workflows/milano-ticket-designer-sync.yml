@@ -26,4 +26,6 @@ jobs:
         run: |
           php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php
           php -l tests/milano-ticket-template-selector/regression.php
+          php -l tests/milano-ticket-template-selector/rebind.php
           php tests/milano-ticket-template-selector/regression.php
+          php tests/milano-ticket-template-selector/rebind.php
