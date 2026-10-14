@@ -42,6 +42,7 @@ jobs:
           php -l integrations/milano/tests/order-claim-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
           php -l integrations/milano/tests/central-eligibility-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-order-retry-verifier.php
           php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
           php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
           php -l integrations/milano/tests/paytr-callback-preflight-contract.php
@@ -50,6 +51,10 @@ jobs:
           php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
           php -l integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-family-quote.php
+          php -l integrations/milano/checkout-intent-protocol/milano-before-paytr-order-gate.php
+          php -l integrations/milano/tests/before-paytr-order-gate-contract.php
+          php -l integrations/milano/tests/central-family-quote-contract.php
           php -l integrations/milano/milano-sales-freeze/milano-sales-freeze.php
           php -l integrations/milano/tests/milano-sales-freeze-contract.php
           php -l integrations/milano/tests/family22-normalizer-contract.php
@@ -59,7 +64,13 @@ jobs:
           php -l integrations/milano/tests/paytr-settlement-claim-contract.php
           php -l integrations/milano/tests/central-preflight-contract.php
           php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
+          php -l integrations/milano/checkout-intent-protocol/milano-canonical-mmc-family-policy.php
+          php -l integrations/milano/tests/canonical-mmc-family-policy-contract.php
           php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-draft-sync-service.php
+          php -l integrations/milano/tests/mmc-draft-brand-contract.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-mdg-bridge-service.php
+          php -l integrations/milano/tests/mmc-legacy-draft-fallback-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
@@ -140,6 +151,14 @@ jobs:
             php integrations/milano/tests/paytr-callback-preflight-contract.php "$scenario"
           done
 
+      - name: Milano central Woo line, family fee and MDG hold PayTR amount gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family22 two_families extra_child individuals other_brand wrong_owner wrong_hold_brand other_event other_session other_product other_hold_session other_hold_event other_hold_order hold_short hold_sold hold_released bad_order_id bad_signed_request bad_order_request wrong_currency other_gateway order_completed order_on_hold price_1k_off wrong_fee extra_fee wrong_fee_label missing_fee wrong_tax_enabled wrong_tax_cents wrong_line_tax line_subtotal_changed line_discount_changed wrong_variation wrong_line_qty duplicate_line_id duplicate_line_code missing_line wrong_line_session wrong_admission_units four_unit_fake_family quoted_subtotal_changed quoted_discount_changed quote_not_only unknown_fee_no_family; do
+            php integrations/milano/tests/before-paytr-order-gate-contract.php "$scenario"
+          done
+
       - name: PayTR one-successful-payment-per-order lock (staging only)
         shell: bash
         run: |
@@ -196,7 +215,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+          for scenario in new family_22 family_22_missing_price family_22_soldout repeat_processing existing_order same_id_different_items existing_order_sold_out existing_order_changed_price existing_order_cancelled_session processing_sold_out claim_conflict_sold_out existing_order_wrong_brand existing_order_wrong_event existing_order_wrong_session existing_order_wrong_payload existing_order_wrong_request existing_order_wrong_currency existing_order_wrong_order_id existing_order_refunded existing_order_unauthorized existing_order_no_lookup existing_order_lookup_error existing_order_missing_source_order read_failure wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
             php integrations/milano/tests/central-preflight-contract.php "$scenario"
           done
 
@@ -224,6 +243,14 @@ jobs:
             php integrations/milano/tests/family22-normalizer-contract.php "$scenario"
           done
 
+      - name: Milano canonical family 2+2 payable quote and physical tickets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family two_families extra_child extra_adult soldout wrong_brand wrong_session wrong_currency invalid_parent price_mismatch disabled_family missing_family price_above_components free_family wrong_adult_code invalid_family_ticket_id inactive_child multi_unit_child too_many_families too_many_with_extra fake_family_variation unknown_extra_code tampered_client_amount; do
+            php integrations/milano/tests/central-family-quote-contract.php "$scenario"
+          done
+
       - name: Family package commercial quantity versus physical tickets (staging only)
         shell: bash
         run: |
@@ -237,10 +264,34 @@ jobs:
           php -l integrations/milano/tests/tickera-full-audit.php
           php integrations/milano/tests/tickera-full-audit-contract.php
 
+      - name: Brand-safe MMC to MDG draft sync titles and family boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano milano_alias milano_district madagaskar madagaskar_alias missing_brand unknown_brand missing_program; do
+            php integrations/milano/tests/mmc-draft-brand-contract.php "$scenario"
+          done
+
+      - name: Legacy MMC fallback rejects Milano and ownerless drafts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano alias_milano missing_brand invalid_brand orphan_program; do
+            php integrations/milano/tests/mmc-legacy-draft-fallback-contract.php "$scenario"
+          done
+
+      - name: Milano canonical MMC family event and real MDG ticket price source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid turkish_codes mmc_event_null_mdgevent bridge_missing bridge_two_events bridge_wrong_event missing_mmc_event duplicate_mmc_event wrong_mdg_event missing_family disabled_family duplicate_family price_change_mmc price_over_components default_price_fallback_forbidden mmc_adult_price_mismatch woo_adult_price_mismatch mdg_child_price_mismatch unknown_mdg_role duplicate_mdg_role real_four_unit_type unmapped_ticket duplicate_ticket_id wrong_adult_units family_units_wrong inactive_child unavailable_adult untrusted_program_id untrusted_event_id no_db_method bad_prefix missing_ticket_rows inactive_other_type; do
+            php integrations/milano/tests/canonical-mmc-family-policy-contract.php "$scenario"
+          done
+
       - name: Trusted central MMC MDG Woo read-only snapshot adapter
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in valid family4 no_brand wrong_brand no_bridge two_bridges bridge_error orphan_bridge malformed_brand missing_event wrong_event_id event_draft session_missing wrong_session_id wrong_session_event closed_session time_closed past_session invalid_start impossible_date invalid_window sale_future sale_ended no_product unpublished simple_product wrong_currency no_tickera bad_parent_id out_of_stock unavailable_variation inactive_type duplicated_code invalid_code no_tickets wrong_woo_price fractional_subcents trailing_zero_price zero_capacity low_capacity invalid_available no_capacity_total invalid_request_id; do
+          for scenario in valid family4 verified_family verified_family_wrong_mmc_price verified_family_duplicate_mmc_event verified_family_wrong_bridge verified_family_duplicate_bridge verified_family_wrong_mdg_event verified_family_inactive no_brand wrong_brand no_bridge two_bridges bridge_error orphan_bridge malformed_brand missing_event wrong_event_id event_draft session_missing wrong_session_id wrong_session_event closed_session time_closed past_session invalid_start impossible_date invalid_window sale_future sale_ended no_product unpublished simple_product wrong_currency no_tickera bad_parent_id out_of_stock unavailable_variation inactive_type duplicated_code invalid_code no_tickets wrong_woo_price fractional_subcents trailing_zero_price zero_capacity low_capacity invalid_available no_capacity_total invalid_request_id; do
             php integrations/milano/tests/canonical-mdg-snapshot-contract.php "$scenario"
           done
