@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano - Ortak Madagaskar Odeme Gecisi
  * Description: Milano secimini mevcut merkezi MDG sepetine aktarir. Ayri siparis, POS, kapasite veya QR defteri olusturmaz.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -36,9 +36,9 @@ final class Milano_Shared_Checkout_Handoff {
   return $isList?in_array((int)$eid,array_map('intval',$list),true):!empty($list[(int)$eid]);
  }
  public static function selector_page(){
-  if(empty($_GET['milano_bilet_sec'])||self::host()!==self::STAGE){return;}
+  if(empty($_GET['milano_bilet_sec'])||!self::central()){return;}
   if(!current_user_can('manage_woocommerce')){wp_die('Yetkili prova kullanicisi gerekli.','Milano',array('response'=>403));}
-  nocache_headers();get_header();echo '<main style="max-width:980px;margin:36px auto;padding:24px"><h1>Milano Sirki — Bilet Secimi Provasi</h1>'.self::shortcode().'</main>';get_footer();exit;
+  nocache_headers();get_header();echo '<main style="max-width:980px;margin:36px auto;padding:24px"><h1>Milano Sirki — Bilet Seçimi</h1>'.self::shortcode().'</main>';get_footer();exit;
  }
  public static function product_event($pid,$vid){
   if(!class_exists('MDG_DB')){return 0;}
@@ -85,6 +85,9 @@ final class Milano_Shared_Checkout_Handoff {
    return new WP_Error('identity','Milano etkinlik kimligi uyusmuyor.');
   }
   $canPreview=$preview&&self::host()===self::STAGE&&current_user_can('manage_woocommerce');
+  if(!$canPreview&&self::host()===self::CENTRAL&&true!==get_option('milano_handoff_sales_enabled_v1',false)&&!current_user_can('manage_woocommerce')){
+   return new WP_Error('launch_closed','Milano bilet satışı son ödeme kontrolünün ardından açılacaktır.');
+  }
   if(!$canPreview&&$event->status!=='onsale'){return new WP_Error('closed','Bu etkinligin bilet satisi henuz acilmadi.');}
   global $wpdb;
   $s=$wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mdg_sessions WHERE id=%d AND event_id=%d LIMIT 1",$sid,$eid));
@@ -149,23 +152,25 @@ final class Milano_Shared_Checkout_Handoff {
   if(self::host()===self::STAGE){
    if(!current_user_can('manage_woocommerce')){return '<p>Bu bilet provasi yalniz yoneticiye aciktir.</p>';}
    $base=home_url();$rows=array();foreach(array(150,151) as $sid){$r=self::snapshot(24,$sid,true);if(!is_wp_error($r)){$rows[]=$r;}}
+  }elseif(self::host()===self::CENTRAL&&current_user_can('manage_woocommerce')){
+   $catalog=self::catalog();$data=is_wp_error($catalog)?array():$catalog->get_data();$rows=$data['sessions']??array();
   }else{
    $res=wp_remote_get($base.'/wp-json/milano-handoff/v1/catalog',array('timeout'=>8,'redirection'=>0));
    $data=!is_wp_error($res)&&wp_remote_retrieve_response_code($res)===200?json_decode(wp_remote_retrieve_body($res),true):null;
    $rows=is_array($data)&&($data['brand']??'')==='milano'&&is_array($data['sessions']??null)?$data['sessions']:array();
   }
-  if(!$rows){return '<p>Milano Sirki bilet satisi henuz acilmadi. Guncel duyurular icin lutfen bizi takip edin.</p>';}
-  $html='<div class="milano-ticket-selector"><p>Odemeniz Dunya Organizasyon\'un ortak bilet altyapisi olan madagaskarsirki.com uzerinden guvenli sekilde tamamlanacaktir.</p>';
+  if(!$rows){return '<p>Milano Sirki bilet satışı son ödeme kontrolünün ardından açılacaktır. Güncel duyurular için bizi takip edin.</p>';}
+  $html='<div class="milano-ticket-selector"><p>Ödemeniz Dünya Organizasyon\'un ortak bilet altyapisi olan madagaskarsirki.com üzerinden güvenli şekilde tamamlanacaktır.</p>';
   foreach($rows as $row){
    $html.='<form method="get" action="'.esc_url($base.'/').'"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="'.(int)$row['event_id'].'"><input type="hidden" name="session_id" value="'.(int)$row['session_id'].'">';
    if(!empty($row['preview'])){$html.='<input type="hidden" name="milano_preview" value="1">';}
    $html.='<h3>'.esc_html($row['title'].' — '.$row['date'].' '.$row['time']).'</h3>';
-   foreach(array('adults'=>'Yetiskin','children'=>'Cocuk','families'=>'Aile 2+2') as $key=>$label){
+   foreach(array('adults'=>'Yetişkin','children'=>'Çocuk','families'=>'Aile 2+2') as $key=>$label){
     $price=$key==='families'?$row['family_price']:$row[$key.'_price'];
     if($price===null){continue;}
     $html.='<label>'.esc_html($label.' — '.number_format((float)$price,2,',','.').' TL').' <input type="number" name="'.esc_attr($key).'" min="0" max="'.($key==='families'?'10':'20').'" value="0"></label> ';
    }
-   $html.='<button type="submit">'.(!empty($row['preview'])?'Secimi provada kontrol et':'Bilet al — ortak odemeye gec').'</button></form>';
+   $html.='<button type="submit">'.(!empty($row['preview'])?'Secimi provada kontrol et':'Bilet al — ortak ödemeye geç').'</button></form>';
   }
   return $html.'</div>';
  }
@@ -178,11 +183,11 @@ final class Milano_Shared_Checkout_Handoff {
   $units=$sel['children']+$sel['adults']+4*$sel['families'];
   if($units>$snap['capacity_snapshot']){wp_die('Secilen kisi sayisi kalan kapasiteyi asiyor.','Milano',array('response'=>409));}
   $total=$sel['children']*$snap['children_price']+$sel['adults']*$snap['adults_price']+$sel['families']*(float)$snap['family_price'];
-  get_header();echo '<main style="max-width:820px;margin:40px auto;padding:24px"><h1>Milano Sirki — Ortak Odeme</h1><p>Bu ekran Dunya Organizasyon\'un madagaskarsirki.com bilet altyapisini kullanir. Biletiniz Milano Sirki etkinligi icindir.</p><h2>'.esc_html($snap['title']).'</h2><p>'.esc_html($snap['date'].' '.$snap['time']).' · '.(int)$units.' kisi</p><p>Toplam: <strong>'.esc_html(number_format($total,2,',','.')).' TL</strong></p>';
+  get_header();echo '<main style="max-width:820px;margin:40px auto;padding:24px"><h1>Milano Sirki — Ortak Ödeme</h1><p>Bu ekran Dünya Organizasyon\'un madagaskarsirki.com bilet altyapısını kullanır. Biletiniz Milano Sirki etkinliği içindir.</p><h2>'.esc_html($snap['title']).'</h2><p>'.esc_html($snap['date'].' '.$snap['time']).' · '.(int)$units.' kişi</p><p>Toplam: <strong>'.esc_html(number_format($total,2,',','.')).' TL</strong></p>';
   if($snap['preview']){echo '<p><strong>PROVA: Satis kapali. Siparis, kapasite rezervasyonu veya odeme olusturulmadi.</strong></p>';}
   else{
    $nonce=wp_create_nonce('milano_handoff_'.$sel['event_id'].'_'.$sel['session_id']);
-   echo '<button id="milano-handoff-continue">Mevcut guvenli odeme ekranina devam et</button><p id="milano-handoff-error" role="alert"></p>';
+   echo '<button id="milano-handoff-continue">Güvenli ödeme ekranına devam et</button><p id="milano-handoff-error" role="alert"></p>';
    $cfg=array('ajax'=>admin_url('admin-ajax.php'),'selection'=>$sel,'nonce'=>$nonce,'checkout'=>wc_get_checkout_url());
    echo '<script>(function(){const c='.wp_json_encode($cfg).';const b=document.getElementById("milano-handoff-continue");b.addEventListener("click",async function(){b.disabled=true;const d=new URLSearchParams(c.selection);d.set("action","milano_handoff_cart");d.set("nonce",c.nonce);try{const r=await fetch(c.ajax,{method:"POST",credentials:"same-origin",body:d});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.data?.message||"Biletler sepete eklenemedi.");window.location.assign(c.checkout);}catch(e){document.getElementById("milano-handoff-error").textContent=e.message;b.disabled=false;}});})();</script>';
   }
@@ -199,7 +204,7 @@ final class Milano_Shared_Checkout_Handoff {
   if(!WC()->cart||!WC()->session){wc_load_cart();}
   foreach(WC()->cart->get_cart() as $item){
    if(empty($item['mdg_live_sale'])||(int)($item['mdg_event_id']??0)!==$sel['event_id']){
-    wp_send_json_error(array('message'=>'Sepetinizde baska bir secim var. Once mevcut sepetinizi kontrol edin; biletleriniz degistirilmedi.'),409);
+    wp_send_json_error(array('message'=>'Sepetinizde başka bir seçim var. Önce mevcut sepetinizi kontrol edin; biletleriniz değiştirilmedi.'),409);
    }
   }
   $lines=array();foreach(array('children'=>$snap['child_code'],'adults'=>$snap['adult_code'],'families'=>'MDG_FAMILY_2_2') as $key=>$code){if($sel[$key]){$lines[]=array('code'=>$code,'qty'=>$sel[$key]);}}
@@ -221,10 +226,28 @@ final class Milano_Shared_Checkout_Handoff {
   foreach($items as $i){if(empty($i['milano_handoff'])||!self::owner((int)($i['mdg_event_id']??0))){return;}}
   $order->update_meta_data('_milano_brand','milano');$order->update_meta_data('_milano_source','https://milanosirki.com');
  }
+
+ public static function public_catalog($rows){
+  return array_values(array_filter((array)$rows,static function($row){
+   return !self::owner((int)$row->id)&&stripos((string)$row->title,'Milano')===false;
+  }));
+ }
+ public static function public_entry(){
+  if(self::host()!==self::CENTRAL||!class_exists('MDG_Events')){return;}
+  $slug=sanitize_title((string)get_query_var('mdg_event_slug'));if(!$slug){return;}
+  $event=MDG_Events::get_by_public_slug($slug);
+  if($event&&self::owner((int)$event->id)){
+   nocache_headers();wp_redirect('https://milanosirki.com/bilet-al/',302);exit;
+  }
+ }
+
  public static function boot(){
   $h=self::host();if(!in_array($h,array(self::CENTRAL,self::STAGE,self::FRONT),true)){return;}
   add_shortcode('milano_merkezi_bilet',array(__CLASS__,'shortcode'));
   if(!self::central()){return;}
+  add_filter('mdg_public_ticket_events',array(__CLASS__,'public_catalog'));
+  add_filter('mdg_public_city_events',array(__CLASS__,'public_catalog'));
+  add_action('template_redirect',array(__CLASS__,'public_entry'),-2);
   add_action('rest_api_init',static function(){register_rest_route('milano-handoff/v1','/catalog',array('methods'=>'GET','permission_callback'=>'__return_true','callback'=>array(__CLASS__,'catalog')));});
   add_action('template_redirect',array(__CLASS__,'selector_page'),1);
   add_action('template_redirect',array(__CLASS__,'landing'),2);
