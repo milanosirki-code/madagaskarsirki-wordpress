@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Milano Yalova Staging Plan Audit
- * Version: 0.2.0
+ * Version: 0.3.0
  * Description: Authenticated read-only production-plan audit for MDG24 on the isolated staging hostname only.
  * Author: Dünya Organizasyon
  */
@@ -132,4 +132,46 @@ add_action('rest_api_init',static function() {
             return new WP_Error('unreachable','Native producer unexpectedly returned without redirect',array('status'=>500));
         }
     ));
+});
+
+
+/** Read-only parser contract for the already-existing session datetime PDF fix. */
+add_action('rest_api_init',static function(){
+ if(parse_url(site_url(),PHP_URL_HOST)!=='staging-f321-milanosirki-lgajf.wpcomstaging.com'){return;}
+ register_rest_route('milano-staging/v1','/yalova-datetime-smoke',array(
+  'methods'=>'GET',
+  'permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
+  'callback'=>static function(){
+   if(!function_exists('mdg_tdfix_correct_ticket_data')){return new WP_Error('fix_inactive','Existing Tickera datetime fix is not active.',array('status'=>503));}
+   $pairs=array(array(6058,'18:00','19:00'),array(6061,'19:30','20:30'));
+   $results=array();
+   foreach($pairs as $pair){
+    $post=get_post($pair[0]);
+    if(!$post||$post->post_type!=='product'||$post->post_status!=='draft'
+       ||false===stripos((string)$post->post_title,'Milano Sirki')
+       ||(int)get_post_meta((int)$post->ID,'_mdg_event_id',true)!==24
+       ||(string)get_post_meta((int)$post->ID,'_mdg_production_key',true)!=='MDG-E24-618c401e2640'){
+      return new WP_Error('wrong_product','Canonical staging ticket product mismatch.',array('status'=>409));
+    }
+    $ticket_data=array(
+     'event_name'=>'Milano Sirki — Yalova',
+     'event_datetime'=>'22 Ekim 2026 18:00 - 20:30',
+     'product_name'=>(string)$post->post_title
+    );
+    $out=mdg_tdfix_correct_ticket_data($ticket_data,0);
+    $str=(string)($out['event_datetime']??'');
+    $ok=($out['event_start_time']??'')===$pair[1]&&($out['event_end_time']??'')===$pair[2]
+     &&false!==strpos($str,'22')&&false!==strpos($str,$pair[1]);
+    $results[]=array('product_id'=>$pair[0],'expected_start'=>$pair[1],
+     'expected_end'=>$pair[2],'resolved'=>$str,'pass'=>$ok);
+   }
+   return rest_ensure_response(array(
+    'read_only'=>true,
+    'type'=>'synthetic parser smoke; NOT a real Tickera PDF or real ticket instance',
+    'all_pass'=>count(array_filter($results,static function($r){return $r['pass'];}))===count($results),
+    'results'=>$results,
+    'hook_attached'=>(bool)has_filter('tickera_ticket_designer_pre_generate','mdg_tdfix_pre_generate')
+   ));
+  }
+ ));
 });
