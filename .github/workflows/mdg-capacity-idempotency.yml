@@ -1,0 +1,30 @@
+name: MDG hold settlement idempotency
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php'
+      - 'tests/mdg-capacity-idempotency/**'
+      - '.github/workflows/mdg-capacity-idempotency.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php'
+      - 'tests/mdg-capacity-idempotency/**'
+      - '.github/workflows/mdg-capacity-idempotency.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  atomic-payment-finalization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: |
+          php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php
+          php -l tests/mdg-capacity-idempotency/regression.php
+      - name: Offline capacity invariants (no database/no PayTR)
+        run: php tests/mdg-capacity-idempotency/regression.php
