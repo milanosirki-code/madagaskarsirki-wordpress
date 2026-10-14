@@ -111,3 +111,5 @@ footer a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;
 }
 
 :is(.page-id-125,.page-id-126,.page-id-127) main h1 {font-size:clamp(28px,4vw,48px)!important;line-height:1.15;overflow-wrap:normal;word-break:normal;}
+
+:is(.page-id-125,.page-id-126,.page-id-127) main h1 {color:#F5C04A!important;}
