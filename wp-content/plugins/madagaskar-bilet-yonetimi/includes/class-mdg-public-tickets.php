@@ -73,7 +73,7 @@ final class MDG_Public_Tickets {
             return array();
         }
 
-        return (array) $wpdb->get_results( $wpdb->prepare(
+        $rows = (array) $wpdb->get_results( $wpdb->prepare(
             "SELECT e.*,
                     MIN(s.start_at) AS next_session_utc,
                     MAX(s.end_at) AS last_session_utc,
@@ -87,6 +87,7 @@ final class MDG_Public_Tickets {
             MDG_Status::ONSALE,
             $now_utc
         ) );
+        return (array) apply_filters( 'mdg_public_ticket_events', $rows );
     }
 
     private static function event_session_labels( $event_id ) {
