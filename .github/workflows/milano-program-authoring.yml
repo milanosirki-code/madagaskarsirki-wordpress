@@ -1,0 +1,17 @@
+name: Milano program authoring
+on:
+  pull_request:
+  push:
+    branches: [feature/milano-program-authoring-20261014]
+jobs:
+  brand-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php
+      - run: php -l integrations/milano/admin-scope/milano-admin-workspace.php
+      - run: php -l integrations/milano/program-authoring/milano-mmc-brand-deploy.php
+      - run: php tests/milano-program-authoring/service.php
