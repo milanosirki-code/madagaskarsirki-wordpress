@@ -161,6 +161,10 @@ $inflight=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
 test(is_array($inflight)&&$inflight['state']==='reserving'
      &&$inflight['wc_order_id']===(int)$winner,
      'ambiguous in-flight reservation remains the same canonical order');
+$existingInFlight=Milano_Canonical_Order_Claim::existing($intent,$quote,24,151,110000,4);
+test(is_array($existingInFlight)&&$existingInFlight['state']==='reserving'
+     &&$existingInFlight['wc_order_id']===(int)$winner,
+     'read-only lookup exposes reserving state for payment gate blocking');
 test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'bound','reserving'),
      'milano_reservation_transition_conflict'),
      'retry is blocked while a reservation is in progress');
@@ -172,6 +176,12 @@ test(is_array($readyRepeat)&&$readyRepeat['state']==='ready'
      &&$readyRepeat['created']===false
      &&$readyRepeat['wc_order_id']===(int)$winner,
      'ready replay returns original order, never grants another WC order');
+$existingReady=Milano_Canonical_Order_Claim::existing($intent,$quote,24,151,110000,4);
+test(is_array($existingReady)&&$existingReady['state']==='ready'
+     &&$existingReady['wc_order_id']===(int)$winner,
+     'read-only lookup returns ready state for same-order replay');
+test(is_code(Milano_Canonical_Order_Claim::existing($intent,$quote,24,150,110000,4),'milano_claim_conflict'),
+     'wrong-session lookup cannot reuse ready reservation');
 test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'reserving','ready'),
      'milano_reservation_transition_conflict'),
      'duplicate ready write never replays gateway or MDG reservation');
