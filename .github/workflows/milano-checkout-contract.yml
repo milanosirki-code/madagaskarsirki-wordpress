@@ -61,3 +61,8 @@ jobs:
           php -l tests/milano-checkout-contract/mysql-order-claim.php
       - name: Concurrent MySQL first-writer checkout + Woo binding test (no site)
         run: php tests/milano-checkout-contract/mysql-order-claim.php
+      - name: Audit prepayment family order / MDG map / held capacity contract
+        run: |
+          php -l integrations/milano/checkout-contract/milano-prepayment-order-audit.php
+          php -l tests/milano-checkout-contract/prepayment-order-audit.php
+          php tests/milano-checkout-contract/prepayment-order-audit.php
