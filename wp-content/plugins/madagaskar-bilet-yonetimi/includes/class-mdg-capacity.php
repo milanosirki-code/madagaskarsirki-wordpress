@@ -161,7 +161,7 @@ final class MDG_Capacity {
         global $wpdb;
         $hold_id = absint( $hold_id );
         $status = sanitize_key( $status );
-        if ( ! $hold_id || ! in_array( $status, array( 'released', 'expired' ), true ) ) {
+        if ( ! $hold_id || ! $status || in_array( $status, array( 'held', 'sold' ), true ) ) {
             return false;
         }
         $holds = MDG_DB::table( 'holds' );
