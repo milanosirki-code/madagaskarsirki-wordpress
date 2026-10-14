@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano - Ortak Madagaskar Odeme Gecisi
  * Description: Milano secimini mevcut merkezi MDG sepetine aktarir. Ayri siparis, POS, kapasite veya QR defteri olusturmaz.
- * Version: 0.2.3
+ * Version: 0.2.4
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -272,7 +272,7 @@ final class Milano_Shared_Checkout_Handoff {
   $h=self::host();if(!in_array($h,array(self::CENTRAL,self::STAGE,self::FRONT),true)){return;}
   add_shortcode('milano_merkezi_bilet',array(__CLASS__,'shortcode'));
   if(!self::central()){return;}
-  if(self::host()===self::CENTRAL){add_action('admin_menu',static function(){add_submenu_page('milano-brand-workspace','Yalova Satis Kapisi','Yalova Satis Kapisi','manage_woocommerce','milano-yalova-launch',array(__CLASS__,'launch_page'));});}
+  if(self::host()===self::CENTRAL){add_action('admin_menu',static function(){add_submenu_page('milano-brand-workspace','Yalova Satis Kapisi','Yalova Satis Kapisi','manage_woocommerce','milano-yalova-launch',array(__CLASS__,'launch_page'));},99);}
   add_filter('mdg_public_ticket_events',array(__CLASS__,'public_catalog'));
   add_filter('mdg_public_city_events',array(__CLASS__,'public_catalog'));
   add_action('template_redirect',array(__CLASS__,'public_entry'),-2);
