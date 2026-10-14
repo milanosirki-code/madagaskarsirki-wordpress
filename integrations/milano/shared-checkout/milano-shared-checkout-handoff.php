@@ -29,6 +29,44 @@ final class Milano_Shared_Checkout_Handoff {
   }
   return $out;
  }
+ public static function family_enabled($list,$eid){
+  if(!is_array($list)){return false;}
+  if(!$list){return false;}
+  $isList=array_keys($list)===range(0,count($list)-1);
+  return $isList?in_array((int)$eid,array_map('intval',$list),true):!empty($list[(int)$eid]);
+ }
+ public static function selector_page(){
+  if(empty($_GET['milano_bilet_sec'])||self::host()!==self::STAGE){return;}
+  if(!current_user_can('manage_woocommerce')){wp_die('Yetkili prova kullanicisi gerekli.','Milano',array('response'=>403));}
+  nocache_headers();get_header();echo '<main style="max-width:980px;margin:36px auto;padding:24px"><h1>Milano Sirki — Bilet Secimi Provasi</h1>'.self::shortcode().'</main>';get_footer();exit;
+ }
+ public static function product_event($pid,$vid){
+  if(!class_exists('MDG_DB')){return 0;}
+  global $wpdb;
+  $ids=$wpdb->get_col($wpdb->prepare('SELECT DISTINCT s.event_id FROM '.MDG_DB::table('sessions').' s INNER JOIN '.MDG_DB::table('ticket_types').' t ON t.session_id=s.id WHERE s.wc_product_id=%d AND t.wc_variation_id=%d AND t.is_active=1 LIMIT 2',(int)$pid,(int)$vid));
+  return !$wpdb->last_error&&count((array)$ids)===1?(int)$ids[0]:0;
+ }
+ public static function validate_cart_entry($passed,$pid,$qty,$vid=0,$variations=array(),$data=array()){
+  if(!$passed||!self::central()){return $passed;}
+  $eid=self::product_event($pid,$vid);if(!$eid||!self::owner($eid)){return $passed;}
+  if(!self::$context||self::$context['event_id']!==$eid){
+   wc_add_notice('Milano biletini Milano bilet secimi ve ortak odeme baglantisi uzerinden ekleyiniz.','error');return false;
+  }
+  return $passed;
+ }
+ public static function check_milano_cart(){
+  if(!function_exists('WC')||!WC()->cart){return;}
+  $milano=false;$other=false;
+  foreach(WC()->cart->get_cart() as $i){
+   $eid=self::product_event((int)$i['product_id'],(int)($i['variation_id']??0));
+   if($eid&&self::owner($eid)){
+    $milano=true;
+    if(empty($i['milano_handoff'])){wc_add_notice('Milano bilet secimi dogrulanamadi.','error');}
+    $s=self::snapshot($eid,(int)($i['mdg_session_id']??0));if(is_wp_error($s)){wc_add_notice($s->get_error_message(),'error');}
+   }else{$other=true;}
+  }
+  if($milano&&$other){wc_add_notice('Milano ve diger secimler ayni sepette odemeye alinamaz.','error');}
+ }
  private static function host(){return strtolower((string)wp_parse_url(home_url('/'),PHP_URL_HOST));}
  private static function central(){return in_array(self::host(),array(self::CENTRAL,self::STAGE),true);}
  private static function owner($eid){
@@ -92,7 +130,7 @@ final class Milano_Shared_Checkout_Handoff {
   $settings=get_option('mdg_family_package_22_v1',array()); $list=$settings['events']??array();
   $familyReady=count((array)$family)===1&&(int)$family[0]->capacity_units===4
    &&(float)$family[0]->price>0&&(float)$family[0]->price<=2*((float)$mapped['CHILD']->price+(float)$mapped['ADULT']->price)
-   &&(in_array($eid,(array)$list,true)||in_array((string)$eid,(array)$list,true)||isset($list[$eid]));
+   &&self::family_enabled($list,$eid);
   $local=MDG_Sessions::local_parts($s->start_at);
   return array('event_id'=>$eid,'session_id'=>$sid,'title'=>(string)$event->title,'venue'=>(string)($event->venue_name??''),
    'date'=>$local[0],'time'=>$local[1],'children_price'=>(float)$mapped['CHILD']->price,'adults_price'=>(float)$mapped['ADULT']->price,
@@ -188,7 +226,10 @@ final class Milano_Shared_Checkout_Handoff {
   add_shortcode('milano_merkezi_bilet',array(__CLASS__,'shortcode'));
   if(!self::central()){return;}
   add_action('rest_api_init',static function(){register_rest_route('milano-handoff/v1','/catalog',array('methods'=>'GET','permission_callback'=>'__return_true','callback'=>array(__CLASS__,'catalog')));});
+  add_action('template_redirect',array(__CLASS__,'selector_page'),1);
   add_action('template_redirect',array(__CLASS__,'landing'),2);
+  add_filter('woocommerce_add_to_cart_validation',array(__CLASS__,'validate_cart_entry'),90,6);
+  add_action('woocommerce_check_cart_items',array(__CLASS__,'check_milano_cart'),90);
   add_action('wp_ajax_milano_handoff_cart',array(__CLASS__,'cart'));
   add_action('wp_ajax_nopriv_milano_handoff_cart',array(__CLASS__,'cart'));
   add_filter('woocommerce_add_cart_item_data',array(__CLASS__,'mark'),60,4);
