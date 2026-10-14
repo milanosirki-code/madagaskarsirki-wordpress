@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Milano Yalova Staging Plan Audit
- * Version: 0.3.0
+ * Version: 0.4.0
  * Description: Authenticated read-only production-plan audit for MDG24 on the isolated staging hostname only.
  * Author: Dünya Organizasyon
  */
@@ -171,6 +171,126 @@ add_action('rest_api_init',static function(){
     'all_pass'=>count(array_filter($results,static function($r){return $r['pass'];}))===count($results),
     'results'=>$results,
     'hook_attached'=>(bool)has_filter('tickera_ticket_designer_pre_generate','mdg_tdfix_pre_generate')
+   ));
+  }
+ ));
+});
+
+
+/**
+ * Safe Yalova asset+family readback. Does not create orders, tickets, holds or PDFs.
+ * Assess the previously uploaded venue QR PNG pixels rather than assuming that
+ * an attachment whose name contains "QR" holds an actual matrix barcode.
+ */
+add_action('rest_api_init', static function () {
+ if (parse_url(site_url(), PHP_URL_HOST) !== 'staging-f321-milanosirki-lgajf.wpcomstaging.com') { return; }
+ register_rest_route('milano-staging/v1', '/yalova-asset-family-audit', array(
+  'methods'=>'GET',
+  'permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
+  'callback'=>static function(){
+   if (!class_exists('MDG_Events')) {return new WP_Error('mdg_missing','MDG is unavailable.',array('status'=>503));}
+   $event=MDG_Events::get(24);
+   if (!$event || $event->status!=='draft' || (string)$event->title!=='Milano Sirki — Yalova'
+       || (int)$event->venue_id!==181 || (int)$event->venue_qr_attachment_id!==6047) {
+    return new WP_Error('wrong_event','Draft venue ownership changed.',array('status'=>409));
+   }
+   global $wpdb;
+   $bridge=$wpdb->get_results($wpdb->prepare(
+    "SELECT p.brand FROM {$wpdb->prefix}mmc_mdg_event_bridge b INNER JOIN {$wpdb->prefix}mmc_programs p ON p.id=b.program_id WHERE b.is_active=1 AND b.mdg_event_id=%d LIMIT 2",24
+   ));
+   if (count((array)$bridge)!==1 || (string)$bridge[0]->brand!=='Milano Sirki'){
+    return new WP_Error('wrong_brand','No unique canonical Milano bridge.',array('status'=>409));
+   }
+   $file=get_attached_file(6047);
+   $exists=is_string($file)&&is_file($file)&&is_readable($file);
+   $bytes=$exists?filesize($file):0;
+   $dimensions=$exists?@getimagesize($file):false;
+   $pixels=array('sampled'=>false,'dark_ratio'=>null,'light_ratio'=>null,'transitions_horizontal'=>0,'transitions_vertical'=>0);
+   if ($exists && $dimensions && function_exists('imagecreatefrompng') && (int)$dimensions[0]===600 && (int)$dimensions[1]===600) {
+     $im=@imagecreatefrompng($file);
+     if ($im) {
+       $counts=array('dark'=>0,'light'=>0,'other'=>0); $transH=0;$transV=0;
+       for ($y=0;$y<600;$y+=6) {
+         $prev=null;
+         for ($x=0;$x<600;$x+=6) {
+           $rgb=imagecolorat($im,$x,$y);
+           $c=imagecolorsforindex($im,$rgb);
+           $brightness=($c['red']+$c['green']+$c['blue'])/3;
+           $cat=($brightness<96)?'dark':(($brightness>205)?'light':'other');
+           $counts[$cat]++;
+           if ($prev!==null && $prev!==$cat) {$transH++;}
+           $prev=$cat;
+         }
+       }
+       for ($x=0;$x<600;$x+=6){
+         $prev=null;
+         for($y=0;$y<600;$y+=6){
+           $c=imagecolorsforindex($im,imagecolorat($im,$x,$y));
+           $brightness=($c['red']+$c['green']+$c['blue'])/3;
+           $cat=($brightness<96)?'dark':(($brightness>205)?'light':'other');
+           if ($prev!==null && $prev!==$cat){$transV++;}
+           $prev=$cat;
+         }
+       }
+       imagedestroy($im);
+       $total=array_sum($counts);
+       $pixels=array('sampled'=>true,'dark_ratio'=>round($counts['dark']/max(1,$total),3),
+        'light_ratio'=>round($counts['light']/max(1,$total),3),
+        'transitions_horizontal'=>$transH,'transitions_vertical'=>$transV);
+     }
+   }
+   $pixel_matrix_ok=$pixels['sampled'] && $pixels['dark_ratio']>0.1 && $pixels['dark_ratio']<0.75
+      && $pixels['light_ratio']>0.18 && $pixels['transitions_horizontal']>70 && $pixels['transitions_vertical']>70;
+   $settings=get_option('mdg_family_package_22_v1',array());
+   $enabled=!empty($settings['events'][24]) || in_array(24, is_array($settings['events']??null)?$settings['events']:array(),true);
+   $mmc_types=$wpdb->get_results("SELECT ticket_code,price,capacity_units,is_active FROM {$wpdb->prefix}mmc_ticket_types WHERE event_id=14 ORDER BY id");
+   $family=null;
+   foreach((array)$mmc_types as $mt){
+    if((string)$mt->ticket_code==='family_2_2'&&(int)$mt->is_active===1){$family=$mt;break;}
+   }
+   $ses=$wpdb->get_results("SELECT id,capacity_total,sold_units,held_units,wc_product_id,tickera_event_id FROM {$wpdb->prefix}mdg_sessions WHERE event_id=24 ORDER BY id");
+   $perSession=array();
+   foreach((array)$ses as $s){
+      $types=$wpdb->get_results($wpdb->prepare(
+       "SELECT id,code,label,price,capacity_units,wc_variation_id FROM {$wpdb->prefix}mdg_ticket_types WHERE session_id=%d AND is_active=1 ORDER BY id",(int)$s->id
+      ));
+      $child=null;$adult=null;$variation_ok=true;
+      foreach((array)$types as $t){
+       if(strtoupper((string)$t->code)==='CHILD'){$child=$t;}
+       if(strtoupper((string)$t->code)==='ADULT'){$adult=$t;}
+       $variation=get_post((int)$t->wc_variation_id);
+       if(!$variation || $variation->post_type!=='product_variation'
+          || (int)$variation->post_parent!==(int)$s->wc_product_id
+          || (int)get_post_meta((int)$t->wc_variation_id,'_mdg_event_id',true)!==24){$variation_ok=false;}
+      }
+      $parent=get_post((int)$s->wc_product_id);
+      $owned=$parent&&$parent->post_type==='product'&&$parent->post_status==='draft'
+           &&false!==stripos($parent->post_title,'Milano Sirki')
+           &&(string)get_post_meta((int)$parent->ID,'_mdg_production_key',true)==='MDG-E24-618c401e2640';
+      $ok=(int)$s->capacity_total===500&&(int)$s->sold_units===0&&(int)$s->held_units===0
+         &&count((array)$types)===2 && $child && $adult && (int)$child->capacity_units===1&&(int)$adult->capacity_units===1
+         &&(float)$child->price===245.0&&(float)$adult->price===490.0 && $variation_ok && $owned
+         &&(int)$s->tickera_event_id===6056;
+      $perSession[]=array('session_id'=>(int)$s->id,'pass'=>(bool)$ok,'product_id'=>(int)$s->wc_product_id,
+         'child_variation'=>(int)($child->wc_variation_id??0),'adult_variation'=>(int)($adult->wc_variation_id??0),
+         'quantity_2plus2'=>4,'normal_total'=>round(2*(float)($child->price??0)+2*(float)($adult->price??0),2));
+   }
+   $package_price=$family?round((float)$family->price,2):null;
+   $family_ok=$enabled && $family && (int)$family->capacity_units===4 && $package_price===1100.0
+        && count($perSession)===2 && array_reduce($perSession,static function($acc,$x){return $acc && $x['pass'];},true);
+   return rest_ensure_response(array(
+    'read_only'=>true,'event_id'=>24,'brand'=>'milano',
+    'venue_qr'=>array(
+       'attachment_id'=>6047,'mime_type'=>get_post_mime_type(6047),'bytes'=>$bytes,
+       'width'=>$dimensions?(int)$dimensions[0]:0,'height'=>$dimensions?(int)$dimensions[1]:0,
+       'matrix_looks_like_qr'=>$pixel_matrix_ok,'pixel_metrics'=>$pixels,
+       'note'=>'Bitmap matrix heuristic only; QR payload and physical scanner not yet tested'
+    ),
+    'family_2plus2'=>array('enabled'=>(bool)$enabled,'price'=>$package_price,
+       'normal_total'=>1470,'discount'=>($package_price===null?null:1470-$package_price),
+       'capacity_units_per_package'=>4,'config_ready'=>(bool)$family_ok,'sessions'=>$perSession,
+       'actual_four_distinct_ticket_instances_verified'=>false
+    )
    ));
   }
  ));
