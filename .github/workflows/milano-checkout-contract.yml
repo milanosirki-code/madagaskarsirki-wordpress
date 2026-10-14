@@ -1,0 +1,30 @@
+name: Milano checkout intent offline contract
+
+on:
+  pull_request:
+    paths:
+      - 'integrations/milano/checkout-contract/**'
+      - 'tests/milano-checkout-contract/**'
+      - '.github/workflows/milano-checkout-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/milano/checkout-contract/**'
+      - 'tests/milano-checkout-contract/**'
+      - '.github/workflows/milano-checkout-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  signed-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: |
+          php -l integrations/milano/checkout-contract/milano-checkout-contract-stage.php
+          php -l tests/milano-checkout-contract/regression.php
+      - name: Offline validation without WordPress or PayTR credentials
+        run: php tests/milano-checkout-contract/regression.php
