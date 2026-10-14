@@ -30,20 +30,35 @@ chk(is_array($verified)&&$verified['status']==='success','valid signed PayTR cal
 $installment=$base;$installment['total_amount']='113500';
 chk(is_array(Milano_PayTR_Callback_Contract::verify(signed($installment,$key,$salt),$oid,110000,$key,$salt)),'signed installments allowed above canonical amount');
 $reject=[
- 'tampered_amount'=>array_merge($normal,['total_amount'=>'110001']),
+ 'tampered_signed_amount'=>array_merge($normal,['total_amount'=>'110001']),
  'bad_hash'=>array_merge($normal,['hash'=>'fake']),
  'wrong_oid'=>signed(array_merge($base,['merchant_oid'=>'MADAGASKAR000001']),$key,$salt),
  'wrong_status'=>signed(array_merge($base,['status'=>'other']),$key,$salt),
- 'wrong_currency'=>signed(array_merge($base,['currency'=>'USD']),$key,$salt),
- 'wrong_family_amount'=>signed(array_merge($base,['payment_amount'=>'109999']),$key,$salt),
- 'zero_amount'=>signed(array_merge($base,['payment_amount'=>'0']),$key,$salt),
- 'missing_payment_amount'=>signed(array_diff_key($base,['payment_amount'=>null]),$key,$salt),
- 'wrong_payment_type'=>signed(array_merge($base,['payment_type'=>'unknown']),$key,$salt),
- 'charge_less_than_expected'=>signed(array_merge($base,['total_amount'=>'108000']),$key,$salt),
+ 'signed_charge_less_than_expected'=>signed(array_merge($base,['total_amount'=>'108000']),$key,$salt),
 ];
-foreach($reject as $name=>$post){
+foreach($reject as $name=>$post) {
   chk(is_wp_error(Milano_PayTR_Callback_Contract::verify($post,$oid,110000,$key,$salt)),
       $name.' rejected');
+}
+// These optional fields are NOT inputs to the documented PayTR step-2 HMAC,
+// so forged values have NO authority and must never become payment truth.
+$unsignedChanges=[
+ 'forged_currency'=>array_merge($normal,['currency'=>'USD']),
+ 'forged_original_amount'=>array_merge($normal,['payment_amount'=>'1']),
+ 'forged_method'=>array_merge($normal,['payment_type'=>'other']),
+ 'omitted_supplementals'=>array_diff_key($normal,[
+   'currency'=>null,'payment_amount'=>null,'payment_type'=>null
+ ])
+];
+foreach($unsignedChanges as $name=>$post) {
+  $result=Milano_PayTR_Callback_Contract::verify($post,$oid,110000,$key,$salt);
+  chk(is_array($result)
+       && $result['charged_minor']===110000
+       && $result['expected_minor']===110000
+       && $result['unsigned_supplemental_fields_ignored']===true
+       && !isset($result['currency'])&&!isset($result['payment_amount'])
+       && !isset($result['payment_type']),
+      $name.' ignored and cannot change authenticated canonical amount');
 }
 $failed=signed(['merchant_oid'=>$oid,'status'=>'failed','total_amount'=>'0'],$key,$salt);
 chk(is_array(Milano_PayTR_Callback_Contract::verify($failed,$oid,110000,$key,$salt)),
