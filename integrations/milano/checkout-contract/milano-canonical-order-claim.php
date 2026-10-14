@@ -177,7 +177,7 @@ final class Milano_Canonical_Order_Claim {
             || (int) $r->session_id !== $session_id
             || (int) $r->amount_minor !== $amount
             || (int) $r->capacity_units !== $units
-            || ! in_array( (string) $r->state, array( 'claimed', 'bound' ), true ) ) {
+            || ! in_array( (string) $r->state, array( 'claimed', 'bound', 'reserving', 'ready' ), true ) ) {
             return new WP_Error( 'milano_claim_conflict', 'Canonical intent does not match trusted quote and ownership.' );
         }
         return array(
