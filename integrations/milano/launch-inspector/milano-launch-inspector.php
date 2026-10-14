@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Launch Read-only Issuance Inspector
  * Description: Admin-only staging inspection of existing Tickera hooks; no order, ticket, payment or metadata writes.
- * Version: 0.1.0
+ * Version: 0.1.1
  */
 if (!defined('ABSPATH')) { exit; }
 final class Milano_Launch_Issuance_Inspector {
@@ -49,7 +49,20 @@ final class Milano_Launch_Issuance_Inspector {
     $methods[]=array('class'=>$class,'method'=>$m->name,'public'=>$m->isPublic(),'static'=>$m->isStatic(),'required_arguments'=>$m->getNumberOfRequiredParameters(),'file'=>substr($file,strlen(WP_CONTENT_DIR)+1),'start'=>$m->getStartLine(),'end'=>$m->getEndLine());
    }
   }
-  return rest_ensure_response(array('read_only'=>true,'orders_created'=>false,'tickets_created'=>false,'payments_started'=>false,'hooks'=>$hooks,'methods'=>$methods));
+  $sources=array();
+  foreach(array('create_order_ticket_instances','create_order_ticket_instances_from_store_api','tc_modify_order_is_paid','allowed_tickets_download') as $name){
+   if(!method_exists('TC_WooCommerce_Bridge',$name)){continue;}
+   $rm=new ReflectionMethod('TC_WooCommerce_Bridge',$name);
+   $path=$rm->getFileName();
+   if(realpath($path)!==realpath(WP_CONTENT_DIR.'/plugins/bridge-for-woocommerce/bridge-for-woocommerce.php')){continue;}
+   $handle=fopen($path,'r'); $line=0; $out='';
+   if(!$handle){continue;}
+   while(($text=fgets($handle))!==false){$line++;if($line<$rm->getStartLine()){continue;}if($line>$rm->getEndLine()){break;}$out.=$line."\t".$text;}
+   fclose($handle);$sources[$name]=$out;
+  }
+  $creation_hooks=array();
+  foreach((array)$wp_filter as $name=>$hook){foreach((array)$hook->callbacks as $priority=>$callbacks){foreach($callbacks as $entry){$fn=$entry['function'];if(is_array($fn)&&count($fn)===2&&(is_object($fn[0])?get_class($fn[0]):(string)$fn[0])==='TC_WooCommerce_Bridge'&&in_array($fn[1],array('create_order_ticket_instances','create_order_ticket_instances_from_store_api'),true)){$creation_hooks[]=array('hook'=>$name,'priority'=>(int)$priority,'method'=>$fn[1]);}}}}
+  return rest_ensure_response(array('sources'=>$sources,'creation_hooks'=>$creation_hooks,'read_only'=>true,'orders_created'=>false,'tickets_created'=>false,'payments_started'=>false,'hooks'=>$hooks,'methods'=>$methods));
  }
  public static function boot() {
   if(parse_url(site_url(),PHP_URL_HOST)!==self::HOST){return;}
