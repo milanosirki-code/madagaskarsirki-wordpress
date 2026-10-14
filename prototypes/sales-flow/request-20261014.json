@@ -1,0 +1,21 @@
+{
+  "0": {
+    "block_uuid": "6c66c637-1e4d-4252-8ad6-29d11e4f5a83",
+    "question": [
+      {
+        "handler": "action",
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "type": "contact_main",
+            "value": "{{contact.cf.2455462.1854226}}",
+            "value_type": "value",
+            "custom_field": "{{contact.cf.2455462}}",
+            "contact_type": "main"
+          }
+        }
+      }
+    ]
+  },
+  "conversation": false
+}
