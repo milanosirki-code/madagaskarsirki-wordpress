@@ -166,4 +166,22 @@ $early_result=Milano_Prepayment_Order_Audit::inspect($o,$early);
 check(is_array($early_result)&&$early_result['session_id']===150,
     '18:00 Yalova family maps 342/343 + Woo 6059/6060 into one four-seat hold');
 check($wpdb->writes===0,'18:00 second session test is read-only');
+// Pre-reservation check MUST validate Woo structure without permitting PayTR
+// or pretending an MDG hold/order_map is already present.
+$wpdb=new FakeDB();
+$earlyOrder=new MockOrder($intent);
+$pre=Milano_Prepayment_Order_Audit::inspect($earlyOrder,$spec,'pre_reservation');
+check(is_array($pre)
+    &&$pre['may_start_payment_after_separate_gateway_auth']===false
+    &&$wpdb->writes===0
+    &&$wpdb->reads===0,
+    'strict pre-reservation audit passes valid Woo family without MDG DB writes/reads or payment');
+$earlyOrder->lines[0]->variation=6059;
+$rejected=Milano_Prepayment_Order_Audit::inspect($earlyOrder,$spec,'pre_reservation');
+check(is_wp_error($rejected)&&$rejected->code==='milano_preflight_family_components',
+    'pre-reservation rejects wrong Yalova child variation before touching MDG');
+$rejected=Milano_Prepayment_Order_Audit::inspect($earlyOrder,$spec,'gateway');
+check(is_wp_error($rejected)&&$rejected->code==='milano_preflight_phase',
+    'unknown audit phase cannot initiate gateway');
+
 echo "PASS count=".$pass." all checks. No order, payment, ticket, QR or email created.\n";
