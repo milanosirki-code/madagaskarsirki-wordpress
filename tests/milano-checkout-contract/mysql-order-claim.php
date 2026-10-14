@@ -42,7 +42,7 @@ function test($ok,$message):void{
     $passes++;echo "PASS $message\n";
 }
 function is_code($r,string $code):bool{return is_wp_error($r)&&$r->code===$code;}
-function key(int $n):string{return str_pad(dechex($n),64,'a',STR_PAD_LEFT);}
+function claim_key(int $n):string{return str_pad(dechex($n),64,'a',STR_PAD_LEFT);}
 function reset_ledger(MysqlWpdb $db):void{
     $db->pdo->exec('DROP TABLE IF EXISTS wp_milano_order_claims_v1');
     $s=Milano_Canonical_Order_Claim::schema_sql('wp_');
@@ -103,7 +103,7 @@ $passes=0;
 $wpdb=new MysqlWpdb();
 reset_ledger($wpdb);
 $quote=hash('sha256','yalova-MDG24-session151-family2plus2-110000-4');
-$intent=key(222);
+$intent=claim_key(222);
 test(is_code(Milano_Canonical_Order_Claim::schema_sql('wp_unsafe;'),'milano_schema_prefix'),'reject dangerous table prefix');
 test(is_code(Milano_Canonical_Order_Claim::claim('short',$quote,24,151,110000,4),'milano_claim_invalid'),'reject invalid nonce');
 test(is_code(Milano_Canonical_Order_Claim::claim($intent,'INVALID',24,151,110000,4),'milano_claim_invalid'),'reject unsigned quote hash');
@@ -129,7 +129,7 @@ $repeat=Milano_Canonical_Order_Claim::attach_order($intent,(int)$winner);
 test(is_array($repeat)&&$repeat['replayed']===true,'same winning Woo binding replay is idempotent');
 $bound=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
 test(is_array($bound)&&$bound['created']===false&&$bound['state']==='bound'&&$bound['wc_order_id']===(int)$winner,'repeat checkout returns canonical bound order');
-$other=key(333);
+$other=claim_key(333);
 test(is_array(Milano_Canonical_Order_Claim::claim($other,$quote,24,151,110000,4)),'new intent may independently claim');
 test(is_code(Milano_Canonical_Order_Claim::attach_order($other,(int)$winner),'milano_order_bind_conflict'),'SQL unique Woo order index blocks cross-intent reuse');
 $other_result=Milano_Canonical_Order_Claim::claim($other,$quote,24,151,110000,4);
