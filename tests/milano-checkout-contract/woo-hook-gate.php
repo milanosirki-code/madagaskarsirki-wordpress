@@ -15,7 +15,7 @@ function is_wp_error($v):bool {return $v instanceof WP_Error;}
 $hooks=[];
 function add_action($name,$cb,$priority=10,$accepted=1){
     global $hooks;
-    $hooks[$name]=['cb'=>$cb,'priority'=>$priority,'accepted'=>$accepted];
+    $hooks[$name][$priority]=['cb'=>$cb,'priority'=>$priority,'accepted'=>$accepted];
 }
 class FakeOrder {
     public int $id=2001;
@@ -93,15 +93,49 @@ $registered=Milano_Woo_Checkout_Gate::register(
     }
 );
 test($registered===true,'explicit trusted resolver registers once');
-test(isset($hooks['woocommerce_checkout_order_processed'])
-    &&$hooks['woocommerce_checkout_order_processed']['priority']===7
-    &&$hooks['woocommerce_checkout_order_processed']['accepted']===3,
-    'Classic Woo hook executes after MDG priority-5 reservation');
-test(isset($hooks['woocommerce_store_api_checkout_order_processed'])
-    &&$hooks['woocommerce_store_api_checkout_order_processed']['priority']===7,
-    'Store API pre-payment hook executes after MDG priority-5 reservation');
+test(isset($hooks['woocommerce_checkout_order_processed'][4])
+    && $hooks['woocommerce_checkout_order_processed'][4]['accepted']===3,
+    'Classic Woo priority-4 validates order before MDG reserves seats');
+test(isset($hooks['woocommerce_checkout_order_processed'][7])
+    && $hooks['woocommerce_checkout_order_processed'][7]['accepted']===3,
+    'Classic Woo priority-7 validates exact MDG hold before gateway');
+test(isset($hooks['woocommerce_store_api_checkout_order_processed'][4])
+    && isset($hooks['woocommerce_store_api_checkout_order_processed'][7]),
+    'Store API has both priority-4 pre-MDG and priority-7 post-MDG guards');
 test(is_wp_error(Milano_Woo_Checkout_Gate::register(static fn()=>null)),
     'cannot silently replace configured trusted resolver');
+reset_fake();$o=new FakeOrder();
+$early=Milano_Woo_Checkout_Gate::audit_before_reservation($o);
+test(is_array($early) && ($early['milano_precheck_ok']??false)
+    && $early['stock_reserved']===false
+    && $early['payment_initiated']===false,
+    'pre-MDG gate allows only existing validated family order without holding seats');
+test(Milano_Canonical_Order_Claim::$bind_calls===0,
+    'early gate never binds/creates canonical WC order');
+reset_fake();$o=new FakeOrder();Milano_Canonical_Order_Claim::$exists=false;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_before_reservation($o))
+    && Milano_Canonical_Order_Claim::$bind_calls===0,
+    'missing intent is denied before any MDG hold');
+reset_fake();$o=new FakeOrder();Milano_Canonical_Order_Claim::$state='reserving';
+Milano_Canonical_Order_Claim::$order_id=2001;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_before_reservation($o)),
+    'ambiguous reserving state denied before stock reservation');
+reset_fake();$o=new FakeOrder();$o->ownership='madagaskar';$o->brand='';
+test((Milano_Woo_Checkout_Gate::audit_before_reservation($o)['skipped_non_milano']??false)===true
+    && Milano_Canonical_Order_Claim::$existing_calls===0,
+    'early check never places Madagaskar orders in Milano ledger');
+reset_fake();$o=new FakeOrder();
+$earlyClassic=Milano_Woo_Checkout_Gate::classic_pre(2001,[],$o);
+$earlyStore=Milano_Woo_Checkout_Gate::store_api_pre($o);
+test(is_array($earlyClassic)&&is_array($earlyStore),
+    'classic/store API pre-MDG hooks accept a valid prepared canonical order');
+reset_fake();$o=new FakeOrder();Milano_Canonical_Order_Claim::$exists=false;
+$earlyThrew=false;
+try { Milano_Woo_Checkout_Gate::classic_pre(2001,[],$o); } catch (RuntimeException $e) {$earlyThrew=true;}
+test($earlyThrew,'classic early guard throws before MDG hold when intent missing');
+$earlyThrew=false;
+try { Milano_Woo_Checkout_Gate::store_api_pre($o); } catch (RuntimeException $e) {$earlyThrew=true;}
+test($earlyThrew,'store early guard throws before MDG hold when intent missing');
 reset_fake();$o=new FakeOrder();
 $result=Milano_Woo_Checkout_Gate::audit_existing_checkout($o);
 test(is_array($result)&&($result['milano_preflight_ok']??false)===true,
