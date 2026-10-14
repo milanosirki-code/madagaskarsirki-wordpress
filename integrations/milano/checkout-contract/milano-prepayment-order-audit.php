@@ -47,7 +47,10 @@ final class Milano_Prepayment_Order_Audit {
      * Does NOT authorize taking money by itself: PayTR merchant/domain and
      * durable callback/sales checks are separate, not yet integrated.
      */
-    public static function inspect( $order, $spec ) {
+    public static function inspect( $order, $spec, $phase = 'payment' ) {
+        if ( ! in_array( $phase, array( 'pre_reservation', 'payment' ), true ) ) {
+            return self::fail( 'phase' );
+        }
         global $wpdb;
         if ( ! self::canonical_spec( $spec ) ) { return self::fail( 'spec' ); }
         if ( ! is_object( $order )
@@ -116,6 +119,22 @@ final class Milano_Prepayment_Order_Audit {
         if ( ! isset( $components['child'], $components['adult'] ) ) {
             return self::fail( 'family_mix' );
         }
+        // The brand/intent/price and exact Woo ticket structure must pass
+        // BEFORE invoking the stock-reservation owner. There cannot yet be a
+        // hold or order_map at this phase, so it explicitly does NOT authorize
+        // gateway initiation. Full MDG audit below is mandatory afterward.
+        if ( 'pre_reservation' === $phase ) {
+            return array(
+                'read_only' => true, 'phase' => 'pre_reservation',
+                'canonical_order_id' => $order_id,
+                'event_id' => $spec['event_id'], 'session_id' => $spec['session_id'],
+                'admission_codes_expected' => 4,
+                'amount_minor' => $spec['amount_minor'], 'currency' => 'TRY',
+                'may_start_payment_after_separate_gateway_auth' => false,
+                'ticket_or_qr_created' => false,
+            );
+        }
+
         // MDG_Live_Sales::reserve_or_throw runs only on standard WC
         // checkout hooks. A custom wc_create_order() path MUST NOT bypass it.
         $table = $wpdb->prefix . 'mdg_order_map';
