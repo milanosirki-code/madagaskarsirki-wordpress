@@ -1,0 +1,19 @@
+name: Milano shared checkout handoff
+on:
+  pull_request:
+    paths:
+      - 'integrations/milano/shared-checkout/**'
+      - 'tests/milano-shared-checkout/**'
+      - '.github/workflows/milano-shared-checkout.yml'
+  push:
+    branches: ['feature/milano-shared-checkout-handoff-20261014']
+jobs:
+  handoff-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: php -l integrations/milano/shared-checkout/milano-shared-checkout-handoff.php
+      - run: php tests/milano-shared-checkout/selection.php
