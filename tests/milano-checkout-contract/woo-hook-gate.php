@@ -151,6 +151,35 @@ Milano_Canonical_Order_Claim::$order_id=2001;
 test(is_array(Milano_Woo_Checkout_Gate::audit_existing_checkout(new FakeOrder()))
     &&Milano_Canonical_Order_Claim::$bind_calls===0,
     'same already-bound Woo order remains idempotent');
+reset_fake();Milano_Canonical_Order_Claim::$state='ready';
+Milano_Canonical_Order_Claim::$order_id=2001;
+$r=Milano_Woo_Checkout_Gate::audit_existing_checkout(new FakeOrder());
+test(is_array($r) && ($r['milano_preflight_ok']??false)
+    && ($r['reservation_state']??'')==='ready'
+    && Milano_Canonical_Order_Claim::$bind_calls===0
+    && Milano_Prepayment_Order_Audit::$calls===1,
+    'pre-reserved ready state replays on SAME order without a new bind/hold');
+$another=new FakeOrder();$another->id=2002;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_existing_checkout($another))
+    && Milano_Canonical_Order_Claim::$bind_calls===0,
+    'ready state cannot authorize a second Woo order');
+reset_fake();Milano_Canonical_Order_Claim::$state='reserving';
+Milano_Canonical_Order_Claim::$order_id=2001;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_existing_checkout(new FakeOrder()))
+    && Milano_Prepayment_Order_Audit::$calls===0
+    && Milano_Canonical_Order_Claim::$bind_calls===0,
+    'ambiguous reserving state blocks checkout BEFORE payment audit');
+reset_fake();Milano_Canonical_Order_Claim::$state='ready';
+Milano_Canonical_Order_Claim::$order_id=2001;
+Milano_Prepayment_Order_Audit::$pass=false;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_existing_checkout(new FakeOrder()))
+    && Milano_Canonical_Order_Claim::$bind_calls===0,
+    'ready state with expired/missing hold cannot enter gateway');
+reset_fake();Milano_Canonical_Order_Claim::$state='bound';
+Milano_Canonical_Order_Claim::$order_id=2002;
+test(is_wp_error(Milano_Woo_Checkout_Gate::audit_existing_checkout(new FakeOrder()))
+    && Milano_Prepayment_Order_Audit::$calls===0,
+    'bound state belonging to OTHER order fails closed');
 reset_fake();$o=new FakeOrder();
 $r=Milano_Woo_Checkout_Gate::classic(2001,[],$o);
 test(is_array($r)&&($r['milano_preflight_ok']??false),
