@@ -27,6 +27,15 @@ final class Milano_Woo_Classic_Checkout_Bridge {
         if ( self::$registered || ! is_callable( $server_verified_spec_provider ) ) {
             return new WP_Error( 'milano_bridge_provider', 'Authenticated server intent provider is required.' );
         }
+        // PR256 also contains an independent draft Woo Checkout Gate (priority
+        // 7). NEVER enable two owning checkout hooks for a single WC order.
+        if ( function_exists( 'has_action' )
+            && false !== has_action(
+                'woocommerce_checkout_order_processed',
+                array( 'Milano_Woo_Checkout_Gate', 'classic' )
+            ) ) {
+            return new WP_Error( 'milano_bridge_conflicting_gate', 'Only one Milano checkout owner may register.' );
+        }
         if ( ! function_exists( 'add_action' ) || ! class_exists( 'Milano_Canonical_Order_Claim' )
             || ! class_exists( 'Milano_Prepayment_Order_Audit' ) ) {
             return new WP_Error( 'milano_bridge_dependencies', 'Required checkout ledger and audit are absent.' );
