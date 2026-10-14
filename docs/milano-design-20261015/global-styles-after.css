@@ -109,3 +109,5 @@ footer a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;
  header .wp-block-site-title {min-width:0;}
  header > .wp-block-group > .wp-block-group:last-child {margin-block-start:8px;padding-top:0!important;}
 }
+
+:is(.page-id-125,.page-id-126,.page-id-127) main h1 {font-size:clamp(28px,4vw,48px)!important;line-height:1.15;overflow-wrap:normal;word-break:normal;}
