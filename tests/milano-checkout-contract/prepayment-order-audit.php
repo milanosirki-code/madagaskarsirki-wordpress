@@ -140,4 +140,30 @@ run_test('wrong hold session refused',static function($o,$db){$db->holds[0]['ses
 run_test('wrong hold units refused',static function($o,$db){$db->holds[0]['units']=2;},'hold_expired_or_mismatch');
 run_test('client inflated capacity units spec refused',static function($o,$db,&$s){$s['units']=8;},'spec');
 run_test('foreign event spec refused',static function($o,$db,&$s){$s['brand']='madagaskar';},'spec');
+// Both actual Yalova 22 October session mapping variants must independently pass.
+$wpdb=new FakeDB();
+$wpdb->map=[
+ ['order_item_id'=>8001,'event_id'=>24,'session_id'=>150,'ticket_type_id'=>342,'quantity'=>2,'units_per_ticket'=>1,'units_total'=>2],
+ ['order_item_id'=>8002,'event_id'=>24,'session_id'=>150,'ticket_type_id'=>343,'quantity'=>2,'units_per_ticket'=>1,'units_total'=>2]
+];
+$wpdb->holds=[['session_id'=>150,'units'=>4,'status'=>'held','expires_at'=>'2027-10-14 12:00:00']];
+$early=$spec;
+$early['session_id']=150;
+$early['product_id']=6058;
+$early['child_variation_id']=6059;
+$early['adult_variation_id']=6060;
+$early['child_type_id']=342;
+$early['adult_type_id']=343;
+$o=new MockOrder($intent);
+$o->lines[0]->variation=6059;
+$o->lines[0]->parent=6058;
+$o->lines[1]->variation=6060;
+$o->lines[1]->parent=6058;
+foreach ($o->lines as $line) {
+    $line->m['_mdg_family22_session_id']=150;
+}
+$early_result=Milano_Prepayment_Order_Audit::inspect($o,$early);
+check(is_array($early_result)&&$early_result['session_id']===150,
+    '18:00 Yalova family maps 342/343 + Woo 6059/6060 into one four-seat hold');
+check($wpdb->writes===0,'18:00 second session test is read-only');
 echo "PASS count=".$pass." all checks. No order, payment, ticket, QR or email created.\n";
