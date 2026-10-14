@@ -18,3 +18,9 @@ Isolated plugin `integrations/milano/checkout-contract/milano-checkout-contract-
 - Duplicate PayTR callback / payment retry, race for final seats, refund and rollback, return URL forgery and 15m hold expiry; simulate on staging with no customer notifications.
 - Explicit venue allocation verification separate from technical sale status.
 - Keep PR246/247/248/253/255 and this prototype draft until independent QA. No live deployment or payment/sale activation from this PR alone.
+
+## Verified PayTR step-2 trust boundary — 2026-10-14
+
+Per PayTR's current iFrame API Step 2 specification (https://dev.paytr.com/iframe-api/iframe-api-2-adim), the callback HMAC input is strictly `merchant_oid . merchant_salt . status . total_amount` with `merchant_key`. **Do NOT represent `currency`, `payment_amount`, `payment_type`, `test_mode` or reason text as cryptographically authenticated by that HMAC** even if the extra fields appear in the POST. The isolated contract verifier now ignores all those fields for payment authorization. `total_amount` is HMAC-protected and may exceed the originally requested amount when installments are chosen; compare it against the server-persisted original Woo order amount and manually reconcile any signed underpayment. The original currency, merchant/test mode and brand must be checked against the centrally stored order and signed iframe initiation record, NOT callback extras. The verifier does not install any REST callback or settle Woo orders. Never use `merchant_ok_url` or `merchant_fail_url` as proof of payment.
+
+PR #258 (https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/258) separately corrects the shared MDG hold-settlement duplicate race, with fake-DB regression and isolated real MySQL 8.4/InnoDB simultaneous settlement-versus-settlement and settlement-versus-release CI; the implementation still requires staging Woo/PayTR real callback and four unique Tickera QR tests.
