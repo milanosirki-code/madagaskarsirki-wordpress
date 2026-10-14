@@ -11,6 +11,16 @@ $markers['ms_oh_yazildi_1001']='gonderilirdi';
 $check('Recovery still detects later payment',ms_oh_dry_run_report($order,null,true)['exclusion_reason'],'REPLACEMENT_PAID');
 $reset();$wpdb->sessions[201][0]->start_at=gmdate('Y-m-d H:i:s',time()-60);
 $check('Recovery still excludes started session',ms_oh_dry_run_report($order,null,true)['exclusion_reason'],'SESSION_STARTED');
+
+$reset();$order->modified=time();
+$check('Metadata refresh does not restart checkout wait',ms_oh_dry_run_report($order,null,true)['eligibility'],'ELIGIBLE');
+$order->modified=time()+120;
+$check('Future metadata timestamp does not defer old checkout',ms_oh_dry_run_report($order,null,true)['eligibility'],'ELIGIBLE');
+$reset();$order->created=time()-60;
+$check('Fresh checkout still waits',ms_oh_dry_run_report($order,null,true)['exclusion_reason'],'WAITING');
+$reset();$order->created=null;
+$check('Missing checkout timestamp remains excluded',ms_oh_dry_run_report($order,null,true)['exclusion_reason'],'DATE_MISSING');
+
 $url='https://example.test/checkout/order-pay/1/?key=fixture';
 $gate=function($eligible=true,$previous='',$old=null,$lock=false,$paid=false,$wc='failed',$crm=143)use($url){return mdg_kr_payment_gate($eligible,$url,$previous,$old,$lock,$paid,$wc,$crm);};
 $check('Failed lost can preview',$gate()['state'],'PREVIEW_ELIGIBLE');
