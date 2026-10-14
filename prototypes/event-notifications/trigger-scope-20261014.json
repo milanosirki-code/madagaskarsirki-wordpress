@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-14",
+  "pipeline_id": 14297695,
+  "schedule": "daily 15:00 Europe/Istanbul",
+  "changes": [
+    {
+      "bot_id": 118596,
+      "trigger_id": 38158674,
+      "required_tags": [
+        "mdg_etkinlik_iptal_bildirim_dogrulandi",
+        "mdg_etkinlik_iptal_bildirim_alanlar_dogrulandi"
+      ]
+    },
+    {
+      "bot_id": 118598,
+      "trigger_id": 38158734,
+      "required_tags": [
+        "mdg_etkinlik_degisiklik_bildirim_dogrulandi",
+        "mdg_etkinlik_degisiklik_bildirim_alanlar_dogrulandi"
+      ]
+    }
+  ],
+  "before_stages": [
+    "Incoming leads"
+  ],
+  "after_stages": [
+    "Incoming leads",
+    "pending",
+    "processing",
+    "Closed - won",
+    "Closed - lost"
+  ],
+  "apply_to_existing_leads": false,
+  "source_change": false,
+  "rollback": "Restore only Incoming leads for each trigger; retain tags and daily15:00."
+}
