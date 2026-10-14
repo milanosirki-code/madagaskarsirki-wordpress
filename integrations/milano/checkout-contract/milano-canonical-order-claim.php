@@ -82,15 +82,20 @@ final class Milano_Canonical_Order_Claim {
             return new WP_Error( 'milano_claim_db_unavailable', 'Database unavailable.' );
         }
         $now = gmdate( 'Y-m-d H:i:s' );
-        $affected = $wpdb->query( $wpdb->prepare(
+        // A plain INSERT with an actual UNIQUE constraint is the creator
+        // election. NEVER use INSERT ... ON DUPLICATE KEY UPDATE no-op and
+        // derive first-writer status from affected_rows: MySQL connections
+        // with CLIENT_FOUND_ROWS may report 1 for an EXISTING row.
+        // Duplicate-key INSERT returns false; read the unique row below and
+        // classify it as a replay only if every immutable field matches.
+        $inserted = $wpdb->query( $wpdb->prepare(
             'INSERT INTO ' . self::table() .
             " (intent_key,quote_sha256,brand,event_id,session_id,amount_minor,capacity_units,state,wc_order_id,created_at,updated_at)
-             VALUES (%s,%s,'milano',%d,%d,%d,%d,'claimed',NULL,%s,%s)
-             ON DUPLICATE KEY UPDATE intent_key = intent_key",
+             VALUES (%s,%s,'milano',%d,%d,%d,%d,'claimed',NULL,%s,%s)",
             $intent, $quote, $event_id, $session_id, $amount, $units, $now, $now
         ) );
-        if ( false === $affected ) {
-            return new WP_Error( 'milano_claim_db_error', 'Canonical intent could not be reserved.' );
+        if ( false !== $inserted && 1 !== (int) $inserted ) {
+            return new WP_Error( 'milano_claim_insert_anomaly', 'Unexpected canonical intent insert count.' );
         }
         $r = self::row( $intent );
         if ( ! $r ) {
@@ -109,7 +114,7 @@ final class Milano_Canonical_Order_Claim {
             );
         }
         return array(
-            'created' => 1 === (int) $affected,
+            'created' => 1 === (int) $inserted,
             'state' => (string) $r->state,
             'wc_order_id' => $r->wc_order_id ? (int) $r->wc_order_id : null,
             // No customer PII, gateway credentials or signature is stored.
