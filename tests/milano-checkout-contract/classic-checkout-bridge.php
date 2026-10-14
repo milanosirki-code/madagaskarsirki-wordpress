@@ -76,6 +76,24 @@ final class TOrder {
     public function get_meta($key,$single=true){return $this->meta[$key]??'';}
     public function update_meta_data($key,$v){$this->meta[$key]=$v;}
 }
+class MDG_DB {
+    public static function table($n):string{return 'wp_mdg_'.$n;}
+}
+class TDb {
+    public int $queries=0;
+    public function prepare($fmt,...$a):string{return vsprintf($fmt,$a);}
+    public function get_row($sql) {
+        $this->queries++;
+        if(preg_match('/t\.wc_variation_id=(\d+)/',$sql,$a)) {
+            $v=(int)$a[1];
+            return (object)['event_id'=>in_array($v,[6062,6063],true)?24:4];
+        }
+        return null;
+    }
+}
+$wpdb=new TDb();
+$existing=[];
+function wc_get_order($id){global $existing;return $existing[$id]??null;}
 require dirname(__DIR__,2).'/integrations/milano/checkout-contract/milano-woo-classic-checkout-bridge.php';
 $passes=0;
 function ok($condition,$name){global $passes;if(!$condition){fwrite(STDERR,"FAIL ".$name."\n");exit(1);}++$passes;echo "PASS ".$name."\n";}
@@ -101,12 +119,32 @@ ok(isset($hooks['woocommerce_checkout_order_processed'])&&$hooks['woocommerce_ch
     'finalized audit happens after MDG priority-5 prepayment hold');
 ok(isset($hooks['woocommerce_store_api_checkout_order_processed']),
     'unapproved Milano Store API branch registered as deny-only');
+ok(isset($hooks['woocommerce_resume_order'])&&$hooks['woocommerce_resume_order']['priority']===1,
+    'resuming checkout is intercepted BEFORE Woo removes existing order items');
 ok(Milano_Woo_Classic_Checkout_Bridge::register($provider) instanceof WP_Error,'cannot register hooks twice');
 $old=new TOrder(false);
 Milano_Woo_Classic_Checkout_Bridge::claim_before_save($old);
 Milano_Woo_Classic_Checkout_Bridge::audit_after_mdg_hold(123,[],$old);
 Milano_Woo_Classic_Checkout_Bridge::deny_unapproved_store_api($old);
 ok($called===0&&Milano_Canonical_Order_Claim::$attempts===0,'Madagaskar checkout is completely untouched');
+$existing[700]=new TOrder(false);
+Milano_Woo_Classic_Checkout_Bridge::deny_reused_milano_order(700);
+ok(true,'resuming legacy Madagaskar order is allowed');
+$existing[701]=new TOrder();
+$existing[701]->id=701;
+$existing[701]->meta['_milano_brand']='milano';
+ok(throws(static function(){Milano_Woo_Classic_Checkout_Bridge::deny_reused_milano_order(701);}),
+    'existing Milano order cannot be reset and have its ticket rows deleted');
+$missingFamily=new TOrder();
+foreach($missingFamily->lines as $line){
+    $line->meta['_mdg_family22_event_id']='';
+    $line->meta['_mdg_family22']='';
+}
+$attemptBefore=Milano_Canonical_Order_Claim::$attempts;
+ok(throws(static function()use($missingFamily){Milano_Woo_Classic_Checkout_Bridge::claim_before_save($missingFamily);}),
+    'actual Milano WC variation remains gated even after family meta is missing');
+ok(Milano_Canonical_Order_Claim::$attempts===$attemptBefore,
+    'invalid Milano variation cannot claim a new order key');
 $pre=new TOrder();
 Milano_Woo_Classic_Checkout_Bridge::claim_before_save($pre);
 ok($pre->meta['_milano_brand']==='milano'
