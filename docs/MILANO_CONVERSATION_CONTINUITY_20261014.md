@@ -76,3 +76,12 @@ Callback sözleşme testleri gerçek gateway kurulumu değildir; sonuç/başarı
 - Tek merkezî checkout: https://github.com/milanosirki-code/madagaskarsirki-wordpress/issues/250
 
 Bu oturumun sonucu: kurumsal devam kaydı; yeni satış veya teknik dağıtım yapılmadı. Sonraki “devam” bu kayıttan sürdürülür.
+
+## 14 Ekim 2026 — Acil satışa açma talimatı ve güncel bağlantı kontrolü
+Kullanıcı etkinliğin haftaya olduğunu ve yayının/satışın hızla açılmasını istedi. Öncelik artık satış için gereken işlerin tamamlanması; yeni görsel/yan özellik veya aynı prototipin tekrarı değildir.
+Canlı Milano WPVibe bağlantısı yönetici yetkisiyle doğrulandı. Aktif eklenti listesinde bağımsız WooCommerce/Tickera/PayTR yok, milano-shared-events mevcut. Prova bağlantısı da doğrulandı; quote0.1.2, feed0.2.0, Milano menü0.1.0, audit0.6.0, MMC1.3.50 aktif. PayTR aktif eklentiler arasında yok.
+Gerçek mevcut GET yalova-preview her iki seansı18.00/19.30, aile1100 TRY,4 kişi,500 snapshot ile döndürdü; sales_opened=false ve order/capacity/ticket_created=false. Mevcut datetime-smoke iki saati doğru çözdü, fakat yanıt açıkça sentetik parser testi, gerçek PDF değil.
+Canlı #36/#37/#38 sayfaları tek tek okundu; üçü draft ve satış/teslim yöntemi doğrulanmadan hazır kabul edilmemeli. Varsayımsal ödeme/teslim beyanı yayımlanmadı.
+Gmail güncel arama yalnız PayTR ikinci alan adı talebinin DRAFT kaydını gösterdi. Taslak tam okunarak alıcı uyeisyeri@paytr.com, 22 Ekim Yalova tarihi, merkezi tek sipariş/iframe/callback ve onaylı test yöntemi sorularının mevcut olduğu doğrulandı. Draft r-596376013609050356; mesaj1a139f5e7260c2dd. Talep bu oturumda gönderilmedi; açık gönderim talimatı gerekiyor. PayTR yanıtı olsa bile eksik checkout ve gerçek QR/PDF kabulünü tek başına tamamlamaz.
+Tickera Bridge ana kaynak dosyası64KiB WPVibe okuma sınırını aştı. Araç bu dosyanın bu yolla okunamayacağını bildirdi; tekrar/izin değişimiyle zorlanmadı. Daha küçük includes/functions.php okundu ama bilet üretim hookunun bütünlüğünü doğrulamaya yeterli değil. Bu nedenle gerçek ticket issuance yöntemi tahmin edilerek sipariş/QR oluşturulmadı.
+Bu turda gerçek satış, ödeme, bilet veya kapasite yazması yapılmadı. İkinci domain talebi, gerçek checkout bağlantısı ve kontrollü gerçek bilet testi hâlen gerekli. Site tanıtımı yayında; satış açıldığı söylenemez.
