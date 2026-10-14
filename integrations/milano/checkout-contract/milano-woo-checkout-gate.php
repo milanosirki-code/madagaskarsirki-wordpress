@@ -43,6 +43,11 @@ final class Milano_Woo_Checkout_Gate {
             return new WP_Error( 'milano_gate_already_registered', 'Checkout gate is already registered.' );
         }
         self::$server_resolver = $trusted_server_resolver;
+        // Before MDG's priority-5 reservation hook: reject forged/expired
+        // intents and malformed family orders without ever holding seats.
+        add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'classic_pre' ), 4, 3 );
+        add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'store_api_pre' ), 4, 1 );
+        // After the canonical MDG owner has reserved and mapped exactly 4 seats.
         add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'classic' ), 7, 3 );
         add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'store_api' ), 7, 1 );
         self::$registered = true;
@@ -151,6 +156,88 @@ final class Milano_Woo_Checkout_Gate {
             'reservation_state' => $current_state,
             'gateway_invoked' => false,
         );
+    }
+
+    /**
+     * BEFORE MDG reserves any seat. No state transition, payment or hold.
+     *
+     * The actual event/brand must be independently resolved from MMC+MDG
+     * product ownership, not customer input. A prior central intent is required.
+     * A "reserving" claim is a crash/uncertainty, not an invitation to retry.
+     */
+    public static function audit_before_reservation( $order ) {
+        if ( ! is_object( $order )
+            || ! method_exists( $order, 'get_id' )
+            || ! method_exists( $order, 'get_meta' )
+            || ! is_callable( self::$server_resolver ) ) {
+            return self::fail( 'not_configured' );
+        }
+        $result = call_user_func( self::$server_resolver, $order );
+        if ( is_wp_error( $result ) ) { return self::fail( 'ownership_resolution' ); }
+        if ( null === $result ) {
+            return 'milano' === (string) $order->get_meta( '_milano_brand', true )
+                ? self::fail( 'untagged_ownership_conflict' )
+                : array( 'skipped_non_milano' => true );
+        }
+        if ( ! is_array( $result ) || 'milano' !== (string) $order->get_meta( '_milano_brand', true )
+            || ! isset( $result['quote_sha256'] ) || ! is_string( $result['quote_sha256'] )
+            || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $result['quote_sha256'] )
+            || ! isset( $result['intent'], $result['event_id'], $result['session_id'],
+                        $result['amount_minor'], $result['units'] )
+            || ! class_exists( 'Milano_Canonical_Order_Claim' )
+            || ! class_exists( 'Milano_Prepayment_Order_Audit' ) ) {
+            return self::fail( 'spec_or_dependencies' );
+        }
+        $digest = $result['quote_sha256'];
+        unset( $result['quote_sha256'] );
+        $claim = Milano_Canonical_Order_Claim::existing(
+            $result['intent'], $digest, $result['event_id'],
+            $result['session_id'], $result['amount_minor'], $result['units']
+        );
+        if ( is_wp_error( $claim ) ) { return self::fail( 'missing_or_conflicting_claim' ); }
+        $order_id = (int) $order->get_id();
+        $state = (string) ( $claim['state'] ?? '' );
+        $bound = (int) ( $claim['wc_order_id'] ?? 0 );
+        if ( $order_id < 1 || 'reserving' === $state
+            || ! in_array( $state, array( 'claimed', 'bound', 'ready' ), true )
+            || ( in_array( $state, array( 'bound', 'ready' ), true ) && $bound !== $order_id ) ) {
+            return self::fail( 'unsafe_claim_state' );
+        }
+        $audit = Milano_Prepayment_Order_Audit::inspect( $order, $result, 'pre_reservation' );
+        if ( is_wp_error( $audit ) || ! is_array( $audit )
+            || (int) ( $audit['canonical_order_id'] ?? 0 ) !== $order_id
+            || ! empty( $audit['may_start_payment_after_separate_gateway_auth'] ) ) {
+            return self::fail( 'pre_reservation_structure' );
+        }
+        return array( 'milano_precheck_ok'=>true, 'order_id'=>$order_id,
+            'stock_reserved'=>false, 'payment_initiated'=>false );
+    }
+
+    /** Classic early Woo checkout guard, BEFORE priority-5 MDG hold. */
+    public static function classic_pre( $order_id, $posted_data = array(), $order = null ) {
+        if ( ! is_object( $order ) && function_exists( 'wc_get_order' ) ) {
+            $order = wc_get_order( $order_id );
+        }
+        $result = self::audit_before_reservation( $order );
+        if ( is_wp_error( $result ) ) {
+            throw new RuntimeException( 'Milano checkout blocked before MDG hold: ' . $result->get_error_code() );
+        }
+        return $result;
+    }
+
+    /** Store API early Woo checkout guard, BEFORE priority-5 MDG hold. */
+    public static function store_api_pre( $order ) {
+        $result = self::audit_before_reservation( $order );
+        if ( is_wp_error( $result ) ) {
+            $code = $result->get_error_code();
+            if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+                throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+                    $code, 'Milano sipariş bilgileri doğrulanamadı.', 409
+                );
+            }
+            throw new RuntimeException( 'Milano checkout blocked before MDG hold: ' . $code );
+        }
+        return $result;
     }
 
     /** Classic WC checkout, after MDG's priority-5 capacity hold hook. */
