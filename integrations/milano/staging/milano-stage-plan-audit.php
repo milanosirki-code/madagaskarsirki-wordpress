@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Milano Yalova Staging Plan Audit
- * Version: 0.4.0
+ * Version: 0.5.0
  * Description: Authenticated read-only production-plan audit for MDG24 on the isolated staging hostname only.
  * Author: Dünya Organizasyon
  */
@@ -292,6 +292,36 @@ add_action('rest_api_init', static function () {
        'actual_four_distinct_ticket_instances_verified'=>false
     )
    ));
+  }
+ ));
+});
+
+
+/** Admin-only staging venue QR bytes for offline decoding. No arbitrary path or URL. */
+add_action('rest_api_init',static function(){
+ if(parse_url(site_url(),PHP_URL_HOST)!=='staging-f321-milanosirki-lgajf.wpcomstaging.com')return;
+ register_rest_route('milano-staging/v1','/yalova-venue-qr-file',array(
+  'methods'=>'GET',
+  'permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
+  'callback'=>static function(){
+   $post=get_post(6047);
+   if(!$post||$post->post_type!=='attachment'||get_post_mime_type(6047)!=='image/png'){
+    return new WP_Error('asset_changed','QR attachment no longer matches approved image.',array('status'=>409));
+   }
+   $event=class_exists('MDG_Events')?MDG_Events::get(24):null;
+   if(!$event||(int)$event->venue_qr_attachment_id!==6047||(string)$event->title!=='Milano Sirki — Yalova'){
+    return new WP_Error('event_changed','QR not bound to Yalova.',array('status'=>409));
+   }
+   $file=get_attached_file(6047);
+   if(!is_string($file)||!is_file($file)||!is_readable($file)||filesize($file)>20000){
+    return new WP_Error('file_unavailable','Staging QR not accessible or too large.',array('status'=>409));
+   }
+   $bytes=file_get_contents($file);
+   if(!is_string($bytes)||substr($bytes,0,8)!=="\x89PNG\r\n\x1a\n"){
+    return new WP_Error('not_png','QR payload is not PNG.',array('status'=>409));
+   }
+   $response=rest_ensure_response(array('attachment_id'=>6047,'bytes'=>strlen($bytes),'sha256'=>hash('sha256',$bytes),'base64'=>base64_encode($bytes),'readonly'=>true));
+   $response->header('Cache-Control','private,no-store,max-age=0');return $response;
   }
  ));
 });
