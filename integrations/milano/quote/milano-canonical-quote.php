@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Merkezi Tekil Teklif Ön Kontrolü
  * Description: Kanonik MMC–MDG–Woo fiyat ve kapasite ön izlemesi. Satış, sipariş, ödeme, bilet veya stok yazmaz.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -124,6 +124,29 @@ final class Milano_Quote_Readonly_01 {
             ||false===stripos((string)$post->post_title,'Milano Sirki')
             ||(!$preview&&$post->post_status!=='publish'))
             return self::error('product','Canonical product invalid.');
+        // Do not quote a Woo product unless the one canonical Tickera event,
+        // production key and branded Designer clone are all verified.
+        $productionKey=(string)get_post_meta($productId,'_mdg_production_key',true);
+        $tickeraId=(int)$s->tickera_event_id;
+        $tickera=$tickeraId?get_post($tickeraId):null;
+        $designerId=(int)get_post_meta($productId,'tc_designer_template_id',true);
+        $designer=$designerId?$wpdb->get_row($wpdb->prepare(
+            "SELECT id,name,status FROM {$p}tickera_ticket_templates WHERE id=%d LIMIT 1",$designerId
+        )):null;
+        if ($productionKey===''||!$tickera||$tickera->post_type!=='tc_events'
+            ||(int)get_post_meta($tickeraId,'_mdg_event_id',true)!==$eid
+            ||(string)get_post_meta($tickeraId,'_mdg_production_key',true)!==$productionKey
+            ||false===stripos((string)$tickera->post_title,'Milano')
+            ||false!==stripos((string)$tickera->post_title,'Madagaskar')
+            ||(!$preview&&$tickera->post_status!=='publish')
+            ||!$designer||(string)$designer->status!=='active'
+            ||false===stripos((string)$designer->name,'Milano')
+            ||!wp_attachment_is_image((int)($event->venue_qr_attachment_id??0))
+            ||!wp_attachment_is_image((int)($event->hero_attachment_id??0))
+            ||(string)get_post_meta($productId,'_tc_is_ticket',true)!=='yes'
+            ||(!$preview&&(string)get_post_meta($productId,'_allow_ticket_checkout',true)!=='yes')) {
+            return self::error('milano_ticket_integrity','Ticket, Designer or production identity unavailable.');
+        }
         $types=$wpdb->get_results($wpdb->prepare(
            "SELECT id,code,price,capacity_units,wc_variation_id FROM {$p}mdg_ticket_types
             WHERE session_id=%d AND is_active=1 ORDER BY id",$sid));
@@ -138,6 +161,8 @@ final class Milano_Quote_Readonly_01 {
                 ||(int)$v->get_parent_id()!==$productId
                 ||(int)get_post_meta($id,'_mdg_event_id',true)!==$eid
                 ||(int)get_post_meta($id,'_mdg_session_id',true)!==$sid
+                ||(int)get_post_meta($id,'tc_designer_template_id',true)!==$designerId
+                ||(string)get_post_meta($id,'_mdg_production_key',true)!==$productionKey
                 ||abs((float)$v->get_price()-(float)$t->price)>0.009
                 ||(!$preview&&(!$v->is_purchasable()||!$v->is_in_stock())))
                 return self::error('variation','Variation or price changed.');
