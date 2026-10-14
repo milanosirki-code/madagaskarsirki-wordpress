@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Merkezi Tekil Teklif Ön Kontrolü
  * Description: Kanonik MMC–MDG–Woo fiyat ve kapasite ön izlemesi. Satış, sipariş, ödeme, bilet veya stok yazmaz.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -17,6 +17,10 @@ final class Milano_Quote_Readonly_01 {
             register_rest_route('dunya-milano/v2','/yalova-preview',array(
                 'methods'=>'GET','permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
                 'callback'=>array(__CLASS__,'preview')
+            ));
+            register_rest_route('dunya-milano/v2','/staging-guard-tests',array(
+                'methods'=>'GET','permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
+                'callback'=>array(__CLASS__,'staging_guards')
             ));
         }
     }
@@ -52,6 +56,24 @@ final class Milano_Quote_Readonly_01 {
             $out[]=$r;
         }
         return rest_ensure_response(array('preview_only'=>true,'sales_opened'=>false,'quotes'=>$out));
+    }
+
+    public static function staging_guards() {
+        $cases=array(
+            'madagaskar_must_be_rejected'=>self::calculate(7,60,0,0,1,true),
+            'wrong_session_must_be_rejected'=>self::calculate(24,60,0,0,1,true),
+            'oversized_family_must_be_rejected'=>self::calculate(24,150,0,0,11,true),
+            'zero_quantity_must_be_rejected'=>self::calculate(24,150,0,0,0,true)
+        );
+        $codes=array();$pass=true;
+        foreach($cases as $label=>$res) {
+            $codes[$label]=is_wp_error($res)?$res->get_error_code():'unexpected_success';
+            if(!is_wp_error($res)){$pass=false;}
+        }
+        return rest_ensure_response(array(
+            'read_only'=>true,'all_fail_closed'=>$pass,'cases'=>$codes,
+            'no_orders_or_holds_created'=>true
+        ));
     }
     private static function calculate($eid,$sid,$children,$adults,$families,$preview) {
         if (!class_exists('MDG_Events')||!class_exists('MDG_Capacity')
