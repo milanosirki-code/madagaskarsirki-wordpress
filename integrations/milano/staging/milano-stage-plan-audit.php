@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Milano Yalova Staging Plan Audit
- * Version: 0.5.0
+ * Version: 0.6.0
  * Description: Authenticated read-only production-plan audit for MDG24 on the isolated staging hostname only.
  * Author: Dünya Organizasyon
  */
@@ -322,6 +322,65 @@ add_action('rest_api_init',static function(){
    }
    $response=rest_ensure_response(array('attachment_id'=>6047,'bytes'=>strlen($bytes),'sha256'=>hash('sha256',$bytes),'base64'=>base64_encode($bytes),'readonly'=>true));
    $response->header('Cache-Control','private,no-store,max-age=0');return $response;
+  }
+ ));
+});
+
+
+/** End-to-end family adaptor *request transformation* without checkout, orders or ticket issuance. */
+add_action('rest_api_init',static function(){
+ if(parse_url(site_url(),PHP_URL_HOST)!=='staging-f321-milanosirki-lgajf.wpcomstaging.com'){return;}
+ register_rest_route('milano-staging/v1','/yalova-family-runtime-smoke',array(
+  'methods'=>'GET',
+  'permission_callback'=>static function(){return current_user_can('manage_woocommerce');},
+  'callback'=>static function(){
+   if(!class_exists('MDG_Family_Package_22_V1')){
+    return new WP_Error('module_missing','Existing family 2+2 module unavailable.',array('status'=>503));
+   }
+   $e=class_exists('MDG_Events')?MDG_Events::get(24):null;
+   if(!$e || (string)$e->status!=='draft'||(string)$e->title!=='Milano Sirki — Yalova'){
+    return new WP_Error('event_changed','Yalova staging event changed.',array('status'=>409));
+   }
+   global $wpdb;
+   $original_post=$_POST;
+   $rows=array();
+   try {
+    foreach(array(array(150,6058,342,343,6059,6060),array(151,6061,344,345,6062,6063)) as $pair){
+      list($sid,$parent,$childType,$adultType,$childVar,$adultVar)=$pair;
+      $post=get_post($parent);
+      if(!$post || $post->post_status!=='draft'||$post->post_type!=='product'
+         ||(string)get_post_meta($parent,'_mdg_production_key',true)!=='MDG-E24-618c401e2640'){
+       return new WP_Error('product_guard','Canonical staged product unavailable.',array('status'=>409));
+      }
+      $_POST=array('event_id'=>24,'session_id'=>$sid,'lines'=>wp_json_encode(array(array('code'=>'MDG_FAMILY_2_2','qty'=>1))));
+      MDG_Family_Package_22_V1::preprocess_family_line();
+      $items=json_decode((string)($_POST['lines']??''),true);
+      $expected=array('CHILD'=>2,'ADULT'=>2);
+      $found=array();
+      foreach((array)$items as $item){$found[strtoupper((string)($item['code']??''))]=(int)($item['qty']??0);}
+      $child=MDG_Family_Package_22_V1::mark_family_components(array('mdg_ticket_type_id'=>$childType),$parent,$childVar,2);
+      $adult=MDG_Family_Package_22_V1::mark_family_components(array('mdg_ticket_type_id'=>$adultType),$parent,$adultVar,2);
+      $sameGroup=!empty($child['mdg_family22_group']) && $child['mdg_family22_group']===$adult['mdg_family22_group'];
+      $discount=(float)($child['mdg_family22_discount_per']??0);
+      $good=($found==$expected) && $sameGroup && $discount===370.0
+        && ($child['mdg_family22_component']??'')==='child'
+        && ($adult['mdg_family22_component']??'')==='adult'
+        && (int)($child['mdg_family22_packages']??0)===1
+        && (int)($adult['mdg_family22_packages']??0)===1;
+      $rows[]=array('session_id'=>$sid,'pass'=>$good,'rewritten_lines'=>$items,
+       'package_count'=>1,'normal_total'=>1470,'discount'=>$discount,
+       'final_total'=>1470-$discount,'component_group_matches'=>$sameGroup,
+       'parent_draft_id'=>$parent,'child_variation_id'=>$childVar,'adult_variation_id'=>$adultVar);
+    }
+   } finally {
+    $_POST=$original_post;
+   }
+   return rest_ensure_response(array(
+      'read_only'=>true,'real_order_or_ticket_created'=>false,
+      'all_pass'=>count($rows)===2 && $rows[0]['pass'] && $rows[1]['pass'],
+      'results'=>$rows,
+      'scope'=>'Actual existing family module PHP preprocessor+cart-item metadata, not an order, payment, checkout or Tickera QR issuance'
+   ));
   }
  ));
 });
