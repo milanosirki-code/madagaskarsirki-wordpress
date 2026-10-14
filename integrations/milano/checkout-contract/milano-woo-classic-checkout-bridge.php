@@ -32,6 +32,10 @@ final class Milano_Woo_Classic_Checkout_Bridge {
             return new WP_Error( 'milano_bridge_dependencies', 'Required checkout ledger and audit are absent.' );
         }
         self::$trusted_provider = $server_verified_spec_provider;
+        // WC_Checkout may resume an existing pending order by removing its
+        // old order items BEFORE woocommerce_checkout_create_order fires.
+        // Stop Milano resumes before any existing Woo ticket data is altered.
+        add_action( 'woocommerce_resume_order', array( __CLASS__, 'deny_reused_milano_order' ), 1, 1 );
         add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'claim_before_save' ), 25, 2 );
         // MDG_Live_Sales reserves stock and records order map at priority 5.
         add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'audit_after_mdg_hold' ), 25, 3 );
@@ -41,18 +45,53 @@ final class Milano_Woo_Classic_Checkout_Bridge {
         return true;
     }
 
-    /** True only if an order line belongs to the initial canonical Milano event. */
+    /** Recognize Milano by saved brand, family metadata or canonical MDG mapping. */
     private static function touches_milano( $order ) {
         if ( ! is_object( $order ) || ! method_exists( $order, 'get_items' ) ) {
             return false;
         }
+        if ( method_exists( $order, 'get_meta' )
+            && 'milano' === (string) $order->get_meta( '_milano_brand', true ) ) {
+            return true;
+        }
         foreach ( (array) $order->get_items( 'line_item' ) as $item ) {
-            if ( ! is_object( $item ) || ! method_exists( $item, 'get_meta' ) ) { continue; }
-            if ( '24' === (string) $item->get_meta( '_mdg_family22_event_id', true ) ) {
+            if ( ! is_object( $item ) ) { continue; }
+            if ( method_exists( $item, 'get_meta' )
+                && '24' === (string) $item->get_meta( '_mdg_family22_event_id', true ) ) {
                 return true;
             }
+            // Even if the family line metadata is missing/tampered with,
+            // the actual WC variation still maps to the Milano MDG event.
+            global $wpdb;
+            if ( ! method_exists( $item, 'get_variation_id' )
+                || ! isset( $wpdb ) || ! is_object( $wpdb )
+                || ! class_exists( 'MDG_DB' )
+                || ! method_exists( $wpdb, 'get_row' ) ) {
+                continue;
+            }
+            $vid = (int) $item->get_variation_id();
+            if ( ! $vid ) { continue; }
+            $types = MDG_DB::table( 'ticket_types' );
+            $sessions = MDG_DB::table( 'sessions' );
+            $mapped = $wpdb->get_row( $wpdb->prepare(
+                "SELECT s.event_id FROM {$types} t INNER JOIN {$sessions} s
+                 ON s.id=t.session_id WHERE t.wc_variation_id=%d LIMIT 2",
+                $vid
+            ) );
+            if ( $mapped && (int) $mapped->event_id === 24 ) { return true; }
         }
         return false;
+    }
+
+    /** WC core calls this BEFORE removing existing order items on a resumed checkout. */
+    public static function deny_reused_milano_order( $order_id ) {
+        if ( ! function_exists( 'wc_get_order' ) ) { return; }
+        $existing = wc_get_order( (int) $order_id );
+        if ( self::touches_milano( $existing ) ) {
+            throw new RuntimeException(
+                'An existing Milano Woo order cannot be reset by a resumed checkout.'
+            );
+        }
     }
 
     /**
@@ -64,7 +103,25 @@ final class Milano_Woo_Classic_Checkout_Bridge {
             throw new RuntimeException( 'Milano signed order provider is not configured.' );
         }
         $context = call_user_func( self::$trusted_provider, $order );
+        $required = array( 'brand','intent','event_id','session_id','product_id',
+            'child_variation_id','adult_variation_id','child_type_id','adult_type_id',
+            'amount_minor','units' );
         if ( ! is_array( $context ) || ! isset( $context['spec'] ) || ! is_array( $context['spec'] )
+            || array_keys( $context['spec'] ) !== $required
+            || ! is_string( $context['spec']['intent'] ?? null )
+            || ! preg_match( '/^[a-f0-9]{64}$/D', $context['spec']['intent'] )
+            || ! is_int( $context['spec']['event_id'] ?? null )
+            || ! is_int( $context['spec']['session_id'] ?? null )
+            || ! is_int( $context['spec']['product_id'] ?? null )
+            || ! is_int( $context['spec']['child_variation_id'] ?? null )
+            || ! is_int( $context['spec']['adult_variation_id'] ?? null )
+            || ! is_int( $context['spec']['child_type_id'] ?? null )
+            || ! is_int( $context['spec']['adult_type_id'] ?? null )
+            || ! is_int( $context['spec']['amount_minor'] ?? null )
+            || ! is_int( $context['spec']['units'] ?? null )
+            || min( $context['spec']['product_id'], $context['spec']['child_variation_id'],
+                    $context['spec']['adult_variation_id'], $context['spec']['child_type_id'],
+                    $context['spec']['adult_type_id'] ) < 1
             || ! isset( $context['quote_sha256'] ) || ! is_string( $context['quote_sha256'] )
             || 1 !== preg_match( '/^[a-f0-9]{64}$/D', $context['quote_sha256'] )
             || ( $context['origin'] ?? null ) !== 'https://milanosirki.com'
