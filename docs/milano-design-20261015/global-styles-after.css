@@ -113,3 +113,7 @@ footer a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;
 :is(.page-id-125,.page-id-126,.page-id-127) main h1 {font-size:clamp(28px,4vw,48px)!important;line-height:1.15;overflow-wrap:normal;word-break:normal;}
 
 :is(.page-id-125,.page-id-126,.page-id-127) main h1 {color:#F5C04A!important;}
+
+#gosteri-takvimi a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;box-sizing:border-box;padding:4px 8px;color:#FFF0C7;text-decoration:underline;}
+.milano-faq-item summary {min-height:44px;box-sizing:border-box;padding-block:10px;line-height:1.5;cursor:pointer;}
+.page-id-22 main .wp-block-group[style*="background-color:#091746"] a {color:#F5C04A;}
