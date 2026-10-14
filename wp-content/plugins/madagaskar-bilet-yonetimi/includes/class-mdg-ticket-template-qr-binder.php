@@ -352,11 +352,24 @@ final class MDG_Ticket_Template_QR_Binder {
     }
 
     private static function save_template_selection( $object_id, $designer_id ) {
+        $object_id = absint( $object_id );
+        $designer_id = absint( $designer_id );
+        if ( ! $object_id || ! $designer_id ) { return; }
+
+        $selection = 'd_' . $designer_id;
         if ( function_exists( 'tickera_ticket_designer_save_template_value' ) ) {
-            tickera_ticket_designer_save_template_value( $object_id, 'd_' . absint( $designer_id ), '_ticket_template' );
-            return;
+            tickera_ticket_designer_save_template_value( $object_id, $selection, '_ticket_template' );
         }
-        update_post_meta( $object_id, 'tc_designer_template_id', absint( $designer_id ) );
+
+        // Tickera's helper can update only its Designer-specific metadata while
+        // leaving a stale _ticket_template=d_<base> value. The purchased-ticket
+        // PDF datetime intercept also reads that legacy value (first) to choose
+        // its template. Keep both supported selectors on the SAME clone to avoid
+        // accidentally rendering the unbound base QR on newly issued tickets.
+        // This function is called only by the explicit event QR binding action;
+        // existing unrelated products/orders are never scanned or rewritten.
+        update_post_meta( $object_id, 'tc_designer_template_id', $designer_id );
+        update_post_meta( $object_id, '_ticket_template', $selection );
     }
 
     private static function restore_template_selection( $object_id, $selection ) {
