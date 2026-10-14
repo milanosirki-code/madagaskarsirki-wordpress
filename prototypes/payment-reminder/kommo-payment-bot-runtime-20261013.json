@@ -2,9 +2,17 @@
   "0": {
     "question": [
       {
-        "handler": "conditions",
         "params": {
           "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 11,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
           "conditions": [
             {
               "term1": "{{lead.status_id}}",
@@ -31,24 +39,16 @@
               "term2": "142",
               "operation": "!="
             }
-          ],
-          "result": [
-            {
-              "handler": "goto",
-              "params": {
-                "step": 11,
-                "type": "question"
-              }
-            }
           ]
-        }
+        },
+        "handler": "conditions"
       },
       {
-        "handler": "goto",
         "params": {
           "step": 10,
           "type": "question"
-        }
+        },
+        "handler": "goto"
       }
     ]
   },
@@ -103,7 +103,7 @@
             "type": "main_contact",
             "way_of_communication": "over_all"
           },
-          "template_id": 86871,
+          "template_id": 86940,
           "chat_sources": [
             {
               "id": 82576
@@ -234,9 +234,17 @@
   "11": {
     "question": [
       {
-        "handler": "conditions",
         "params": {
           "logic": "or",
+          "result": [
+            {
+              "params": {
+                "step": 12,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
           "conditions": [
             {
               "term1": "lead.tags",
@@ -248,33 +256,33 @@
               "term2": "mdg_odeme_hatirlatma_baslatildi",
               "operation": "not_in"
             }
-          ],
-          "result": [
-            {
-              "handler": "goto",
-              "params": {
-                "step": 12,
-                "type": "question"
-              }
-            }
           ]
-        }
+        },
+        "handler": "conditions"
       },
       {
-        "handler": "goto",
         "params": {
           "step": 10,
           "type": "question"
-        }
+        },
+        "handler": "goto"
       }
     ]
   },
   "12": {
     "question": [
       {
-        "handler": "conditions",
         "params": {
           "logic": "or",
+          "result": [
+            {
+              "params": {
+                "step": 2,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
           "conditions": [
             {
               "term1": "lead.tags",
@@ -286,24 +294,16 @@
               "term2": "WooCommerce Ödeme Başarılı",
               "operation": "not_in"
             }
-          ],
-          "result": [
-            {
-              "handler": "goto",
-              "params": {
-                "step": 2,
-                "type": "question"
-              }
-            }
           ]
-        }
+        },
+        "handler": "conditions"
       },
       {
-        "handler": "goto",
         "params": {
           "step": 10,
           "type": "question"
-        }
+        },
+        "handler": "goto"
       }
     ]
   },
