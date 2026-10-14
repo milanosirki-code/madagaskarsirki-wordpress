@@ -53,26 +53,28 @@ final class Milano_PayTR_Callback_Contract {
             return new WP_Error( 'milano_bad_hash', 'Payment notification authentication failed.' );
         }
 
-        // Validate supplemental values only AFTER PayTR-signed core fields
-        // authenticate. Merchant_oid must be looked up in the same central ledger.
-        if ( 'success' === $post['status'] ) {
-            if ( ! isset( $post['payment_amount'], $post['currency'], $post['payment_type'] )
-                || ! is_string( $post['payment_amount'] )
-                || ! preg_match( '/^[0-9]{1,15}$/D', $post['payment_amount'] )
-                || (int) $post['payment_amount'] !== $expected_amount_minor
-                || ! is_string( $post['currency'] ) || 'TL' !== $post['currency']
-                || ! is_string( $post['payment_type'] )
-                || ! in_array( $post['payment_type'], array( 'card', 'eft' ), true )
-                || (int) $post['total_amount'] < $expected_amount_minor ) {
-                return new WP_Error( 'milano_amount_or_currency', 'Payment amount/currency is not the canonical order.' );
-            }
+        // PayTR HMAC authenticates ONLY merchant_oid + status + total_amount.
+        // currency, payment_amount and payment_type are additional POST fields
+        // and are NOT part of the documented callback HMAC input. Never use
+        // them to authorize, alter, or reject a canonical Woo order; they may
+        // be missing/modified independently. Original currency (TL), amount,
+        // merchant/test mode and order ownership MUST be read from the central
+        // order and the previously authenticated PayTR iframe request instead.
+        // total_amount may be GREATER than the initial amount on installments.
+        if ( 'success' === $post['status']
+            && (int) $post['total_amount'] < $expected_amount_minor ) {
+            return new WP_Error(
+                'milano_signed_amount_mismatch',
+                'Signed charged amount is below canonical order amount.'
+            );
         }
         return array(
             'merchant_oid' => $order_oid,
             'status' => $post['status'],
             'charged_minor' => (int) $post['total_amount'],
             'expected_minor' => $expected_amount_minor,
-            'authentication' => 'hmac_sha256_verified',
+            'authentication' => 'hmac_sha256_verified_core_fields_only',
+            'unsigned_supplemental_fields_ignored' => true,
         );
     }
 
