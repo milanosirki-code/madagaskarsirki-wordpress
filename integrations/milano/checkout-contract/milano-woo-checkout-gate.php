@@ -104,9 +104,23 @@ final class Milano_Woo_Checkout_Gate {
         );
         if ( is_wp_error( $existing ) ) { return self::fail( 'missing_or_conflicting_claim' ); }
         $order_id = (int) $order->get_id();
-        if ( $order_id < 1 || ( 'bound' === $existing['state']
-            && (int) $existing['wc_order_id'] !== $order_id ) ) {
+        if ( $order_id < 1 ) { return self::fail( 'invalid_order' ); }
+        $current_state = (string) ( $existing['state'] ?? '' );
+        $existing_order_id = (int) ( $existing['wc_order_id'] ?? 0 );
+        // Another worker is in the middle of the MDG hold step. A retry
+        // must never initiate a second payment while the outcome is unknown.
+        if ( 'reserving' === $current_state ) {
+            return self::fail( 'reservation_in_progress_needs_reconciliation' );
+        }
+        // "ready" belongs to the explicit MDG reservation orchestrator.
+        // It must be replayable for the SAME Woo order, not re-bound.
+        if ( in_array( $current_state, array( 'bound', 'ready' ), true )
+            && $existing_order_id !== $order_id ) {
             return self::fail( 'duplicate_order' );
+        }
+        if ( 'claimed' !== $current_state
+            && 'bound' !== $current_state && 'ready' !== $current_state ) {
+            return self::fail( 'unexpected_claim_state' );
         }
 
         // Runs AFTER MDG checkout reservation hook, ensuring pre-payment
@@ -123,18 +137,18 @@ final class Milano_Woo_Checkout_Gate {
 
         // One-time bind. A competing Woo order created against this intent
         // fails the atomic order-ID CAS, preventing its gateway initiation.
-        if ( 'claimed' === $existing['state'] ) {
+        if ( 'claimed' === $current_state ) {
             $bound = Milano_Canonical_Order_Claim::attach_order( $resolved['intent'], $order_id );
             if ( is_wp_error( $bound ) || (int) ( $bound['wc_order_id'] ?? 0 ) !== $order_id ) {
                 return self::fail( 'order_bind' );
             }
-        } elseif ( 'bound' !== $existing['state'] ) {
-            return self::fail( 'unexpected_claim_state' );
         }
-
+        // For bound/ready replays the CAS state and bound Woo order ID were
+        // validated above; under no condition do we initiate a second hold.
         return array(
             'milano_preflight_ok' => true,
             'canonical_order_id' => $order_id,
+            'reservation_state' => $current_state,
             'gateway_invoked' => false,
         );
     }
