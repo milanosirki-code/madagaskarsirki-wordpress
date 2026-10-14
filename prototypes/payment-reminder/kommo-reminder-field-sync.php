@@ -49,6 +49,23 @@ function mdg_kr_survey_date($order, $context) {
     return mdg_kr_survey_timestamp(mdg_kr_utc_timestamp((string)$session->start_at),$order->is_paid(),$order->get_status(),true,time());
 }
 
+
+/** Revalidate authorization without reopening one-send locks or treating a dry-run as delivery. */
+function mdg_kr_payment_gate($eligible, $candidate, $previous_state, $previous_link, $locked, $paid_success, $wc_status, $crm_status) {
+    $terminal=array('SEND_STARTED','SENT','SEND_ERROR','LOCKED');
+    if ($locked || in_array($previous_state,$terminal,true)) {
+        return array('state'=>in_array($previous_state,$terminal,true)?$previous_state:'LOCKED','link'=>$previous_link);
+    }
+    $stage_matches=($wc_status==='pending' && (int)$crm_status===110416823)
+        || ($wc_status==='failed' && (int)$crm_status===143);
+    if (!$eligible || !$candidate || $paid_success || !$stage_matches) {
+        return array('state'=>'EXCLUDED','link'=>null);
+    }
+    // Only an explicit, still-valid per-order authorization is preserved. Never grant ALLOW_SEND here.
+    $state=$previous_state==='ALLOW_SEND' && $previous_link===$candidate ? 'ALLOW_SEND':'PREVIEW_ELIGIBLE';
+    return array('state'=>$state,'link'=>$candidate);
+}
+
 function mdg_kr_sync($order_id) {
     try {
         if (!function_exists('wc_get_order') || !function_exists('ms_oh_order_context') || !class_exists('MDG_DB')) { return; }
@@ -74,17 +91,22 @@ function mdg_kr_sync($order_id) {
         if (($current[2460832]??null)!=$date) { $fields[]=array('field_id'=>2460832,'values'=>$date===null?null:array(array('value'=>$date))); }
         $survey_date=mdg_kr_survey_date($order,$context);
         if (($current[2460854]??null)!=$survey_date) { $fields[]=array('field_id'=>2460854,'values'=>$survey_date===null?null:array(array('value'=>$survey_date))); }
-        $state='EXCLUDED'; $link=null;
+        $candidate=null; $eligible=false;
         if (function_exists('ms_oh_dry_run_report') && $order->needs_payment()) {
-            $report=ms_oh_dry_run_report($order);
+            // Third argument ignores only dry-run history; paid/replacement/cancel/receipt checks remain.
+            $report=ms_oh_dry_run_report($order,null,true);
             if ($report['eligibility']==='ELIGIBLE' && $start>time()) {
-                $candidate=$order->get_checkout_payment_url();
-                if (wp_parse_url($candidate,PHP_URL_SCHEME)==='https' && strtolower((string)wp_parse_url($candidate,PHP_URL_HOST))===strtolower((string)wp_parse_url(home_url('/'),PHP_URL_HOST))) {
-                    // PREVIEW state is deliberately insufficient to authorize Salesbot delivery.
-                    $state='PREVIEW_ELIGIBLE'; $link=$candidate;
+                $url=$order->get_checkout_payment_url();
+                if (wp_parse_url($url,PHP_URL_SCHEME)==='https' && strtolower((string)wp_parse_url($url,PHP_URL_HOST))===strtolower((string)wp_parse_url(home_url('/'),PHP_URL_HOST))) {
+                    $eligible=true; $candidate=$url;
                 }
             }
         }
+        $tag_names=array();
+        foreach (($lead['_embedded']['tags']??array()) as $tag) { $tag_names[]=(string)($tag['name']??''); }
+        $locked=(bool)array_intersect($tag_names,array('mdg_odeme_hatirlatma_baslatildi','mdg_odeme_hatirlatma_gonderildi','mdg_odeme_hatirlatma_hata'));
+        $decision=mdg_kr_payment_gate($eligible,$candidate,(string)($current[2460836]??''),$current[2460834]??null,$locked,in_array('WooCommerce Ödeme Başarılı',$tag_names,true),$order->get_status(),$lead['status_id']??0);
+        $state=$decision['state']; $link=$decision['link'];
         foreach (array(2460834=>$link,2460836=>$state) as $id=>$value) {
             if (($current[$id]??null)!=$value) { $fields[]=array('field_id'=>$id,'values'=>$value===null?null:array(array('value'=>$value))); }
         }
@@ -114,3 +136,42 @@ add_action('init',function() {
         as_schedule_recurring_action(time()+15,30*MINUTE_IN_SECONDS,'mdg_kr_batch',array(1),'mdg-kommo-reminder-fields',true);
     }
 });
+
+/** Private, read-only current eligibility review; refresh writes only existing CRM fields, never sends. */
+add_action('admin_menu',function() {
+    add_submenu_page('mmc-dashboard','Ödeme Hatırlatma Kontrolü','Ödeme Hatırlatma Kontrolü','manage_woocommerce','mdg-payment-reminder-review','mdg_kr_review_page');
+},90);
+function mdg_kr_review_page() {
+    if (!current_user_can('manage_woocommerce')) { wp_die('Yetkisiz erişim.'); }
+    $notice='';
+    if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['mdg_kr_refresh'])) {
+        check_admin_referer('mdg_kr_review_refresh');
+        $id=absint($_POST['mdg_kr_refresh']);
+        $order=function_exists('wc_get_order')?wc_get_order($id):false;
+        if ($order && $order->get_type()==='shop_order' && in_array($order->get_status(),array('pending','failed'),true)) {
+            mdg_kr_sync($id);
+            $notice='Seçili siparişin CRM alanları yeniden kontrol edildi. Bu işlem gönderim onayı vermez ve mesaj göndermez.';
+        }
+    }
+    echo '<div class="wrap"><h1>Ödeme Hatırlatma Kontrolü</h1><p>Ödeme bekleyen ve başarısız siparişler burada güncel kurallarla değerlendirilir. Deneme geçmişi gerçek gönderim sayılmaz. Daha sonra ödenmiş sipariş, kapanmış seans ve önceki gönderim kilidi korunur.</p>';
+    if ($notice) { echo '<div class="notice notice-info"><p>'.esc_html($notice).'</p></div>'; }
+    if (!function_exists('ms_oh_dry_run_report') || !function_exists('wc_get_orders')) { echo '<p>Uygunluk kaynağı yüklenemedi.</p></div>'; return; }
+    $page=max(1,absint($_GET['review_page']??1));
+    $result=wc_get_orders(array('status'=>array('pending','failed'),'date_created'=>'>='.(time()-30*DAY_IN_SECONDS),'limit'=>30,'page'=>$page,'orderby'=>'ID','order'=>'DESC','paginate'=>true));
+    $orders=$result->orders??array();
+    echo '<p>Son 30 gün: '.esc_html((string)($result->total??0)).' kayıt. Bu sayı mesaj gönderilecek kişi sayısı değildir.</p>';
+    echo '<table class="widefat striped"><thead><tr><th>Sipariş</th><th>Durum</th><th>Güncel uygunluk</th><th>Açıklama</th><th>CRM alanları</th></tr></thead><tbody>';
+    foreach ($orders as $order) {
+        $report=ms_oh_dry_run_report($order,null,true);
+        $id=(int)$order->get_id();
+        echo '<tr><td><a href="'.esc_url($order->get_edit_order_url()).'">#'.esc_html((string)$id).'</a></td><td>'.esc_html(wc_get_order_status_name($order->get_status())).'</td><td>'.esc_html($report['eligibility']).'</td><td>'.esc_html($report['reason']).'</td><td><form method="post">';
+        wp_nonce_field('mdg_kr_review_refresh');
+        echo '<button class="button" name="mdg_kr_refresh" value="'.esc_attr((string)$id).'">Alanları yeniden kontrol et</button></form></td></tr>';
+    }
+    if (!$orders) { echo '<tr><td colspan="5">Kayıt bulunamadı.</td></tr>'; }
+    echo '</tbody></table>';
+    for ($i=1;$i<=(int)($result->max_num_pages??1);$i++) {
+        echo '<a class="button" href="'.esc_url(add_query_arg(array('page'=>'mdg-payment-reminder-review','review_page'=>$i),admin_url('admin.php'))).'">'.esc_html((string)$i).'</a> ';
+    }
+    echo '<p>İlk gerçek gönderim için doğrulanmış tek sipariş ve mevcut onaylı şablon kullanılmalıdır. Alan yenileme ALLOW_SEND oluşturmaz.</p></div>';
+}

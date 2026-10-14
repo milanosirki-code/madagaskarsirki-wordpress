@@ -221,7 +221,7 @@ if (!function_exists('ms_oh_sonradan_odedi_mi')) {
 
 if (!function_exists('ms_oh_dry_run_report')) {
     /** Read-only eligibility. Does not log, schedule, set markers or send anything. */
-    function ms_oh_dry_run_report($order,$now=null) {
+    function ms_oh_dry_run_report($order,$now=null,$ignore_preview_history=false) {
         $now=$now??time();$phone=ms_oh_telefon($order->get_billing_phone());$context=ms_oh_order_context($order,$now);
         $sent=(bool)$order->get_meta('_ms_oh_reminder_sent_at',true);
         $seen=get_transient('ms_oh_yazildi_'.(int)$order->get_id())==='gonderilirdi';
@@ -229,7 +229,7 @@ if (!function_exists('ms_oh_dry_run_report')) {
         $code=$context['reason_code'];$reason=$context['reason'];
         if(!in_array($order->get_status(),array('pending','failed'),true) || $order->is_paid()){$code='PAYMENT_NOT_ELIGIBLE';$reason='Sipariş ödenmiş, iptal edilmiş veya ödeme beklemiyor.';}
         if(!$code && $sent){$code='ALREADY_REMINDED';$reason='Bu sipariş için kalıcı gönderim kaydı var.';}
-        if(!$code && $seen){$code='ALREADY_EVALUATED';$reason='Bu sipariş için dry-run uygunluk kararı daha önce kaydedildi; gerçek mesaj gönderildiği anlamına gelmez.';}
+        if(!$code && $seen && !$ignore_preview_history){$code='ALREADY_EVALUATED';$reason='Bu sipariş için dry-run uygunluk kararı daha önce kaydedildi; gerçek mesaj gönderildiği anlamına gelmez.';}
         if(!$code && !$phone){$code='PHONE_UNAVAILABLE';$reason='Geçerli ülke kodlu telefon bulunamadı.';}
         if(!$code && !$order->get_date_created()){$code='DATE_MISSING';$reason='Sipariş oluşturma zamanı doğrulanamadı.';}
         if(!$code){
@@ -238,7 +238,8 @@ if (!function_exists('ms_oh_dry_run_report')) {
             if($report['replacement_paid']){$code='REPLACEMENT_PAID';$reason='Aynı telefon ve etkinlik için daha sonra ödenmiş sipariş var.';}
         }
         if(!$code && !in_array($order->get_created_via(),array('checkout','store-api'),true)){$code='NOT_CHECKOUT';$reason='Sipariş ödeme sayfasından açılmamış.';}
-        $modified=$order->get_date_modified();$elapsed=$modified?$now-$modified->getTimestamp():MS_OH_BEKLEME;
+        // Metadata sync updates modified time; checkout age must remain stable.
+        $created=$order->get_date_created();$elapsed=$created?$now-$created->getTimestamp():0;
         if(!$code && $elapsed<MS_OH_BEKLEME-60){$code='WAITING';$reason='Ödeme bekleme süresi henüz dolmadı.';$report['eligibility']='DEFERRED';}
         if(!$code){$report['eligibility']='ELIGIBLE';$reason='Ödenmemiş, gelecekte ve satın alınabilir seans; yalnız dry-run.';}
         $report['exclusion_reason']=$code;$report['reason']=$reason;$report['wait_minutes']=(int)floor($elapsed/60);
@@ -255,7 +256,7 @@ if (!function_exists('ms_oh_kontrol')) {
             if(!$order || $order->get_type()!=='shop_order' || $order->get_status()==='checkout-draft')return;
             $report=ms_oh_dry_run_report($order);
             if($report['exclusion_reason']==='WAITING' && $erteleme<MS_OH_MAX_ERTELEME){
-                $modified=$order->get_date_modified();$elapsed=$modified?time()-$modified->getTimestamp():0;
+                $created=$order->get_date_created();$elapsed=$created?time()-$created->getTimestamp():0;
                 ms_oh_planla($order_id,time()+max(60,MS_OH_BEKLEME-$elapsed),$erteleme+1);return;
             }
             $eligible=$report['eligibility']==='ELIGIBLE';
