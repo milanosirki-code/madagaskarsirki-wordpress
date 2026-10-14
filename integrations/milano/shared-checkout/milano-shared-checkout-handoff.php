@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano - Ortak Madagaskar Odeme Gecisi
  * Description: Milano secimini mevcut merkezi MDG sepetine aktarir. Ayri siparis, POS, kapasite veya QR defteri olusturmaz.
- * Version: 0.2.2
+ * Version: 0.2.3
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -243,10 +243,36 @@ final class Milano_Shared_Checkout_Handoff {
   }
  }
 
+
+ public static function launch_page(){
+  if(self::host()!==self::CENTRAL||!current_user_can('manage_woocommerce')){wp_die('Yetkili merkezi yonetici gerekli.');}
+  $message='';
+  if(isset($_POST['milano_launch_action'])){
+   check_admin_referer('milano_yalova_launch');
+   $action=sanitize_key($_POST['milano_launch_action']);
+   if($action==='close'){
+    update_option('milano_handoff_sales_enabled_v1',false,false);$message='Milano satis kapisi kapatildi.';
+   }elseif($action==='open'){
+    $catalog=self::catalog();$data=is_wp_error($catalog)?array():$catalog->get_data();$rows=$data['sessions']??array();
+    $ids=array_map(static function($row){return (int)$row['session_id'];},$rows);sort($ids);
+    $ready=count($rows)===2&&$ids===array(154,155);
+    foreach($rows as $row){$ready=$ready&&(int)$row['event_id']===24&&strpos($row['title'],'Yalova')!==false&&$row['date']==='2026-10-22'
+     &&abs($row['adults_price']-490)<0.009&&abs($row['children_price']-245)<0.009&&abs((float)$row['family_price']-1100)<0.009;}
+    if(!$ready){$message='Yalova marka, seans, urun veya fiyat on kontrolu basarisiz; satis acilmadi.';}
+    else{update_option('milano_handoff_sales_enabled_v1',true,false);$message='Yalova bilet satisi halka acildi.';}
+   }
+  }
+  $open=true===get_option('milano_handoff_sales_enabled_v1',false);
+  echo '<div class="wrap"><h1>Milano Yalova Satis Kapisi</h1><p>'.esc_html($message).'</p><p>Halka acik satis: <strong>'.($open?'ACIK':'KAPALI').'</strong></p><p>22 Ekim 2026 · 18.00 / 19.30 · yetiskin 490 TL · cocuk 245 TL · aile 1100 TL</p><form method="post">';
+  wp_nonce_field('milano_yalova_launch');
+  echo '<button class="button button-primary" name="milano_launch_action" value="open">Yalova satisini ac</button> <button class="button" name="milano_launch_action" value="close">Satis kapisini kapat</button></form></div>';
+ }
+
  public static function boot(){
   $h=self::host();if(!in_array($h,array(self::CENTRAL,self::STAGE,self::FRONT),true)){return;}
   add_shortcode('milano_merkezi_bilet',array(__CLASS__,'shortcode'));
   if(!self::central()){return;}
+  if(self::host()===self::CENTRAL){add_action('admin_menu',static function(){add_submenu_page('milano-brand-workspace','Yalova Satis Kapisi','Yalova Satis Kapisi','manage_woocommerce','milano-yalova-launch',array(__CLASS__,'launch_page'));});}
   add_filter('mdg_public_ticket_events',array(__CLASS__,'public_catalog'));
   add_filter('mdg_public_city_events',array(__CLASS__,'public_catalog'));
   add_action('template_redirect',array(__CLASS__,'public_entry'),-2);
