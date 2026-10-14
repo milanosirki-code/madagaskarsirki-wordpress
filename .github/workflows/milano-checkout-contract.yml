@@ -66,6 +66,11 @@ jobs:
           php -l integrations/milano/checkout-contract/milano-prepayment-order-audit.php
           php -l tests/milano-checkout-contract/prepayment-order-audit.php
           php tests/milano-checkout-contract/prepayment-order-audit.php
+      - name: Woo classic and Store API post-MDG pre-gateway hook contract
+        run: |
+          php -l integrations/milano/checkout-contract/milano-woo-checkout-gate.php
+          php -l tests/milano-checkout-contract/woo-hook-gate.php
+          php tests/milano-checkout-contract/woo-hook-gate.php
           php -l integrations/milano/checkout-contract/milano-woo-classic-checkout-bridge.php
           php -l tests/milano-checkout-contract/classic-checkout-bridge.php
           php tests/milano-checkout-contract/classic-checkout-bridge.php
