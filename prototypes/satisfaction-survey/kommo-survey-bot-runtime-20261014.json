@@ -1,0 +1,722 @@
+{
+  "0": {
+    "question": [
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "lead.tags",
+              "term2": "madagaskar_anket_baslatildi",
+              "operation": "not_in"
+            },
+            {
+              "term1": "{{lead.cf.2455472}}",
+              "term2": "1,true,Y",
+              "operation": "not_in"
+            },
+            {
+              "term1": "{{lead.cf.2460854}}",
+              "term2": "",
+              "operation": "!="
+            },
+            {
+              "client_value": "{{lead.name}}",
+              "type": "regex",
+              "condition_value": "/^Order#[0-9]+$/",
+              "operation": "contains"
+            },
+            {
+              "term1": "lead.tags",
+              "term2": "WooCommerce Ödeme Başarılı",
+              "operation": "in"
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "1": {
+    "question": [
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 12,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "lead.tags",
+              "term2": "madagaskar_anket_baslatildi,anket_yanitlandi",
+              "operation": "not_in"
+            },
+            {
+              "term1": "{{lead.cf.2455472}}",
+              "term2": "1,true,Y",
+              "operation": "not_in"
+            },
+            {
+              "term1": "{{lead.cf.2460856}}",
+              "term2": "",
+              "operation": "="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "2": {
+    "question": [
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": true,
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2455472}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "logic": "or",
+          "conditions": [
+            {
+              "event": {
+                "action": "received",
+                "source": "message"
+              },
+              "action": {
+                "step": 3,
+                "type": "question"
+              }
+            },
+            {
+              "event": {
+                "delay": 172800,
+                "action": "ended",
+                "source": "timer"
+              },
+              "action": {
+                "step": 13,
+                "type": "question"
+              }
+            }
+          ]
+        },
+        "handler": "waits"
+      }
+    ]
+  },
+  "3": {
+    "question": [
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 4,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "{{message_text}}",
+              "term2": "Çok memnun kaldım",
+              "operation": "="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 5,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "{{message_text}}",
+              "term2": "Memnun kaldım",
+              "operation": "="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "params": {
+                "step": 6,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "{{message_text}}",
+              "term2": "Memnun kalmadım",
+              "operation": "="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "step": 7,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "4": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_yanitlandi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": "Anket: Çok memnun",
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2460856}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_cok_memnun"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası anket: Çok memnun kaldım",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "tag": "",
+          "text": "Güzel yorumunuz için teşekkür ederiz. Sizi yeniden Madagaskar Sirki’nde görmek isteriz. 🎪",
+          "type": "external",
+          "on_error": {
+            "params": {
+              "step": 13,
+              "type": "question"
+            },
+            "handler": "goto"
+          },
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "over_all"
+          },
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "create_chat_if_not_exists": false
+        },
+        "handler": "send_message"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "5": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_yanitlandi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": "Anket: Memnun",
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2460856}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_memnun"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası anket: Memnun kaldım",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "tag": "",
+          "text": "Görüşünüz için teşekkür ederiz. Sizi yeniden Madagaskar Sirki’nde görmek isteriz. 🎪",
+          "type": "external",
+          "on_error": {
+            "params": {
+              "step": 13,
+              "type": "question"
+            },
+            "handler": "goto"
+          },
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "over_all"
+          },
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "create_chat_if_not_exists": false
+        },
+        "handler": "send_message"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "6": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_yanitlandi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": "Anket: Takip gerekli",
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2460856}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_takip_gerekli"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası anket: Memnun kalmadım",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "trigger": {
+            "delay": 0,
+            "action": "create_task",
+            "segments": [
+              ""
+            ],
+            "settings": {
+              "task_text": "Gösteri sonrası ankette müşteri memnun kalmadığını bildirdi. WhatsApp görüşmesini inceleyip müşteriyi takip edin.",
+              "task_type": "1",
+              "deadline-days": "",
+              "deadline-hours": "",
+              "task_type_name": "Takip",
+              "within-deadline": "0",
+              "deadline-minutes": "",
+              "responsible_user": "current"
+            },
+            "date_exec": 0,
+            "handler_code": "amocrm",
+            "execution_condition": {
+              "id": 45,
+              "name": "execute_trigger"
+            }
+          },
+          "element_type": "lead"
+        },
+        "handler": "trigger"
+      },
+      {
+        "params": {
+          "tag": "",
+          "text": "Görüşünüz için teşekkür ederiz. Deneyiminizi değerlendirmemiz için yaşadığınız durumu bu sohbete yazabilirsiniz.",
+          "type": "external",
+          "on_error": {
+            "params": {
+              "step": 13,
+              "type": "question"
+            },
+            "handler": "goto"
+          },
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "over_all"
+          },
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "create_chat_if_not_exists": false
+        },
+        "handler": "send_message"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "7": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_yanitlandi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": "Anket: Serbest yanıt",
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2460856}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_serbest_yanit"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası ankete serbest yanıt: {{message_text}}",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "8": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "anket_gonderim_hatasi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası WhatsApp anketi gönderilemedi. Otomatik tekrar kapalı; müşteri ve kanal bilgileri kontrol edilerek manuel takip yapılmalıdır.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "trigger": {
+            "delay": 0,
+            "action": "create_task",
+            "segments": [
+              ""
+            ],
+            "settings": {
+              "task_text": "Gösteri sonrası WhatsApp anketi gönderilemedi. Telefon/kanal ve WhatsApp hata durumunu kontrol edin. Yeniden başlatmadan önce gönderim kaydını inceleyin.",
+              "task_type": "1",
+              "deadline-days": "",
+              "deadline-hours": "",
+              "task_type_name": "Takip",
+              "within-deadline": "0",
+              "deadline-minutes": "",
+              "responsible_user": "current"
+            },
+            "date_exec": 0,
+            "handler_code": "amocrm",
+            "execution_condition": {
+              "id": 45,
+              "name": "execute_trigger"
+            }
+          },
+          "element_type": "lead"
+        },
+        "handler": "trigger"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "10": {
+    "question": [
+      {
+        "params": {
+          "logic": "or",
+          "result": [
+            {
+              "params": {
+                "step": 1,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "{{lead.status_id}}",
+              "term2": "110416827",
+              "operation": "="
+            },
+            {
+              "term1": "{{lead.status_id}}",
+              "term2": "142",
+              "operation": "="
+            }
+          ]
+        },
+        "handler": "conditions"
+      },
+      {
+        "params": {
+          "step": 13,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "12": {
+    "question": [
+      {
+        "params": {
+          "name": "set_tag",
+          "params": {
+            "type": 2,
+            "value": "madagaskar_anket_baslatildi"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "set_custom_fields",
+          "params": {
+            "value": true,
+            "value_type": "value",
+            "custom_field": "{{lead.cf.2455472}}"
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Gösteri sonrası anket başlatıldı. madagaskar_memnuniyet_v3; tekrar başlatma kilidi eklendi. Teslimat Kommo WhatsApp durumundan takip edilir.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      },
+      {
+        "params": {
+          "tag": "",
+          "type": "external",
+          "footer": null,
+          "on_error": {
+            "params": {
+              "step": 8,
+              "type": "question"
+            },
+            "handler": "goto"
+          },
+          "products": null,
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "over_all"
+          },
+          "template_id": 80796,
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "is_in_starting_block": false,
+          "create_chat_if_not_exists": true
+        },
+        "handler": "send_message"
+      },
+      {
+        "params": {
+          "step": 2,
+          "type": "question"
+        },
+        "handler": "goto"
+      }
+    ]
+  },
+  "13": {
+    "question": [
+      {
+        "params": {
+          "name": "add_note",
+          "params": {
+            "text": "Anket akışı sonlandırıldı. Yanıt sonrasında otomatik yeniden anket gönderimi engellendi.",
+            "note_type": 4,
+            "element_type": 2
+          }
+        },
+        "handler": "action"
+      }
+    ]
+  },
+  "conversation": false
+}
