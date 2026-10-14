@@ -2,28 +2,10 @@
   "0": {
     "question": [
       {
+        "handler": "conditions",
         "params": {
           "logic": "and",
-          "result": [
-            {
-              "params": {
-                "step": 2,
-                "type": "question"
-              },
-              "handler": "goto"
-            }
-          ],
           "conditions": [
-            {
-              "term1": "lead.tags",
-              "term2": "mdg_odeme_hatirlatma_baslatildi",
-              "operation": "not_in"
-            },
-            {
-              "term1": "lead.tags",
-              "term2": "WooCommerce Ödeme Başarılı",
-              "operation": "not_in"
-            },
             {
               "term1": "{{lead.status_id}}",
               "term2": "110416823,143",
@@ -49,16 +31,24 @@
               "term2": "142",
               "operation": "!="
             }
+          ],
+          "result": [
+            {
+              "handler": "goto",
+              "params": {
+                "step": 11,
+                "type": "question"
+              }
+            }
           ]
-        },
-        "handler": "conditions"
+        }
       },
       {
+        "handler": "goto",
         "params": {
           "step": 10,
           "type": "question"
-        },
-        "handler": "goto"
+        }
       }
     ]
   },
@@ -238,6 +228,82 @@
           }
         },
         "handler": "action"
+      }
+    ]
+  },
+  "11": {
+    "question": [
+      {
+        "handler": "conditions",
+        "params": {
+          "logic": "or",
+          "conditions": [
+            {
+              "term1": "lead.tags",
+              "term2": "",
+              "operation": "="
+            },
+            {
+              "term1": "lead.tags",
+              "term2": "mdg_odeme_hatirlatma_baslatildi",
+              "operation": "not_in"
+            }
+          ],
+          "result": [
+            {
+              "handler": "goto",
+              "params": {
+                "step": 12,
+                "type": "question"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "handler": "goto",
+        "params": {
+          "step": 10,
+          "type": "question"
+        }
+      }
+    ]
+  },
+  "12": {
+    "question": [
+      {
+        "handler": "conditions",
+        "params": {
+          "logic": "or",
+          "conditions": [
+            {
+              "term1": "lead.tags",
+              "term2": "",
+              "operation": "="
+            },
+            {
+              "term1": "lead.tags",
+              "term2": "WooCommerce Ödeme Başarılı",
+              "operation": "not_in"
+            }
+          ],
+          "result": [
+            {
+              "handler": "goto",
+              "params": {
+                "step": 2,
+                "type": "question"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "handler": "goto",
+        "params": {
+          "step": 10,
+          "type": "question"
+        }
       }
     ]
   },
