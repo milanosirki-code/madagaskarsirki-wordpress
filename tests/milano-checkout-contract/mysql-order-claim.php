@@ -70,6 +70,8 @@ function fork_race(string $mode,string $intent,string $quote,int $order_id):arra
         }
         if($mode==='claim') {
             $r=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
+        } elseif($mode==='reserve') {
+            $r=Milano_Canonical_Order_Claim::reservation_transition($intent,$order_id,'bound','reserving');
         } else {
             $r=Milano_Canonical_Order_Claim::attach_order($intent,$order_id+1);
         }
@@ -91,6 +93,8 @@ function fork_race(string $mode,string $intent,string $quote,int $order_id):arra
     }
     if($mode==='claim'){
         $parent=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
+    }elseif($mode==='reserve'){
+        $parent=Milano_Canonical_Order_Claim::reservation_transition($intent,$order_id,'bound','reserving');
     }else{
         $parent=Milano_Canonical_Order_Claim::attach_order($intent,$order_id);
     }
@@ -145,6 +149,38 @@ $repeat=Milano_Canonical_Order_Claim::attach_order($intent,(int)$winner);
 test(is_array($repeat)&&$repeat['replayed']===true,'same winning Woo binding replay is idempotent');
 $bound=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
 test(is_array($bound)&&$bound['created']===false&&$bound['state']==='bound'&&$bound['wc_order_id']===(int)$winner,'repeat checkout returns canonical bound order');
+// Two concurrent requests must never both invoke the MDG stock-reservation owner.
+[$reserveParent,$reserveChild]=fork_race('reserve',$intent,$quote,(int)$winner);
+$wpdb=new MysqlWpdb();
+$one_reserver=is_array($reserveParent)!==($reserveChild['error']===null);
+test($one_reserver,'two simultaneous reserve attempts allow exactly one caller into MDG');
+test(is_code($reserveParent,'milano_reservation_transition_conflict')
+     ||$reserveChild['error']==='milano_reservation_transition_conflict',
+     'losing worker is explicitly blocked from duplicate MDG stock hold');
+$inflight=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
+test(is_array($inflight)&&$inflight['state']==='reserving'
+     &&$inflight['wc_order_id']===(int)$winner,
+     'ambiguous in-flight reservation remains the same canonical order');
+test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'bound','reserving'),
+     'milano_reservation_transition_conflict'),
+     'retry is blocked while a reservation is in progress');
+$ready=Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'reserving','ready');
+test(is_array($ready)&&$ready['state']==='ready',
+    'only completed MDG audit may advance reservation to ready');
+$readyRepeat=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
+test(is_array($readyRepeat)&&$readyRepeat['state']==='ready'
+     &&$readyRepeat['created']===false
+     &&$readyRepeat['wc_order_id']===(int)$winner,
+     'ready replay returns original order, never grants another WC order');
+test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'reserving','ready'),
+     'milano_reservation_transition_conflict'),
+     'duplicate ready write never replays gateway or MDG reservation');
+test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner+99,'bound','reserving'),
+     'milano_reservation_transition_conflict'),
+     'foreign Woo order ID cannot reserve the same intent');
+test(is_code(Milano_Canonical_Order_Claim::reservation_transition($intent,(int)$winner,'ready','bound'),
+     'milano_reservation_transition_invalid'),
+     'completed reservation cannot be reset to bound');
 $other=claim_key(333);
 test(is_array(Milano_Canonical_Order_Claim::claim($other,$quote,24,151,110000,4)),'new intent may independently claim');
 test(is_code(Milano_Canonical_Order_Claim::attach_order($other,(int)$winner),'milano_order_bind_conflict'),'SQL unique Woo order index blocks cross-intent reuse');
