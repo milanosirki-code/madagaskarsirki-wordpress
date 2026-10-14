@@ -26,5 +26,9 @@ jobs:
         run: |
           php -l integrations/milano/checkout-contract/milano-checkout-contract-stage.php
           php -l tests/milano-checkout-contract/regression.php
+          php -l integrations/milano/checkout-contract/milano-paytr-callback-contract.php
+          php -l tests/milano-checkout-contract/paytr-callback.php
       - name: Offline validation without WordPress or PayTR credentials
-        run: php tests/milano-checkout-contract/regression.php
+        run: |
+          php tests/milano-checkout-contract/regression.php
+          php tests/milano-checkout-contract/paytr-callback.php
