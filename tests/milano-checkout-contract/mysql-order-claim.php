@@ -9,6 +9,7 @@ class WP_Error {
 function is_wp_error($v):bool{return $v instanceof WP_Error;}
 class MysqlWpdb {
     public string $prefix='wp_';
+    public static bool $foundRows=false;
     public PDO $pdo;
     public function __construct(){
         $this->pdo=new PDO(
@@ -16,7 +17,8 @@ class MysqlWpdb {
             'root','test-only-root',[
                 PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_OBJ,
-                PDO::ATTR_EMULATE_PREPARES=>false
+                PDO::ATTR_EMULATE_PREPARES=>false,
+                PDO::MYSQL_ATTR_FOUND_ROWS=>self::$foundRows
             ]
         );
     }
@@ -115,6 +117,20 @@ test(count_intent($wpdb,$intent)===0,'invalid claims make no DB rows');
 $wpdb=new MysqlWpdb();
 test(is_array($a)&&$b['error']===null&&($a['created']!==$b['created']),'concurrent identical checkout requests yield one and only one creator');
 test(count_intent($wpdb,$intent)===1,'unique intent ledger holds one row after race');
+// Simulate MySQL CLIENT_FOUND_ROWS=1, in which an upsert-with-no-op used to
+// return affected_rows=1 for both creators and duplicate replays.
+MysqlWpdb::$foundRows=true;
+$foundIntent=claim_key(229);
+[$foundFirst,$foundSecond]=fork_race('claim',$foundIntent,$quote,6020);
+$wpdb=new MysqlWpdb();
+test(is_array($foundFirst)&&$foundSecond['error']===null
+    && $foundFirst['created']!==$foundSecond['created'],
+    'CLIENT_FOUND_ROWS=1 still allows exactly one creator');
+test(count_intent($wpdb,$foundIntent)===1,'CLIENT_FOUND_ROWS duplicate stays one DB row');
+$foundReplay=Milano_Canonical_Order_Claim::claim($foundIntent,$quote,24,151,110000,4);
+test(is_array($foundReplay)&&$foundReplay['created']===false,
+    'CLIENT_FOUND_ROWS retry never grants create-order permission');
+MysqlWpdb::$foundRows=false;
 $same=Milano_Canonical_Order_Claim::claim($intent,$quote,24,151,110000,4);
 test(is_array($same)&&$same['created']===false&&$same['wc_order_id']===null,'retry cannot authorize second Woo order');
 test(is_code(Milano_Canonical_Order_Claim::claim($intent,hash('sha256','tampered-quote'),24,151,110000,4),'milano_claim_conflict'),'same nonce with different price quote digest refused');
@@ -135,5 +151,5 @@ test(is_code(Milano_Canonical_Order_Claim::attach_order($other,(int)$winner),'mi
 $other_result=Milano_Canonical_Order_Claim::claim($other,$quote,24,151,110000,4);
 test(is_array($other_result)&&$other_result['state']==='claimed'&&$other_result['wc_order_id']===null,'conflicted order id never mutates claim');
 test(count_intent($wpdb,$other)===1,'independent purchase claim remains singular');
-test((int)$wpdb->pdo->query('SELECT COUNT(*) FROM wp_milano_order_claims_v1')->fetchColumn()===2,'no duplicate/order/hold/ticket/payment records created by test');
+test((int)$wpdb->pdo->query('SELECT COUNT(*) FROM wp_milano_order_claims_v1')->fetchColumn()===3,'no duplicate/order/hold/ticket/payment records created by test');
 echo "ALL $passes real isolated MySQL idempotent checkout tests passed.\n";
