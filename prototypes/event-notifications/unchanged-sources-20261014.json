@@ -1,0 +1,441 @@
+{
+  "cancel": {
+    "0": {
+      "question": [
+        {
+          "params": {
+            "logic": "and",
+            "result": [
+              {
+                "params": {
+                  "step": 2,
+                  "type": "question"
+                },
+                "handler": "goto"
+              }
+            ],
+            "conditions": [
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_iptal_bildirim_baslatildi",
+                "operation": "not_in"
+              },
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_iptal_bildirim_dogrulandi",
+                "operation": "in"
+              },
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_iptal_bildirim_alanlar_dogrulandi",
+                "operation": "in"
+              },
+              {
+                "term1": "{{lead.cf.2460844}}",
+                "term2": "",
+                "operation": "!="
+              },
+              {
+                "term1": "{{lead.cf.2460858}}",
+                "term2": "",
+                "operation": "!="
+              }
+            ]
+          },
+          "handler": "conditions"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "2": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_iptal_bildirim_baslatildi"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik iptali bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "tag": "",
+            "type": "external",
+            "footer": null,
+            "on_error": {
+              "params": {
+                "step": 8,
+                "type": "question"
+              },
+              "handler": "goto"
+            },
+            "products": null,
+            "recipient": {
+              "type": "main_contact",
+              "way_of_communication": "over_all"
+            },
+            "template_id": 86958,
+            "chat_sources": [
+              {
+                "id": 82576
+              }
+            ],
+            "is_in_starting_block": false,
+            "create_chat_if_not_exists": true
+          },
+          "handler": "send_message"
+        },
+        {
+          "params": {
+            "step": 3,
+            "type": "question"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "3": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_iptal_bildirim_gonderildi"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik iptali şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "8": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_iptal_bildirim_hata"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik iptali bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "trigger": {
+              "delay": 0,
+              "action": "create_task",
+              "segments": [
+                ""
+              ],
+              "settings": {
+                "task_text": "Etkinlik iptali gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                "task_type": "1",
+                "deadline-days": "",
+                "deadline-hours": "",
+                "task_type_name": "Takip",
+                "within-deadline": "0",
+                "deadline-minutes": "",
+                "responsible_user": "current"
+              },
+              "date_exec": 0,
+              "handler_code": "amocrm",
+              "execution_condition": {
+                "id": 45,
+                "name": "execute_trigger"
+              }
+            },
+            "element_type": "lead"
+          },
+          "handler": "trigger"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "9": {
+      "finish": [
+        {
+          "params": [],
+          "handler": "_stop"
+        }
+      ]
+    },
+    "conversation": false
+  },
+  "change": {
+    "0": {
+      "question": [
+        {
+          "params": {
+            "logic": "and",
+            "result": [
+              {
+                "params": {
+                  "step": 2,
+                  "type": "question"
+                },
+                "handler": "goto"
+              }
+            ],
+            "conditions": [
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_degisiklik_bildirim_baslatildi",
+                "operation": "not_in"
+              },
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_degisiklik_bildirim_dogrulandi",
+                "operation": "in"
+              },
+              {
+                "term1": "lead.tags",
+                "term2": "mdg_etkinlik_degisiklik_bildirim_alanlar_dogrulandi",
+                "operation": "in"
+              },
+              {
+                "term1": "{{lead.cf.2460844}}",
+                "term2": "",
+                "operation": "!="
+              },
+              {
+                "term1": "{{lead.cf.2460858}}",
+                "term2": "",
+                "operation": "!="
+              },
+              {
+                "term1": "{{lead.cf.2460860}}",
+                "term2": "",
+                "operation": "!="
+              }
+            ]
+          },
+          "handler": "conditions"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "2": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_degisiklik_bildirim_baslatildi"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik değişikliği bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "tag": "",
+            "type": "external",
+            "footer": null,
+            "on_error": {
+              "params": {
+                "step": 8,
+                "type": "question"
+              },
+              "handler": "goto"
+            },
+            "products": null,
+            "recipient": {
+              "type": "main_contact",
+              "way_of_communication": "over_all"
+            },
+            "template_id": 86960,
+            "chat_sources": [
+              {
+                "id": 82576
+              }
+            ],
+            "is_in_starting_block": false,
+            "create_chat_if_not_exists": true
+          },
+          "handler": "send_message"
+        },
+        {
+          "params": {
+            "step": 3,
+            "type": "question"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "3": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_degisiklik_bildirim_gonderildi"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik değişikliği şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "8": {
+      "question": [
+        {
+          "params": {
+            "name": "set_tag",
+            "params": {
+              "type": 2,
+              "value": "mdg_etkinlik_degisiklik_bildirim_hata"
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "name": "add_note",
+            "params": {
+              "text": "Etkinlik değişikliği bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+              "note_type": 4,
+              "element_type": 2
+            }
+          },
+          "handler": "action"
+        },
+        {
+          "params": {
+            "trigger": {
+              "delay": 0,
+              "action": "create_task",
+              "segments": [
+                ""
+              ],
+              "settings": {
+                "task_text": "Etkinlik değişikliği gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                "task_type": "1",
+                "deadline-days": "",
+                "deadline-hours": "",
+                "task_type_name": "Takip",
+                "within-deadline": "0",
+                "deadline-minutes": "",
+                "responsible_user": "current"
+              },
+              "date_exec": 0,
+              "handler_code": "amocrm",
+              "execution_condition": {
+                "id": 45,
+                "name": "execute_trigger"
+              }
+            },
+            "element_type": "lead"
+          },
+          "handler": "trigger"
+        },
+        {
+          "params": {
+            "step": 9,
+            "type": "finish"
+          },
+          "handler": "goto"
+        }
+      ]
+    },
+    "9": {
+      "finish": [
+        {
+          "params": [],
+          "handler": "_stop"
+        }
+      ]
+    },
+    "conversation": false
+  }
+}
