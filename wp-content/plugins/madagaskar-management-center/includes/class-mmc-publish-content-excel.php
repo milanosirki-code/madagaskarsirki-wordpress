@@ -70,7 +70,7 @@ final class MMC_Publish_Content_Excel {
         $venue = $preview['venue'];
         $sheets = array(
             'KULLANIM' => array(
-                array( 'MADAGASKAR SİRKİ — MMC YAYIN İÇERİĞİ EXCEL ŞABLONU', '', '' ),
+                array( $vars['{{MARKA}}'] . ' — MMC YAYIN İÇERİĞİ EXCEL ŞABLONU', '', '' ),
                 array( 'Program', (string) $program->program_code, 'MMC’den gelir; Excel değiştirmez.' ),
                 array( 'Yer', $vars['{{YER}}'], 'İl/ilçe MMC’den gelir.' ),
                 array( 'Tarih', $vars['{{TARIH}}'], 'Tarih MMC’den gelir.' ),
@@ -83,11 +83,11 @@ final class MMC_Publish_Content_Excel {
             ),
             'YAYIN_ICERIGI' => array(
                 array( 'alan', 'deger', 'aciklama' ),
-                array( 'short_description', 'Madagaskar Sirki {{YER}}’de! {{TARIH_UZUN}} günü {{SALON}}’nda {{SEANSLAR}} seanslarıyla. Uluslararası sanatçılar • Hayvansız modern sirk • Ailece eğlence.', 'Kısa açıklama' ),
+                array( 'short_description', '{{MARKA}} {{YER}}’de! {{TARIH_UZUN}} günü {{SALON}}’nda {{SEANSLAR}} seanslarıyla. Uluslararası sanatçılar • Hayvansız modern sirk • Ailece eğlence.', 'Kısa açıklama' ),
                 array( 'long_description', '{{ETKINLIK_ADI}}, {{TARIH_UZUN}} günü {{SALON}}’nda seyircisiyle buluşuyor. Uluslararası sirk sanatçılarını aynı sahnede buluşturan gösteride akrobasi, denge, jonglörlük, hula hoop, palyaço ve görsel sahne performansları yer alır. Hayvan gösterisi içermeyen modern sirk programı yaklaşık 60 dakikalık aile eğlencesidir. Tarih: {{TARIH_UZUN}}. Seanslar: {{SEANSLAR}}. Salon: {{SALON}}. Adres: {{ADRES}}. Biletler: {{BILET_OZETI}}. Online bilet: {{BILET_LINKI}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Uzun açıklama' ),
                 array( 'rules', 'Oturma: {{OTURMA}}. Salon kapıları gösteriden yaklaşık {{KAPI_DK}} dakika önce açılır. Gösteri süresi yaklaşık 60 dakikadır. 0–2 yaş ücretsizdir; 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin bileti kullanır. Çocuklar yetişkin eşliğinde katılır. Aile Paketi 2 yetişkin + 2 çocuktan oluşur. Biletler: {{BILET_OZETI}}. Salon: {{SALON}} — {{ADRES}}. Bilgi hattı: {{BILGI_HATTI}}.', 'Kurallar' ),
-                array( 'seo_title', 'Madagaskar Sirki {{YER}} Biletleri | {{TARIH_UZUN}}', 'SEO başlığı' ),
-                array( 'seo_description', 'Madagaskar Sirki {{YER}}: {{TARIH_UZUN}}, {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler: {{BILET_OZETI}}.', 'SEO açıklaması' ),
+                array( 'seo_title', '{{MARKA}} {{YER}} Biletleri | {{TARIH_UZUN}}', 'SEO başlığı' ),
+                array( 'seo_description', '{{MARKA}} {{YER}}: {{TARIH_UZUN}}, {{SALON}}. Seanslar: {{SEANSLAR}}. Biletler: {{BILET_OZETI}}.', 'SEO açıklaması' ),
                 array( 'video_url', '', 'İsteğe bağlı video URL’si' ),
             ),
             'SSS' => array(
@@ -101,6 +101,7 @@ final class MMC_Publish_Content_Excel {
             ),
             'DEGISKENLER' => array(
                 array( 'degisken', 'kaynak', 'aciklama' ),
+                array( '{{MARKA}}', 'MMC Program', 'Programın satış markası' ),
                 array( '{{PROGRAM_KODU}}', 'MMC Program', 'Program kodu' ),
                 array( '{{IL}}', 'MMC Program', 'İl' ),
                 array( '{{ILCE}}', 'MMC Program', 'İlçe' ),
@@ -236,7 +237,8 @@ final class MMC_Publish_Content_Excel {
         $place = (string) $program->province_name . ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ? ' / ' . $district : '' );
         $date_short = $event && $event->event_date ? mysql2date( 'd.m.Y', $event->event_date ) : '';
         $date_long = $event && $event->event_date ? date_i18n( 'j F Y l', strtotime( $event->event_date . ' 12:00:00' ) ) : '';
-        $event_name = 'Madagaskar Sirki — ' . (string) $program->province_name;
+        $brand = MMC_Program_Service::public_brand_profile( $program );
+        $event_name = $brand['name'] . ' — ' . (string) $program->province_name;
         if ( $district && 'merkez' !== strtolower( remove_accents( $district ) ) ) { $event_name .= ' / ' . $district; }
         return array(
             '{{PROGRAM_KODU}}' => (string) $program->program_code,
@@ -254,8 +256,9 @@ final class MMC_Publish_Content_Excel {
             '{{AILE_FIYATI}}' => $prices['family_2_2'],
             '{{OTURMA}}' => 'numbered' === (string) ( $event->seating_mode ?? '' ) ? 'Numaralı oturma' : 'Numarasız / serbest oturma',
             '{{KAPI_DK}}' => (string) absint( $event->door_open_minutes ?? 30 ),
-            '{{BILGI_HATTI}}' => '0312 911 37 10',
-            '{{BILET_LINKI}}' => 'https://madagaskarsirki.com/bilet-al/',
+            '{{MARKA}}' => $brand['name'],
+            '{{BILGI_HATTI}}' => $brand['phone'],
+            '{{BILET_LINKI}}' => $brand['ticket_url'],
             '{{ETKINLIK_ADI}}' => $event_name,
         );
     }
