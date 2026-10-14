@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano - Ortak Madagaskar Odeme Gecisi
  * Description: Milano secimini mevcut merkezi MDG sepetine aktarir. Ayri siparis, POS, kapasite veya QR defteri olusturmaz.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -38,7 +38,7 @@ final class Milano_Shared_Checkout_Handoff {
  public static function selector_page(){
   if(empty($_GET['milano_bilet_sec'])||!self::central()){return;}
   if(!current_user_can('manage_woocommerce')){wp_die('Yetkili prova kullanicisi gerekli.','Milano',array('response'=>403));}
-  nocache_headers();get_header();echo '<main style="max-width:980px;margin:36px auto;padding:24px"><h1>Milano Sirki — Bilet Seçimi</h1>'.self::shortcode().'</main>';get_footer();exit;
+  nocache_headers();get_header();echo '<style>body{background:#f4f1e8!important;color:#17243a!important;font-family:system-ui,sans-serif!important}body>header{padding:18px 24px;border-bottom:1px solid #ded8c6}body>header h1{font-size:24px!important;line-height:1.2!important;margin:8px 0!important}body>header a{color:#17243a!important}main{background:#fffdf7;border:1px solid #e4dcc8;border-radius:22px;box-shadow:0 12px 44px #15213b12;box-sizing:border-box}main h1{font-size:clamp(26px,4vw,36px)!important;line-height:1.2!important;letter-spacing:-.02em;margin:0 0 24px!important;color:#14233f!important}main h2{font-size:23px!important;line-height:1.35!important;margin:24px 0 12px!important;color:#14233f!important}main p{font-size:16px!important;line-height:1.65!important;margin:14px 0!important;color:#263a54!important}main strong{color:#14233f}main button{background:#14233f;color:#fff9e7;border:0;border-radius:10px;padding:15px 22px;font:700 16px system-ui,sans-serif;cursor:pointer}main button:disabled{opacity:.6;cursor:wait}main [role=alert]{color:#a72b22!important}main form{padding:22px 0;border-top:1px solid #e4dcc8}main form label{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 16px 10px 0;font-size:15px}main input[type=number]{width:64px;min-height:42px;padding:8px;border:1px solid #a9b5c5;border-radius:8px;font:inherit}@media(max-width:640px){main{margin:18px 12px!important;padding:22px!important}main button{width:100%}}</style><main style="max-width:980px;margin:36px auto;padding:24px"><h1>Milano Sirki — Bilet Seçimi</h1>'.self::shortcode().'</main>';get_footer();exit;
  }
  public static function product_event($pid,$vid){
   if(!class_exists('MDG_DB')){return 0;}
