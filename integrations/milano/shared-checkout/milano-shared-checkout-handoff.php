@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano - Ortak Madagaskar Odeme Gecisi
  * Description: Milano secimini mevcut merkezi MDG sepetine aktarir. Ayri siparis, POS, kapasite veya QR defteri olusturmaz.
- * Version: 0.2.1
+ * Version: 0.2.2
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -211,6 +211,8 @@ final class Milano_Shared_Checkout_Handoff {
   self::$context=$sel;
   $_POST['lines']=wp_json_encode($lines);$_POST['event_id']=$sel['event_id'];$_POST['session_id']=$sel['session_id'];
   $_POST['nonce']=wp_create_nonce('mdg_live_cart_'.$sel['event_id']);
+  // WordPress check_ajax_referer reads REQUEST, not POST; keep the validated delegation nonce in sync.
+  $_REQUEST['nonce']=$_POST['nonce'];
   if($sel['families']){MDG_Family_Package_22_V1::preprocess_family_line();}
   // Reuse the existing engine's validation, mapping, prices and capacity checks.
   // The engine replies with its existing JSON response; no Woo order or payment is created here.
