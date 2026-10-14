@@ -152,4 +152,39 @@ final class Milano_Canonical_Order_Claim {
         }
         return new WP_Error( 'milano_order_bind_conflict', 'Intent already bound to another order or missing.' );
     }
+    /**
+     * Read an EXISTING trusted purchase-intent claim, WITHOUT creating one.
+     * This must be used at the standard Woo pre-payment hooks: creating a new
+     * claim after the Woo order exists would defeat first-writer order election.
+     *
+     * @return array|WP_Error
+     */
+    public static function existing( $intent, $quote, $event_id, $session_id, $amount, $units ) {
+        global $wpdb;
+        if ( ! self::valid( $intent, $quote, $event_id, $session_id, $amount, $units ) ) {
+            return new WP_Error( 'milano_claim_invalid', 'Invalid canonical intent lookup.' );
+        }
+        if ( ! is_object( $wpdb ) ) {
+            return new WP_Error( 'milano_claim_db_unavailable', 'Database unavailable.' );
+        }
+        $r = self::row( $intent );
+        if ( ! $r ) {
+            return new WP_Error( 'milano_claim_unreserved', 'No prior purchase-intent claim; checkout blocked.' );
+        }
+        if ( (string) $r->brand !== 'milano'
+            || ! hash_equals( $quote, (string) $r->quote_sha256 )
+            || (int) $r->event_id !== $event_id
+            || (int) $r->session_id !== $session_id
+            || (int) $r->amount_minor !== $amount
+            || (int) $r->capacity_units !== $units
+            || ! in_array( (string) $r->state, array( 'claimed', 'bound' ), true ) ) {
+            return new WP_Error( 'milano_claim_conflict', 'Canonical intent does not match trusted quote and ownership.' );
+        }
+        return array(
+            'state' => (string) $r->state,
+            'wc_order_id' => $r->wc_order_id ? (int) $r->wc_order_id : null,
+            'intent_key' => (string) $r->intent_key,
+        );
+    }
+
 }
