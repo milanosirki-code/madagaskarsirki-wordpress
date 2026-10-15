@@ -67,6 +67,7 @@ foreach($rows as [$event,$tc,$city,$day,$slots]) {
         }
     }
 }
+$fixture = serialize([$events,$meta,$products,$sessions,$types,$mdg]);
 $count=0;
 function check($ok,$name) {
     global $count;
