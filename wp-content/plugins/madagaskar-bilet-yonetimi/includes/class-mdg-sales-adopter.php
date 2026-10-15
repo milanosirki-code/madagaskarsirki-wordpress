@@ -203,17 +203,19 @@ final class MDG_Sales_Adopter {
         $groups = self::ticket_product_groups();
         if ( ! $groups ) { $out['errors'][]='Mevcut Tickera/WooCommerce ürün grubu bulunamadı.'; return $out; }
 
-        $best = null;
+        $valid = array();
         foreach ( $groups as $eid => $products ) {
             $candidate = self::match_group( $event, $sessions, absint( $eid ), $products );
-            if ( ! $best || $candidate['score'] > $best['score'] ) { $best = $candidate; }
+            if ( empty( $candidate['errors'] ) && count( $candidate['sessions'] ) === count( $sessions ) ) {
+                $valid[] = $candidate;
+            }
         }
-        if ( ! $best || ! empty( $best['errors'] ) || count( $best['sessions'] ) !== count( $sessions ) ) {
+        if ( 1 !== count( $valid ) ) {
             $out['errors'][] = 'Taslağın bütün seanslarını güvenle eşleştiren tek bir mevcut satış grubu bulunamadı.';
-            if ( $best && ! empty( $best['errors'] ) ) { $out['errors'] = array_merge( $out['errors'], $best['errors'] ); }
+            if ( count( $valid ) > 1 ) { $out['errors'][] = 'Birden fazla geçerli satış grubu var; otomatik seçim yapılmadı.'; }
             return $out;
         }
-        return $best;
+        return $valid[0];
     }
 
     private static function ticket_product_groups() {
@@ -237,16 +239,42 @@ final class MDG_Sales_Adopter {
     private static function match_group( $event, array $sessions, $event_id, array $products ) {
         $result = array( 'tickera_event_id'=>$event_id, 'sessions'=>array(), 'errors'=>array(), 'warnings'=>array(), 'score'=>0 );
         $event_title = get_the_title( $event_id );
+        // Times and prices are shared by unrelated cities/dates. Never use score as identity.
+        if ( 'tc_events' !== get_post_type( $event_id ) || ! self::same_brand( (string) $event->title, $event_title ) ) {
+            $result['errors'][] = 'Tickera etkinlik markası doğrulanamadı.';
+            return $result;
+        }
+        $place = self::norm( (string) $event->district );
+        if ( ! $place || 'merkez' === $place ) { $place = self::norm( (string) $event->province_name ); }
+        if ( ! $place || ! self::contains_words( $event_title, $place ) ) {
+            $result['errors'][] = 'Tickera etkinliğinin il/ilçe kimliği eşleşmiyor.';
+            return $result;
+        }
+        $tickera_date = substr( (string) get_post_meta( $event_id, 'event_date_time', true ), 0, 10 );
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $tickera_date ) ||
+             ( (int) get_post_meta( $event_id, '_mdg_event_id', true ) &&
+               (int) get_post_meta( $event_id, '_mdg_event_id', true ) !== (int) $event->id ) ) {
+            $result['errors'][] = 'Tickera tarih/MDG kimliği doğrulanamadı.';
+            return $result;
+        }
         if ( self::norm( $event_title ) && false !== strpos( self::norm( $event_title ), self::norm( $event->province_name ) ) ) { $result['score'] += 8; }
         if ( count( $products ) === count( $sessions ) ) { $result['score'] += 12; }
 
         $used_products = array();
         foreach ( $sessions as $session ) {
             list( $date, $time ) = MDG_Sessions::local_parts( $session->start_at );
+            if ( $date !== $tickera_date ) {
+                $result['errors'][] = 'Tickera tarihi seansın Türkiye tarihiyle eşleşmiyor.';
+                continue;
+            }
             $matches = array();
             foreach ( $products as $p ) {
                 if ( isset( $used_products[ $p->get_id() ] ) ) { continue; }
                 $name = (string) $p->get_name();
+                if ( ! self::same_brand( (string) $event->title, $name ) || ! self::contains_words( $name, $place ) ) { continue; }
+                $owner = (int) get_post_meta( $p->get_id(), '_mdg_event_id', true );
+                $sid = (int) get_post_meta( $p->get_id(), '_mdg_session_id', true );
+                if ( ( $owner && $owner !== (int) $event->id ) || ( $sid && $sid !== (int) $session->id ) ) { continue; }
                 if ( false !== strpos( $name, $time ) ) { $matches[] = $p; }
             }
             if ( 1 !== count( $matches ) ) {
@@ -302,6 +330,20 @@ final class MDG_Sales_Adopter {
             );
         }
         return $result;
+    }
+
+    private static function contains_words( $text, $words ) {
+        return false !== strpos( ' ' . self::norm( $text ) . ' ', ' ' . self::norm( $words ) . ' ' );
+    }
+
+    private static function same_brand( $left, $right ) {
+        $brands = array( 'milano sirki', 'madagaskar sirki' );
+        $a = array(); $b = array();
+        foreach ( $brands as $brand ) {
+            if ( self::contains_words( $left, $brand ) ) { $a[] = $brand; }
+            if ( self::contains_words( $right, $brand ) ) { $b[] = $brand; }
+        }
+        return 1 === count( $a ) && $a === $b;
     }
 
     private static function variation_matches_type( $variation, $type ) {
