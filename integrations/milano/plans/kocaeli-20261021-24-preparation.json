@@ -333,7 +333,7 @@
       6106
     ],
     "paytr_validated": false,
-    "notes": "Europe/Istanbul applied. Real family cart test passed 2 child + 2 adult =1100 TRY after370 discount; draft checkout guard rejects sale. Cart cleaned. No paid order/PDF/QR issuance test.",
+    "notes": "Europe/Istanbul applied. Real family cart test passed 2 child + 2 adult =1100 TRY after370 discount; draft checkout guard rejects sale. Cart cleaned. No paid order/PDF/QR issuance test. Later runtime fixture6116 generated four actual PDFs with unique decoded admission QR codes; scans accepted then repeated scans rejected after single-entry limit correction. Fixture cancelled and tickets trashed. Not a paid checkout/capacity E2E test; see runtime report.",
     "woo_draft_products": [
       {
         "mdg_session_id": 152,
@@ -421,7 +421,7 @@
     "tickera_event_post_status": "draft; vendor dates/locations configured",
     "tickera_issued_ticket_count": "not verified; no intentional test order",
     "paytr_detected": true,
-    "integration_stage": "CONFIGURATION_READY_EXCEPT_PAYTR; REAL_PAYMENT_PDF_FOUR_QR_TESTS_BLOCKED",
+    "integration_stage": "CONFIGURATION_READY_RUNTIME_QR_PARTIAL_PAYMENT_CAPACITY_GATES_BLOCKED",
     "rate_limit": "WPVibe limit respected; subsequent authorized work performed through authenticated native staging WordPress browser UI.",
     "note": "Supersedes earlier unlinked skeleton statements. Existing records adopted without recreating events/products/sessions. No production deployment. All sessions final capacity500 held0 sold0.",
     "continuation_20261015": {
@@ -489,6 +489,28 @@
       "paid_test_pass": false,
       "production_unchanged": true,
       "report": "docs/MILANO_KOCAELI_PAYTR_RECHECK_20261015.md"
+    },
+    "runtime_qr_pdf_20261015": {
+      "report": "docs/MILANO_KOCAELI_RUNTIME_QR_PDF_20261015.md",
+      "administrative_test_order_id": 6116,
+      "order_final_status": "cancelled",
+      "ticket_instances": [
+        6117,
+        6118,
+        6119,
+        6120
+      ],
+      "ticket_final_status": "trash",
+      "actual_vendor_pdfs_decoded": 4,
+      "unique_admission_qr_count": 4,
+      "first_scan_accepted_four": true,
+      "repeat_scan_rejected_after_correction": true,
+      "initial_duplicate_scan_defect": "empty parent _available_checkins_per_ticket permitted unlimited entry",
+      "all_seven_staging_parent_checkin_limit": 1,
+      "capacity_payment_e2e_pass": false,
+      "all_seven_sessions_tested": false,
+      "payment_taken": false,
+      "public_sales_enabled": false
     }
   },
   "live_continuation_20261015": {
@@ -525,6 +547,12 @@
     "native_readiness_all_three": true,
     "variations_price_parent_match": "14/14",
     "real_payment_pdf_four_qr_verified": false,
-    "blocking_tests_remaining": true
+    "blocking_tests_remaining": true,
+    "pdf_layout_updated_templates": [
+      31,
+      32,
+      33
+    ],
+    "live_single_entry_limit_verified_7_of_7": true
   }
 }
