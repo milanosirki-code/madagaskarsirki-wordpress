@@ -74,6 +74,14 @@ class MMC_Admin {
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mmc-form-grid">
                     <input type="hidden" name="action" value="mmc_create_program">
                     <?php wp_nonce_field( 'mmc_create_program', 'mmc_nonce' ); ?>
+                    <label>Satış Markası
+                        <select name="brand" required>
+                            <option value="">Marka seçin</option>
+                            <option value="Madagaskar Sirki">Madagaskar Sirki</option>
+                            <option value="Milano Sirki">Milano Sirki</option>
+                        </select>
+                        <small class="description">Her etkinlik sadece seçilen markanın satış kanalında yer alır.</small>
+                    </label>
                     <label>İl
                         <select name="province_name" required>
                             <option value="">İl seçin</option>
