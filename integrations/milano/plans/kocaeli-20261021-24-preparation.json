@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "STAGING_PROGRAM_MDG_DRAFT_READY_NOT_ONSALE",
+  "status": "STAGING_DRAFT_WOO_TICKERA_SKELETON_UNLINKED_SALES_BLOCKED",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -71,7 +71,12 @@
         152,
         153
       ],
-      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6081,
+        6084
+      ],
+      "staging_tickera_event_post_id": 6102
     },
     {
       "city": "Darıca",
@@ -110,7 +115,12 @@
         154,
         155
       ],
-      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6087,
+        6090
+      ],
+      "staging_tickera_event_post_id": 6104
     },
     {
       "city": "Derince",
@@ -151,7 +161,13 @@
         157,
         158
       ],
-      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6093,
+        6096,
+        6099
+      ],
+      "staging_tickera_event_post_id": 6106
     }
   ],
   "observations": {
@@ -248,6 +264,96 @@
     "wc_product_ids": null,
     "tickera_event_ids": null,
     "paytr_validated": false,
-    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check."
+    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check.",
+    "woo_draft_products": [
+      {
+        "mdg_session_id": 152,
+        "mmc_session_id": 36,
+        "parent_product_id": 6081,
+        "child_variation_id": 6082,
+        "adult_variation_id": 6083,
+        "child_mdg_ticket_type_id": 346,
+        "adult_mdg_ticket_type_id": 347
+      },
+      {
+        "mdg_session_id": 153,
+        "mmc_session_id": 37,
+        "parent_product_id": 6084,
+        "child_variation_id": 6085,
+        "adult_variation_id": 6086,
+        "child_mdg_ticket_type_id": 348,
+        "adult_mdg_ticket_type_id": 349
+      },
+      {
+        "mdg_session_id": 154,
+        "mmc_session_id": 38,
+        "parent_product_id": 6087,
+        "child_variation_id": 6088,
+        "adult_variation_id": 6089,
+        "child_mdg_ticket_type_id": 350,
+        "adult_mdg_ticket_type_id": 351
+      },
+      {
+        "mdg_session_id": 155,
+        "mmc_session_id": 39,
+        "parent_product_id": 6090,
+        "child_variation_id": 6091,
+        "adult_variation_id": 6092,
+        "child_mdg_ticket_type_id": 352,
+        "adult_mdg_ticket_type_id": 353
+      },
+      {
+        "mdg_session_id": 156,
+        "mmc_session_id": 40,
+        "parent_product_id": 6093,
+        "child_variation_id": 6094,
+        "adult_variation_id": 6095,
+        "child_mdg_ticket_type_id": 354,
+        "adult_mdg_ticket_type_id": 355
+      },
+      {
+        "mdg_session_id": 157,
+        "mmc_session_id": 41,
+        "parent_product_id": 6096,
+        "child_variation_id": 6097,
+        "adult_variation_id": 6098,
+        "child_mdg_ticket_type_id": 356,
+        "adult_mdg_ticket_type_id": 357
+      },
+      {
+        "mdg_session_id": 158,
+        "mmc_session_id": 42,
+        "parent_product_id": 6099,
+        "child_variation_id": 6100,
+        "adult_variation_id": 6101,
+        "child_mdg_ticket_type_id": 358,
+        "adult_mdg_ticket_type_id": 359
+      }
+    ],
+    "tickera_event_draft_posts": [
+      {
+        "mdg_event_id": 25,
+        "tickera_event_post_id": 6102,
+        "city": "Karamürsel"
+      },
+      {
+        "mdg_event_id": 26,
+        "tickera_event_post_id": 6104,
+        "city": "Darıca"
+      },
+      {
+        "mdg_event_id": 27,
+        "tickera_event_post_id": 6106,
+        "city": "Derince"
+      }
+    ],
+    "woo_product_state": "All seven variable parents DRAFT + catalog visibility HIDDEN; 14 child/adult variations PUBLISH under draft parents; NO MDG or Tickera mappings; no order/payment created.",
+    "woo_product_prices_verified": true,
+    "tickera_event_post_status": "draft (not configured with final vendor event_date_time, event_end_date_time, _event_name links or vendor-specific metadata)",
+    "tickera_issued_ticket_count": "not verified; no intentional test order",
+    "paytr_detected": false,
+    "integration_stage": "REQUIRES CHECKOUT-REJECT PREVIEW AND TICKERA VENDOR META/BRIDGE CONFIG",
+    "rate_limit": "WPVibe Pro 24-hour limit reached during final stage mapping read at ~2026-10-15 10:15 Istanbul. Stop WordPress writes until access restored. Do not rerun product or ticket creation without duplicate check.",
+    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale."
   }
 }
