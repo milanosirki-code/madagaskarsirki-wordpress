@@ -375,7 +375,7 @@
     "woo_product_prices_verified": true,
     "tickera_event_post_status": "draft; vendor dates/locations configured",
     "tickera_issued_ticket_count": "not verified; no intentional test order",
-    "paytr_detected": false,
+    "paytr_detected": true,
     "integration_stage": "CONFIGURATION_READY_EXCEPT_PAYTR; REAL_PAYMENT_PDF_FOUR_QR_TESTS_BLOCKED",
     "rate_limit": "WPVibe limit respected; subsequent authorized work performed through authenticated native staging WordPress browser UI.",
     "note": "Supersedes earlier unlinked skeleton statements. Existing records adopted without recreating events/products/sessions. No production deployment. All sessions final capacity500 held0 sold0.",
@@ -428,12 +428,22 @@
       "payment_test_pass": false,
       "public_sales_enabled": false,
       "blockers": [
-        "Staging PayTR test gateway unavailable",
+        "PayTR staging plugin activated; saved test mode true, gateway disabled pending verified authorized isolated callback test",
         "Draft checkout guard correctly refuses sale",
         "Paid adult/child/family orders, duplicate callback, failure/refund, concurrent capacity, PDF and four distinct QR/check-in remain untested",
         "Milano preview discovery heading and shared checkout branding require review before launch"
       ],
       "production_changed": false
+    },
+    "paytr_recheck_20261015": {
+      "plugin_version": "3.1.2",
+      "plugin_active": true,
+      "gateway_enabled": false,
+      "test_mode": true,
+      "callback_isolation_verified": false,
+      "paid_test_pass": false,
+      "production_unchanged": true,
+      "report": "docs/MILANO_KOCAELI_PAYTR_RECHECK_20261015.md"
     }
   }
 }
