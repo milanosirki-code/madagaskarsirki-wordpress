@@ -1,0 +1,124 @@
+{
+  "schema": "milano-preparation-v1",
+  "prepared_at": "2026-10-15",
+  "status": "PREPARED_NOT_ONSALE",
+  "brand": "Milano Sirki",
+  "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
+  "exclusive_brand_sale": true,
+  "prices_try": {
+    "child_3_12": 245,
+    "adult_13_plus": 490,
+    "family_two_adults_two_children": 1100,
+    "infant_0_2": 0,
+    "additional_platform_service_fee": "show_before_payment"
+  },
+  "family": {
+    "adults": 2,
+    "children": 2,
+    "tickets": 4,
+    "capacity_units": 4,
+    "discount_vs_single_tickets_try": 370
+  },
+  "payment_site_canonical": "madagaskarsirki.com",
+  "customer_entry_site": "milanosirki.com",
+  "one_order_one_capacity_ledger": true,
+  "launch_gates": {
+    "central_mmc_brand_aware_create_proven": false,
+    "venue_identity_verified": false,
+    "capacity_user_approved": false,
+    "three_owner_unique_mdg_links": false,
+    "woo_and_tickera_products_verified": false,
+    "per_session_four_ticket_qr_staging_pass": false,
+    "paytr_checkout_callback_verified": false,
+    "brand_redirect_and_return_verified": false,
+    "public_sales_enabled": false
+  },
+  "events": [
+    {
+      "city": "Karamürsel",
+      "province": "Kocaeli",
+      "date": "2026-10-21",
+      "local_times": [
+        "17:30",
+        "19:30"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": null,
+      "poster_wp_attachment_id": 122,
+      "public_page_id": 125,
+      "public_url": "https://milanosirki.com/milano-sirki-karamursel-21-ekim-2026/",
+      "venue_intended": {
+        "name": "Atatürk Kapalı Spor Salonu",
+        "address": "4 Temmuz Mahallesi, 115 Nolu Sokak, Karamürsel / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 152,
+        "name": "Karamürsel Spor Salonu",
+        "address": "Tabakhane, 115. Cd. No:7"
+      },
+      "venue_match": "NOT_CONFIRMED_NAME_AND_ADDRESS_DIFFER"
+    },
+    {
+      "city": "Darıca",
+      "province": "Kocaeli",
+      "date": "2026-10-23",
+      "local_times": [
+        "17:30",
+        "19:30"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": null,
+      "poster_wp_attachment_id": 123,
+      "public_page_id": 126,
+      "public_url": "https://milanosirki.com/milano-sirki-darica-23-ekim-2026/",
+      "venue_intended": {
+        "name": "Eray Şamdan Kapalı Spor Salonu",
+        "address": "Bağlarbaşı Mahallesi, Özbay Sokak No:67, Darıca / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 59,
+        "name": "Eren Şamdan Kapalı Spor Salonu",
+        "address": "Bağlarbaşı, Özbay Sk. No:67"
+      },
+      "venue_match": "ADDRESS_SIMILAR_NAME_CONFLICT_VERIFY"
+    },
+    {
+      "city": "Derince",
+      "province": "Kocaeli",
+      "date": "2026-10-24",
+      "local_times": [
+        "12:00",
+        "14:00",
+        "16:00"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": null,
+      "poster_wp_attachment_id": 124,
+      "public_page_id": 127,
+      "public_url": "https://milanosirki.com/milano-sirki-derince-24-ekim-2026/",
+      "venue_intended": {
+        "name": "Derince Kapalı Spor Salonu",
+        "address": "Yenikent Mahallesi, Serpil Sokak No:2, Derince / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 60,
+        "name": "Derince Spor Salonu",
+        "address": "Yenikent, Serpil Sk. No:2"
+      },
+      "venue_match": "PROBABLE_NEEDS_VERIFICATION"
+    }
+  ],
+  "observations": {
+    "live_mmc_programs_milano_count": 1,
+    "live_mmc_program_id": 14,
+    "live_mdg_milano_event_count": 1,
+    "live_mdg_event_id": 24,
+    "live_mdg_event_status": "onsale",
+    "handoff_live_sales_option_enabled": true,
+    "available_venue_default_capacity": 500,
+    "note": "Venue defaults not approved per-show capacity. Existing program/event are Yalova, not these three. MMC program-create AI ability lacks brand argument; do not call without brand-aware path."
+  }
+}
