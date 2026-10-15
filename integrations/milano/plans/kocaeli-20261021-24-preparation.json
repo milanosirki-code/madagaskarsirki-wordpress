@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "STAGING_PARENT_BRIDGE_CONFIGURED_MDG_MAPPING_AND_E2E_BLOCKED",
+  "status": "STAGING_CONFIGURED_FAMILY_CART_PASS_PAYTR_QR_BLOCKED",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -71,12 +71,16 @@
         152,
         153
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6081,
         6084
       ],
-      "staging_tickera_event_post_id": 6102
+      "staging_tickera_event_post_id": 6102,
+      "staging_production_key": "MDG-E25-6837c876393d",
+      "staging_ticket_template_id": 31,
+      "staging_poster_attachment_id": 6109,
+      "staging_maps_qr_attachment_id": 6112
     },
     {
       "city": "Darıca",
@@ -115,12 +119,16 @@
         154,
         155
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6087,
         6090
       ],
-      "staging_tickera_event_post_id": 6104
+      "staging_tickera_event_post_id": 6104,
+      "staging_production_key": "MDG-E26-b6944678a08f",
+      "staging_ticket_template_id": 32,
+      "staging_poster_attachment_id": 6110,
+      "staging_maps_qr_attachment_id": 6113
     },
     {
       "city": "Derince",
@@ -161,13 +169,17 @@
         157,
         158
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6093,
         6096,
         6099
       ],
-      "staging_tickera_event_post_id": 6106
+      "staging_tickera_event_post_id": 6106,
+      "staging_production_key": "MDG-E27-9efba8606c2e",
+      "staging_ticket_template_id": 33,
+      "staging_poster_attachment_id": 6111,
+      "staging_maps_qr_attachment_id": 6114
     }
   ],
   "observations": {
@@ -178,7 +190,7 @@
     "live_mdg_event_status": "onsale",
     "handoff_live_sales_option_enabled": true,
     "available_venue_default_capacity": 500,
-    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven.",
+    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven. Current continuation adopted existing staging objects, completed identity/templates and verified family cart; see mapping report. No production change.",
     "new_venues_created_on_central_live": [
       196,
       197,
@@ -261,10 +273,22 @@
     },
     "mdg_bridges_created": true,
     "mdg_status": "draft",
-    "wc_product_ids": null,
-    "tickera_event_ids": null,
+    "wc_product_ids": [
+      6081,
+      6084,
+      6087,
+      6090,
+      6093,
+      6096,
+      6099
+    ],
+    "tickera_event_ids": [
+      6102,
+      6104,
+      6106
+    ],
     "paytr_validated": false,
-    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check.",
+    "notes": "Europe/Istanbul applied. Real family cart test passed 2 child + 2 adult =1100 TRY after370 discount; draft checkout guard rejects sale. Cart cleaned. No paid order/PDF/QR issuance test.",
     "woo_draft_products": [
       {
         "mdg_session_id": 152,
@@ -347,14 +371,14 @@
         "city": "Derince"
       }
     ],
-    "woo_product_state": "All seven variable parents DRAFT + catalog visibility HIDDEN; 14 child/adult variations PUBLISH under draft parents; NO MDG or Tickera mappings; no order/payment created.",
+    "woo_product_state": "Seven draft hidden parents and 14 variations mapped to existing MDG sessions/types and Tickera events; production identity completed. No paid order.",
     "woo_product_prices_verified": true,
-    "tickera_event_post_status": "draft (not configured with final vendor event_date_time, event_end_date_time, _event_name links or vendor-specific metadata)",
+    "tickera_event_post_status": "draft; vendor dates/locations configured",
     "tickera_issued_ticket_count": "not verified; no intentional test order",
     "paytr_detected": false,
-    "integration_stage": "REQUIRES CHECKOUT-REJECT PREVIEW AND TICKERA VENDOR META/BRIDGE CONFIG",
-    "rate_limit": "WPVibe Pro 24-hour limit reached during final stage mapping read at ~2026-10-15 10:15 Istanbul. Stop WordPress writes until access restored. Do not rerun product or ticket creation without duplicate check.",
-    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale.",
+    "integration_stage": "CONFIGURATION_READY_EXCEPT_PAYTR; REAL_PAYMENT_PDF_FOUR_QR_TESTS_BLOCKED",
+    "rate_limit": "WPVibe limit respected; subsequent authorized work performed through authenticated native staging WordPress browser UI.",
+    "note": "Supersedes earlier unlinked skeleton statements. Existing records adopted without recreating events/products/sessions. No production deployment. All sessions final capacity500 held0 sold0.",
     "continuation_20261015": {
       "report": "docs/MILANO_KOCAELI_STAGING_BRIDGE_UI_20261015.md",
       "tickera_vendor_dates_locations_terms_saved": true,
@@ -374,6 +398,42 @@
       "paytr_test_pass": false,
       "public_sales_enabled": false,
       "notes": "This continuation supersedes earlier statements that parent Tickera Bridge flags/event selections are absent. MDG links remain absent. Ticket template not assigned; full integration still blocked. No new records or production changes."
+    },
+    "continuation_mapping_20261015": {
+      "report": "docs/MILANO_KOCAELI_STAGING_MAPPING_TEST_20261015.md",
+      "pr": 266,
+      "configuration_verified": true,
+      "mdg_mapping_completed": true,
+      "variation_mapping_verified": true,
+      "template_ids": [
+        31,
+        32,
+        33
+      ],
+      "base_template_id": 28,
+      "family_cart": {
+        "persons": 4,
+        "child": 2,
+        "adult": 2,
+        "subtotal_try": 1470,
+        "discount_try": 370,
+        "total_try": 1100,
+        "passed": true,
+        "cart_cleaned": true
+      },
+      "ci_run": 38704942292,
+      "ci_status": "success",
+      "four_php_test_groups_passed": true,
+      "four_qr_test_pass": false,
+      "payment_test_pass": false,
+      "public_sales_enabled": false,
+      "blockers": [
+        "Staging PayTR test gateway unavailable",
+        "Draft checkout guard correctly refuses sale",
+        "Paid adult/child/family orders, duplicate callback, failure/refund, concurrent capacity, PDF and four distinct QR/check-in remain untested",
+        "Milano preview discovery heading and shared checkout branding require review before launch"
+      ],
+      "production_changed": false
     }
   }
 }
