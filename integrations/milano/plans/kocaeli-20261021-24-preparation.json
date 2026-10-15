@@ -60,7 +60,7 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 196,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
+      "mmc_program_id": 16,
       "mdg_event_id": null,
       "woo_product_id": null,
       "tickera_event_id": null,
@@ -80,7 +80,9 @@
       "staging_production_key": "MDG-E25-6837c876393d",
       "staging_ticket_template_id": 31,
       "staging_poster_attachment_id": 6109,
-      "staging_maps_qr_attachment_id": 6112
+      "staging_maps_qr_attachment_id": 6112,
+      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
+      "live_mmc_event_id": null
     },
     {
       "city": "Darıca",
@@ -108,7 +110,7 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 197,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
+      "mmc_program_id": 17,
       "mdg_event_id": null,
       "woo_product_id": null,
       "tickera_event_id": null,
@@ -128,7 +130,9 @@
       "staging_production_key": "MDG-E26-b6944678a08f",
       "staging_ticket_template_id": 32,
       "staging_poster_attachment_id": 6110,
-      "staging_maps_qr_attachment_id": 6113
+      "staging_maps_qr_attachment_id": 6113,
+      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
+      "live_mmc_event_id": null
     },
     {
       "city": "Derince",
@@ -157,7 +161,7 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 198,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
+      "mmc_program_id": 18,
       "mdg_event_id": null,
       "woo_product_id": null,
       "tickera_event_id": null,
@@ -179,7 +183,9 @@
       "staging_production_key": "MDG-E27-9efba8606c2e",
       "staging_ticket_template_id": 33,
       "staging_poster_attachment_id": 6111,
-      "staging_maps_qr_attachment_id": 6114
+      "staging_maps_qr_attachment_id": 6114,
+      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
+      "live_mmc_event_id": null
     }
   ],
   "observations": {
@@ -445,5 +451,32 @@
       "production_unchanged": true,
       "report": "docs/MILANO_KOCAELI_PAYTR_RECHECK_20261015.md"
     }
+  },
+  "live_continuation_20261015": {
+    "report": "docs/MILANO_KOCAELI_LIVE_YALOVA_REFERENCE_20261015.md",
+    "program_ids": [
+      16,
+      17,
+      18
+    ],
+    "mdg_event_ids": [],
+    "public_sales_enabled": false,
+    "venue_submission": "AUTO_REVIEW_REJECTED_ATTESTATION_REQUIRES_EXPLICIT_FACTUAL_CONFIRMATION",
+    "yalova_unchanged": true,
+    "reference": {
+      "mmc": 14,
+      "mdg": 24,
+      "sessions": [
+        154,
+        155
+      ],
+      "tickera": 6316,
+      "parents": [
+        6318,
+        6321
+      ],
+      "template": 29
+    },
+    "payment_architecture": "Use existing central Madagaskar checkout as Yalova; no separate production PayTR merchant required"
   }
 }
