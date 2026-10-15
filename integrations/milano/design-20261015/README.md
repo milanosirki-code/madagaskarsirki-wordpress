@@ -15,11 +15,11 @@ Desktop live view inspected: event poster, buttons, price cards and four-column 
 All four city tabs exercised: Karamürsel2, Yalova2, Darıca2, Derince3 visible correct session forms; unrelated forms hidden, server validations unchanged.
 Darıca23October19:30 family1 submitted via new visual form to native central landing: correct Milano/Darıca, date/time,4people,1100TRY. Did not click final continuation/create cart/order/payment in this redesign test.
 Temporary draft212 framed actual live event and ticket pages at390px outer iframe width, effective375px document viewport after scrollbar. Both scrollWidth375=clientWidth375 (no horizontal page overflow). Visible Derince forms339px; submit buttons301px; quantity inputs85x48px. Mobile screenshot visually inspected; no overlapping fields/buttons. Temporary draft212 moved to recoverable trash after testing.
-Header/footer templates, Yalova event detail page, homepage and other informational pages were outside this five-page redesign and unchanged. Existing footer still references Yalova; no claim of full-site redesign.
+Header, Yalova event detail page, homepage and other informational pages unchanged. Shared assembler//footer updated with only two copy replacements inviting city selection. Contact links and payment disclosure preserved. Backup footer-before.json and final footer-after.html recorded.
 
 ## Business state preserved
 No central Madagaskar code, Woo products, Tickera events/templates, MDG/MMC capacities, orders, PayTR callback or payment credentials changed. Kocaeli sale state remains the authorized live state from prior task; no new paid E2E claim.
 WordPress native revisions and GitHub original-source backup provide rollback. No plugins installed or deployed for design. Branch feat/milano-professional-pages-20261015 derives from existing reviewed project work.
 
 ## Evidence
-Browser desktop catalog and event screenshots and mobile frame screenshots captured. Initial scratch/browser synchronization was unavailable; final catalog screenshot was recaptured with unique JPEG filename after failure. Do not return a file link unless synchronized file is confirmed available.
+Desktop and mobile screenshots visually inspected. Final live catalog screenshot milano-professional-final-1792087686105.jpg synchronized and opened successfully including updated footer. Draft PR #268 contains source backups.
