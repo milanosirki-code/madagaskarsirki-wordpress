@@ -215,7 +215,9 @@ final class MDG_New_Event_Draft_Producer {
 
     private static function create_tickera_event( $event, array $plan ) {
         $p = $plan['products'][0];
-        $first_end_local = self::utc_to_local_mysql( (string) $p['end_at'] );
+        // One Tickera event covers every session; end at the LAST planned session, not the first.
+        $last_end_local = (string) ( $plan['tickera']['last_end_local'] ?? '' );
+        if ( '' === $last_end_local ) { throw new Exception( 'Son seans bitiş saati üretim planında bulunamadı.' ); }
         $post_id = wp_insert_post( array(
             'post_type'    => 'tc_events',
             'post_status'  => 'draft',
@@ -231,7 +233,7 @@ final class MDG_New_Event_Draft_Producer {
             '_mdg_event_id'                => (int) $event->id,
             '_mdg_production_key'          => (string) $plan['production_key'],
             'event_date_time'              => (string) $plan['tickera']['first_start_local'],
-            'event_end_date_time'          => $first_end_local,
+            'event_end_date_time'          => $last_end_local,
             'event_location'               => (string) $plan['tickera']['location'],
             'event_terms'                  => (string) $plan['tickera']['event_terms'],
             'event_logo_file_url'          => wp_get_attachment_url( (int) $plan['tickera']['hero_attachment_id'] ) ?: '',
