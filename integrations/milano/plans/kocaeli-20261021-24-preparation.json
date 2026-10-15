@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "LIVE_DRAFT_CONFIGURATION_READY_E2E_UNVERIFIED_NOT_ONSALE",
+  "status": "LIVE_ONSALE_USER_AUTHORIZED_WITH_REMAINING_TESTS_UNVERIFIED",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -31,7 +31,7 @@
     "per_session_four_ticket_qr_staging_pass": false,
     "paytr_checkout_callback_verified": false,
     "brand_redirect_and_return_verified": false,
-    "public_sales_enabled": false
+    "public_sales_enabled": true
   },
   "events": [
     {
@@ -81,7 +81,7 @@
       "staging_ticket_template_id": 31,
       "staging_poster_attachment_id": 6109,
       "staging_maps_qr_attachment_id": 6112,
-      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_status": "ONSALE",
       "live_mmc_event_id": 16,
       "live_mdg_session_ids": [
         181,
@@ -143,7 +143,7 @@
       "staging_ticket_template_id": 32,
       "staging_poster_attachment_id": 6110,
       "staging_maps_qr_attachment_id": 6113,
-      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_status": "ONSALE",
       "live_mmc_event_id": 17,
       "live_mdg_session_ids": [
         179,
@@ -208,7 +208,7 @@
       "staging_ticket_template_id": 33,
       "staging_poster_attachment_id": 6111,
       "staging_maps_qr_attachment_id": 6114,
-      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_status": "ONSALE",
       "live_mmc_event_id": 18,
       "live_mdg_session_ids": [
         176,
@@ -525,7 +525,7 @@
       27,
       26
     ],
-    "public_sales_enabled": false,
+    "public_sales_enabled": true,
     "venue_submission": "COMPLETED_AFTER_EXPLICIT_USER_CONFIRMATION",
     "yalova_unchanged": true,
     "reference": {
@@ -554,5 +554,40 @@
       33
     ],
     "live_single_entry_limit_verified_7_of_7": true
+  },
+  "live_sales_opened_20261015": {
+    "report": "docs/MILANO_KOCAELI_SALES_OPENED_20261015.md",
+    "user_authorization_time": "2026-10-15T20:32:15+03:00",
+    "authorization": "Proceed without waiting for remaining real payment/capacity tests; same existing Yalova infrastructure",
+    "native_publish_event_ids": [
+      28,
+      27,
+      26
+    ],
+    "all_seven_sessions_onsale": true,
+    "prices_try": [
+      245,
+      490,
+      1100
+    ],
+    "capacity_per_session": 500,
+    "central_catalog_milano_rows": 9,
+    "public_milano_kocaeli_forms": 7,
+    "live_family_checkout_total_try": 1100,
+    "live_family_checkout_child_qty": 2,
+    "live_family_checkout_adult_qty": 2,
+    "test_order_submitted": false,
+    "test_cart_cleaned": true,
+    "payment_taken": false,
+    "real_payment_callback_test_pass": false,
+    "paid_capacity_e2e_test_pass": false,
+    "madagaskar_city_listing_excludes_kocaeli_ids": [
+      26,
+      27,
+      28
+    ],
+    "legacy_city_snippet_id": 30,
+    "yalova_unchanged": true,
+    "production_paytr_settings_unchanged": true
   }
 }
