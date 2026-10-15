@@ -11,11 +11,12 @@
   fbq('consent', 'grant');
   fbq('trackSingle', pixel, 'PageView');
   var events = {
-    '/milano-sirki-karamursel-21-ekim-2026/': 'Milano Sirki Karamürsel 21 Ekim 2026',
+        '/milano-sirki-yalova-22-ekim-2026/': 'Milano Sirki Yalova 22 Ekim 2026',
+'/milano-sirki-karamursel-21-ekim-2026/': 'Milano Sirki Karamürsel 21 Ekim 2026',
     '/milano-sirki-darica-23-ekim-2026/': 'Milano Sirki Darıca 23 Ekim 2026',
     '/milano-sirki-derince-24-ekim-2026/': 'Milano Sirki Derince 24 Ekim 2026'
   };
-  if (events[location.pathname]) {
+    if (events[location.pathname] && document.querySelector('main h1')) {
     fbq('trackSingle', pixel, 'ViewContent', {
       content_name: events[location.pathname],
       content_ids: [location.pathname.replace(/^\/|\/$/g, '')],
