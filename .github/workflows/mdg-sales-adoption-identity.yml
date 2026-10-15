@@ -13,3 +13,5 @@ jobs:
       - uses: actions/checkout@v4
       - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sales-adopter.php
       - run: php tests/mdg/sales-adoption-identity.php
+      - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php
+      - run: php tests/mdg/draft-structure-preservation.php
