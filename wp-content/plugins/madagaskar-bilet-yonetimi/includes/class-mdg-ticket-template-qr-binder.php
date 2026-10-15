@@ -289,7 +289,12 @@ final class MDG_Ticket_Template_QR_Binder {
         // Milano must use the brand-aware production plan, never Madagaskar's legacy default.
         if ( 0 === strpos( (string) $event->title, 'Milano Sirki' ) ) {
             $plan = class_exists( 'MDG_New_Event_Production_Plan' ) ? MDG_New_Event_Production_Plan::build( $event ) : array();
-            $out['base_template_id'] = absint( $plan['template']['base_template_id'] ?? 0 );
+            $candidate_id = absint( $plan['template']['base_template_id'] ?? 0 );
+            global $wpdb;
+            $template_name = $candidate_id ? (string) $wpdb->get_var( $wpdb->prepare(
+                "SELECT name FROM {$wpdb->prefix}tickera_ticket_templates WHERE id=%d", $candidate_id
+            ) ) : '';
+            $out['base_template_id'] = 0 === strpos( $template_name, 'Milano Sirki' ) ? $candidate_id : 0;
         } else {
             $out['base_template_id'] = self::detect_base_template_id( $out['product_ids'], $out['variation_ids'] );
         }
