@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "VENUES_CREATED_PROGRAMS_PENDING_BRAND_SAFE_CREATION",
+  "status": "STAGING_PROGRAM_MDG_DRAFT_READY_NOT_ONSALE",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -23,10 +23,10 @@
   "customer_entry_site": "milanosirki.com",
   "one_order_one_capacity_ledger": true,
   "launch_gates": {
-    "central_mmc_brand_aware_create_proven": false,
+    "central_mmc_brand_aware_create_proven": true,
     "venue_identity_verified": true,
     "capacity_user_approved": true,
-    "three_owner_unique_mdg_links": false,
+    "three_owner_unique_mdg_links": true,
     "woo_and_tickera_products_verified": false,
     "per_session_four_ticket_qr_staging_pass": false,
     "paytr_checkout_callback_verified": false,
@@ -63,7 +63,15 @@
       "mmc_program_id": null,
       "mdg_event_id": null,
       "woo_product_id": null,
-      "tickera_event_id": null
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 15,
+      "staging_mmc_event_id": 15,
+      "staging_mdg_event_id": 25,
+      "staging_mdg_session_ids": [
+        152,
+        153
+      ],
+      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
     },
     {
       "city": "Darıca",
@@ -94,7 +102,15 @@
       "mmc_program_id": null,
       "mdg_event_id": null,
       "woo_product_id": null,
-      "tickera_event_id": null
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 16,
+      "staging_mmc_event_id": 16,
+      "staging_mdg_event_id": 26,
+      "staging_mdg_session_ids": [
+        154,
+        155
+      ],
+      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
     },
     {
       "city": "Derince",
@@ -126,7 +142,16 @@
       "mmc_program_id": null,
       "mdg_event_id": null,
       "woo_product_id": null,
-      "tickera_event_id": null
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 17,
+      "staging_mmc_event_id": 17,
+      "staging_mdg_event_id": 27,
+      "staging_mdg_session_ids": [
+        156,
+        157,
+        158
+      ],
+      "staging_status": "MDG_DRAFT_NOT_FOR_SALE"
     }
   ],
   "observations": {
@@ -137,7 +162,7 @@
     "live_mdg_event_status": "onsale",
     "handoff_live_sales_option_enabled": true,
     "available_venue_default_capacity": 500,
-    "note": "Only 3 MDG master venues created; no MMC program or order. Program-create AI and live MMC admin lack brand field; invoking would default to Madagaskar. Do not use. Need staged reviewed brand-safe admin+AI narrow patch before Milano programme creation.",
+    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven.",
     "new_venues_created_on_central_live": [
       196,
       197,
@@ -145,12 +170,84 @@
     ],
     "mmc_admin_main_brand_field": false,
     "ai_program_create_schema_accepts_brand": false,
-    "live_program_service_missing_brand_defaults_to_madagaskar": true
+    "live_program_service_missing_brand_defaults_to_madagaskar": true,
+    "staging_created_only": true,
+    "brand_aware_source_live_deployment_pending": true
   },
   "approval": {
     "confirmed_at": "2026-10-15",
     "capacity_per_session": 500,
     "venue_names_and_addresses_from_posters": true,
     "approved_by": "user"
+  },
+  "staging": {
+    "site": "staging-f321-milanosirki-lgajf.wpcomstaging.com",
+    "created_date": "2026-10-15",
+    "brand_entry_test_pass": true,
+    "venues": [
+      196,
+      197,
+      198
+    ],
+    "program_ids": [
+      15,
+      16,
+      17
+    ],
+    "mmc_event_ids": [
+      15,
+      16,
+      17
+    ],
+    "mdg_event_ids": [
+      25,
+      26,
+      27
+    ],
+    "mdg_session_ids": [
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158
+    ],
+    "session_capacities": [
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ],
+    "local_times": [
+      "2026-10-21 17:30",
+      "2026-10-21 19:30",
+      "2026-10-23 17:30",
+      "2026-10-23 19:30",
+      "2026-10-24 12:00",
+      "2026-10-24 14:00",
+      "2026-10-24 16:00"
+    ],
+    "tickets": {
+      "child_price": 245,
+      "adult_price": 490,
+      "family_price": 1100,
+      "family_enabled_mdg_event_ids": [
+        25,
+        26,
+        27
+      ],
+      "family_model": "Virtual 2 child + 2 adult via dedicated MDG Family Package plugin; each component must issue one admission ticket, four total",
+      "family_qr_test_pass": false
+    },
+    "mdg_bridges_created": true,
+    "mdg_status": "draft",
+    "wc_product_ids": null,
+    "tickera_event_ids": null,
+    "paytr_validated": false,
+    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check."
   }
 }
