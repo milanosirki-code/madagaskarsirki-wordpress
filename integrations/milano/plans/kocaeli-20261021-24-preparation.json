@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "PREPARED_NOT_ONSALE",
+  "status": "VENUES_CREATED_PROGRAMS_PENDING_BRAND_SAFE_CREATION",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -24,8 +24,8 @@
   "one_order_one_capacity_ledger": true,
   "launch_gates": {
     "central_mmc_brand_aware_create_proven": false,
-    "venue_identity_verified": false,
-    "capacity_user_approved": false,
+    "venue_identity_verified": true,
+    "capacity_user_approved": true,
     "three_owner_unique_mdg_links": false,
     "woo_and_tickera_products_verified": false,
     "per_session_four_ticket_qr_staging_pass": false,
@@ -44,7 +44,7 @@
       ],
       "show_duration_min": 60,
       "seating": "general-admission",
-      "capacity_per_session": null,
+      "capacity_per_session": 500,
       "poster_wp_attachment_id": 122,
       "public_page_id": 125,
       "public_url": "https://milanosirki.com/milano-sirki-karamursel-21-ekim-2026/",
@@ -57,7 +57,13 @@
         "name": "Karamürsel Spor Salonu",
         "address": "Tabakhane, 115. Cd. No:7"
       },
-      "venue_match": "NOT_CONFIRMED_NAME_AND_ADDRESS_DIFFER"
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 196,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null
     },
     {
       "city": "Darıca",
@@ -69,7 +75,7 @@
       ],
       "show_duration_min": 60,
       "seating": "general-admission",
-      "capacity_per_session": null,
+      "capacity_per_session": 500,
       "poster_wp_attachment_id": 123,
       "public_page_id": 126,
       "public_url": "https://milanosirki.com/milano-sirki-darica-23-ekim-2026/",
@@ -82,7 +88,13 @@
         "name": "Eren Şamdan Kapalı Spor Salonu",
         "address": "Bağlarbaşı, Özbay Sk. No:67"
       },
-      "venue_match": "ADDRESS_SIMILAR_NAME_CONFLICT_VERIFY"
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 197,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null
     },
     {
       "city": "Derince",
@@ -95,7 +107,7 @@
       ],
       "show_duration_min": 60,
       "seating": "general-admission",
-      "capacity_per_session": null,
+      "capacity_per_session": 500,
       "poster_wp_attachment_id": 124,
       "public_page_id": 127,
       "public_url": "https://milanosirki.com/milano-sirki-derince-24-ekim-2026/",
@@ -108,7 +120,13 @@
         "name": "Derince Spor Salonu",
         "address": "Yenikent, Serpil Sk. No:2"
       },
-      "venue_match": "PROBABLE_NEEDS_VERIFICATION"
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 198,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null
     }
   ],
   "observations": {
@@ -119,6 +137,20 @@
     "live_mdg_event_status": "onsale",
     "handoff_live_sales_option_enabled": true,
     "available_venue_default_capacity": 500,
-    "note": "Venue defaults not approved per-show capacity. Existing program/event are Yalova, not these three. MMC program-create AI ability lacks brand argument; do not call without brand-aware path."
+    "note": "Only 3 MDG master venues created; no MMC program or order. Program-create AI and live MMC admin lack brand field; invoking would default to Madagaskar. Do not use. Need staged reviewed brand-safe admin+AI narrow patch before Milano programme creation.",
+    "new_venues_created_on_central_live": [
+      196,
+      197,
+      198
+    ],
+    "mmc_admin_main_brand_field": false,
+    "ai_program_create_schema_accepts_brand": false,
+    "live_program_service_missing_brand_defaults_to_madagaskar": true
+  },
+  "approval": {
+    "confirmed_at": "2026-10-15",
+    "capacity_per_session": 500,
+    "venue_names_and_addresses_from_posters": true,
+    "approved_by": "user"
   }
 }
