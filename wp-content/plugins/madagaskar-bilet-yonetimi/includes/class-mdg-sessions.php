@@ -214,6 +214,29 @@ final class MDG_Sessions {
         $types_table = MDG_DB::table( 'ticket_types' );
         $now = MDG_DB::now();
 
+        // Content-only saves must not delete stable session/type IDs or their sales links.
+        $existing = self::by_event( $event_id );
+        $same = count( $existing ) === count( $sessions );
+        $protected = false;
+        $desired = array();
+        foreach ( $sessions as $s ) { $desired[] = self::session_shape( $s ); }
+        sort( $desired );
+        $actual = array();
+        $desired_types = self::type_shapes( $ticket_types, true );
+        foreach ( $existing as $s ) {
+            $actual[] = self::session_shape( (array) $s );
+            $old_types = self::ticket_types_by_session( $s->id );
+            if ( self::type_shapes( $old_types, false ) !== $desired_types ) { $same = false; }
+            if ( (int) $s->wc_product_id || (int) $s->tickera_event_id ||
+                 (int) $s->held_units || (int) $s->sold_units || 'draft' !== (string) $s->status ) { $protected = true; }
+            foreach ( $old_types as $t ) { if ( (int) $t->wc_variation_id ) { $protected = true; } }
+        }
+        sort( $actual );
+        if ( $existing && $same && $actual === $desired ) { return true; }
+        if ( $protected ) {
+            return new WP_Error( 'mdg_structure_protected', 'Bağlı, rezerve veya satılmış seans yapısı bu taslak ekranından değiştirilemez. İçerik kaydında aynı seans ve bilet kataloğunu koruyun.' );
+        }
+
         $session_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$sessions_table} WHERE event_id=%d", $event_id ) );
         if ( $session_ids ) {
             $placeholders = implode( ',', array_fill( 0, count( $session_ids ), '%d' ) );
@@ -257,4 +280,22 @@ final class MDG_Sessions {
 
         return true;
     }
+
+    private static function session_shape( array $row ) {
+        return wp_json_encode( array( (string) $row['start_at'], (string) $row['end_at'], (int) $row['capacity_total'] ) );
+    }
+
+    private static function type_shapes( array $rows, $input ) {
+        $out = array();
+        foreach ( $rows as $row ) {
+            $r = (array) $row;
+            // The form regenerates sort_order; keep the stored order on a content-only save.
+            $out[] = wp_json_encode( array( (string) $r['code'], (string) $r['label'],
+                number_format( (float) $r['price'], 2, '.', '' ), (int) $r['capacity_units'],
+                $input ? 1 : (int) $r['is_active'] ) );
+        }
+        sort( $out );
+        return $out;
+    }
 }
+
