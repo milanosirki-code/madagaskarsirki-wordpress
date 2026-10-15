@@ -17,3 +17,5 @@ jobs:
       - run: php tests/mdg/draft-structure-preservation.php
       - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php
       - run: php tests/mdg/milano-template-brand.php
+      - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-draft-producer.php
+      - run: php tests/mdg/draft-identity-completion.php
