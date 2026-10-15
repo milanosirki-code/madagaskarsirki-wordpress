@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "STAGING_DRAFT_WOO_TICKERA_SKELETON_UNLINKED_SALES_BLOCKED",
+  "status": "STAGING_PARENT_BRIDGE_CONFIGURED_MDG_MAPPING_AND_E2E_BLOCKED",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -354,6 +354,26 @@
     "paytr_detected": false,
     "integration_stage": "REQUIRES CHECKOUT-REJECT PREVIEW AND TICKERA VENDOR META/BRIDGE CONFIG",
     "rate_limit": "WPVibe Pro 24-hour limit reached during final stage mapping read at ~2026-10-15 10:15 Istanbul. Stop WordPress writes until access restored. Do not rerun product or ticket creation without duplicate check.",
-    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale."
+    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale.",
+    "continuation_20261015": {
+      "report": "docs/MILANO_KOCAELI_STAGING_BRIDGE_UI_20261015.md",
+      "tickera_vendor_dates_locations_terms_saved": true,
+      "parent_bridge_event_links_ui_verified": {
+        "6081": 6102,
+        "6084": 6102,
+        "6087": 6104,
+        "6090": 6104,
+        "6093": 6106,
+        "6096": 6106,
+        "6099": 6106
+      },
+      "products_reopened_draft_hidden_verified": 7,
+      "mdg_mapping_completed": false,
+      "variation_mapping_verified": false,
+      "four_qr_test_pass": false,
+      "paytr_test_pass": false,
+      "public_sales_enabled": false,
+      "notes": "This continuation supersedes earlier statements that parent Tickera Bridge flags/event selections are absent. MDG links remain absent. Ticket template not assigned; full integration still blocked. No new records or production changes."
+    }
   }
 }
