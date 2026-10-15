@@ -286,7 +286,13 @@ final class MDG_Ticket_Template_QR_Binder {
         $out['event_date'] = $dates ? min( $dates ) : '';
         if ( ! $out['product_ids'] || ! $out['variation_ids'] ) { $out['errors'][]='WooCommerce mapping eksik.'; }
 
-        $out['base_template_id'] = self::detect_base_template_id( $out['product_ids'], $out['variation_ids'] );
+        // Milano must use the brand-aware production plan, never Madagaskar's legacy default.
+        if ( 0 === strpos( (string) $event->title, 'Milano Sirki' ) ) {
+            $plan = class_exists( 'MDG_New_Event_Production_Plan' ) ? MDG_New_Event_Production_Plan::build( $event ) : array();
+            $out['base_template_id'] = absint( $plan['template']['base_template_id'] ?? 0 );
+        } else {
+            $out['base_template_id'] = self::detect_base_template_id( $out['product_ids'], $out['variation_ids'] );
+        }
         if ( ! $out['base_template_id'] ) { $out['errors'][]='Kullanılan Ticket Designer şablonu bulunamadı.'; return $out; }
 
         $out['candidate'] = self::detect_static_qr_candidate( $out['base_template_id'] );
