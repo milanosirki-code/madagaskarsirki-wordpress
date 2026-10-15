@@ -15,6 +15,6 @@ verify_brand_contract(strpos($admin, '<option value="Milano Sirki">Milano Sirki<
 verify_brand_contract(strpos($admin, '<option value="Madagaskar Sirki">Madagaskar Sirki</option>') !== false, 'Madagaskar option preserved');
 verify_brand_contract(strpos($ability, "'brand'         => sanitize_text_field( \$input['brand'] ?? 'Madagaskar Sirki' )") !== false, 'AI callback forwards explicit brand and preserves legacy');
 verify_brand_contract(strpos($ability, "'brand'         => array( 'type' => 'string', 'enum' => array( 'Madagaskar Sirki', 'Milano Sirki' ) )") !== false, 'AI registered schema validates brand');
-verify_brand_contract(strpos($service, "'brand'         => $brand") !== false, 'MMC service persists brand');
-verify_brand_contract(strpos($service, "in_array( $brand, array( 'Madagaskar Sirki', 'Milano Sirki' ), true )") !== false, 'MMC rejects unknown brand');
+verify_brand_contract(strpos($service, "'brand'         => ".'$brand') !== false, 'MMC service persists brand');
+verify_brand_contract(strpos($service, "in_array( ".'$brand' . ", array( 'Madagaskar Sirki', 'Milano Sirki' ), true )") !== false, 'MMC rejects unknown brand');
 echo "PASS brand-aware programme entry contract\n";
