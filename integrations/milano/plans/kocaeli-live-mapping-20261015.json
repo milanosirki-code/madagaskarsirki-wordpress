@@ -1,7 +1,7 @@
 {
   "date": "2026-10-15",
   "timezone": "Europe/Istanbul",
-  "status": "LIVE_DRAFT_CONFIGURATION_READY_E2E_UNVERIFIED_NOT_ONSALE",
+  "status": "LIVE_ONSALE_USER_AUTHORIZED_WITH_REMAINING_TESTS_UNVERIFIED",
   "programs": {
     "Karamursel": 16,
     "Darica": 17,
@@ -11,7 +11,7 @@
     {
       "id": "26",
       "title": "Milano Sirki — Derince",
-      "status": "draft",
+      "status": "onsale",
       "public_uuid": "9efba860-6c2e-5245-a951-d9d814fdac8f",
       "venue_id": "198",
       "venue_maps_url": "https://www.google.com/maps/search/?api=1&query=Derince%20Kapal%C4%B1%20Spor%20Salonu%20Yenikent%20Mahallesi%20Serpil%20Sokak%20No%202%20Merkez%20Bankas%C4%B1%20Derince%20Anadolu%20Lisesi%20yan%C4%B1%20Derince%20Kocaeli",
@@ -21,7 +21,7 @@
     {
       "id": "27",
       "title": "Milano Sirki — Darıca",
-      "status": "draft",
+      "status": "onsale",
       "public_uuid": "b6944678-a08f-50be-a421-de1f8267f658",
       "venue_id": "197",
       "venue_maps_url": "https://www.google.com/maps/search/?api=1&query=Eray%20%C5%9Eamdan%20Kapal%C4%B1%20Spor%20Salonu%20Ba%C4%9Flarba%C5%9F%C4%B1%20Mahallesi%20%C3%96zbay%20Sokak%20No%2067%20Dar%C4%B1ca%20Kocaeli",
@@ -31,7 +31,7 @@
     {
       "id": "28",
       "title": "Milano Sirki — Karamürsel",
-      "status": "draft",
+      "status": "onsale",
       "public_uuid": "6837c876-393d-5d72-a2a8-5a2b0961fa5b",
       "venue_id": "196",
       "venue_maps_url": "https://www.google.com/maps/search/?api=1&query=Atat%C3%BCrk%20Kapal%C4%B1%20Spor%20Salonu%204%20Temmuz%20Mahallesi%20115%20Nolu%20Sokak%20Karam%C3%BCrsel%20Kocaeli",
@@ -315,8 +315,10 @@
     "sold": 0,
     "payment_test": false,
     "four_qr_pdf_test": false,
-    "public_sales_enabled": false,
-    "yalova_unchanged": true
+    "public_sales_enabled": true,
+    "yalova_unchanged": true,
+    "live_family_checkout_before_payment": true,
+    "real_payment_still_unverified": true
   },
-  "note": "All IDs are live IDs. Store local session time as DB UTC+3 interpretation. No production code/PayTR/global launch gate modified."
+  "note": "All IDs are live IDs. Store local session time as DB UTC+3 interpretation. No production code/PayTR/global launch gate modified. 20:32 explicit user authorization: native public launch completed. Existing Yalova common infrastructure reused; no PayTR settings/global sales gate changed. See sales-opened report."
 }
