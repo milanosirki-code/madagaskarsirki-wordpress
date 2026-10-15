@@ -10,6 +10,7 @@ final class MDG_Sales_Adopter {
     public static function hooks() {
         add_action( 'admin_post_mdg_adopt_existing_sales', array( __CLASS__, 'handle_adopt' ) );
         add_action( 'admin_post_mdg_unlink_existing_sales', array( __CLASS__, 'handle_unlink' ) );
+        add_action( 'admin_post_mdg_finalize_adopted_draft', array( __CLASS__, 'handle_finalize_draft' ) );
     }
 
     public static function render() {
@@ -51,6 +52,10 @@ final class MDG_Sales_Adopter {
         $current = self::current_mapping( (int) $selected->id );
         if ( $current['is_complete'] ) {
             self::render_current_mapping( $selected, $current );
+            echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:12px 0">';
+            echo '<input type="hidden" name="action" value="mdg_finalize_adopted_draft"><input type="hidden" name="event_id" value="' . esc_attr( $selected->id ) . '">';
+            wp_nonce_field( 'mdg_finalize_adopted_draft_' . (int) $selected->id, 'mdg_nonce' );
+            echo '<button class="button button-secondary">Doğrulanmış Taslak Kimliklerini Tamamla</button></form>';
             echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(\'Yalnızca Madagaskar V2 eşleştirmesi kaldırılacak. WooCommerce ve Tickera kayıtları silinmeyecek. Devam edilsin mi?\');">';
             echo '<input type="hidden" name="action" value="mdg_unlink_existing_sales"><input type="hidden" name="event_id" value="' . esc_attr( $selected->id ) . '">';
             wp_nonce_field( 'mdg_unlink_existing_sales_' . (int) $selected->id, 'mdg_nonce' );
@@ -145,6 +150,81 @@ final class MDG_Sales_Adopter {
         exit;
     }
 
+    public static function handle_finalize_draft() {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) { wp_die( 'Yetkiniz yok.' ); }
+        $id = absint( $_POST['event_id'] ?? 0 );
+        check_admin_referer( 'mdg_finalize_adopted_draft_' . $id, 'mdg_nonce' );
+        $result = self::finalize_draft_identity( $id );
+        if ( is_wp_error( $result ) ) { self::redirect_error( $id, $result->get_error_message() ); }
+        wp_safe_redirect( add_query_arg( array( 'page'=>'mdg-settings', 'mdg_link_event'=>$id, 'mdg_adopted'=>1 ), admin_url( 'admin.php' ) ) );
+        exit;
+    }
+
+    /** Complete provenance only after revalidating all existing draft objects; never create/publish. */
+    public static function finalize_draft_identity( $event_id ) {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) { return new WP_Error( 'mdg_identity_forbidden', 'Yetkiniz yok.' ); }
+        $event_id = absint( $event_id );
+        $event = MDG_Events::get( $event_id );
+        if ( ! $event || 'draft' !== (string) $event->status ) { return new WP_Error( 'mdg_identity_draft', 'Yalnızca taslak etkinlik kullanılabilir.' ); }
+        $plan = self::build_plan( $event );
+        if ( ! empty( $plan['errors'] ) || empty( $plan['tickera_event_id'] ) ) { return new WP_Error( 'mdg_identity_plan', 'Tekil marka/tarih/seans eşleştirmesi doğrulanamadı.' ); }
+        $tc = (int) $plan['tickera_event_id'];
+        if ( ! in_array( get_post_status( $tc ), array( 'draft','private' ), true ) ) { return new WP_Error( 'mdg_identity_tickera', 'Tickera etkinliği taslak olmalıdır.' ); }
+        if ( ! class_exists( 'MDG_New_Event_Production_Plan' ) ) { return new WP_Error( 'mdg_identity_missing', 'Üretim planı kullanılamıyor.' ); }
+        $production = MDG_New_Event_Production_Plan::build( $event );
+        $key = (string) ( $production['production_key'] ?? '' );
+        if ( ! $key || 0 !== strpos( $key, 'MDG-E' . $event_id . '-' ) ) { return new WP_Error( 'mdg_identity_key', 'Üretim anahtarı doğrulanamadı.' ); }
+        $writes = array( $tc => array( '_mdg_event_id'=>$event_id, '_mdg_production_key'=>$key, '_mdg_managed'=>'1', '_mdg_adopted_existing'=>'1' ) );
+        $sessions = MDG_Sessions::by_event( $event_id );
+        foreach ( $plan['sessions'] as $row ) {
+            $sid = (int) $row['session_id']; $pid = (int) $row['product_id'];
+            $s = null;
+            foreach ( $sessions as $candidate ) { if ( (int) $candidate->id === $sid ) { $s = $candidate; break; } }
+            if ( ! $s || 'draft' !== (string) $s->status || (int) $s->held_units || (int) $s->sold_units ||
+                 (int) $s->wc_product_id !== $pid || (int) $s->tickera_event_id !== $tc ||
+                 ! in_array( get_post_status( $pid ), array( 'draft','private' ), true ) ) {
+                return new WP_Error( 'mdg_identity_session', 'Seans taslak/boş kapasite/eşleştirme kontrolü geçmedi.' );
+            }
+            $base = array( '_mdg_event_id'=>$event_id, '_mdg_session_id'=>$sid, '_mdg_production_key'=>$key, '_mdg_managed'=>'1', '_mdg_adopted_existing'=>'1' );
+            $writes[$pid] = $base;
+            $types = MDG_Sessions::ticket_types_by_session( $sid );
+            foreach ( $row['variations'] as $v ) {
+                $vid = (int) $v['variation_id']; $tid = (int) $v['ticket_type_id']; $type = null;
+                foreach ( $types as $candidate ) { if ( (int) $candidate->id === $tid ) { $type = $candidate; break; } }
+                if ( ! $type || (int) $type->wc_variation_id !== $vid || wp_get_post_parent_id( $vid ) !== $pid ) {
+                    return new WP_Error( 'mdg_identity_type', 'Bilet türü/varyasyon/ana ürün kontrolü geçmedi.' );
+                }
+                $writes[$vid] = array_merge( $base, array( '_mdg_ticket_type_id'=>$tid ) );
+            }
+        }
+        // Preflight every identity before any write; existing foreign metadata is never overwritten.
+        foreach ( $writes as $id=>$meta ) {
+            foreach ( $meta as $k=>$expected ) {
+                $old = get_post_meta( $id, $k, true );
+                if ( '' !== (string) $old && (string) $old !== (string) $expected ) {
+                    return new WP_Error( 'mdg_identity_conflict', 'Başka kimlik taşıyan nesneye yazılmadı: #' . $id );
+                }
+            }
+        }
+        global $wpdb;
+        $wpdb->query( 'START TRANSACTION' );
+        try {
+            foreach ( $writes as $id=>$meta ) {
+                foreach ( $meta as $k=>$value ) {
+                    update_post_meta( $id, $k, $value );
+                    if ( (string) get_post_meta( $id, $k, true ) !== (string) $value ) { throw new Exception( 'Kimlik meta kaydı doğrulanamadı.' ); }
+                }
+            }
+            self::audit( 'sales.existing.draft_identity', $event_id, array( 'objects'=>array_keys($writes), 'production_key'=>$key ) );
+            $wpdb->query( 'COMMIT' );
+        } catch ( Throwable $e ) {
+            $wpdb->query( 'ROLLBACK' );
+            foreach ( array_keys( $writes ) as $id ) { clean_post_cache( $id ); }
+            return new WP_Error( 'mdg_identity_write', $e->getMessage() );
+        }
+        return array( 'event_id'=>$event_id, 'object_ids'=>array_keys($writes), 'production_key'=>$key );
+    }
+
     public static function handle_unlink() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) { wp_die( 'Yetkiniz yok.' ); }
         $event_id = absint( $_POST['event_id'] ?? 0 );
@@ -203,17 +283,19 @@ final class MDG_Sales_Adopter {
         $groups = self::ticket_product_groups();
         if ( ! $groups ) { $out['errors'][]='Mevcut Tickera/WooCommerce ürün grubu bulunamadı.'; return $out; }
 
-        $best = null;
+        $valid = array();
         foreach ( $groups as $eid => $products ) {
             $candidate = self::match_group( $event, $sessions, absint( $eid ), $products );
-            if ( ! $best || $candidate['score'] > $best['score'] ) { $best = $candidate; }
+            if ( empty( $candidate['errors'] ) && count( $candidate['sessions'] ) === count( $sessions ) ) {
+                $valid[] = $candidate;
+            }
         }
-        if ( ! $best || ! empty( $best['errors'] ) || count( $best['sessions'] ) !== count( $sessions ) ) {
+        if ( 1 !== count( $valid ) ) {
             $out['errors'][] = 'Taslağın bütün seanslarını güvenle eşleştiren tek bir mevcut satış grubu bulunamadı.';
-            if ( $best && ! empty( $best['errors'] ) ) { $out['errors'] = array_merge( $out['errors'], $best['errors'] ); }
+            if ( count( $valid ) > 1 ) { $out['errors'][] = 'Birden fazla geçerli satış grubu var; otomatik seçim yapılmadı.'; }
             return $out;
         }
-        return $best;
+        return $valid[0];
     }
 
     private static function ticket_product_groups() {
@@ -237,16 +319,42 @@ final class MDG_Sales_Adopter {
     private static function match_group( $event, array $sessions, $event_id, array $products ) {
         $result = array( 'tickera_event_id'=>$event_id, 'sessions'=>array(), 'errors'=>array(), 'warnings'=>array(), 'score'=>0 );
         $event_title = get_the_title( $event_id );
+        // Times and prices are shared by unrelated cities/dates. Never use score as identity.
+        if ( 'tc_events' !== get_post_type( $event_id ) || ! self::same_brand( (string) $event->title, $event_title ) ) {
+            $result['errors'][] = 'Tickera etkinlik markası doğrulanamadı.';
+            return $result;
+        }
+        $place = self::norm( (string) $event->district );
+        if ( ! $place || 'merkez' === $place ) { $place = self::norm( (string) $event->province_name ); }
+        if ( ! $place || ! self::contains_words( $event_title, $place ) ) {
+            $result['errors'][] = 'Tickera etkinliğinin il/ilçe kimliği eşleşmiyor.';
+            return $result;
+        }
+        $tickera_date = substr( (string) get_post_meta( $event_id, 'event_date_time', true ), 0, 10 );
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $tickera_date ) ||
+             ( (int) get_post_meta( $event_id, '_mdg_event_id', true ) &&
+               (int) get_post_meta( $event_id, '_mdg_event_id', true ) !== (int) $event->id ) ) {
+            $result['errors'][] = 'Tickera tarih/MDG kimliği doğrulanamadı.';
+            return $result;
+        }
         if ( self::norm( $event_title ) && false !== strpos( self::norm( $event_title ), self::norm( $event->province_name ) ) ) { $result['score'] += 8; }
         if ( count( $products ) === count( $sessions ) ) { $result['score'] += 12; }
 
         $used_products = array();
         foreach ( $sessions as $session ) {
             list( $date, $time ) = MDG_Sessions::local_parts( $session->start_at );
+            if ( $date !== $tickera_date ) {
+                $result['errors'][] = 'Tickera tarihi seansın Türkiye tarihiyle eşleşmiyor.';
+                continue;
+            }
             $matches = array();
             foreach ( $products as $p ) {
                 if ( isset( $used_products[ $p->get_id() ] ) ) { continue; }
                 $name = (string) $p->get_name();
+                if ( ! self::same_brand( (string) $event->title, $name ) || ! self::contains_words( $name, $place ) ) { continue; }
+                $owner = (int) get_post_meta( $p->get_id(), '_mdg_event_id', true );
+                $sid = (int) get_post_meta( $p->get_id(), '_mdg_session_id', true );
+                if ( ( $owner && $owner !== (int) $event->id ) || ( $sid && $sid !== (int) $session->id ) ) { continue; }
                 if ( false !== strpos( $name, $time ) ) { $matches[] = $p; }
             }
             if ( 1 !== count( $matches ) ) {
@@ -302,6 +410,20 @@ final class MDG_Sales_Adopter {
             );
         }
         return $result;
+    }
+
+    private static function contains_words( $text, $words ) {
+        return false !== strpos( ' ' . self::norm( $text ) . ' ', ' ' . self::norm( $words ) . ' ' );
+    }
+
+    private static function same_brand( $left, $right ) {
+        $brands = array( 'milano sirki', 'madagaskar sirki' );
+        $a = array(); $b = array();
+        foreach ( $brands as $brand ) {
+            if ( self::contains_words( $left, $brand ) ) { $a[] = $brand; }
+            if ( self::contains_words( $right, $brand ) ) { $b[] = $brand; }
+        }
+        return 1 === count( $a ) && $a === $b;
     }
 
     private static function variation_matches_type( $variation, $type ) {

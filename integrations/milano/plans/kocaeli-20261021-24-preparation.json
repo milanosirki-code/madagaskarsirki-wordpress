@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "STAGING_PARENT_BRIDGE_CONFIGURED_MDG_MAPPING_AND_E2E_BLOCKED",
+  "status": "LIVE_ONSALE_USER_AUTHORIZED_WITH_REMAINING_TESTS_UNVERIFIED",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -27,11 +27,11 @@
     "venue_identity_verified": true,
     "capacity_user_approved": true,
     "three_owner_unique_mdg_links": true,
-    "woo_and_tickera_products_verified": false,
+    "woo_and_tickera_products_verified": true,
     "per_session_four_ticket_qr_staging_pass": false,
     "paytr_checkout_callback_verified": false,
     "brand_redirect_and_return_verified": false,
-    "public_sales_enabled": false
+    "public_sales_enabled": true
   },
   "events": [
     {
@@ -60,10 +60,10 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 196,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
-      "mdg_event_id": null,
+      "mmc_program_id": 16,
+      "mdg_event_id": 28,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6529,
       "staging_mmc_program_id": 15,
       "staging_mmc_event_id": 15,
       "staging_mdg_event_id": 25,
@@ -71,12 +71,30 @@
         152,
         153
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6081,
         6084
       ],
-      "staging_tickera_event_post_id": 6102
+      "staging_tickera_event_post_id": 6102,
+      "staging_production_key": "MDG-E25-6837c876393d",
+      "staging_ticket_template_id": 31,
+      "staging_poster_attachment_id": 6109,
+      "staging_maps_qr_attachment_id": 6112,
+      "live_status": "ONSALE",
+      "live_mmc_event_id": 16,
+      "live_mdg_session_ids": [
+        181,
+        182
+      ],
+      "live_woo_product_ids": [
+        6531,
+        6534
+      ],
+      "live_ticket_template_id": 31,
+      "live_poster_attachment_id": 6523,
+      "live_maps_qr_attachment_id": 6526,
+      "live_production_key": "MDG-E28-6837c876393d"
     },
     {
       "city": "Darıca",
@@ -104,10 +122,10 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 197,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
-      "mdg_event_id": null,
+      "mmc_program_id": 17,
+      "mdg_event_id": 27,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6537,
       "staging_mmc_program_id": 16,
       "staging_mmc_event_id": 16,
       "staging_mdg_event_id": 26,
@@ -115,12 +133,30 @@
         154,
         155
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6087,
         6090
       ],
-      "staging_tickera_event_post_id": 6104
+      "staging_tickera_event_post_id": 6104,
+      "staging_production_key": "MDG-E26-b6944678a08f",
+      "staging_ticket_template_id": 32,
+      "staging_poster_attachment_id": 6110,
+      "staging_maps_qr_attachment_id": 6113,
+      "live_status": "ONSALE",
+      "live_mmc_event_id": 17,
+      "live_mdg_session_ids": [
+        179,
+        180
+      ],
+      "live_woo_product_ids": [
+        6539,
+        6542
+      ],
+      "live_ticket_template_id": 32,
+      "live_poster_attachment_id": 6524,
+      "live_maps_qr_attachment_id": 6527,
+      "live_production_key": "MDG-E27-b6944678a08f"
     },
     {
       "city": "Derince",
@@ -149,10 +185,10 @@
       "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
       "assigned_venue_id": 198,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
-      "mmc_program_id": null,
-      "mdg_event_id": null,
+      "mmc_program_id": 18,
+      "mdg_event_id": 26,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6545,
       "staging_mmc_program_id": 17,
       "staging_mmc_event_id": 17,
       "staging_mdg_event_id": 27,
@@ -161,24 +197,44 @@
         157,
         158
       ],
-      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_status": "DRAFT_LINKED_NOT_ONSALE",
       "staging_woo_product_ids": [
         6093,
         6096,
         6099
       ],
-      "staging_tickera_event_post_id": 6106
+      "staging_tickera_event_post_id": 6106,
+      "staging_production_key": "MDG-E27-9efba8606c2e",
+      "staging_ticket_template_id": 33,
+      "staging_poster_attachment_id": 6111,
+      "staging_maps_qr_attachment_id": 6114,
+      "live_status": "ONSALE",
+      "live_mmc_event_id": 18,
+      "live_mdg_session_ids": [
+        176,
+        177,
+        178
+      ],
+      "live_woo_product_ids": [
+        6547,
+        6550,
+        6553
+      ],
+      "live_ticket_template_id": 33,
+      "live_poster_attachment_id": 6525,
+      "live_maps_qr_attachment_id": 6528,
+      "live_production_key": "MDG-E26-9efba8606c2e"
     }
   ],
   "observations": {
-    "live_mmc_programs_milano_count": 1,
+    "live_mmc_programs_milano_count": 4,
     "live_mmc_program_id": 14,
-    "live_mdg_milano_event_count": 1,
+    "live_mdg_milano_event_count": 4,
     "live_mdg_event_id": 24,
     "live_mdg_event_status": "onsale",
     "handoff_live_sales_option_enabled": true,
     "available_venue_default_capacity": 500,
-    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven.",
+    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven. Current continuation adopted existing staging objects, completed identity/templates and verified family cart; see mapping report. No production change. 16:13 continuation: live Kocaeli draft configuration completed with native producer. Three new live MDG events28/27/26, seven mapped products and14 variations. Supersedes earlier production-not-created statements. Public sales remain closed pending original runtime gates.",
     "new_venues_created_on_central_live": [
       196,
       197,
@@ -194,7 +250,8 @@
     "confirmed_at": "2026-10-15",
     "capacity_per_session": 500,
     "venue_names_and_addresses_from_posters": true,
-    "approved_by": "user"
+    "approved_by": "user",
+    "venue_phone_direct_attestation_confirmed_at": "2026-10-15T16:13:18+03:00"
   },
   "staging": {
     "site": "staging-f321-milanosirki-lgajf.wpcomstaging.com",
@@ -261,10 +318,22 @@
     },
     "mdg_bridges_created": true,
     "mdg_status": "draft",
-    "wc_product_ids": null,
-    "tickera_event_ids": null,
+    "wc_product_ids": [
+      6081,
+      6084,
+      6087,
+      6090,
+      6093,
+      6096,
+      6099
+    ],
+    "tickera_event_ids": [
+      6102,
+      6104,
+      6106
+    ],
     "paytr_validated": false,
-    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check.",
+    "notes": "Europe/Istanbul applied. Real family cart test passed 2 child + 2 adult =1100 TRY after370 discount; draft checkout guard rejects sale. Cart cleaned. No paid order/PDF/QR issuance test. Later runtime fixture6116 generated four actual PDFs with unique decoded admission QR codes; scans accepted then repeated scans rejected after single-entry limit correction. Fixture cancelled and tickets trashed. Not a paid checkout/capacity E2E test; see runtime report.",
     "woo_draft_products": [
       {
         "mdg_session_id": 152,
@@ -347,14 +416,14 @@
         "city": "Derince"
       }
     ],
-    "woo_product_state": "All seven variable parents DRAFT + catalog visibility HIDDEN; 14 child/adult variations PUBLISH under draft parents; NO MDG or Tickera mappings; no order/payment created.",
+    "woo_product_state": "Seven draft hidden parents and 14 variations mapped to existing MDG sessions/types and Tickera events; production identity completed. No paid order.",
     "woo_product_prices_verified": true,
-    "tickera_event_post_status": "draft (not configured with final vendor event_date_time, event_end_date_time, _event_name links or vendor-specific metadata)",
+    "tickera_event_post_status": "draft; vendor dates/locations configured",
     "tickera_issued_ticket_count": "not verified; no intentional test order",
-    "paytr_detected": false,
-    "integration_stage": "REQUIRES CHECKOUT-REJECT PREVIEW AND TICKERA VENDOR META/BRIDGE CONFIG",
-    "rate_limit": "WPVibe Pro 24-hour limit reached during final stage mapping read at ~2026-10-15 10:15 Istanbul. Stop WordPress writes until access restored. Do not rerun product or ticket creation without duplicate check.",
-    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale.",
+    "paytr_detected": true,
+    "integration_stage": "CONFIGURATION_READY_RUNTIME_QR_PARTIAL_PAYMENT_CAPACITY_GATES_BLOCKED",
+    "rate_limit": "WPVibe limit respected; subsequent authorized work performed through authenticated native staging WordPress browser UI.",
+    "note": "Supersedes earlier unlinked skeleton statements. Existing records adopted without recreating events/products/sessions. No production deployment. All sessions final capacity500 held0 sold0.",
     "continuation_20261015": {
       "report": "docs/MILANO_KOCAELI_STAGING_BRIDGE_UI_20261015.md",
       "tickera_vendor_dates_locations_terms_saved": true,
@@ -374,6 +443,151 @@
       "paytr_test_pass": false,
       "public_sales_enabled": false,
       "notes": "This continuation supersedes earlier statements that parent Tickera Bridge flags/event selections are absent. MDG links remain absent. Ticket template not assigned; full integration still blocked. No new records or production changes."
+    },
+    "continuation_mapping_20261015": {
+      "report": "docs/MILANO_KOCAELI_STAGING_MAPPING_TEST_20261015.md",
+      "pr": 266,
+      "configuration_verified": true,
+      "mdg_mapping_completed": true,
+      "variation_mapping_verified": true,
+      "template_ids": [
+        31,
+        32,
+        33
+      ],
+      "base_template_id": 28,
+      "family_cart": {
+        "persons": 4,
+        "child": 2,
+        "adult": 2,
+        "subtotal_try": 1470,
+        "discount_try": 370,
+        "total_try": 1100,
+        "passed": true,
+        "cart_cleaned": true
+      },
+      "ci_run": 38704942292,
+      "ci_status": "success",
+      "four_php_test_groups_passed": true,
+      "four_qr_test_pass": false,
+      "payment_test_pass": false,
+      "public_sales_enabled": false,
+      "blockers": [
+        "PayTR staging plugin activated; saved test mode true, gateway disabled pending verified authorized isolated callback test",
+        "Draft checkout guard correctly refuses sale",
+        "Paid adult/child/family orders, duplicate callback, failure/refund, concurrent capacity, PDF and four distinct QR/check-in remain untested",
+        "Milano preview discovery heading and shared checkout branding require review before launch"
+      ],
+      "production_changed": false
+    },
+    "paytr_recheck_20261015": {
+      "plugin_version": "3.1.2",
+      "plugin_active": true,
+      "gateway_enabled": false,
+      "test_mode": true,
+      "callback_isolation_verified": false,
+      "paid_test_pass": false,
+      "production_unchanged": true,
+      "report": "docs/MILANO_KOCAELI_PAYTR_RECHECK_20261015.md"
+    },
+    "runtime_qr_pdf_20261015": {
+      "report": "docs/MILANO_KOCAELI_RUNTIME_QR_PDF_20261015.md",
+      "administrative_test_order_id": 6116,
+      "order_final_status": "cancelled",
+      "ticket_instances": [
+        6117,
+        6118,
+        6119,
+        6120
+      ],
+      "ticket_final_status": "trash",
+      "actual_vendor_pdfs_decoded": 4,
+      "unique_admission_qr_count": 4,
+      "first_scan_accepted_four": true,
+      "repeat_scan_rejected_after_correction": true,
+      "initial_duplicate_scan_defect": "empty parent _available_checkins_per_ticket permitted unlimited entry",
+      "all_seven_staging_parent_checkin_limit": 1,
+      "capacity_payment_e2e_pass": false,
+      "all_seven_sessions_tested": false,
+      "payment_taken": false,
+      "public_sales_enabled": false
     }
+  },
+  "live_continuation_20261015": {
+    "report": "docs/MILANO_KOCAELI_LIVE_DRAFT_CONFIGURATION_20261015.md",
+    "program_ids": [
+      16,
+      17,
+      18
+    ],
+    "mdg_event_ids": [
+      28,
+      27,
+      26
+    ],
+    "public_sales_enabled": true,
+    "venue_submission": "COMPLETED_AFTER_EXPLICIT_USER_CONFIRMATION",
+    "yalova_unchanged": true,
+    "reference": {
+      "mmc": 14,
+      "mdg": 24,
+      "sessions": [
+        154,
+        155
+      ],
+      "tickera": 6316,
+      "parents": [
+        6318,
+        6321
+      ],
+      "template": 29
+    },
+    "payment_architecture": "Use existing central Madagaskar checkout as Yalova; no separate production PayTR merchant required",
+    "mapping_evidence": "integrations/milano/plans/kocaeli-live-mapping-20261015.json",
+    "native_readiness_all_three": true,
+    "variations_price_parent_match": "14/14",
+    "real_payment_pdf_four_qr_verified": false,
+    "blocking_tests_remaining": true,
+    "pdf_layout_updated_templates": [
+      31,
+      32,
+      33
+    ],
+    "live_single_entry_limit_verified_7_of_7": true
+  },
+  "live_sales_opened_20261015": {
+    "report": "docs/MILANO_KOCAELI_SALES_OPENED_20261015.md",
+    "user_authorization_time": "2026-10-15T20:32:15+03:00",
+    "authorization": "Proceed without waiting for remaining real payment/capacity tests; same existing Yalova infrastructure",
+    "native_publish_event_ids": [
+      28,
+      27,
+      26
+    ],
+    "all_seven_sessions_onsale": true,
+    "prices_try": [
+      245,
+      490,
+      1100
+    ],
+    "capacity_per_session": 500,
+    "central_catalog_milano_rows": 9,
+    "public_milano_kocaeli_forms": 7,
+    "live_family_checkout_total_try": 1100,
+    "live_family_checkout_child_qty": 2,
+    "live_family_checkout_adult_qty": 2,
+    "test_order_submitted": false,
+    "test_cart_cleaned": true,
+    "payment_taken": false,
+    "real_payment_callback_test_pass": false,
+    "paid_capacity_e2e_test_pass": false,
+    "madagaskar_city_listing_excludes_kocaeli_ids": [
+      26,
+      27,
+      28
+    ],
+    "legacy_city_snippet_id": 30,
+    "yalova_unchanged": true,
+    "production_paytr_settings_unchanged": true
   }
 }
