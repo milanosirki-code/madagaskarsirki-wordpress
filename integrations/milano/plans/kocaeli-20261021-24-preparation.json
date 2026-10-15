@@ -1,7 +1,7 @@
 {
   "schema": "milano-preparation-v1",
   "prepared_at": "2026-10-15",
-  "status": "STAGING_CONFIGURED_FAMILY_CART_PASS_PAYTR_QR_BLOCKED",
+  "status": "LIVE_DRAFT_CONFIGURATION_READY_E2E_UNVERIFIED_NOT_ONSALE",
   "brand": "Milano Sirki",
   "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
   "exclusive_brand_sale": true,
@@ -27,7 +27,7 @@
     "venue_identity_verified": true,
     "capacity_user_approved": true,
     "three_owner_unique_mdg_links": true,
-    "woo_and_tickera_products_verified": false,
+    "woo_and_tickera_products_verified": true,
     "per_session_four_ticket_qr_staging_pass": false,
     "paytr_checkout_callback_verified": false,
     "brand_redirect_and_return_verified": false,
@@ -61,9 +61,9 @@
       "assigned_venue_id": 196,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
       "mmc_program_id": 16,
-      "mdg_event_id": null,
+      "mdg_event_id": 28,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6529,
       "staging_mmc_program_id": 15,
       "staging_mmc_event_id": 15,
       "staging_mdg_event_id": 25,
@@ -81,8 +81,20 @@
       "staging_ticket_template_id": 31,
       "staging_poster_attachment_id": 6109,
       "staging_maps_qr_attachment_id": 6112,
-      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
-      "live_mmc_event_id": null
+      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_mmc_event_id": 16,
+      "live_mdg_session_ids": [
+        181,
+        182
+      ],
+      "live_woo_product_ids": [
+        6531,
+        6534
+      ],
+      "live_ticket_template_id": 31,
+      "live_poster_attachment_id": 6523,
+      "live_maps_qr_attachment_id": 6526,
+      "live_production_key": "MDG-E28-6837c876393d"
     },
     {
       "city": "Darıca",
@@ -111,9 +123,9 @@
       "assigned_venue_id": 197,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
       "mmc_program_id": 17,
-      "mdg_event_id": null,
+      "mdg_event_id": 27,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6537,
       "staging_mmc_program_id": 16,
       "staging_mmc_event_id": 16,
       "staging_mdg_event_id": 26,
@@ -131,8 +143,20 @@
       "staging_ticket_template_id": 32,
       "staging_poster_attachment_id": 6110,
       "staging_maps_qr_attachment_id": 6113,
-      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
-      "live_mmc_event_id": null
+      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_mmc_event_id": 17,
+      "live_mdg_session_ids": [
+        179,
+        180
+      ],
+      "live_woo_product_ids": [
+        6539,
+        6542
+      ],
+      "live_ticket_template_id": 32,
+      "live_poster_attachment_id": 6524,
+      "live_maps_qr_attachment_id": 6527,
+      "live_production_key": "MDG-E27-b6944678a08f"
     },
     {
       "city": "Derince",
@@ -162,9 +186,9 @@
       "assigned_venue_id": 198,
       "venue_source": "new_poster_exact_canonical_mdg_venue",
       "mmc_program_id": 18,
-      "mdg_event_id": null,
+      "mdg_event_id": 26,
       "woo_product_id": null,
-      "tickera_event_id": null,
+      "tickera_event_id": 6545,
       "staging_mmc_program_id": 17,
       "staging_mmc_event_id": 17,
       "staging_mdg_event_id": 27,
@@ -184,19 +208,33 @@
       "staging_ticket_template_id": 33,
       "staging_poster_attachment_id": 6111,
       "staging_maps_qr_attachment_id": 6114,
-      "live_status": "PREPARATION_VENUE_ATTESTATION_PENDING",
-      "live_mmc_event_id": null
+      "live_status": "DRAFT_CONFIGURATION_READY_NOT_ONSALE",
+      "live_mmc_event_id": 18,
+      "live_mdg_session_ids": [
+        176,
+        177,
+        178
+      ],
+      "live_woo_product_ids": [
+        6547,
+        6550,
+        6553
+      ],
+      "live_ticket_template_id": 33,
+      "live_poster_attachment_id": 6525,
+      "live_maps_qr_attachment_id": 6528,
+      "live_production_key": "MDG-E26-9efba8606c2e"
     }
   ],
   "observations": {
-    "live_mmc_programs_milano_count": 1,
+    "live_mmc_programs_milano_count": 4,
     "live_mmc_program_id": 14,
-    "live_mdg_milano_event_count": 1,
+    "live_mdg_milano_event_count": 4,
     "live_mdg_event_id": 24,
     "live_mdg_event_status": "onsale",
     "handoff_live_sales_option_enabled": true,
     "available_venue_default_capacity": 500,
-    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven. Current continuation adopted existing staging objects, completed identity/templates and verified family cart; see mapping report. No production change.",
+    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven. Current continuation adopted existing staging objects, completed identity/templates and verified family cart; see mapping report. No production change. 16:13 continuation: live Kocaeli draft configuration completed with native producer. Three new live MDG events28/27/26, seven mapped products and14 variations. Supersedes earlier production-not-created statements. Public sales remain closed pending original runtime gates.",
     "new_venues_created_on_central_live": [
       196,
       197,
@@ -212,7 +250,8 @@
     "confirmed_at": "2026-10-15",
     "capacity_per_session": 500,
     "venue_names_and_addresses_from_posters": true,
-    "approved_by": "user"
+    "approved_by": "user",
+    "venue_phone_direct_attestation_confirmed_at": "2026-10-15T16:13:18+03:00"
   },
   "staging": {
     "site": "staging-f321-milanosirki-lgajf.wpcomstaging.com",
@@ -453,15 +492,19 @@
     }
   },
   "live_continuation_20261015": {
-    "report": "docs/MILANO_KOCAELI_LIVE_YALOVA_REFERENCE_20261015.md",
+    "report": "docs/MILANO_KOCAELI_LIVE_DRAFT_CONFIGURATION_20261015.md",
     "program_ids": [
       16,
       17,
       18
     ],
-    "mdg_event_ids": [],
+    "mdg_event_ids": [
+      28,
+      27,
+      26
+    ],
     "public_sales_enabled": false,
-    "venue_submission": "AUTO_REVIEW_REJECTED_ATTESTATION_REQUIRES_EXPLICIT_FACTUAL_CONFIRMATION",
+    "venue_submission": "COMPLETED_AFTER_EXPLICIT_USER_CONFIRMATION",
     "yalova_unchanged": true,
     "reference": {
       "mmc": 14,
@@ -477,6 +520,11 @@
       ],
       "template": 29
     },
-    "payment_architecture": "Use existing central Madagaskar checkout as Yalova; no separate production PayTR merchant required"
+    "payment_architecture": "Use existing central Madagaskar checkout as Yalova; no separate production PayTR merchant required",
+    "mapping_evidence": "integrations/milano/plans/kocaeli-live-mapping-20261015.json",
+    "native_readiness_all_three": true,
+    "variations_price_parent_match": "14/14",
+    "real_payment_pdf_four_qr_verified": false,
+    "blocking_tests_remaining": true
   }
 }
