@@ -445,6 +445,7 @@ final class MDG_New_Event_Draft_Producer {
     private static function safe_managed_draft( $post_id, $key ) {
         $post_id = absint( $post_id );
         if ( ! $post_id ) { return false; }
+        if ( '1' === (string)get_post_meta( $post_id, '_mdg_adopted_existing', true ) ) { return false; }
         if ( '1' !== (string)get_post_meta( $post_id, '_mdg_managed', true ) ) { return false; }
         if ( (string)get_post_meta( $post_id, '_mdg_production_key', true ) !== (string)$key ) { return false; }
         $type = get_post_type( $post_id );
