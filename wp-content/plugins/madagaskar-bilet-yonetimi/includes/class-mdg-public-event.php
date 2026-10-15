@@ -56,6 +56,11 @@ final class MDG_Public_Event {
         if ( ! $slug ) { return; }
         $event = MDG_Events::get_by_public_slug( $slug );
         if ( ! $event || MDG_Status::ONSALE !== (string) $event->status ) { self::not_found_public(); }
+        // Enforce exclusive site visibility on deep links, not only city cards.
+        // An uninstalled/disabled guard leaves existing Madagaskar URLs alone.
+        if ( ! apply_filters( 'dunya_brand_event_visible_on_site', true, (int) $event->id, 'event_page' ) ) {
+            self::not_found_public();
+        }
         status_header( 200 );
         nocache_headers(); // Live cart nonce and session availability must not be served stale.
         self::render( $event, false );

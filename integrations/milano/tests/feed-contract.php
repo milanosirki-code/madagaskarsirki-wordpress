@@ -45,6 +45,17 @@ class MockResponse {
     public function get_data() { return $this->data; }
 }
 function add_action( $name, $callback ) { /* registered on the real WP instance */ }
+function apply_filters( $name, $value, $event_id ) {
+    global $scenario;
+    if ( 'dunya_milano_canonical_event_owner' !== $name || 16 !== $event_id ) {
+        return $value;
+    }
+    if ( 'missing_brand' === $scenario || 'filter_reject' === $scenario ) { return null; }
+    if ( 'filter_promote' === $scenario || 'filter_promote_no_bridge' === $scenario ) { return 'milano'; }
+    if ( 'filter_cross_brand' === $scenario ) { return 'madagaskar'; }
+    if ( 'invalid_brand' === $scenario ) { return 'unknown'; }
+    return $value;
+}
 function register_rest_route( $namespace, $path, $definition ) {}
 function rest_ensure_response( $data ) { return new MockResponse( $data ); }
 function current_time( $format, $gmt = false ) { return '2026-10-12 18:30:00'; }
@@ -52,6 +63,27 @@ function wp_timezone_string() { return 'Europe/Istanbul'; }
 function sanitize_text_field( $text ) { return trim( strip_tags( $text ) ); }
 function sanitize_key( $text ) { return strtolower( preg_replace( '/[^a-zA-Z0-9_-]/', '', $text ) ); }
 function get_post_status( $id ) { return 'publish'; }
+// Only a single *active* MMC bridge may resolve a canonical owner.
+$programLinks = array( 16 => array( 401 ) );
+$programBrands = array( 401 => 'Milano Sirki', 402 => 'Madagaskar Sirki' );
+$bridgeTable = 'wp_mmc_mdg_event_bridge';
+class MMC_MDG_Bridge_Service {
+    public static $legacy_calls = 0;
+    public static function table() { return $GLOBALS['bridgeTable']; }
+    public static function program_for_mdg_event( $event_id ) {
+        ++self::$legacy_calls;
+        return 401; // deliberately unsafe legacy fallback: MUST NEVER execute
+    }
+}
+class MMC_Program_Service {
+    public static function get_program( $id ) {
+        $brands = $GLOBALS['programBrands'];
+        return isset( $brands[$id] ) ? (object) array( 'brand' => $brands[$id] ) : null;
+    }
+    public static function normalized_program_brand( $brand ) {
+        return in_array( $brand, array( 'Milano Sirki', 'Madagaskar Sirki' ), true ) ? $brand : '';
+    }
+}
 class MDG_DB {
     public static function table( $name ) { return 'wp_mdg_' . $name; }
 }
@@ -87,12 +119,22 @@ class MockDB {
     public $events;
     public $ticketTypes;
     public $queries = array();
+    public $lastArgs = array();
     public function prepare( $sql, ...$args ) {
         // Avoid implementing SQL: query strings and parameter counts are separately asserted.
         $count = substr_count( $sql, '%s' ) + substr_count( $sql, '%d' );
         expect( $count === count( $args ), 'SQL placeholder count mismatch' );
+        $this->lastArgs = $args;
         $this->queries[] = $sql;
         return $sql;
+    }
+    public function get_col( $sql ) {
+        global $programLinks;
+        expect( false !== strpos( $sql, 'SELECT program_id' ), 'non-authoritative SQL owner lookup' );
+        expect( false !== strpos( $sql, 'is_active=1 LIMIT 2' ), 'bridge ownership must detect duplicates' );
+        expect( false === strpos( $sql, 'program_for_mdg_event' ), 'legacy fallback SQL forbidden' );
+        $event_id = (int) ( $this->lastArgs[0] ?? 0 );
+        return $programLinks[$event_id] ?? array();
     }
     public function get_results( $sql ) {
         $this->queries[] = $sql;
@@ -141,6 +183,32 @@ if ( 'wrong_parent' === $scenario ) { $products[602]->parent = 222; }
 if ( 'price_mismatch' === $scenario ) { $products[602]->price = 999; }
 if ( 'variation_out_of_stock' === $scenario ) { $products[602]->stock = false; }
 if ( 'no_ticket_types' === $scenario ) { $wpdb->ticketTypes = array(); }
+if ( 'other_brand' === $scenario || 'filter_promote' === $scenario ) {
+    $programLinks[16] = array( 402 );
+}
+if ( 'invalid_brand' === $scenario ) { $programBrands[401] = 'both'; }
+if ( 'no_bridge' === $scenario || 'legacy_fallback' === $scenario
+    || 'filter_promote_no_bridge' === $scenario ) {
+    $programLinks[16] = array();
+}
+if ( 'two_bridges' === $scenario ) { $programLinks[16] = array( 401, 402 ); }
+if ( 'orphan_bridge' === $scenario ) { $programLinks[16] = array( 999 ); }
+if ( 'bad_bridge_table' === $scenario ) { $bridgeTable = 'invalid; DROP TABLE'; }
+if ( 'no_db_owner' === $scenario ) {
+    $original_db = $wpdb; $wpdb = null;
+    expect( null === dmsf_event_owner_brand( 16 ), 'missing db must deny owner' );
+    $wpdb = $original_db;
+}
+if ( 'zero_event_owner' === $scenario ) {
+    expect( null === dmsf_event_owner_brand( 0 ), 'invalid event ID must deny' );
+}
+if ( 'filter_promote_no_bridge' === $scenario ) {
+    expect( null === dmsf_event_owner_brand( 16 ), 'untrusted filter must not create ownership' );
+}
+if ( 'legacy_fallback' === $scenario ) {
+    expect( null === dmsf_event_owner_brand( 16 ), 'legacy fallback must not grant Milano ownership' );
+    expect( 0 === MMC_MDG_Bridge_Service::$legacy_calls, 'first-match legacy helper was called' );
+}
 
 $result = dmsf_get_sessions( $request );
 if ( 'db_error' === $scenario ) {
@@ -153,17 +221,28 @@ $data = $result->get_data();
 expect( 1 === $data['schema_version'], 'schema version' );
 expect( true === $data['read_only'], 'read only flag' );
 expect( false !== strpos( $result->headers['Cache-Control'], 'no-store' ), 'must not cache available inventory' );
-$eventSql = $wpdb->queries[0];
+$eventSql = '';
+foreach ( $wpdb->queries as $query ) {
+    if ( false !== strpos( $query, 'e.status=%s' ) ) {
+        $eventSql = $query;
+        break;
+    }
+}
+expect( '' !== $eventSql, 'missing MDG event listing query' );
 foreach ( array( 'e.status=%s', 's.status=%s', 's.start_at>%s', 'e.sale_start', 'e.sale_end', 's.sale_start', 's.sale_end', 'LIMIT %d' ) as $requiredSql ) {
     expect( false !== strpos( $eventSql, $requiredSql ), 'missing mandatory status/time gate ' . $requiredSql );
 }
-$shouldBeHidden = in_array( $scenario, array( 'empty', 'closed', 'zero_capacity', 'no_ticket_event', 'missing_product', 'wrong_parent', 'price_mismatch', 'variation_out_of_stock', 'no_ticket_types' ), true );
+$shouldBeHidden = in_array( $scenario, array( 'empty', 'closed', 'zero_capacity', 'no_ticket_event', 'missing_product', 'wrong_parent', 'price_mismatch', 'variation_out_of_stock', 'no_ticket_types', 'missing_brand', 'other_brand', 'invalid_brand',
+    'no_bridge', 'two_bridges', 'orphan_bridge', 'bad_bridge_table',
+    'filter_promote', 'filter_cross_brand', 'filter_reject',
+    'filter_promote_no_bridge', 'legacy_fallback' ), true );
 if ( $shouldBeHidden ) {
     expect( count( $data['sessions'] ) === 0, 'invalid session was exposed' );
 } else {
     expect( count( $data['sessions'] ) === 1, 'valid session missing' );
     $session = $data['sessions'][0];
     expect( $session['session_id'] === 107, 'wrong session identity' );
+    expect( $session['event_owner_brand'] === 'milano', 'brand owner missing from feed' );
     expect( $session['available_units'] === ( 'sold_out' === $scenario ? 0 : 42 ), 'wrong capacity count' );
     expect( $session['availability'] === ( 'sold_out' === $scenario ? 'sold_out' : 'available' ), 'wrong availability flag' );
     expect( count( $session['ticket_types'] ) === 1, 'wrong ticket catalogue' );

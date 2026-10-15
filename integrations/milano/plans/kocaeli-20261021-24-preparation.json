@@ -1,0 +1,379 @@
+{
+  "schema": "milano-preparation-v1",
+  "prepared_at": "2026-10-15",
+  "status": "STAGING_PARENT_BRIDGE_CONFIGURED_MDG_MAPPING_AND_E2E_BLOCKED",
+  "brand": "Milano Sirki",
+  "checkout_architecture": "milano-selection-to-single-central-Woo-MDG-Tickera-order",
+  "exclusive_brand_sale": true,
+  "prices_try": {
+    "child_3_12": 245,
+    "adult_13_plus": 490,
+    "family_two_adults_two_children": 1100,
+    "infant_0_2": 0,
+    "additional_platform_service_fee": "show_before_payment"
+  },
+  "family": {
+    "adults": 2,
+    "children": 2,
+    "tickets": 4,
+    "capacity_units": 4,
+    "discount_vs_single_tickets_try": 370
+  },
+  "payment_site_canonical": "madagaskarsirki.com",
+  "customer_entry_site": "milanosirki.com",
+  "one_order_one_capacity_ledger": true,
+  "launch_gates": {
+    "central_mmc_brand_aware_create_proven": true,
+    "venue_identity_verified": true,
+    "capacity_user_approved": true,
+    "three_owner_unique_mdg_links": true,
+    "woo_and_tickera_products_verified": false,
+    "per_session_four_ticket_qr_staging_pass": false,
+    "paytr_checkout_callback_verified": false,
+    "brand_redirect_and_return_verified": false,
+    "public_sales_enabled": false
+  },
+  "events": [
+    {
+      "city": "Karamürsel",
+      "province": "Kocaeli",
+      "date": "2026-10-21",
+      "local_times": [
+        "17:30",
+        "19:30"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": 500,
+      "poster_wp_attachment_id": 122,
+      "public_page_id": 125,
+      "public_url": "https://milanosirki.com/milano-sirki-karamursel-21-ekim-2026/",
+      "venue_intended": {
+        "name": "Atatürk Kapalı Spor Salonu",
+        "address": "4 Temmuz Mahallesi, 115 Nolu Sokak, Karamürsel / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 152,
+        "name": "Karamürsel Spor Salonu",
+        "address": "Tabakhane, 115. Cd. No:7"
+      },
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 196,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 15,
+      "staging_mmc_event_id": 15,
+      "staging_mdg_event_id": 25,
+      "staging_mdg_session_ids": [
+        152,
+        153
+      ],
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6081,
+        6084
+      ],
+      "staging_tickera_event_post_id": 6102
+    },
+    {
+      "city": "Darıca",
+      "province": "Kocaeli",
+      "date": "2026-10-23",
+      "local_times": [
+        "17:30",
+        "19:30"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": 500,
+      "poster_wp_attachment_id": 123,
+      "public_page_id": 126,
+      "public_url": "https://milanosirki.com/milano-sirki-darica-23-ekim-2026/",
+      "venue_intended": {
+        "name": "Eray Şamdan Kapalı Spor Salonu",
+        "address": "Bağlarbaşı Mahallesi, Özbay Sokak No:67, Darıca / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 59,
+        "name": "Eren Şamdan Kapalı Spor Salonu",
+        "address": "Bağlarbaşı, Özbay Sk. No:67"
+      },
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 197,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 16,
+      "staging_mmc_event_id": 16,
+      "staging_mdg_event_id": 26,
+      "staging_mdg_session_ids": [
+        154,
+        155
+      ],
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6087,
+        6090
+      ],
+      "staging_tickera_event_post_id": 6104
+    },
+    {
+      "city": "Derince",
+      "province": "Kocaeli",
+      "date": "2026-10-24",
+      "local_times": [
+        "12:00",
+        "14:00",
+        "16:00"
+      ],
+      "show_duration_min": 60,
+      "seating": "general-admission",
+      "capacity_per_session": 500,
+      "poster_wp_attachment_id": 124,
+      "public_page_id": 127,
+      "public_url": "https://milanosirki.com/milano-sirki-derince-24-ekim-2026/",
+      "venue_intended": {
+        "name": "Derince Kapalı Spor Salonu",
+        "address": "Yenikent Mahallesi, Serpil Sokak No:2, Derince / Kocaeli"
+      },
+      "existing_venue_candidate": {
+        "id": 60,
+        "name": "Derince Spor Salonu",
+        "address": "Yenikent, Serpil Sk. No:2"
+      },
+      "venue_match": "USER_APPROVED_POSTER_RECORD_CREATED_DISTINCT_FROM_OLD_MASTER",
+      "assigned_venue_id": 198,
+      "venue_source": "new_poster_exact_canonical_mdg_venue",
+      "mmc_program_id": null,
+      "mdg_event_id": null,
+      "woo_product_id": null,
+      "tickera_event_id": null,
+      "staging_mmc_program_id": 17,
+      "staging_mmc_event_id": 17,
+      "staging_mdg_event_id": 27,
+      "staging_mdg_session_ids": [
+        156,
+        157,
+        158
+      ],
+      "staging_status": "DRAFT_WOO_TICKERA_UNLINKED_NOT_ONSALE",
+      "staging_woo_product_ids": [
+        6093,
+        6096,
+        6099
+      ],
+      "staging_tickera_event_post_id": 6106
+    }
+  ],
+  "observations": {
+    "live_mmc_programs_milano_count": 1,
+    "live_mmc_program_id": 14,
+    "live_mdg_milano_event_count": 1,
+    "live_mdg_event_id": 24,
+    "live_mdg_event_status": "onsale",
+    "handoff_live_sales_option_enabled": true,
+    "available_venue_default_capacity": 500,
+    "note": "Staging brand-owned MMC+MDG drafts exist; production Kocaeli MMC/MDG not created. PR265 three workflows green; do not deploy generic repo service/admin without three-way diff against live due source drift. Family plugin virtual line has event gating, enabled only on staging for MDG 25/26/27, checkout not proven.",
+    "new_venues_created_on_central_live": [
+      196,
+      197,
+      198
+    ],
+    "mmc_admin_main_brand_field": false,
+    "ai_program_create_schema_accepts_brand": false,
+    "live_program_service_missing_brand_defaults_to_madagaskar": true,
+    "staging_created_only": true,
+    "brand_aware_source_live_deployment_pending": true
+  },
+  "approval": {
+    "confirmed_at": "2026-10-15",
+    "capacity_per_session": 500,
+    "venue_names_and_addresses_from_posters": true,
+    "approved_by": "user"
+  },
+  "staging": {
+    "site": "staging-f321-milanosirki-lgajf.wpcomstaging.com",
+    "created_date": "2026-10-15",
+    "brand_entry_test_pass": true,
+    "venues": [
+      196,
+      197,
+      198
+    ],
+    "program_ids": [
+      15,
+      16,
+      17
+    ],
+    "mmc_event_ids": [
+      15,
+      16,
+      17
+    ],
+    "mdg_event_ids": [
+      25,
+      26,
+      27
+    ],
+    "mdg_session_ids": [
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158
+    ],
+    "session_capacities": [
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ],
+    "local_times": [
+      "2026-10-21 17:30",
+      "2026-10-21 19:30",
+      "2026-10-23 17:30",
+      "2026-10-23 19:30",
+      "2026-10-24 12:00",
+      "2026-10-24 14:00",
+      "2026-10-24 16:00"
+    ],
+    "tickets": {
+      "child_price": 245,
+      "adult_price": 490,
+      "family_price": 1100,
+      "family_enabled_mdg_event_ids": [
+        25,
+        26,
+        27
+      ],
+      "family_model": "Virtual 2 child + 2 adult via dedicated MDG Family Package plugin; each component must issue one admission ticket, four total",
+      "family_qr_test_pass": false
+    },
+    "mdg_bridges_created": true,
+    "mdg_status": "draft",
+    "wc_product_ids": null,
+    "tickera_event_ids": null,
+    "paytr_validated": false,
+    "notes": "Staging only. MDG sessions stored UTC-like 3 hours behind local program time. Do not interpret DB start_at without timezone conversion. No paid orders, live integration or PDF check.",
+    "woo_draft_products": [
+      {
+        "mdg_session_id": 152,
+        "mmc_session_id": 36,
+        "parent_product_id": 6081,
+        "child_variation_id": 6082,
+        "adult_variation_id": 6083,
+        "child_mdg_ticket_type_id": 346,
+        "adult_mdg_ticket_type_id": 347
+      },
+      {
+        "mdg_session_id": 153,
+        "mmc_session_id": 37,
+        "parent_product_id": 6084,
+        "child_variation_id": 6085,
+        "adult_variation_id": 6086,
+        "child_mdg_ticket_type_id": 348,
+        "adult_mdg_ticket_type_id": 349
+      },
+      {
+        "mdg_session_id": 154,
+        "mmc_session_id": 38,
+        "parent_product_id": 6087,
+        "child_variation_id": 6088,
+        "adult_variation_id": 6089,
+        "child_mdg_ticket_type_id": 350,
+        "adult_mdg_ticket_type_id": 351
+      },
+      {
+        "mdg_session_id": 155,
+        "mmc_session_id": 39,
+        "parent_product_id": 6090,
+        "child_variation_id": 6091,
+        "adult_variation_id": 6092,
+        "child_mdg_ticket_type_id": 352,
+        "adult_mdg_ticket_type_id": 353
+      },
+      {
+        "mdg_session_id": 156,
+        "mmc_session_id": 40,
+        "parent_product_id": 6093,
+        "child_variation_id": 6094,
+        "adult_variation_id": 6095,
+        "child_mdg_ticket_type_id": 354,
+        "adult_mdg_ticket_type_id": 355
+      },
+      {
+        "mdg_session_id": 157,
+        "mmc_session_id": 41,
+        "parent_product_id": 6096,
+        "child_variation_id": 6097,
+        "adult_variation_id": 6098,
+        "child_mdg_ticket_type_id": 356,
+        "adult_mdg_ticket_type_id": 357
+      },
+      {
+        "mdg_session_id": 158,
+        "mmc_session_id": 42,
+        "parent_product_id": 6099,
+        "child_variation_id": 6100,
+        "adult_variation_id": 6101,
+        "child_mdg_ticket_type_id": 358,
+        "adult_mdg_ticket_type_id": 359
+      }
+    ],
+    "tickera_event_draft_posts": [
+      {
+        "mdg_event_id": 25,
+        "tickera_event_post_id": 6102,
+        "city": "Karamürsel"
+      },
+      {
+        "mdg_event_id": 26,
+        "tickera_event_post_id": 6104,
+        "city": "Darıca"
+      },
+      {
+        "mdg_event_id": 27,
+        "tickera_event_post_id": 6106,
+        "city": "Derince"
+      }
+    ],
+    "woo_product_state": "All seven variable parents DRAFT + catalog visibility HIDDEN; 14 child/adult variations PUBLISH under draft parents; NO MDG or Tickera mappings; no order/payment created.",
+    "woo_product_prices_verified": true,
+    "tickera_event_post_status": "draft (not configured with final vendor event_date_time, event_end_date_time, _event_name links or vendor-specific metadata)",
+    "tickera_issued_ticket_count": "not verified; no intentional test order",
+    "paytr_detected": false,
+    "integration_stage": "REQUIRES CHECKOUT-REJECT PREVIEW AND TICKERA VENDOR META/BRIDGE CONFIG",
+    "rate_limit": "WPVibe Pro 24-hour limit reached during final stage mapping read at ~2026-10-15 10:15 Istanbul. Stop WordPress writes until access restored. Do not rerun product or ticket creation without duplicate check.",
+    "note": "Both seven variable products + 14 variations and three Tickera CPT drafts created ONLY on staging; this is skeleton, not functional end-to-end ticketing. E-commerce Woo API response reports purchasable=true despite draft parent; do not rely on draft alone as security; require explicit public checkout rejection test. Parent has preparation-only metadata (_milano_prepare_*) and variations reference staged MDG ticket IDs; NO _tc_is_ticket/_event_name or MDG production-identity mapping. PayTR is not enabled on staging (MMC health). Tickera draft event date/location vendor meta not yet configured. Cannot run PayTR E2E. Review 0-2 infant/free and fee disclosures before sale.",
+    "continuation_20261015": {
+      "report": "docs/MILANO_KOCAELI_STAGING_BRIDGE_UI_20261015.md",
+      "tickera_vendor_dates_locations_terms_saved": true,
+      "parent_bridge_event_links_ui_verified": {
+        "6081": 6102,
+        "6084": 6102,
+        "6087": 6104,
+        "6090": 6104,
+        "6093": 6106,
+        "6096": 6106,
+        "6099": 6106
+      },
+      "products_reopened_draft_hidden_verified": 7,
+      "mdg_mapping_completed": false,
+      "variation_mapping_verified": false,
+      "four_qr_test_pass": false,
+      "paytr_test_pass": false,
+      "public_sales_enabled": false,
+      "notes": "This continuation supersedes earlier statements that parent Tickera Bridge flags/event selections are absent. MDG links remain absent. Ticket template not assigned; full integration still blocked. No new records or production changes."
+    }
+  }
+}

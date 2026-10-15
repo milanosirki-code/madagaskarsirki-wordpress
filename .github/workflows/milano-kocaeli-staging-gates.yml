@@ -1,0 +1,17 @@
+name: Milano Kocaeli Staging Sale Gates
+on:
+  pull_request:
+    paths:
+      - 'integrations/milano/plans/kocaeli-20261021-24-preparation.json'
+      - 'integrations/milano/tests/kocaeli-staging-gate-contract.php'
+      - '.github/workflows/milano-kocaeli-staging-gates.yml'
+  workflow_dispatch:
+jobs:
+  fail-closed-staging-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: php -l integrations/milano/tests/kocaeli-staging-gate-contract.php
+      - name: Verify seven sessions, child/adult variants and closed-sale gates
+        run: php integrations/milano/tests/kocaeli-staging-gate-contract.php

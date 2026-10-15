@@ -1,13 +1,17 @@
 <?php
 /**
- * Isolated v0.2 Milano consumer contract tests.
+ * Isolated v0.3 Milano consumer / separate announcement-only public catalog tests.
  * Run: php integrations/milano/tests/consumer-contract.php <scenario>
  */
 error_reporting( E_ALL );
 define( 'ABSPATH', __DIR__ );
 $scenario = isset( $argv[1] ) ? $argv[1] : 'valid';
-if ( 'no_key' !== $scenario ) {
+if ( ! in_array( $scenario, array( 'no_key', 'public_no_key' ), true ) ) {
     define( 'DUNYA_MILANO_FEED_TOKEN', str_repeat( 'm', 40 ) );
+}
+$publicScenarios = array( 'public_enabled', 'public_empty', 'public_wrong_brand', 'public_missing_brand', 'public_no_key', 'public_price', 'public_stale', 'public_unknown_brand', 'public_past', 'public_script' );
+if ( in_array( $scenario, $publicScenarios, true ) ) {
+    define( 'DUNYA_MILANO_PUBLIC_CATALOG_ENABLED', true );
 }
 function expect( $ok, $label ) {
     if ( ! $ok ) { fwrite( STDERR, "FAIL {$label}\n" ); exit( 1 ); }
@@ -21,7 +25,7 @@ function is_wp_error( $v ) { return $v instanceof WP_Error; }
 function add_shortcode( $name, $function ) {}
 function sanitize_text_field( $v ) { return trim( strip_tags( (string) $v ) ); }
 function esc_html( $v ) { return htmlspecialchars( (string) $v, ENT_QUOTES, 'UTF-8' ); }
-$admin = 'public' !== $scenario;
+$admin = ! ( 'public' === $scenario || in_array( $scenario, $publicScenarios, true ) );
 function current_user_can( $cap ) { global $admin; return $admin; }
 $httpCalls = 0;
 $capturedUrl = '';
@@ -45,6 +49,7 @@ $fixture = array(
     'timezone' => 'Europe/Istanbul',
     'sessions' => array( array(
         'event_id' => 12,
+        'event_owner_brand' => 'milano',
         'session_id' => 102,
         'province' => 'Aydın',
         'district' => 'Efeler',
@@ -65,6 +70,22 @@ switch ( $scenario ) {
     case 'stale': $fixture['generated_at'] = gmdate( 'Y-m-d\TH:i:s\Z', time() - 400 ); break;
     case 'over_limit':
         $fixture['sessions'] = array_fill( 0, 121, $fixture['sessions'][0] ); break;
+    case 'missing_brand':
+    case 'public_missing_brand': unset( $fixture['sessions'][0]['event_owner_brand'] ); break;
+    case 'empty':
+    case 'public_empty': $fixture['sessions'] = array(); break;
+    case 'two_cards':
+        $other = $fixture['sessions'][0];
+        $other['session_id'] = 103;
+        $other['province'] = 'Manisa';
+        $other['available_units'] = 0;
+        $other['availability'] = 'sold_out';
+        $fixture['sessions'][] = $other;
+        break;
+    case 'wrong_brand':
+    case 'public_wrong_brand': $fixture['sessions'][0]['event_owner_brand'] = 'madagaskar'; break;
+    case 'unknown_brand':
+    case 'public_unknown_brand': $fixture['sessions'][0]['event_owner_brand'] = 'other'; break;
     case 'bad_capacity': $fixture['sessions'][0]['available_units'] = -1; break;
     case 'mismatched_soldout': $fixture['sessions'][0]['availability'] = 'sold_out'; break;
     case 'past': $fixture['sessions'][0]['start_utc'] = gmdate( 'Y-m-d H:i:s', time() - 400 ); break;
@@ -72,7 +93,19 @@ switch ( $scenario ) {
         $fixture['sessions'][0]['available_units'] = 0;
         $fixture['sessions'][0]['availability'] = 'sold_out';
         break;
-    case 'html_input': $fixture['sessions'][0]['province'] = '<script>bad()</script>Aydın'; break;
+    case 'html_input':
+    case 'public_script': $fixture['sessions'][0]['province'] = '<script>bad()</script>Aydın'; break;
+    case 'public_price': $fixture['sessions'][0]['price'] = 999; break;
+    case 'public_stale': $fixture['generated_at'] = gmdate( 'Y-m-d\TH:i:s\Z', time() - 400 ); break;
+    case 'public_past': $fixture['sessions'][0]['start_utc'] = gmdate( 'Y-m-d H:i:s', time() - 400 ); break;
+}
+if ( in_array( $scenario, $publicScenarios, true ) ) {
+    $fixture['catalog_mode'] = 'announcement_only';
+    unset( $fixture['timezone'] );
+    foreach ( $fixture['sessions'] as &$row ) {
+        unset( $row['available_units'], $row['availability'] );
+    }
+    unset( $row );
 }
 if ( '' === $mockBody ) { $mockBody = json_encode( $fixture ); }
 
@@ -83,6 +116,33 @@ if ( 'public' === $scenario ) {
     expect( $httpCalls === 0, 'public visitor must never call the feed' );
     echo "PASS public\n"; exit( 0 );
 }
+if ( in_array( $scenario, $publicScenarios, true ) ) {
+    expect( mso_events_public_enabled(), 'explicit public catalogue flag ignored' );
+    $html = mso_events_shortcode();
+    expect( $httpCalls === ( 'public_no_key' === $scenario ? 0 : 1 ), 'public safe feed invocation count' );
+    if ( 'public_no_key' !== $scenario ) {
+        expect( $capturedUrl === 'https://madagaskarsirki.com/wp-json/dunya-milano/v1/upcoming', 'public catalogue must not call commercial stock feed' );
+        expect( true === $capturedArgs['sslverify'] && 0 === $capturedArgs['redirection'], 'public feed TLS/redirect security' );
+        expect( $capturedArgs['headers']['X-Dunya-Milano-Key'] === DUNYA_MILANO_FEED_TOKEN, 'public server token missing' );
+    }
+    expect( false === strpos( $html, 'href=' ), 'public catalogue cannot link to checkout' );
+    expect( false === strpos( $html, '<script' ), 'public catalogue cannot embed scripts' );
+    expect( false === strpos( $html, 'Kalan birim' ), 'public catalogue leaked exact stock' );
+    expect( false === strpos( $html, 'Yonetici test gorunumu' ), 'public catalogue leaked admin-only message' );
+    expect( false === strpos( $html, 'Satış uygunluğu testte' ), 'public catalogue leaked admin-only state' );
+    expect( false === strpos( $html, 'Madagaskar Sirki' ), 'cross-brand catalogue leak' );
+    if ( in_array( $scenario, array( 'public_enabled', 'public_script' ), true ) ) {
+        expect( false !== strpos( $html, 'mso-preview__grid' ), 'verified public announcement was not rendered' );
+        expect( false !== strpos( $html, 'Gösteri duyurusu' ), 'public catalogue missing safe status' );
+        expect( substr_count( $html, '<article' ) === 1, 'public catalogue must render one Milano announcement' );
+        if ( 'public_script' === $scenario ) {
+            expect( false === strpos( $html, '<script>' ), 'malicious announcement markup escaped incorrectly' );
+        }
+    } else {
+        expect( false === strpos( $html, '<article' ), 'unapproved or invalid data rendered a public card' );
+    }
+    echo "PASS {$scenario}\n"; exit( 0 );
+}
 if ( 'no_key' === $scenario ) {
     $out = mso_events_source();
     expect( is_wp_error( $out ) && 'mso_token_missing' === $out->get_error_code(), 'missing key must fail closed' );
@@ -92,14 +152,21 @@ if ( 'no_key' === $scenario ) {
 $out = mso_events_source();
 $errors = array(
     'http_error', 'network_error', 'malformed_json', 'wrong_schema',
-    'missing_readonly', 'stale', 'over_limit', 'bad_capacity', 'mismatched_soldout'
+    'missing_readonly', 'stale', 'over_limit', 'bad_capacity', 'mismatched_soldout', 'missing_brand', 'unknown_brand'
 );
 if ( in_array( $scenario, $errors, true ) ) {
     expect( is_wp_error( $out ), 'invalid feed must fail closed' );
+} elseif ( 'wrong_brand' === $scenario ) {
+    expect( is_array( $out ) && count( $out ) === 0, 'Madagaskar event leaked to Milano' );
 } elseif ( 'past' === $scenario ) {
     expect( is_array( $out ) && count( $out ) === 0, 'past sessions must be filtered' );
+} elseif ( 'empty' === $scenario ) {
+    expect( is_array( $out ) && count( $out ) === 0, 'empty Milano feed must be allowed' );
+    $html = mso_events_shortcode();
+    expect( false !== strpos( $html, 'doğrulanmış gelecek seans bulunamadı' ), 'safe empty state missing' );
+    expect( false === strpos( $html, '<article' ), 'empty feed rendered inventorial cards' );
 } else {
-    expect( is_array( $out ) && count( $out ) === 1, 'valid session not accepted' );
+    expect( is_array( $out ) && count( $out ) === ( 'two_cards' === $scenario ? 2 : 1 ), 'valid session count incorrect' );
     expect( $out[0]['available_units'] === ( 'sold_out' === $scenario ? 0 : 40 ), 'wrong units displayed' );
     if ( 'html_input' === $scenario ) {
         expect( false === strpos( $out[0]['province'], '<script>' ), 'unsafe markup reached display' );
@@ -107,6 +174,16 @@ if ( in_array( $scenario, $errors, true ) ) {
     $html = mso_events_shortcode();
     expect( false !== strpos( $html, 'Yonetici test gorunumu' ), 'admin diagnostic missing' );
     expect( false === strpos( $html, 'href=' ), 'must not expose checkout links' );
+    expect( false === strpos( $html, '<script' ), 'preview must not load executable scripts' );
+    expect( false !== strpos( $html, 'mso-preview__grid' ), 'responsive preview grid missing' );
+    expect( false !== strpos( $html, 'mso-preview__city' ), 'city cards missing' );
+    expect( substr_count( $html, '<article' ) === ( 'two_cards' === $scenario ? 2 : 1 ), 'duplicate or lost preview cards' );
+    if ( 'sold_out' === $scenario || 'two_cards' === $scenario ) {
+        expect( false !== strpos( $html, 'Kontenjan dolu' ), 'sold-out label missing' );
+    }
+    if ( 'html_input' === $scenario ) {
+        expect( false === strpos( $html, '<script>' ), 'unescaped user content in output' );
+    }
 }
 expect( $capturedUrl === 'https://madagaskarsirki.com/wp-json/dunya-milano/v1/sessions', 'not canonical source' );
 expect( 0 === $capturedArgs['redirection'], 'upstream redirects must not be allowed' );

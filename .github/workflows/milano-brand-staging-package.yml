@@ -1,0 +1,102 @@
+name: Milano MMC Brand Selection - Staging Package
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php'
+      - 'wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php'
+      - 'wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php'
+      - 'integrations/milano/tests/mmc-program-brand-contract.php'
+      - 'integrations/milano/tests/yalova-config-contract.php'
+      - 'integrations/milano/fixtures/yalova-20261022.json'
+      - '.github/workflows/milano-brand-staging-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brand-staging-package:
+    name: Build review-only brand upgrade bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+          php -l integrations/milano/tests/mmc-program-brand-contract.php
+          php -l integrations/milano/tests/yalova-config-contract.php
+
+      - name: Verify brand selection does not add a default
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure; do
+            php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
+          done
+          php integrations/milano/tests/yalova-config-contract.php
+
+      - name: Inventory every program create call-site in this repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staging-review
+          git grep -n -E '(MMC_Program_Service::create_program|\$service::create_program)' -- wp-content/plugins integrations/milano > staging-review/program-create-callers.txt || true
+          cat staging-review/program-create-callers.txt
+          grep -q 'class-mmc-admin.php' staging-review/program-create-callers.txt
+          grep -q 'program-venue-event-sales.php' staging-review/program-create-callers.txt
+          grep -q "'brand'" wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+          grep -q 'name="brand" required' wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+
+      - name: Package source overlays only, NOT installable plugin releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staging-review/wp-content/plugins/madagaskar-management-center/includes
+          mkdir -p staging-review/wp-content/plugins/madagaskar-ai-abilities/modules
+          mkdir -p staging-review/fixtures
+          cp wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php staging-review/wp-content/plugins/madagaskar-management-center/includes/
+          cp wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php staging-review/wp-content/plugins/madagaskar-management-center/includes/
+          cp wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php staging-review/wp-content/plugins/madagaskar-ai-abilities/modules/
+          cp integrations/milano/fixtures/yalova-20261022.json staging-review/fixtures/
+          cat > staging-review/REVIEW_ONLY_NOT_INSTALLABLE.txt <<'NOTICE'
+          M I L A N O   S I R K I  —  S T A G I N G  O N L Y
+          This archive is a review bundle, NOT a complete WordPress plugin.
+          Do not install/upload it to production. No production files are changed.
+          Source paths are retained for a human-reviewed three-file deployment.
+
+          Production prerequisites:
+          1. Existing 13 Madagaskar records remain unchanged and the live plugin
+             versions/source hashes have been captured and can be restored.
+          2. Operator checks all plugin/program-creation callers and rollback plan.
+          3. MMC brand service, MMC admin and AI Abilities module are upgraded
+             together in maintenance window, never piecemeal.
+          4. After release, create Milano/Yalova preparation-only program with
+             explicit brand=Milano Sirki. Verify DB brand and initial tasks.
+          5. Do not attach/sell tickets or open PayTR/QR before separate QA.
+          NOTICE
+          (
+            cd staging-review
+            find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          )
+          (
+            cd staging-review
+            zip -q -r ../milano-brand-STAGING-REVIEW-ONLY.zip .
+          )
+          sha256sum milano-brand-STAGING-REVIEW-ONLY.zip > milano-brand-STAGING-REVIEW-ONLY.zip.sha256
+
+      - name: Upload review-only bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: milano-brand-staging-review-only
+          path: |
+            milano-brand-STAGING-REVIEW-ONLY.zip
+            milano-brand-STAGING-REVIEW-ONLY.zip.sha256
+          if-no-files-found: error
+          retention-days: 30

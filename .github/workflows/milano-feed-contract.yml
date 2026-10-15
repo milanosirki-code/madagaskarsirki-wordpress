@@ -23,21 +23,224 @@ jobs:
       - name: PHP syntax
         run: |
           php -l integrations/milano/dunya-milano-session-feed/dunya-milano-session-feed.php
+          php -l integrations/milano/dunya-milano-session-feed/dunya-milano-upcoming.php
+          php -l integrations/milano/tests/upcoming-contract.php
           php -l integrations/milano/milano-shared-events/milano-shared-events.php
           php -l integrations/milano/tests/feed-contract.php
+          php -l integrations/milano/dunya-milano-session-feed/dunya-milano-upcoming.php
+          php -l integrations/milano/tests/upcoming-feed-contract.php
           php -l integrations/milano/tests/consumer-contract.php
+          php -l integrations/milano/milano-brand-checkout-guard/milano-brand-checkout-guard.php
+          php -l integrations/milano/tests/brand-checkout-guard-contract.php
+          php -l integrations/milano/dunya-brand-enforcement/dunya-brand-enforcement.php
+          php -l integrations/milano/tests/brand-enforcement-contract.php
+          php -l integrations/milano/tests/mmc-program-brand-contract.php
+          php -l integrations/milano/tests/brand-public-catalog-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-checkout-intent.php
+          php -l integrations/milano/tests/checkout-intent-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-order-claim-registry.php
+          php -l integrations/milano/tests/order-claim-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-eligibility.php
+          php -l integrations/milano/tests/central-eligibility-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-central-preflight.php
+          php -l integrations/milano/checkout-intent-protocol/milano-paytr-callback-preflight.php
+          php -l integrations/milano/tests/paytr-callback-preflight-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-paytr-settlement-claim.php
+          php -l integrations/milano/checkout-intent-protocol/milano-paytr-order-settlement-lock.php
+          php -l integrations/milano/tests/paytr-order-settlement-lock-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-ticket-fulfillment-audit.php
+          php -l integrations/milano/checkout-intent-protocol/milano-family22-normalizer.php
+          php -l integrations/milano/milano-sales-freeze/milano-sales-freeze.php
+          php -l integrations/milano/tests/milano-sales-freeze-contract.php
+          php -l integrations/milano/tests/family22-normalizer-contract.php
+          php -l integrations/milano/tests/tickera-fulfillment-audit-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-ticket-issuance-ledger.php
+          php -l integrations/milano/tests/tickera-issuance-ledger-contract.php
+          php -l integrations/milano/tests/paytr-settlement-claim-contract.php
+          php -l integrations/milano/tests/central-preflight-contract.php
+          php -l integrations/milano/checkout-intent-protocol/milano-canonical-mdg-snapshot.php
+          php -l integrations/milano/tests/canonical-mdg-snapshot-contract.php
       - name: Isolated feed contract cases
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types; do
+          for scenario in no_key short_key wrong auth_success db_error empty available sold_out closed zero_capacity no_ticket_event missing_product wrong_parent price_mismatch variation_out_of_stock no_ticket_types missing_brand other_brand invalid_brand no_bridge two_bridges orphan_bridge bad_bridge_table no_db_owner zero_event_owner filter_promote filter_cross_brand filter_reject filter_promote_no_bridge legacy_fallback; do
             php integrations/milano/tests/feed-contract.php "$scenario"
           done
+
+      - name: Isolated Milano presale announcement-only feed cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in disabled no_key short_key wrong_key no_allowlist empty_allowlist duplicate_allowlist string_allowlist oversize_allowlist approved_draft other_brand missing_bridge two_bridges orphan_bridge unapproved_event missing_venue missing_province invalid_local expired_row empty db_error; do
+            php integrations/milano/tests/upcoming-contract.php "$scenario"
+          done
+
+      - name: Milano announcement-only producer security contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid disabled missing_ids invalid_ids duplicate_ids wrong_key missing_key bad_table query_error empty wrong_brand unknown_brand unapproved_event invalid_local empty_venue html_input; do
+            php integrations/milano/tests/upcoming-feed-contract.php "$scenario"
+          done
+
+      - name: Yalova first-event price, capacity and family ticket contract
+        run: |
+          php -l integrations/milano/tests/yalova-config-contract.php
+          php integrations/milano/tests/yalova-config-contract.php
 
       - name: Isolated Milano client contract cases
         shell: bash
         run: |
           set -euo pipefail
-          for scenario in public no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid; do
+          for scenario in public public_enabled public_empty public_wrong_brand public_missing_brand public_no_key public_price public_stale public_unknown_brand public_past public_script no_key network_error http_error malformed_json wrong_schema missing_readonly stale over_limit bad_capacity mismatched_soldout past sold_out html_input valid missing_brand wrong_brand unknown_brand empty two_cards; do
             php integrations/milano/tests/consumer-contract.php "$scenario"
+          done
+
+      - name: Exclusive brand direct-cart and checkout guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano_denied madagaskar_allowed unrelated_product missing_brand invalid_brand no_bridge two_bridges orphan_bridge shared_product mismatched_variation direct_parent existing_cart checkout_order valid_order store_cart cart_preserve_upstream_error; do
+            php integrations/milano/tests/brand-enforcement-contract.php "$scenario"
+          done
+
+      - name: Isolated brand purchase gate contract
+        run: php integrations/milano/tests/brand-checkout-guard-contract.php
+
+      - name: MMC program brand selection contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in create_milano create_madagaskar create_alias_milano create_alias_madagaskar create_trimmed missing_brand empty_brand bad_brand ambiguous_brand no_province db_failure; do
+            php integrations/milano/tests/mmc-program-brand-contract.php "$scenario"
+          done
+
+      - name: Native public cities and direct event brand gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano madagaskar disabled; do
+            php integrations/milano/tests/brand-public-catalog-contract.php "$scenario"
+          done
+
+      - name: Signed Milano central-checkout intent contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid sort_items random_nonce tamper_event tamper_session tamper_quantity tamper_brand extra_price buyer_email wrong_key weak_key expired clock_skew future_within_skew ttl_override signature_garbage negative_id duplicate_ticket invalid_qty unknown_field_item untrusted_code reordered_fields empty_items duplicate_pre_sign too_many_units missing_items replay_contract; do
+            php integrations/milano/tests/checkout-intent-contract.php "$scenario"
+          done
+
+      - name: PayTR signed callback order-attempt preflight contract (staging only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid wrong_brand empty_brand wrong_gateway wrong_order wrong_pending_oid missing_attempt duplicate_attempt failed_token other_attempt_oid attempt_amount_changed order_amount_changed wrong_currency attempt_currency tamper_status tamper_paid_total tamper_oid invalid_hash weak_key missing_field invalid_notice_total unsigned_payment_changed unsigned_currency_changed underpayment installment_difference failed_callback already_completed already_refunded already_cancelled failed_order invalid_order_total missing_stored_order_meta untrusted_extra_callback_field spoofed_meta_brand; do
+            php integrations/milano/tests/paytr-callback-preflight-contract.php "$scenario"
+          done
+
+      - name: PayTR one-successful-payment-per-order lock (staging only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in first parallel_same second_oid final_once already_final crash_reconcile payload_conflict wrong_worker cross_order_same_oid bad_hash failed_callback wrong_brand wrong_order_brand wrong_order missing_pending_id already_paid refunded underpaid installments not_authorized bad_table bad_db db_broken; do
+            php integrations/milano/tests/paytr-order-settlement-lock-contract.php "$scenario"
+          done
+
+      - name: Atomic PayTR callback merchant OID claim (staging contract)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in first repeat different_signed_total wrong_token finish_once repeat_final stale_claim corrupt_state different_order_record failure_notification tampered_signature wrong_brand installment_review already_paid bad_db db_unavailable; do
+            php integrations/milano/tests/paytr-settlement-claim-contract.php "$scenario"
+          done
+
+      - name: MDG payment capacity duplicate callback contract
+        run: |
+          php -l integrations/milano/tests/mdg-payment-capacity-contract.php
+          php integrations/milano/tests/mdg-payment-capacity-contract.php
+
+      - name: Atomic checkout request registry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new_claim insert_unavailable bad_signature expired weak_secret bad_table same_in_flight parallel_worker attach_once duplicate_ready different_payload_same_request changed_event_same_request unauthorized_worker invalid_order invalid_request reuse_order_other_request no_automatic_claim_timeout invalid_state broken_ready db_update_failure order_id_wrong_type; do
+            php integrations/milano/tests/order-claim-contract.php "$scenario"
+          done
+
+      - name: Tickera ticket dry-run duplicate fingerprint contract
+        run: |
+          php -l integrations/milano/tests/tickera-ticket-dry-run.php
+          php integrations/milano/tests/tickera-ticket-dry-run-contract.php
+
+      - name: Tickera per-line ticket reconciliation contract
+        run: |
+          php -l integrations/milano/tests/tickera-line-reconciliation.php
+          php integrations/milano/tests/tickera-line-reconciliation-contract.php
+
+      - name: Canonical central MDG ticket and price eligibility contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid family_package wrong_brand unknown_brand event_draft event_id_mismatch session_id_mismatch session_event_mismatch session_closed session_past cutoff_closed event_sale_future event_sale_ended session_sale_future session_sale_ended missing_window product_mismatch unpublished_product simple_product wrong_currency no_tickera zero_capacity insufficient_capacity capacity_negative available_greater_than_total unknown_type inactive_type unavailable_variation unpurchasable_variation variation_parent_mismatch wrong_price float_price negative_price duplicate_codes free_checkout overpriced too_many_admissions malformed_intent missing_snapshot; do
+            php integrations/milano/tests/central-eligibility-contract.php "$scenario"
+          done
+
+      - name: Tickera event ticket-type mapping contract
+        run: |
+          php -l integrations/milano/tests/tickera-mapping-audit.php
+          php integrations/milano/tests/tickera-mapping-audit-contract.php
+
+      - name: Signed intent plus central eligibility plus atomic claim contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new repeat_processing existing_order same_id_different_items wrong_signature expired wrong_brand missing_brand out_of_stock price_mismatch cancelled_session server_error no_lookup invalid_db; do
+            php integrations/milano/tests/central-preflight-contract.php "$scenario"
+          done
+
+      - name: Milano per-admission Tickera ledger idempotency (review-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in new duplicate attach_once already_issued wrong_token ticket_id_reused family4 crashed_worker identity_conflict stuck_after_issue other_brand order_brand_mismatch unsettled invalid_line bad_unit negative_index large_family bad_type bad_table db_unavailable; do
+            php integrations/milano/tests/tickera-issuance-ledger-contract.php "$scenario"
+          done
+
+      - name: Milano temporary Woo checkout freeze, never affect Madagaskar
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in milano_default www uppercase_host trailing_dot host_spoofing query_switch admin_switch constant_switch add_cart_true add_cart_false purchasable variation old_cart checkout_validation classic_order store_cart store_checkout gateway_hidden madagaskar_unchanged other_domain_unchanged lookalike_domain; do
+            php integrations/milano/tests/milano-sales-freeze-contract.php "$scenario"
+          done
+
+      - name: Milano virtual family 2+2 real child adult cart contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family_one two_families ten_families extra_child extra_adult extra_both combined_two no_discount nonstandard_event_price child_zero_price different_catalogue_codes inactive_other_type wrong_source_brand wrong_owner_brand event_mismatch session_mismatch zero_families eleven_families fractional_family child_unknown virtual_family_as_real_type real_capacity_four adult_multi_unit two_children missing_adult duplicate_type_code inactive_child expensive_family free_family too_many_child too_many_adult full_child_20 wrong_price_type wrong_qty_type missing_variation invalid_role duplicate_normal_lines missing_request unknown_metadata injected_code; do
+            php integrations/milano/tests/family22-normalizer-contract.php "$scenario"
+          done
+
+      - name: Family package commercial quantity versus physical tickets (staging only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in family4 two_families split_2adults_2children one_ticket_for_family three_of_four five_of_four duplicate_ticket_id duplicate_qr_hash incorrect_hash invalid_ticket_id different_order wrong_ticket_item different_event wrong_ticket_type ticket_trashed brand_leak event_owner_leak payment_pending mdg_hold_not_committed wrong_order_id wrong_woo_quantity wrong_woo_variation wrong_woo_session extra_woo_line missing_woo_line wrong_admission_math capacity_zero negative_quantity duplicate_quote_line unknown_order large_admissions untrusted_line_key; do
+            php integrations/milano/tests/tickera-fulfillment-audit-contract.php "$scenario"
+          done
+
+      - name: Full Tickera invariant audit contract
+        run: |
+          php -l integrations/milano/tests/tickera-full-audit.php
+          php integrations/milano/tests/tickera-full-audit-contract.php
+
+      - name: Trusted central MMC MDG Woo read-only snapshot adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          for scenario in valid family4 no_brand wrong_brand no_bridge two_bridges bridge_error orphan_bridge malformed_brand missing_event wrong_event_id event_draft session_missing wrong_session_id wrong_session_event closed_session time_closed past_session invalid_start impossible_date invalid_window sale_future sale_ended no_product unpublished simple_product wrong_currency no_tickera bad_parent_id out_of_stock unavailable_variation inactive_type duplicated_code invalid_code no_tickets wrong_woo_price fractional_subcents trailing_zero_price zero_capacity low_capacity invalid_available no_capacity_total invalid_request_id; do
+            php integrations/milano/tests/canonical-mdg-snapshot-contract.php "$scenario"
           done

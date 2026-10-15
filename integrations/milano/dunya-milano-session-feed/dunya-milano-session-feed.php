@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dünya Organizasyon - Milano Ortak Seans Beslemesi (Hazırlık)
  * Description: MDG'nin kanonik kapasite defterinden salt okunur ve anahtar korumalı seans bilgisi verir. Sipariş veya stok değiştirmez.
- * Version: 0.1.0
+ * Version: 0.3.0
  * Requires PHP: 7.4
  * Text Domain: dunya-milano-session-feed
  *
@@ -51,7 +51,66 @@ function dmsf_ready() {
         && function_exists( 'wc_get_product' );
 }
 
-/** Only future, on-sale sessions with valid native product/variation mapping. */
+/**
+ * Resolve the canonical event owner. No heuristic fallback to Madagaskar.
+ * The authoritative MDG/MMC brand adapter must be installed and tested
+ * separately before this feed can return any session. An unverified event
+ * MUST NEVER be exposed to Milano.
+ */
+function dmsf_event_owner_brand( $event_id ) {
+    // Never use MMC_MDG_Bridge_Service::program_for_mdg_event() here:
+    // its legacy first-match / fallback behavior is not an authority.
+    $event_id = (int) $event_id;
+    if ( $event_id < 1
+        || ! class_exists( 'MMC_MDG_Bridge_Service' )
+        || ! class_exists( 'MMC_Program_Service' )
+        || ! method_exists( 'MMC_MDG_Bridge_Service', 'table' )
+        || ! method_exists( 'MMC_Program_Service', 'get_program' )
+        || ! method_exists( 'MMC_Program_Service', 'normalized_program_brand' ) ) {
+        return null;
+    }
+
+    global $wpdb;
+    if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'prepare' )
+        || ! method_exists( $wpdb, 'get_col' ) ) {
+        return null;
+    }
+    $bridge_table = MMC_MDG_Bridge_Service::table();
+    if ( ! is_string( $bridge_table )
+        || ! preg_match( '/\\A[A-Za-z0-9_]+\\z/D', $bridge_table ) ) {
+        return null;
+    }
+
+    // LIMIT 2 is deliberate: zero or multiple active links means NO owner.
+    // Do not fall back to historical sale mappings or trust a browser brand.
+    $program_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT program_id FROM {$bridge_table} WHERE mdg_event_id=%d AND is_active=1 LIMIT 2",
+        $event_id
+    ) );
+    if ( ! is_array( $program_ids ) || 1 !== count( $program_ids )
+        || (int) $program_ids[0] < 1 ) {
+        return null;
+    }
+
+    $program = MMC_Program_Service::get_program( (int) $program_ids[0] );
+    if ( ! is_object( $program ) || ! isset( $program->brand ) ) {
+        return null;
+    }
+    $brand = MMC_Program_Service::normalized_program_brand( $program->brand );
+    $verified = 'Milano Sirki' === $brand ? 'milano'
+        : ( 'Madagaskar Sirki' === $brand ? 'madagaskar' : null );
+    if ( null === $verified ) {
+        return null;
+    }
+
+    // Extensions may VETO an owner, but cannot supply/replace the verified
+    // owner. This preserves compatibility with strict brand guard filters,
+    // without allowing an unknown owner to be made Milano by a plugin.
+    $filtered = apply_filters( 'dunya_milano_canonical_event_owner', $verified, $event_id );
+    return $filtered === $verified ? $verified : null;
+}
+
+/** Only future, on-sale Milano-owned sessions with native mappings. */
 function dmsf_get_sessions( WP_REST_Request $request ) {
     if ( ! dmsf_ready() ) {
         return new WP_Error( 'dmsf_dependencies', 'Feed unavailable.', array( 'status' => 503 ) );
@@ -89,6 +148,10 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
 
     $sessions = array();
     foreach ( (array) $rows as $row ) {
+        // Critical brand boundary; no implicit fallback for existing events.
+        if ( 'milano' !== dmsf_event_owner_brand( (int) $row->event_id ) ) {
+            continue;
+        }
         if ( (int) $row->capacity_total < 1
             || (int) $row->wc_product_id < 1
             || (int) $row->tickera_event_id < 1
@@ -142,6 +205,7 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
         $available = MDG_Capacity::available( (int) $row->session_id );
         $sessions[] = array(
             'event_id'       => (int) $row->event_id,
+            'event_owner_brand' => 'milano',
             'session_id'     => (int) $row->session_id,
             'province'       => sanitize_text_field( (string) $row->province_name ),
             'district'       => sanitize_text_field( (string) $row->district ),
@@ -167,3 +231,7 @@ function dmsf_get_sessions( WP_REST_Request $request ) {
     $response->header( 'X-Robots-Tag', 'noindex, nofollow' );
     return $response;
 }
+
+// Separate, independently approved announcement-only feed. The existing
+// /sessions stock/pricing contract is unchanged and remains private.
+require_once __DIR__ . '/dunya-milano-upcoming.php';

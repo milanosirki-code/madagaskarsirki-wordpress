@@ -42,6 +42,25 @@ class MMC_Program_Service {
         );
     }
 
+    public static function brand_options() {
+        return array(
+            'Madagaskar Sirki' => 'Madagaskar Sirki',
+            'Milano Sirki'     => 'Milano Sirki',
+        );
+    }
+
+    public static function normalized_program_brand( $value ) {
+        $value = sanitize_text_field( (string) $value );
+        $aliases = array(
+            'madagaskar' => 'Madagaskar Sirki',
+            'milano'     => 'Milano Sirki',
+        );
+        if ( isset( $aliases[ strtolower( $value ) ] ) ) {
+            return $aliases[ strtolower( $value ) ];
+        }
+        return isset( self::brand_options()[ $value ] ) ? $value : '';
+    }
+
     public static function create_program( $data ) {
         global $wpdb;
         $table = $wpdb->prefix . 'mmc_programs';
@@ -51,6 +70,11 @@ class MMC_Program_Service {
         $year     = absint( $data['plan_year'] ?? wp_date( 'Y' ) );
         $date     = sanitize_text_field( $data['planned_date'] ?? '' );
         $notes    = sanitize_textarea_field( $data['notes'] ?? '' );
+        // A new programme must explicitly declare its sales brand.
+        $brand = self::normalized_program_brand( $data['brand'] ?? '' );
+        if ( '' === $brand ) {
+            return new WP_Error( 'mmc_brand_required', 'Program için Madagaskar Sirki veya Milano Sirki markasını seçiniz.' );
+        }
 
         if ( '' === $province ) {
             return new WP_Error( 'mmc_missing_province', 'İl alanı zorunludur.' );
@@ -64,7 +88,7 @@ class MMC_Program_Service {
             $table,
             array(
                 'program_code'  => $code,
-                'brand'         => 'Madagaskar Sirki',
+                'brand'         => $brand,
                 'province_name' => $province,
                 'district_name' => $district,
                 'plan_year'     => $year,
@@ -86,6 +110,7 @@ class MMC_Program_Service {
         $program_id = (int) $wpdb->insert_id;
         self::add_log( $program_id, 'program_created', 'program', $program_id, null, array(
             'program_code' => $code,
+            'brand'        => $brand,
             'province'     => $province,
             'district'     => $district,
             'status'       => 'preparation',
