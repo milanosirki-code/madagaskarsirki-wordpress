@@ -1,6 +1,6 @@
 # Kommo yanıt kalitesi değişiklikleri — 16 Ekim 2026
 
-Durum: KISMEN UYGULANDI. Kullanıcı “gerekli değişiklikleri yap” diyerek yetkilendirdi. Tamamlandı/önizleme geçti iddiası yok.
+Durum: KAYITLAR DOĞRULANDI; ÜÇ KRİTİK ÖNİZLEME TESTİ GEÇTİ. Aşağıdaki ilk bölümler önceki oturumun tarihçesidir; en güncel sonuç son bölümdedir.
 
 ## Kaydı yeniden açılarak doğrulanan bölüm
 İlk güvenli giriş yenilemesinden sonra AI350584 kalıcı sayfasında uzun yeni marka-duyarlı rol,8 saniye gecikme ve300 karaktere sığdırılmış9 kılavuz değişikliği görüldü. Madagaskar/Milano resmî yönlendirmesi, normal bilet/davetiye ayrımı, QR/dekont, görselin tekrar istenmemesi, doğrudan insan aktarımı, kurumsal bilgiyi formda yeniden istememe ve bağlam kuralları kaydedilmişti. Kılavuzlar başlangıçta300karakter sınırını aştığından kısaltıldı.
@@ -38,3 +38,15 @@ Branch fix/kommo-response-quality-20261016;draftPR271. Başlangıç hazırlık c
 Geri alma: kaynak eski “MADAGASKAR SİRKİ — GENEL KURALLAR” içeriğine; rol/kılavuzlar önceki kayda; gecikme3saniyeye; aktarım bildirimi Kimseye; özel niyet genel destek alın + önceki açıklamaya döner. Şehir eylemi önceki “İlçe tek başına verilmişse ili tahmin etme...hangi gösteri iliyle ilgilendiğini kısa soruyla netleştir” metnindeydi; işlevsel çelişki nedeniyle buna dönüş tekrar soru sorununu geri getirebilir. Eski ödeme/bilet veya finans botları geri alma hedefi değildir.
 
 Müşteri adı,telefon,e-posta,görüşme/lead/sipariş/bilet kimliği,özel URL,kimlik bilgisi ve parola rapora alınmadı.
+
+## 28. Erişim geri geldi; kalıcı kayıt ve üç kritik test doğrulandı — 16 Ekim 2026
+Kullanıcı şifre değişikliğinden sonra bulut tarayıcısında kendisi giriş yaptı ve işlemlerin sürdürülmesini istedi. Hesap içi ekran ve AI350584 Açık durumu doğrulandı. Önceki güvenlik engeli bu oturumda artık görevi engellemiyor.
+
+Kalıcı kayıttan rol, 8 saniye gecikme, son gereksiz soru/düz URL kılavuzları, Temel bilgiler kaynağının tam metni, özel değişiklik/kurumsal aktarım eylemi ve Milano Sirki bildirim alıcısı okundu. CRM İlgi Şehri eyleminde uzun yeni kural da kaydedilmiş: doğrulanmış ilçe-il eşleşmesi yoksa alanı değiştirme; sırf CRM için il/şehir sorusu sorma; diğer alan/aşama/iş başvurusu ve pazarlama izni korumalarını sürdür. Önceki kalıcılık belirsizliği giderildi; yeniden yazma veya mükerrer eylem gerekmedi.
+
+Temiz önizleme sonuçları:
+- Didim okul davetiyesi, 1 yetişkin + 7/10 yaş iki çocuk: kampanya ilgili etkinlikte geçerliyse ayrıca çocuk bileti gerekmediği açıklandı; yeniden il sorulmadı. PASS.
+- Karamürsel Milano marka/ortak ödeme ve resmî URL: ayrı markalar/ortak altyapı açıklandı; https://milanosirki.com/bilet-al/ doğru link olarak üretildi, sonuna bozuk Markdown eklenmedi; tekrar şehir sorulmadı. PASS.
+- Didim 19:30 → 17:30 değişiklik: 'Talebinizi incelemesi için canlı temsilcimize aktarıyorum.' yanıtı ve 'İşlemler tamamlandı / Temsilci sohbeti bir kullanıcıya aktardı' sonucu görüldü. Tekrar il sorusu veya değişiklik onayı verilmedi. PASS (önizleme).
+
+Bu tur yeni canlı yapılandırma değişikliği gerekmemiştir; önceki kaydedilmiş düzeltmeler doğrulandı. Gerçek müşteriye test mesajı gönderilmedi. Canlı WhatsApp/Instagram teslimatı, eski Uşak kesintisinin kesin teknik nedeni ve fiyat mutabakatı bu üç testle doğrulanmış sayılmaz. QR/gişe/kurumsal kuralları kalıcı kaynakta mevcut; bu tur bunlara ayrı model testi uygulanmadı. Önceki bilet/ödeme/hatırlatma/anket korumaları geçerlidir.
