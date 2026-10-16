@@ -20,8 +20,8 @@
   },
   "realtime_verified": false,
   "network_cookie_inventory_verified": false,
-  "google_auth": "awaiting_phone_approval",
-  "sitemap_regeneration": "awaiting_wpvibe_approval",
+  "google_auth": "session_expired_requires_secure_sign_in",
+  "sitemap_regeneration": "executed_and_public_verified_25_urls",
   "pagespeed": {
     "performance": 78,
     "seo": 100,
