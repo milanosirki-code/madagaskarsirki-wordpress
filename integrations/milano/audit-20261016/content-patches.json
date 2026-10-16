@@ -1,0 +1,108 @@
+[
+  {
+    "post_id": 231,
+    "old_content": "Yalova’de.",
+    "new_content": "Yalova’da."
+  },
+  {
+    "post_id": 14,
+    "old_content": "Milano Sirki çevrimiçi bilet satışları henüz aktif değildir. Onaylanmış şehir ve seans duyuruları için resmî sayfamızı ziyaret edebilirsiniz.",
+    "new_content": "Karamürsel, Yalova, Darıca ve Derince gösterilerinin biletleri satıştadır. Şehrinizi ve seansınızı Bilet Al sayfasından seçebilirsiniz. Ödeme, Dünya Organizasyon’un madagaskarsirki.com ortak ödeme altyapısında tamamlanır."
+  },
+  {
+    "post_id": 115,
+    "old_content": "14 Ekim 2026. Bu metin, milanosirki.com üzerinden ileride gerçekleştirilecek Milano Sirki etkinlik bileti satışlarında uygulanacak esasları açıklar. <strong>14 Ekim 2026 itibarıyla sitede çevrimiçi bilet satışı henüz aktif değildir.</strong> Satış başladığında",
+    "new_content": "16 Ekim 2026. Bu metin, milanosirki.com üzerinden seçilen Milano Sirki etkinlik biletleri için uygulanacak esasları açıklar. <strong>Karamürsel, Yalova, Darıca ve Derince biletleri satıştadır; ödeme, Dünya Organizasyon’un madagaskarsirki.com ortak ödeme altyapısında tamamlanır.</strong> Satın alırken"
+  },
+  {
+    "post_id": 34,
+    "old_content": "Milano Sirki çevrimiçi bilet satışı henüz etkin değildir. Gelecekte ödeme ve e-bilet özelliği devreye alınırsa bu kapsamdaki veri faaliyetleri ayrıca açıklanacaktır.",
+    "new_content": "Milano Sirki etkinlik ve seans seçimi milanosirki.com üzerinden yapılır. Sipariş, ödeme ve e-bilet işlemleri Dünya Organizasyon’un madagaskarsirki.com ortak altyapısında yürütülür. Bu süreçlerde ad-soyad, iletişim, katılımcı, etkinlik, seans, sipariş ve bilet bilgileri işlenebilir. Kart bilgileri ödeme sağlayıcısının güvenli ekranında girilir; destek kanallarımız üzerinden kart numaranızı veya güvenlik kodunuzu göndermeyin."
+  },
+  {
+    "post_id": 34,
+    "old_content": "ileride açılabilecek bilet hizmetlerinin",
+    "new_content": "bilet hizmetlerinin"
+  },
+  {
+    "post_id": 34,
+    "old_content": "İleride etkinlik bileti satışı başladığında, sipariş ve iade taleplerine ilişkin kayıtlar",
+    "new_content": "Sipariş ve iade taleplerine ilişkin kayıtlar"
+  },
+  {
+    "post_id": 34,
+    "old_content": "Milano markasının çevrimiçi satışları şu anda açık değildir.",
+    "new_content": "Milano etkinliklerinin güncel satış durumu Bilet Al sayfasında gösterilir."
+  },
+  {
+    "post_id": 34,
+    "old_content": "14 Ekim 2026",
+    "new_content": "16 Ekim 2026"
+  },
+  {
+    "post_id": 33,
+    "old_content": "Gelecekte bilet satın alma özelliği etkinleştirildiğinde",
+    "new_content": "Bilet satın alma sürecinde"
+  },
+  {
+    "post_id": 33,
+    "old_content": "Biletleme etkinleştirildiğinde sipariş",
+    "new_content": "Sipariş"
+  },
+  {
+    "post_id": 33,
+    "old_content": "ilgili formlar ve gelecekte devreye alınacak bilet satış ekranlarından",
+    "new_content": "ilgili formlar ve Dünya Organizasyon’un madagaskarsirki.com ortak bilet satış ekranlarından"
+  },
+  {
+    "post_id": 33,
+    "old_content": "biletleme etkinleştiğinde ödeme, e-bilet ve muhasebe hizmet sağlayıcıları",
+    "new_content": "ödeme, e-bilet ve muhasebe hizmet sağlayıcıları"
+  },
+  {
+    "post_id": 33,
+    "old_content": "13 Ekim 2026",
+    "new_content": "16 Ekim 2026"
+  },
+  {
+    "post_id": 22,
+    "old_content": "Yalova biletleri satışa açılmıştır.",
+    "new_content": "Karamürsel, Yalova, Darıca ve Derince biletleri satışa açılmıştır.",
+    "replace_all": true
+  },
+  {
+    "post_id": 22,
+    "old_content": "Yalova için <a href=\"/bilet-al/\">Bilet Al</a> sayfasından seansınızı ve biletlerinizi seçin.",
+    "new_content": "<a href=\"/bilet-al/\">Bilet Al</a> sayfasında önce şehrinizi, ardından seansınızı ve biletlerinizi seçin."
+  },
+  {
+    "post_id": 22,
+    "old_content": "<a href=\"/sehirler/\">Yalova etkinlik ayrıntılarını görün →</a>",
+    "new_content": "<a href=\"/milano-sirki-yalova-22-ekim-2026/\">Yalova etkinlik ayrıntılarını görün →</a>"
+  },
+  {
+    "post_id": 5,
+    "old_content": "Yalova biletleri satışta. <a href=\"/bilet-al/\"><strong>Yalova Bilet Al →</strong></a>",
+    "new_content": "Karamürsel, Yalova, Darıca ve Derince biletleri satışta. <a href=\"/bilet-al/\"><strong>Şehrini seç ve bilet al →</strong></a>"
+  },
+  {
+    "post_id": 35,
+    "old_content": "Sitemizdeki çerez tercih panelinin kurulumu ve Türkiye için tercih/rıza ayarlarının teknik doğrulaması henüz tamamlanmamıştır.",
+    "new_content": "“İzinleri yönet” düğmesiyle çerez tercih panelini açabilir, kategorileri görüntüleyebilir ve tercihinizi değiştirebilirsiniz."
+  },
+  {
+    "post_id": 35,
+    "old_content": "Tercih paneli devreye alındığında",
+    "new_content": "Tercih panelinde"
+  },
+  {
+    "post_id": 35,
+    "old_content": "sağlanması hedeflenmektedir.",
+    "new_content": "sunulur."
+  },
+  {
+    "post_id": 35,
+    "old_content": "13 Ekim 2026",
+    "new_content": "16 Ekim 2026"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "post_id": 271,
+    "old_content": "bu hafta sonu",
+    "new_content": "24 Ekim Cumartesi günü"
+  },
+  {
+    "post_id": 267,
+    "old_content": "beceresini",
+    "new_content": "becerisini"
+  },
+  {
+    "post_id": 265,
+    "old_content": "<li><strong>Kapılar:</strong> Her seanstan yaklaşık 45 dakika önce açılır</li>",
+    "new_content": "<li><strong>Salona varış:</strong> Gösteriden en az 30 dakika önce salonda olmanızı öneririz.</li>"
+  },
+  {
+    "post_id": 265,
+    "old_content": "QR kodlu bilet telefonunuza gelir.",
+    "new_content": "QR kodlu bilet e-posta adresinize gönderilir; telefonunuzdan gösterebilirsiniz."
+  },
+  {
+    "post_id": 272,
+    "old_content": "ekim’in son haftası",
+    "new_content": "21–24 Ekim arası"
+  },
+  {
+    "post_id": 262,
+    "old_content": "Online satış, seans başladığında kapanır.",
+    "new_content": "Seansların güncel satış durumunu Bilet Al sayfasından kontrol edebilirsiniz."
+  },
+  {
+    "post_id": 272,
+    "old_content": "online satış seans başladığında kapanır.",
+    "new_content": "seansın güncel satış durumunu Bilet Al sayfasından kontrol edin."
+  }
+]
