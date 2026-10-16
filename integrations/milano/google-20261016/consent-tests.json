@@ -1,0 +1,32 @@
+{
+  "measurementId": "G-DD2ZXC383D",
+  "before_consent": {
+    "loader_active": false,
+    "category": "statistics",
+    "type": "text/plain"
+  },
+  "after_reject": {
+    "loader_active": false,
+    "type": "text/plain"
+  },
+  "after_accept": {
+    "external_loaders": 1,
+    "inline_configs": 1,
+    "src": "https://www.googletagmanager.com/gtag/js?id=G-DD2ZXC383D"
+  },
+  "after_withdrawal": {
+    "loader_active": false,
+    "type": "text/plain"
+  },
+  "realtime_verified": false,
+  "network_cookie_inventory_verified": false,
+  "google_auth": "session_expired_requires_secure_sign_in",
+  "sitemap_regeneration": "executed_and_public_verified_25_urls",
+  "pagespeed": {
+    "performance": 78,
+    "seo": 100,
+    "LCP_seconds": 5.3,
+    "CLS": 0,
+    "total_payload_KiB": 4902
+  }
+}

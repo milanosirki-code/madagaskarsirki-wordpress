@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-16",
+  "site": "https://milanosirki.com",
+  "cron": {
+    "operation": "op_d228ae81960f4f86",
+    "hook": "jp_sitemap_cron_hook",
+    "status": "executed",
+    "exit_code": 0
+  },
+  "native_buffer_modified": "2026-10-16 10:35:06",
+  "public_before": 15,
+  "cache_clear": {
+    "method": "WordPress.com Settings > Caching > Global edge > Clear",
+    "ui_confirmation": "Küresel edge önbelleği temizlendi."
+  },
+  "public_after": {
+    "index_http": 200,
+    "index_children": 2,
+    "content_http": 200,
+    "content_urls": 25,
+    "pages": 17,
+    "posts": 8,
+    "includes_yalova_detail": true,
+    "includes_blog_index": true,
+    "cache": "MISS"
+  },
+  "search_console_submission_verified": false,
+  "google_indexing_verified": false
+}
