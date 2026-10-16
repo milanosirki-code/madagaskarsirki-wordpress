@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-16",
+  "site": "https://milanosirki.com",
+  "published_pages": 17,
+  "published_articles": 8,
+  "changed_pages": [
+    5,
+    14,
+    22,
+    33,
+    34,
+    35,
+    115,
+    231
+  ],
+  "changed_posts": [
+    262,
+    265,
+    267,
+    271,
+    272
+  ],
+  "changed_template": "assembler//single",
+  "page_content_patches": 21,
+  "blog_content_patches": 7,
+  "http_initial_targets": 47,
+  "http_initial_failures": 0,
+  "http_blog_link_targets": 35,
+  "http_blog_link_failures": 0,
+  "mobile_viewport": 375,
+  "mobile_pages_checked": 17,
+  "mobile_articles_checked": 2,
+  "mobile_overflow": 0,
+  "city_session_counts": {
+    "karamursel": 2,
+    "yalova": 2,
+    "darica": 2,
+    "derince": 3
+  },
+  "prices": {
+    "child": 245,
+    "adult": 490,
+    "family": 1100
+  },
+  "family_handoff": {
+    "event": 26,
+    "session": 177,
+    "date": "2026-10-24",
+    "time": "14:00",
+    "people": 4,
+    "total": 1100,
+    "order_created": false,
+    "charge": false
+  },
+  "qa_draft": {
+    "id": 253,
+    "status": "trash"
+  },
+  "limitations": [
+    "Paid PayTR, callback, refund, capacity race and live QR scanning were not exercised in this page audit.",
+    "Cookie panel interaction verified; complete tracker inventory/consent network compliance was not certified.",
+    "Social/email/WhatsApp destinations checked in markup; no outbound message sent or third-party account login tested."
+  ]
+}
