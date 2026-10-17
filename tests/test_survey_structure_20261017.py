@@ -1,8 +1,11 @@
 import json
 from pathlib import Path
 
-old = json.loads(Path('kommo-survey-bot-backup-20261017.json').read_text())
-new = json.loads(Path('kommo-survey-bot-runtime-20261017.json').read_text())
+source_dir = Path(__file__).resolve().parent
+if source_dir.name == 'tests':
+    source_dir = source_dir.parent / 'prototypes' / 'satisfaction-survey'
+old = json.loads((source_dir / 'kommo-survey-bot-backup-20261017.json').read_text())
+new = json.loads((source_dir / 'kommo-survey-bot-runtime-20261017.json').read_text())
 
 def walk(value):
     if isinstance(value, dict):
