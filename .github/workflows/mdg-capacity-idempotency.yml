@@ -1,0 +1,50 @@
+name: MDG hold settlement idempotency
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php'
+      - 'tests/mdg-capacity-idempotency/**'
+      - '.github/workflows/mdg-capacity-idempotency.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php'
+      - 'tests/mdg-capacity-idempotency/**'
+      - '.github/workflows/mdg-capacity-idempotency.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  atomic-payment-finalization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-root
+          MYSQL_DATABASE: mdg_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=test-only-root"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, pcntl
+      - name: PHP syntax
+        run: |
+          php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-capacity.php
+          php -l tests/mdg-capacity-idempotency/regression.php
+          php -l tests/mdg-capacity-idempotency/mysql-concurrency.php
+      - name: Offline capacity invariants (no database/no PayTR)
+        run: php tests/mdg-capacity-idempotency/regression.php
+      - name: True MySQL concurrency settlement/cancellation test
+        run: php tests/mdg-capacity-idempotency/mysql-concurrency.php
