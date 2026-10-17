@@ -1,0 +1,73 @@
+{
+  "0": {
+    "block_uuid": "c607fd2a-5545-4f9c-95db-438c28883d87",
+    "question": [
+      {
+        "handler": "conditions",
+        "params": {
+          "logic": "and",
+          "result": [
+            {
+              "handler": "goto",
+              "params": {
+                "type": "question",
+                "step": 1
+              }
+            }
+          ],
+          "conditions": [
+            {
+              "term1": "{{contact.cf.2455462}}",
+              "term2": "1854228",
+              "operation": "=",
+              "value_type": "value"
+            }
+          ]
+        }
+      },
+      {
+        "handler": "goto",
+        "params": {
+          "type": "question",
+          "step": 2
+        }
+      }
+    ]
+  },
+  "1": {
+    "block_uuid": "bc2d6ae7-5e07-45af-a1af-3177ee429572",
+    "question": [
+      {
+        "handler": "action",
+        "params": {
+          "name": "change_status",
+          "params": {
+            "value": 142,
+            "pipeline_id": 14267487
+          }
+        }
+      }
+    ]
+  },
+  "2": {
+    "block_uuid": "f70ef8e8-2669-4cc8-a1ff-a3f174bcd28e",
+    "question": [
+      {
+        "handler": "send_message",
+        "params": {
+          "tag": "",
+          "text": "",
+          "type": "external",
+          "recipient": {
+            "type": "all_contacts",
+            "way_of_communication": "over_all"
+          },
+          "is_in_starting_block": true,
+          "send_to_all_chat_sources": true,
+          "on_error": null
+        }
+      }
+    ]
+  },
+  "conversation": false
+}
