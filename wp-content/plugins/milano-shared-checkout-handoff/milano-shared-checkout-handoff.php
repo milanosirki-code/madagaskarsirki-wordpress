@@ -11,6 +11,13 @@ final class Milano_Shared_Checkout_Handoff {
  const CENTRAL='madagaskarsirki.com';
  const FRONT='milanosirki.com';
  private static $context=null;
+ public static function designer_selection($id){
+  // Tickera stores Designer IDs separately; the native selector normalizes d_N.
+  if(function_exists('\\Tickera\\tickera_ticket_designer_selected_template_value')){
+   return (string)\Tickera\tickera_ticket_designer_selected_template_value($id,'_ticket_template');
+  }
+  return (string)get_post_meta($id,'_ticket_template',true);
+ }
  public static function selection($input) {
   $out=array();
   foreach(array('event_id','session_id','children','adults','families') as $key){
@@ -112,8 +119,8 @@ final class Milano_Shared_Checkout_Handoff {
    ||(int)get_post_meta($tid,'_mdg_event_id',true)!==$eid
    ||get_post_meta($tid,'_mdg_production_key',true)!==$key
    ||!$design||$design->status!=='active'||stripos($design->name,'Milano')===false
-   ||get_post_meta($pid,'_ticket_template',true)!=='d_'.$designer
-   ||(!$canPreview&&(get_post_status($pid)!=='publish'||$tp->post_status!=='publish'||get_post_meta($pid,'_allow_ticket_checkout',true)!=='yes'))){
+   ||self::designer_selection($pid)!=='d_'.$designer
+   ||(!$canPreview&&(get_post_status($pid)!=='publish'||$tp->post_status!=='publish'))){
    return new WP_Error('mapping','Bilet ve Milano sablon baglantisi hazir degil.');
   }
   $types=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mdg_ticket_types WHERE session_id=%d AND is_active=1 ORDER BY id",$sid));
@@ -125,7 +132,7 @@ final class Milano_Shared_Checkout_Handoff {
    if(!$v||!$v->is_type('variation')||(int)$v->get_parent_id()!==$pid
     ||abs((float)$v->get_price()-(float)$t->price)>0.009
     ||(int)get_post_meta($v->get_id(),'tc_designer_template_id',true)!==$designer
-    ||get_post_meta($v->get_id(),'_ticket_template',true)!=='d_'.$designer
+    ||self::designer_selection($v->get_id())!=='d_'.$designer
     ||(!$canPreview&&(!$v->is_purchasable()||!$v->is_in_stock()))){return new WP_Error('variation','Bilet fiyati veya varyasyonu hazir degil.');}
    $mapped[$kind]=$t;
   }
