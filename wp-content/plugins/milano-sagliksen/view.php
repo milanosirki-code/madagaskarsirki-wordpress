@@ -1,0 +1,27 @@
+<?php if(!defined('ABSPATH')){exit;} ?>
+<section class="milano-sagliksen" aria-label="Sağlık-Sen bilet seçimi">
+<style>
+.milano-sagliksen{max-width:1000px;margin:24px auto;color:#091746}.milano-sagliksen *{box-sizing:border-box}.milano-sagliksen .ms-card{background:#fff8ed;border:1px solid #e2d7bf;border-radius:20px;padding:clamp(20px,4vw,40px)}.milano-sagliksen .ms-kicker{color:#c72528;font-weight:800;letter-spacing:.06em}.milano-sagliksen h2{font-size:clamp(28px,5vw,42px);line-height:1.15}.milano-sagliksen label{display:block;font-weight:700}.milano-sagliksen input,.milano-sagliksen select{font:inherit;display:block;width:100%;min-height:48px;padding:12px;margin:8px 0 18px;color:#091746;border:1px solid #929bb0;border-radius:8px;background:white}.milano-sagliksen .ms-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.milano-sagliksen button{font:inherit;font-weight:800;min-height:52px;background:#c72528;color:white;padding:16px 24px;border:0;border-radius:10px;cursor:pointer}.milano-sagliksen :focus-visible{outline:3px solid #091746;outline-offset:3px}.milano-sagliksen p,.milano-sagliksen li{line-height:1.65}.milano-sagliksen .ms-price{background:#091746;color:#fff8ed;padding:18px;border-radius:12px;font-size:22px;font-weight:800}@media(max-width:600px){.milano-sagliksen .ms-grid{grid-template-columns:1fr;gap:0}.milano-sagliksen button{width:100%}}
+</style>
+<div class="ms-card"><p class="ms-kicker">MİLANO SİRKİ · SAĞLIK-SEN</p><h2>Kocaeli ve Yalova Özel Bilet Kampanyası</h2>
+<p>Sağlık-Sen kampanya kodunuzla gösterinizi ve seansınızı seçin. Her paket 1 yetişkin ve 2 çocuk için üç ayrı giriş hakkı sağlar.</p>
+<p>1 yetişkin + 2 çocuk: <del>980 TL</del> yerine <strong>475 TL</strong>. İki paket: <strong>950 TL</strong>.</p>
+<form method="post" action="<?php echo esc_url($base.'/?milano_campaign=1'); ?>" data-ms-form>
+<label>Kampanya kodu<input name="code" maxlength="120" required autocomplete="off" placeholder="Kampanya kodunuzu girin"></label>
+<div class="ms-grid"><label>Etkinlik<select name="event_id" data-ms-event required>
+<?php $seen=array();foreach($rows as $row): if(isset($seen[$row['event_id']]))continue;$seen[$row['event_id']]=true; ?>
+<option value="<?php echo (int)$row['event_id']; ?>"><?php echo esc_html($row['title']); ?></option>
+<?php endforeach; ?></select></label>
+<label>Seans<select name="session" data-ms-session required>
+<?php foreach($rows as $row): ?><option data-event="<?php echo (int)$row['event_id']; ?>" data-child="<?php echo esc_attr($row['children_price']); ?>" data-adult="<?php echo esc_attr($row['adults_price']); ?>" value="<?php echo (int)$row['session_id']; ?>"><?php echo esc_html($row['title'].' · '.$row['date'].' · '.$row['time']); ?></option><?php endforeach; ?>
+</select></label></div>
+<label>Paket<select name="packages" data-ms-packages required><option value="1">1 yetişkin + 2 çocuk — 475 TL</option><option value="2">2 yetişkin + 4 çocuk — 950 TL</option></select></label>
+<div class="ms-grid"><label>Pakete ek çocuk<input type="number" name="extra_children" min="0" max="16" step="1" value="0" required data-ms-child></label><label>Pakete ek yetişkin<input type="number" name="extra_adults" min="0" max="18" step="1" value="0" required data-ms-adult></label></div>
+<p data-ms-extra>Ek biletlerin güncel fiyatı seçim sonrasında merkezi sunucuda hesaplanır.</p>
+<p class="ms-price" data-ms-total aria-live="polite">1 paket: 475 TL</p>
+<p>Varsa hizmet bedeli, ödeme özetinde ödeme onayından önce ayrıca gösterilir. Kesin tutar merkezi sunucuda yeniden doğrulanır.</p>
+<button type="submit">Seçimi doğrula ve ortak ödemeye geç</button></form>
+<h3>Kampanya koşulları</h3><ul><li>21 Ekim Karamürsel, 22 Ekim Yalova, 23 Ekim Darıca ve 24 Ekim 2026 Derince gösterilerinin satışa açık seanslarında geçerlidir.</li><li>Tek paket 1 yetişkin + 2 çocuk; iki paket 2 yetişkin + 4 çocuk içindir. Tek pakette üçüncü çocuk ayrıca ücretlidir.</li><li>Ek çocuk ve yetişkinler güncel normal bilet fiyatıyla hesaplanır. Ek yetişkin seçmek ücretsiz çocuk hakkını artırmaz.</li><li>Diğer kampanya, aile paketi ve kuponlarla birleştirilemez. Kontenjan ve seans satış süresi sınırlamaları geçerlidir.</li><li>Ödeme Dünya Organizasyon’un madagaskarsirki.com altyapısında tamamlanır. Biletiniz Milano Sirki içindir; her katılımcı için ayrı giriş hakkı başarılı ödeme sonrasında mevcut bilet sistemi tarafından oluşturulur.</li></ul></div>
+<script>
+(function(){const f=document.currentScript.closest('.milano-sagliksen').querySelector('form'),e=f.querySelector('[data-ms-event]'),s=f.querySelector('[data-ms-session]'),all=Array.from(s.options).map(o=>o.cloneNode(true));const p=f.querySelector('[data-ms-packages]'),c=f.querySelector('[data-ms-child]'),a=f.querySelector('[data-ms-adult]');const money=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(n);function update(){const o=s.selectedOptions[0];if(!o)return;const cp=Number(o.dataset.child),ap=Number(o.dataset.adult);f.querySelector('[data-ms-extra]').textContent='Ek çocuk: '+money(cp)+' · Ek yetişkin: '+money(ap);f.querySelector('[data-ms-total]').textContent='Bilet toplamı: '+money(475*Number(p.value)+cp*Number(c.value)+ap*Number(a.value));}function sessions(){s.replaceChildren(...all.filter(o=>o.dataset.event===e.value).map(o=>o.cloneNode(true)));update();}e.addEventListener('change',sessions);[s,p,c,a].forEach(x=>x.addEventListener('input',update));sessions();})();
+</script></section>

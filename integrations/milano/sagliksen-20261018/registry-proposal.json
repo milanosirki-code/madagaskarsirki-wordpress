@@ -1,0 +1,15 @@
+{
+  "option": "mdg_corporate_campaign_codes_v1",
+  "key": "sagliksen",
+  "value": {
+    "name": "Sağlık-Sen Kocaeli ve Yalova Özel Bilet Kampanyası",
+    "active": false,
+    "brand": "milano",
+    "schema": "milano_bundle_v1",
+    "bundle_price": 475,
+    "event_ids": [28, 24, 27, 26],
+    "cities": [],
+    "schema_version": 2
+  },
+  "note": "Proposal only. Merge this one key through the owning option API after hash/absence checks. Never replace the registry or alter any existing code. Active must remain false until integration/payment/QR/fee tests pass."
+}

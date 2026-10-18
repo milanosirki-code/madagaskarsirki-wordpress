@@ -1,0 +1,269 @@
+{
+  "observed_on": "2026-10-18",
+  "timezone_of_start_at": "UTC",
+  "events": [
+    {
+      "program_id": "16",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "16",
+      "event_id": "28",
+      "title": "Milano Sirki — Karamürsel",
+      "status": "onsale",
+      "session_id": "181",
+      "start_at": "2026-10-21 14:30:00",
+      "session_status": "onsale",
+      "wc_product_id": "6531",
+      "tickera_event_id": "6529"
+    },
+    {
+      "program_id": "16",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "16",
+      "event_id": "28",
+      "title": "Milano Sirki — Karamürsel",
+      "status": "onsale",
+      "session_id": "182",
+      "start_at": "2026-10-21 16:30:00",
+      "session_status": "onsale",
+      "wc_product_id": "6534",
+      "tickera_event_id": "6529"
+    },
+    {
+      "program_id": "14",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "14",
+      "event_id": "24",
+      "title": "Milano Sirki — Yalova",
+      "status": "onsale",
+      "session_id": "154",
+      "start_at": "2026-10-22 15:00:00",
+      "session_status": "onsale",
+      "wc_product_id": "6318",
+      "tickera_event_id": "6316"
+    },
+    {
+      "program_id": "14",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "14",
+      "event_id": "24",
+      "title": "Milano Sirki — Yalova",
+      "status": "onsale",
+      "session_id": "155",
+      "start_at": "2026-10-22 16:30:00",
+      "session_status": "onsale",
+      "wc_product_id": "6321",
+      "tickera_event_id": "6316"
+    },
+    {
+      "program_id": "17",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "17",
+      "event_id": "27",
+      "title": "Milano Sirki — Darıca",
+      "status": "onsale",
+      "session_id": "179",
+      "start_at": "2026-10-23 14:30:00",
+      "session_status": "onsale",
+      "wc_product_id": "6539",
+      "tickera_event_id": "6537"
+    },
+    {
+      "program_id": "17",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "17",
+      "event_id": "27",
+      "title": "Milano Sirki — Darıca",
+      "status": "onsale",
+      "session_id": "180",
+      "start_at": "2026-10-23 16:30:00",
+      "session_status": "onsale",
+      "wc_product_id": "6542",
+      "tickera_event_id": "6537"
+    },
+    {
+      "program_id": "18",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "18",
+      "event_id": "26",
+      "title": "Milano Sirki — Derince",
+      "status": "onsale",
+      "session_id": "176",
+      "start_at": "2026-10-24 09:00:00",
+      "session_status": "onsale",
+      "wc_product_id": "6547",
+      "tickera_event_id": "6545"
+    },
+    {
+      "program_id": "18",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "18",
+      "event_id": "26",
+      "title": "Milano Sirki — Derince",
+      "status": "onsale",
+      "session_id": "177",
+      "start_at": "2026-10-24 11:00:00",
+      "session_status": "onsale",
+      "wc_product_id": "6550",
+      "tickera_event_id": "6545"
+    },
+    {
+      "program_id": "18",
+      "brand": "Milano Sirki",
+      "mmc_event_id": "18",
+      "event_id": "26",
+      "title": "Milano Sirki — Derince",
+      "status": "onsale",
+      "session_id": "178",
+      "start_at": "2026-10-24 13:00:00",
+      "session_status": "onsale",
+      "wc_product_id": "6553",
+      "tickera_event_id": "6545"
+    }
+  ],
+  "types": [
+    {
+      "session_id": "154",
+      "id": "351",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6320"
+    },
+    {
+      "session_id": "154",
+      "id": "350",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6319"
+    },
+    {
+      "session_id": "155",
+      "id": "353",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6323"
+    },
+    {
+      "session_id": "155",
+      "id": "352",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6322"
+    },
+    {
+      "session_id": "176",
+      "id": "395",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6549"
+    },
+    {
+      "session_id": "176",
+      "id": "394",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6548"
+    },
+    {
+      "session_id": "177",
+      "id": "397",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6552"
+    },
+    {
+      "session_id": "177",
+      "id": "396",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6551"
+    },
+    {
+      "session_id": "178",
+      "id": "399",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6555"
+    },
+    {
+      "session_id": "178",
+      "id": "398",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6554"
+    },
+    {
+      "session_id": "179",
+      "id": "401",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6541"
+    },
+    {
+      "session_id": "179",
+      "id": "400",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6540"
+    },
+    {
+      "session_id": "180",
+      "id": "403",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6544"
+    },
+    {
+      "session_id": "180",
+      "id": "402",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6543"
+    },
+    {
+      "session_id": "181",
+      "id": "405",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6533"
+    },
+    {
+      "session_id": "181",
+      "id": "404",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6532"
+    },
+    {
+      "session_id": "182",
+      "id": "407",
+      "code": "ADULT",
+      "price": "490.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6536"
+    },
+    {
+      "session_id": "182",
+      "id": "406",
+      "code": "CHILD",
+      "price": "245.00",
+      "capacity_units": "1",
+      "wc_variation_id": "6535"
+    }
+  ]
+}
