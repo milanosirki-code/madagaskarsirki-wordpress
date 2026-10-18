@@ -1,0 +1,70 @@
+PASS shipping registry proposal is disabled
+PASS legacy Madagaskar resolver cannot use Milano scoped record
+PASS one package 475 TL and three admission units
+PASS existing campaign plan has exactly three one-person tickets
+PASS two packages 950 TL and six admission units
+PASS existing campaign plan has exactly six one-person tickets
+PASS third child charged live 245 TL: 720 TL
+PASS extra adult does not create another free-child allowance
+PASS extra adult charged live 490 TL: 965 TL
+PASS extra child follows changed canonical child price
+PASS invalid or other code rejected
+PASS invalid or other code rejected
+PASS invalid or other code rejected
+PASS untrusted price rejected
+PASS untrusted amount rejected
+PASS untrusted variation_id rejected
+PASS untrusted product_id rejected
+PASS untrusted redirect rejected
+PASS untrusted return_url rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive packages rejected
+PASS malformed or excessive extra_children rejected
+PASS malformed or excessive extra_children rejected
+PASS malformed or excessive extra_children rejected
+PASS malformed or excessive extra_children rejected
+PASS malformed or excessive extra_adults rejected
+PASS malformed or excessive extra_adults rejected
+PASS foreign event/session rejected
+PASS foreign event/session rejected
+PASS foreign event/session rejected
+PASS insufficient capacity rejected
+PASS preview cannot be purchased
+PASS wrong show date rejected
+PASS canonical closed or past session error propagated
+PASS registry active cannot bypass gate
+PASS registry brand cannot bypass gate
+PASS registry bundle_price cannot bypass gate
+PASS scoped quote accepts canonical event 28 session 181
+PASS scoped quote accepts canonical event 28 session 182
+PASS scoped quote accepts canonical event 24 session 154
+PASS scoped quote accepts canonical event 24 session 155
+PASS scoped quote accepts canonical event 27 session 179
+PASS scoped quote accepts canonical event 27 session 180
+PASS scoped quote accepts canonical event 26 session 176
+PASS scoped quote accepts canonical event 26 session 177
+PASS scoped quote accepts canonical event 26 session 178
+PASS signed campaign accepted by actual existing cart_state
+PASS actual existing server-side prices hook yields 475 TL
+PASS cart tamper quantity blocks checkout
+PASS cart tamper variation_id blocks checkout
+PASS cart tamper mdg_capacity_units blocks checkout
+PASS cart tamper mdg_ticket_type_id blocks checkout
+PASS cart tamper mdg_session_id blocks checkout
+PASS cart tamper milano_handoff blocks checkout
+PASS cart tamper mdg_campaign_signature blocks checkout
+PASS manifest edit invalidates HMAC
+PASS removing paid adult invalidates free children
+PASS global coupon stacking rejected
+PASS coupon order rejected
+PASS mixed ordinary or Madagaskar order rejected
+PASS campaign disabled after selection blocks checkout
+PASS invalid free line restored to catalog price
+PASS actual shared pricing hook 950 TL and 6 admissions
+PASS actual shared pricing hook 720 TL and 4 admissions
+PASS actual shared pricing hook 965 TL and 4 admissions
+TOTAL 69 assertions passed. Payment, real capacity races, PDF/QR and visual QA NOT tested by this harness.

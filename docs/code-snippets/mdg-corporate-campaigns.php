@@ -384,6 +384,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
 
         public static function plan($quote) {
             if(isset($quote['error'])){return array();}
+            if(isset($quote['milano_bundle_plan'])){return $quote['milano_bundle_plan'];}
             $s=$quote['session'];
             return array(
                 'adult'=>array('qty'=>$quote['adult_tickets'],'type'=>$s['types']['adult'],'free'=>false),
@@ -394,6 +395,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
         }
 
         public static function manifest_quote($m) {
+            // A scoped adapter can supply a fixed bundle; ordinary campaigns keep their existing path.
+            if(is_array($m) && ($m['schema']??'')==='milano_bundle_v1'){
+                return class_exists('Milano_Sagliksen') ? Milano_Sagliksen::manifest_quote($m) : array('error'=>'Milano kampanyası kullanıma kapalı.');
+            }
             if(!is_array($m) || !isset($m['code'],$m['session'],$m['adults'],$m['births'])){return array('error'=>'Kampanya seçimi doğrulanamadı.');}
             $events=self::source_events();
             $campaign=self::resolve($m['code'],$events,self::registry(),current_time('Y-m-d'));
@@ -408,6 +413,11 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $count=self::input($_POST,'mdg_campaign_children');
             if(!is_array($births) || !preg_match('/^(?:0|[1-9][0-9]*)$/D',$count) || (int)$count!==count($births)){wp_die('Çocuk sayısı ve doğum tarihleri uyuşmuyor.');}
             $m=array('code'=>self::normalize(self::input($_POST,'mdg_campaign_code')),'session'=>self::input($_POST,'mdg_campaign_session'),'adults'=>self::input($_POST,'mdg_campaign_adults'),'births'=>$births);
+            self::checkout_manifest($m);
+        }
+
+        public static function checkout_manifest($m) {
+            if(!function_exists('WC') || !class_exists('MDG_Live_Sales')){wp_die('Bilet satış sistemi hazır değil.');}
             $q=self::manifest_quote($m);
             if(isset($q['error'])){wp_die(esc_html($q['error']));}
             $plan=self::plan($q);
@@ -418,6 +428,13 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             if(function_exists('wc_load_cart') && (!WC()->cart || !WC()->session)){wc_load_cart();}
             if(!WC()->cart){wp_die('Sepet başlatılamadı.');}
             $cart=WC()->cart; $old=array(); $added=array();
+            if(($m['schema']??'')==='milano_bundle_v1'){
+                foreach($cart->get_cart() as $item){
+                    if(!isset($item['mdg_campaign_manifest']) || ($item['mdg_campaign_manifest']['schema']??'')!=='milano_bundle_v1'){
+                        wp_die('Sepetinizde başka bir seçim var. Önce mevcut sepetinizi kontrol edin; biletleriniz değiştirilmedi.');
+                    }
+                }
+            }
             // Replace only this flow's previous selection. Preserve ordinary tickets.
             foreach($cart->get_cart() as $key=>$item){if(isset($item['mdg_campaign_manifest'])){$old[$key]=$item;$cart->remove_cart_item($key);}}
             try {
@@ -461,6 +478,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 $plan=self::plan($q); $counts=array_fill_keys(array_keys($plan),0);
                 foreach($group['items'] as $key=>$item){
                     $role=$item['mdg_campaign_role']??'';
+                    if(($group['manifest']['schema']??'')==='milano_bundle_v1' &&
+                        (!class_exists('Milano_Sagliksen') || !Milano_Sagliksen::authorize_item($item,$item['product_id'],$item['variation_id'],$item['quantity'],(int)$q['event']->id) || empty($item['milano_handoff']))){
+                        return array('error'=>'Milano kampanya bilet bağlantısı değişmiş.');
+                    }
                     if(!isset($plan[$role]) || (int)$item['variation_id']!==$plan[$role]['type']['variation'] || (int)$item['product_id']!==$plan[$role]['type']['parent'] || (int)$item['quantity']<1){return array('error'=>'Kampanya biletleri değişmiş. Kampanya sayfasından yeniden seçin.');}
                     $counts[$role]+=(int)$item['quantity'];
                     $prices[$key]=$plan[$role]['free']?0:$plan[$role]['type']['price'];
@@ -502,7 +523,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
         }
 
         public static function role_label($role) {
-            return array('adult'=>'Ücretli yetişkin','paid_child'=>'Ücretli çocuk','free_child'=>'Ücretsiz çocuk davetiyesi','infant'=>'0–2 yaş ücretsiz')[$role]??'';
+            return array('adult'=>'Ücretli yetişkin','extra_adult'=>'Ek yetişkin','paid_child'=>'Ücretli çocuk','free_child'=>'Ücretsiz çocuk davetiyesi','infant'=>'0–2 yaş ücretsiz')[$role]??'';
         }
 
         public static function item_display($data,$item) {

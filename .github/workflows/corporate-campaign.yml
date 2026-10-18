@@ -23,5 +23,12 @@ jobs:
       - run: php tests/corporate-invitation/sales-report.php
       - run: php tests/corporate-invitation/live-price-menu.php
       - run: php tests/corporate-invitation/multi-province-admin.php
+      - run: php -l wp-content/plugins/milano-sagliksen/milano-sagliksen.php
+      - run: php -l wp-content/plugins/milano-sagliksen/view.php
+      - run: php -l wp-content/plugins/milano-shared-checkout-handoff/milano-shared-checkout-handoff.php
+      - run: php tests/corporate-invitation/milano-sagliksen.php
+      - run: php tests/corporate-invitation/handoff-designer.php
+      - run: php tests/corporate-invitation/stage-content.php
       - run: npm install --no-save jsdom@26
       - run: node tests/corporate-invitation/age-ui.cjs
+      - run: node tests/corporate-invitation/milano-ui.cjs
