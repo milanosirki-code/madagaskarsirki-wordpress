@@ -1,0 +1,7 @@
+{
+  "name": "milano-ticket-selection-qa",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {"test": "node test-selection.cjs"},
+  "devDependencies": {"jsdom": "30.1.3"}
+}
