@@ -1,0 +1,12 @@
+name: Milano PDF layout protections
+on: [push, pull_request]
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - run: php -l integrations/milano/pdf-layout-20261018/milano-layout-fields.php
+      - run: php tests/milano-pdf-layout/fields.php
