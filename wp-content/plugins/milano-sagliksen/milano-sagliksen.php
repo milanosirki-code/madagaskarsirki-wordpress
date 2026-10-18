@@ -12,6 +12,8 @@ final class Milano_Sagliksen {
     const CENTRAL = 'https://madagaskarsirki.com';
     const STAGE = 'staging-f321-milanosirki-lgajf.wpcomstaging.com';
     const EVENTS = array(28=>array('date'=>'2026-10-21','sessions'=>array(181,182)),24=>array('date'=>'2026-10-22','sessions'=>array(154,155)),27=>array('date'=>'2026-10-23','sessions'=>array(179,180)),26=>array('date'=>'2026-10-24','sessions'=>array(176,177,178)));
+    const STAGE_EVENTS = array(25=>array('date'=>'2026-10-21','sessions'=>array(152,153)),24=>array('date'=>'2026-10-22','sessions'=>array(150,151)),26=>array('date'=>'2026-10-23','sessions'=>array(154,155)),27=>array('date'=>'2026-10-24','sessions'=>array(156,157,158)));
+    public static function scope() { return self::host()===self::STAGE?self::STAGE_EVENTS:self::EVENTS; }
 
     private static function host() { return strtolower((string)wp_parse_url(home_url('/'),PHP_URL_HOST)); }
     public static function central() { return in_array(self::host(),array('madagaskarsirki.com',self::STAGE),true); }
@@ -24,7 +26,7 @@ final class Milano_Sagliksen {
     public static function enabled($r) {
         return ($r['active']??false)===true && ($r['brand']??'')==='milano'
             && ($r['schema']??'')===self::SCHEMA && ($r['bundle_price']??0)===475
-            && ($r['event_ids']??array())===array(28,24,27,26);
+            && ($r['event_ids']??array())===array_keys(self::scope());
     }
     public static function selection($input) {
         if(!is_callable(array('MDG_Corporate_Campaigns_20261005','normalize'))){return array('error'=>'Kampanya bağımlılığı hazır değil.');}
@@ -46,7 +48,7 @@ final class Milano_Sagliksen {
     public static function quote_snapshot($m,$s,$types,$record) {
         $m=self::selection($m); if(isset($m['error'])){return $m;}
         if(!self::enabled($record)){return array('error'=>'Sağlık-Sen kampanyası henüz satışa açık değil.');}
-        $eid=(int)$m['event_id'];$sid=(int)$m['session'];$allow=self::EVENTS[$eid]??null;
+        $eid=(int)$m['event_id'];$sid=(int)$m['session'];$allow=self::scope()[$eid]??null;
         if(!$allow||!in_array($sid,$allow['sessions'],true)||(int)($s['event_id']??0)!==$eid
             ||(int)($s['session_id']??0)!==$sid||($s['date']??'')!==$allow['date']||!empty($s['preview'])){
             return array('error'=>'Etkinlik veya seans kampanyaya ait değil.');
@@ -71,10 +73,10 @@ final class Milano_Sagliksen {
     }
     public static function manifest_quote($m) {
         $m=self::selection($m);if(isset($m['error'])){return $m;}
-        if(!self::central()||!is_callable(array('Milano_Shared_Checkout_Handoff','snapshot'))||!class_exists('MDG_Sessions')
+        if(!self::central()||!is_callable(array('Milano_Shared_Checkout_Handoff','catalog'))||!class_exists('MDG_Sessions')
             ||!is_callable(array('MDG_Corporate_Campaigns_20261005','checkout_manifest'))){return array('error'=>'Merkezi kampanya altyapısı hazır değil.');}
         if(!self::enabled(self::record())){return array('error'=>'Sağlık-Sen kampanyası henüz satışa açık değil.');}
-        $s=Milano_Shared_Checkout_Handoff::snapshot((int)$m['event_id'],(int)$m['session']);
+        $s=self::snapshot((int)$m['event_id'],(int)$m['session']);
         if(is_wp_error($s)){return array('error'=>$s->get_error_message());}
         $types=array();
         foreach((array)MDG_Sessions::ticket_types_by_session((int)$m['session']) as $t){
@@ -92,6 +94,26 @@ final class Milano_Sagliksen {
         return $p && $p['qty']>0 && $p['qty']===(int)$qty && $p['type']['parent']===(int)$pid && $p['type']['variation']===(int)$vid
             && (int)($data['mdg_event_id']??0)===$eid && (int)($data['mdg_session_id']??0)===(int)$data['mdg_campaign_manifest']['session']
             && (int)($data['mdg_ticket_type_id']??0)===$p['type']['type_id'] && (int)($data['mdg_capacity_units']??0)===1;
+    }
+    public static function snapshot($eid,$sid) {
+        // Use the installed handoff's public canonical catalogue. Do not replace its private mapping validator.
+        $catalog=Milano_Shared_Checkout_Handoff::catalog();if(is_wp_error($catalog)){return $catalog;}$d=$catalog->get_data();
+        foreach($d['sessions']??array() as $s){
+            if((int)$s['event_id']!==$eid||(int)$s['session_id']!==$sid){continue;}
+            global $wpdb;
+            $pid=(int)$wpdb->get_var($wpdb->prepare("SELECT wc_product_id FROM {$wpdb->prefix}mdg_sessions WHERE id=%d AND event_id=%d",$sid,$eid));
+            if(!$pid){break;}$s['wc_product_id']=$pid;return $s;
+        }
+        return new WP_Error('session','Doğrulanmış satışa açık Milano seansı bulunamadı.');
+    }
+    public static function handoff_validation($passed,$pid,$qty,$vid=0,$vars=array(),$data=array()) {
+        if(!$passed){return false;}
+        if(self::authorize_item($data,$pid,$vid,$qty,(int)($data['mdg_event_id']??0))){return true;}
+        return Milano_Shared_Checkout_Handoff::validate_cart_entry($passed,$pid,$qty,$vid,$vars,$data);
+    }
+    public static function handoff_mark($data,$pid,$vid,$qty) {
+        if(self::authorize_item($data,$pid,$vid,$qty,(int)($data['mdg_event_id']??0))){$data['milano_handoff']=1;}
+        return $data;
     }
     public static function validate_cart() {
         if(!function_exists('WC')||!WC()->cart){return;}
@@ -122,10 +144,10 @@ final class Milano_Sagliksen {
         MDG_Corporate_Campaigns_20261005::checkout_manifest($m);
     }
     public static function catalog() {
-        if(!self::central()||!self::enabled(self::record())||!is_callable(array('Milano_Shared_Checkout_Handoff','snapshot'))
+        if(!self::central()||!self::enabled(self::record())||!is_callable(array('Milano_Shared_Checkout_Handoff','catalog'))
             ||!is_callable(array('MDG_Corporate_Campaigns_20261005','checkout_manifest'))){return new WP_Error('closed','Kampanya henüz satışa açık değil.',array('status'=>503));}
         $r=Milano_Shared_Checkout_Handoff::catalog();if(is_wp_error($r)){return $r;}$d=$r->get_data();$rows=array();
-        foreach($d['sessions']??array() as $s){$a=self::EVENTS[(int)$s['event_id']]??null;if($a&&$a['date']===$s['date']&&in_array((int)$s['session_id'],$a['sessions'],true)&&$s['capacity_snapshot']>=3){$rows[]=$s;}}
+        foreach($d['sessions']??array() as $s){$a=self::scope()[(int)$s['event_id']]??null;if($a&&$a['date']===$s['date']&&in_array((int)$s['session_id'],$a['sessions'],true)&&$s['capacity_snapshot']>=3){$rows[]=$s;}}
         return rest_ensure_response(array('brand'=>'milano','sessions'=>$rows));
     }
     public static function render() {
@@ -150,6 +172,11 @@ final class Milano_Sagliksen {
     public static function boot() {
         add_shortcode(self::SHORTCODE,array(__CLASS__,'render'));
         if(!self::central()){return;}
+        if(is_callable(array('Milano_Shared_Checkout_Handoff','validate_cart_entry'))){
+            remove_filter('woocommerce_add_to_cart_validation',array('Milano_Shared_Checkout_Handoff','validate_cart_entry'),90);
+            add_filter('woocommerce_add_to_cart_validation',array(__CLASS__,'handoff_validation'),90,6);
+            add_filter('woocommerce_add_cart_item_data',array(__CLASS__,'handoff_mark'),61,4);
+        }
         add_action('template_redirect',array(__CLASS__,'landing'),0);
         add_action('rest_api_init',static function(){register_rest_route('milano-sagliksen/v1','/catalog',array('methods'=>'GET','permission_callback'=>'__return_true','callback'=>array(__CLASS__,'catalog')));});
         add_action('admin_post_milano_sagliksen_checkout',array(__CLASS__,'checkout'));

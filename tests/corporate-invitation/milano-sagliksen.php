@@ -12,7 +12,9 @@ function WC(){global $wc;return $wc;}
 function wc_add_notice($s,$t){global $notices;$notices[]=$s;}
 class WP_Error{function __construct(public $code,public $message){} function get_error_message(){return $this->message;}}
 class MDG_Sessions{static function ticket_types_by_session($id){global $ticket_rows;return $ticket_rows[$id]??array();}}
-class Milano_Shared_Checkout_Handoff{static function snapshot($e,$s){global $snapshots;return $snapshots[$s]??new WP_Error('closed','Seans kapalı.');}}
+class Milano_Shared_Checkout_Handoff{static function catalog(){global $snapshots;return new class(array_values(array_filter($snapshots,fn($s)=>is_array($s)))){function __construct(public $rows){}function get_data(){return array('sessions'=>$this->rows);}};}}
+class TestDB{public $prefix='wp_';function prepare($sql,...$args){return $args;}function get_var($args){global $snapshots;return $snapshots[$args[0]]['wc_product_id']??0;}}
+$wpdb=new TestDB();
 class Product{public $price;function __construct($p){$this->price=$p;}function set_price($p){$this->price=$p;}}
 class Cart{public $cart_contents=array();public $coupons=array();function get_cart(){return $this->cart_contents;}function get_applied_coupons(){return $this->coupons;}}
 require __DIR__.'/../../docs/code-snippets/mdg-corporate-campaigns.php';
