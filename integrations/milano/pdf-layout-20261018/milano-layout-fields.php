@@ -2,7 +2,7 @@
 /** Milano presentation fields v3. Stored ticket data and all original fields stay unchanged. */
 if (!defined('ABSPATH')) { exit; }
 function milano_pdf_layout_fields_v3($data) {
-    if (!is_array($data) || !isset($data['event_name']) || strpos($data['event_name'],'Milano Sirki')!==0) return $data;
+    if (!is_array($data) || !isset($data['event_name']) || !preg_match('/(?:^|\s)Milano Sirki(?:$|\s|[—-])/u',$data['event_name'])) return $data;
     $raw=(string)($data['event_terms']??'');
     $parts=preg_split('/(?=Bilgi\s*&\s*Destek\s*WhatsApp|Koltuk\s+numarası|Lütfen\s+seans)/u',$raw,2);
     $data['milano_layout_address']=trim($parts[0]);
