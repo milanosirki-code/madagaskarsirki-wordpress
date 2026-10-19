@@ -48,6 +48,14 @@ final class MDG_New_Event_Production_Plan {
         $warnings = array();
         $errors = array();
         $recognized_existing = array();
+        $brand = self::canonical_brand( (int) $event->id );
+        if ( ! $brand ) { $errors[] = 'Etkinlik için tek aktif MMC bağlantısı ve doğrulanmış satış markası gerekli.'; }
+        $brand_name = $brand['name'] ?? 'Markası doğrulanmamış etkinlik';
+        $brand_slug = $brand['slug'] ?? 'brand-unverified';
+        if ( 'milano' === ( $brand['key'] ?? '' )
+            && ( false === stripos( (string) $event->title, 'Milano' ) || false !== stripos( (string) $event->title, 'Madagaskar' ) ) ) {
+            $errors[] = 'Milano etkinlik başlığı satış markasıyla uyuşmuyor.';
+        }
 
         $deps = array(
             'woo' => class_exists( 'WooCommerce' ) && function_exists( 'wc_get_product' ),
@@ -116,8 +124,8 @@ final class MDG_New_Event_Production_Plan {
             $hhmm = str_replace( ':', '', $time );
             $human_date = self::human_date_tr( $date );
             $location_label = trim( (string) $event->province_name . ( ! empty( $event->district ) ? ' / ' . (string) $event->district : '' ) );
-            $product_name = 'Madagaskar Sirki – ' . $location_label . ' – ' . $human_date . ' – ' . $time . ' Bileti';
-            $product_slug = sanitize_title( 'madagaskar-sirki-' . (string) $event->province_name . '-' . (string) $event->district . '-' . $date . '-' . $hhmm . '-bileti' );
+            $product_name = $brand_name . ' – ' . $location_label . ' – ' . $human_date . ' – ' . $time . ' Bileti';
+            $product_slug = sanitize_title( $brand_slug . '-' . (string) $event->province_name . '-' . (string) $event->district . '-' . $date . '-' . $hhmm . '-bileti' );
 
             $slug_collision = self::product_slug_collision( $product_slug );
             if ( $slug_collision ) {
@@ -172,12 +180,12 @@ final class MDG_New_Event_Production_Plan {
         }
 
         $category = self::category_plan( (string) $event->province_name );
-        $template = self::designer_plan();
+        $template = self::designer_plan( $brand );
         if ( ! $template['ready'] ) { $errors[] = $template['error']; }
 
         $first = $products ? $products[0] : array();
         $last = $products ? $products[ count( $products ) - 1 ] : array();
-        $tickera_slug = sanitize_title( 'madagaskar-sirki-' . (string) $event->province_name . '-' . (string) $event->district . '-' . ( $first['date'] ?? '' ) );
+        $tickera_slug = sanitize_title( $brand_slug . '-' . (string) $event->province_name . '-' . (string) $event->district . '-' . ( $first['date'] ?? '' ) );
         $tickera_slug_collision = self::tickera_slug_collision( $tickera_slug );
         if ( $tickera_slug_collision ) {
             if ( self::is_same_managed_object( $tickera_slug_collision, $production_key, (int) $event->id ) ) {
@@ -194,7 +202,7 @@ final class MDG_New_Event_Production_Plan {
             'last_end_local' => ! empty( $last['end_at'] ) ? self::utc_to_local_mysql( $last['end_at'] ) : '',
             'location' => (string) $event->venue_name,
             'address' => (string) $event->venue_address,
-            'event_terms' => self::planned_terms( $event ),
+            'event_terms' => self::planned_terms( $event, $brand ),
             'hero_attachment_id' => (int) $event->hero_attachment_id,
             'strategy' => '1 Tickera etkinliği + seans başına 1 WooCommerce variable product',
         );
@@ -212,6 +220,7 @@ final class MDG_New_Event_Production_Plan {
             'warnings' => array_values( array_unique( $warnings ) ),
             'dependencies' => $deps,
             'event_id' => (int) $event->id,
+            'brand' => $brand,
             'production_key' => $production_key,
             'city_code' => $city_code,
             'district_code' => $district_code,
@@ -337,18 +346,76 @@ final class MDG_New_Event_Production_Plan {
         return array( 'name'=>(string)$province_name, 'exists'=>(bool)$id, 'term_id'=>$id );
     }
 
-    private static function designer_plan() {
+    /** No title/URL/legacy first-row fallback may grant brand ownership. */
+    public static function canonical_brand( $event_id ) {
         global $wpdb;
+        $event_id = absint( $event_id );
+        $bridge = $wpdb->prefix . 'mmc_mdg_event_bridge';
+        $programs = $wpdb->prefix . 'mmc_programs';
+        if ( ! $event_id || ! self::table_exists( $bridge ) || ! self::table_exists( $programs ) ) { return array(); }
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT b.program_id,p.id AS owner_id,p.brand FROM {$bridge} b LEFT JOIN {$programs} p ON p.id=b.program_id WHERE b.mdg_event_id=%d AND b.is_active=1 LIMIT 2",
+            $event_id
+        ) );
+        if ( ! is_array( $rows ) || 1 !== count( $rows ) || ! empty( $wpdb->last_error ) ) { return array(); }
+        $row = $rows[0];
+        if ( ! is_object( $row ) || ! absint( $row->owner_id ?? 0 ) || absint( $row->owner_id ) !== absint( $row->program_id ?? 0 ) ) { return array(); }
+        $name = trim( (string) ( $row->brand ?? '' ) );
+        if ( in_array( $name, array( 'Milano Sirki', 'milano' ), true ) ) {
+            return array( 'key'=>'milano', 'name'=>'Milano Sirki', 'slug'=>'milano-sirki', 'phone'=>'+90 536 358 33 81', 'program_id'=>absint( $row->owner_id ) );
+        }
+        if ( in_array( $name, array( 'Madagaskar Sirki', 'madagaskar' ), true ) ) {
+            return array( 'key'=>'madagaskar', 'name'=>'Madagaskar Sirki', 'slug'=>'madagaskar-sirki', 'phone'=>'+90 312 911 37 10', 'program_id'=>absint( $row->owner_id ) );
+        }
+        return array();
+    }
+
+    private static function template_error( $message ) {
+        return array( 'ready'=>false, 'base_template_id'=>0, 'base_template_name'=>'', 'candidate_id'=>'', 'error'=>$message );
+    }
+
+    private static function designer_plan( array $brand ) {
+        global $wpdb;
+        if ( ! $brand ) { return self::template_error( 'Satış markası doğrulanmadan bilet şablonu seçilemez.' ); }
         $table = $wpdb->prefix . 'tickera_ticket_templates';
         if ( ! self::table_exists( $table ) ) {
             return array( 'ready'=>false, 'base_template_id'=>0, 'base_template_name'=>'', 'candidate_id'=>'', 'error'=>'Tickera Ticket Designer tablosu bulunamadı.' );
         }
 
         $base_id = 0;
+        if ( 'milano' === $brand['key'] ) {
+            // Explicit operator-reviewed content binding. Never infer approval
+            // from a template name or reuse Madagaskar's global QR bindings.
+            $bases = get_option( 'mdg_ticket_designer_brand_bases_v1', array() );
+            $approved = is_array( $bases ) ? ( $bases['milano'] ?? array() ) : array();
+            if ( ! is_array( $approved ) || true !== ( $approved['approved'] ?? false )
+                || ! absint( $approved['template_id'] ?? 0 )
+                || ! preg_match( '/^[a-f0-9]{64}$/', (string) ( $approved['template_sha256'] ?? '' ) ) ) {
+                return self::template_error( 'Onaylı Milano Ticket Designer içerik bağı gerekli.' );
+            }
+            $base_id = absint( $approved['template_id'] );
+            $row = $wpdb->get_row( $wpdb->prepare( "SELECT id,name,template_data,status FROM {$table} WHERE id=%d LIMIT 1", $base_id ) );
+            if ( ! $row || ! empty( $wpdb->last_error ) || 'active' !== (string) $row->status
+                || false === stripos( (string) $row->name, 'Milano' ) || false !== stripos( (string) $row->name, 'Madagaskar' )
+                || ! hash_equals( $approved['template_sha256'], hash( 'sha256', (string) $row->template_data ) ) ) {
+                return self::template_error( 'Milano şablonu etkin, markaya uygun ve onaylanan içerikle aynı olmalıdır.' );
+            }
+            $candidate = self::detect_static_qr_candidate( (string) $row->template_data );
+            if ( ! $candidate || '' === (string) ( $approved['candidate_id'] ?? '' )
+                || (string) ( $candidate['id'] ?? '' ) !== (string) $approved['candidate_id'] ) {
+                return self::template_error( 'Onaylanan Milano salon QR elementi doğrulanamadı.' );
+            }
+            return array( 'ready'=>true, 'base_template_id'=>$base_id, 'base_template_name'=>(string)$row->name, 'candidate_id'=>(string)$candidate['id'], 'error'=>'' );
+        }
         $bindings = get_option( 'mdg_ticket_template_qr_bindings_v1', array() );
         if ( is_array( $bindings ) ) {
             foreach ( array_reverse( $bindings, true ) as $binding ) {
-                if ( ! empty( $binding['base_template_id'] ) ) { $base_id = absint( $binding['base_template_id'] ); break; }
+                if ( ! empty( $binding['base_template_id'] ) ) {
+                    $binding_id = absint( $binding['base_template_id'] );
+                    $binding_name = (string) $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$table} WHERE id=%d", $binding_id ) );
+                    if ( false !== stripos( $binding_name, 'Milano' ) ) { continue; }
+                    $base_id = $binding_id; break;
+                }
             }
         }
         if ( ! $base_id ) {
@@ -403,10 +470,10 @@ final class MDG_New_Event_Production_Plan {
         return $candidates[0];
     }
 
-    private static function planned_terms( $event ) {
+    private static function planned_terms( $event, array $brand ) {
         $lines = array();
         if ( ! empty( $event->venue_address ) ) { $lines[] = 'Adres: ' . trim( (string) $event->venue_address ); }
-        $lines[] = 'Bilgi & Destek WhatsApp Hattı: +90 312 911 37 10';
+        if ( ! empty( $brand['phone'] ) ) { $lines[] = 'Bilgi & Destek WhatsApp Hattı: ' . $brand['phone']; }
         if ( 'free' === (string) $event->seating_type ) { $lines[] = 'Koltuk numarası bulunmamaktadır. Lütfen seans saatinden en az 30 dakika önce salonda hazır bulununuz.'; }
         elseif ( ! empty( $event->rules ) ) { $lines[] = trim( (string) $event->rules ); }
         $lines[] = 'Fatura Bilgilendirmesi: Faturanızı etkinlik günü salon girişindeki görevlilerimizden teslim alabilirsiniz.';
