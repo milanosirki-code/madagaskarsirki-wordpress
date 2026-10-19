@@ -24,12 +24,21 @@ $session = (object)array(
     'wc_product_id'=>1234,'tickera_event_id'=>999,'capacity_total'=>100
 );
 $catalogue=array(
-    (object)array('code'=>'ADULT','is_active'=>1,'wc_variation_id'=>101,'capacity_units'=>1,'price'=>'490.00'),
-    (object)array('code'=>'CHILD','is_active'=>1,'wc_variation_id'=>102,'capacity_units'=>1,'price'=>'245.00')
+    (object)array('id'=>202,'code'=>'ADULT','is_active'=>1,'wc_variation_id'=>101,'capacity_units'=>1,'price'=>'490.00'),
+    (object)array('id'=>201,'code'=>'CHILD','is_active'=>1,'wc_variation_id'=>102,'capacity_units'=>1,'price'=>'245.00')
 );
 $available=25;$siteCurrency='TRY';$productStatus='publish';$closedByTime=false;
+$mmcFamilyEvents=array();$mmcFamilyLinks=array();$mmcFamilyTickets=array();
 class SnapshotDB {
+    public $prefix='wp_';
     public $getRowCalls=0,$getColCalls=0,$requests=array();
+    public function get_results($sql){
+        global $mmcFamilyEvents,$mmcFamilyLinks,$mmcFamilyTickets;
+        if(strpos($sql,'FROM wp_mmc_mdg_event_bridge')!==false)return $mmcFamilyLinks;
+        if(strpos($sql,'FROM wp_mmc_events')!==false)return $mmcFamilyEvents;
+        if(strpos($sql,'FROM wp_mmc_ticket_types')!==false)return $mmcFamilyTickets;
+        demand_snapshot(false,'unrecognized MMC policy SELECT');
+    }
     public function prepare($sql,...$args) {
         demand_snapshot(strpos($sql,'UPDATE ')===false&&strpos($sql,'INSERT ')===false&&strpos($sql,'DELETE ')===false,'mutating SQL attempted');
         $this->requests[]=$sql;
@@ -39,6 +48,13 @@ class SnapshotDB {
         }
         if(strpos($sql,'SELECT * FROM wp_mdg_sessions')!==false) {
             demand_snapshot($args===array(93,72),'session must join signed event');
+        }
+        if(strpos($sql,'SELECT id,mdg_event_id')!==false){
+            demand_snapshot($args===array(20),'must use verified MMC program id');
+            demand_snapshot(strpos($sql,'LIMIT 2')!==false,'must reject ambiguous MMC events');
+        }
+        if(strpos($sql,'SELECT id,ticket_code,price')!==false){
+            demand_snapshot($args===array(301),'must use exact trusted MMC event');
         }
         return $sql;
     }
@@ -95,10 +111,41 @@ function get_woocommerce_currency(){global $siteCurrency;return $siteCurrency;}
 require dirname(__DIR__).'/checkout-intent-protocol/milano-checkout-intent.php';
 require dirname(__DIR__).'/checkout-intent-protocol/milano-central-eligibility.php';
 require dirname(__DIR__).'/checkout-intent-protocol/milano-canonical-mdg-snapshot.php';
+require dirname(__DIR__).'/checkout-intent-protocol/milano-canonical-mmc-family-policy.php';
+require dirname(__DIR__).'/checkout-intent-protocol/milano-family22-normalizer.php';
+require dirname(__DIR__).'/checkout-intent-protocol/milano-central-family-quote.php';
 
 $expected='eligible';
 switch($scenario){
 case 'valid':break;
+case 'verified_family':
+case 'verified_family_wrong_mmc_price':
+case 'verified_family_duplicate_mmc_event':
+case 'verified_family_wrong_bridge':
+case 'verified_family_duplicate_bridge':
+case 'verified_family_wrong_mdg_event':
+case 'verified_family_inactive':
+    $mmcFamilyEvents=array((object)array('id'=>301,'mdg_event_id'=>null));
+    $mmcFamilyLinks=array((object)array('mdg_event_id'=>72));
+    $mmcFamilyTickets=array(
+      (object)array('id'=>401,'ticket_code'=>'child','price'=>'245.00','capacity_units'=>1,'is_active'=>1),
+      (object)array('id'=>402,'ticket_code'=>'adult','price'=>'490.00','capacity_units'=>1,'is_active'=>1),
+      (object)array('id'=>403,'ticket_code'=>'family_2_2','price'=>'1100.00','capacity_units'=>4,'is_active'=>1)
+    );
+    if($scenario==='verified_family_wrong_mmc_price'){
+        $mmcFamilyTickets[1]->price='500.00';
+    }elseif($scenario==='verified_family_duplicate_mmc_event'){
+        $mmcFamilyEvents[]=(object)array('id'=>302,'mdg_event_id'=>72);
+    }elseif($scenario==='verified_family_wrong_bridge'){
+        $mmcFamilyLinks[0]->mdg_event_id=919;
+    }elseif($scenario==='verified_family_duplicate_bridge'){
+        $mmcFamilyLinks[]=(object)array('mdg_event_id'=>73);
+    }elseif($scenario==='verified_family_wrong_mdg_event'){
+        $mmcFamilyEvents[0]->mdg_event_id=919;
+    }elseif($scenario==='verified_family_inactive'){
+        $mmcFamilyTickets[2]->is_active=0;
+    }
+    break;
 case 'family4':
     $catalogue[]= (object)array('code'=>'FAMILY4','is_active'=>1,'wc_variation_id'=>103,'capacity_units'=>4,'price'=>'1100.00');
     $products[103]=new SnapshotProduct(103,'variation',1234,'1100');
@@ -163,6 +210,26 @@ if($expected==='null'){
         demand_snapshot($snap['session']['start_utc']>$now,'future session UTC conversion failed');
     }
     demand_snapshot($snap['tickets'][0]['price_cents']===49000,'price parser mismatch');
+    demand_snapshot($snap['tickets'][0]['ticket_type_id']===202,
+        'MDG ticket instance identifier missing');
+    if('verified_family'===$scenario){
+        demand_snapshot(($snap['family']['price_cents']??null)===110000,
+            'trusted MMC family price not attached');
+        demand_snapshot(($snap['family']['child_ticket_type_id']??null)===201 &&
+            ($snap['family']['adult_ticket_type_id']??null)===202,
+            'trusted MDG admission IDs not attached');
+        $familyIntent=mcpi_make_intent(72,93,
+            array(array('code'=>'FAMILY22','quantity'=>1)),$now);
+        $familyQuote=MCPI_Milano_Central_Family_Quote::validate($familyIntent,$snap,$now);
+        demand_snapshot(($familyQuote['status']??null)==='eligible' &&
+            $familyQuote['total_cents']===110000 &&
+            $familyQuote['admission_units']===4 &&
+            $familyQuote['family_discount_cents']===37000,
+            'central verified 2+2 family quote not 1100 TRY');
+    }else{
+        demand_snapshot(!isset($snap['family']),
+            'family default price leaked without unique MMC authority');
+    }
     $items=$scenario==='family4'
         ?array(array('code'=>'FAMILY4','quantity'=>1))
         :array(array('code'=>'ADULT','quantity'=>2),array('code'=>'CHILD','quantity'=>2));

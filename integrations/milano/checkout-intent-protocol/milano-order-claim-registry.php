@@ -40,6 +40,60 @@ final class MCPI_Order_Claim_Registry {
     }
 
     /**
+     * READ-ONLY inspect of an existing request, before looking up the current
+     * session/price/availability. A retry must recover the SAME central order,
+     * even if its session later sells out or its ticket price changes.
+     *
+     * This is NOT payment proof: a trusted central caller still authorizes
+     * the customer and independently checks order brand and access.
+     * No SELECT-then-INSERT: claim() remains the only create gate.
+     *
+     * Outcomes: absent, existing_order, processing, conflict,
+     * reconcile_required, rejected, unavailable. Never take over old claims.
+     */
+    public static function inspect( $db, $table, $payload, $signature, $secret, $now ) {
+        if ( ! self::valid_table( $table ) || ! is_object( $db )
+            || ! method_exists( $db, 'get_row' ) || ! method_exists( $db, 'prepare' )
+            || ! function_exists( 'mcpi_verify' )
+            || ! mcpi_verify( $payload, $signature, $secret, $now ) ) {
+            return array( 'status' => 'rejected' );
+        }
+
+        $json = json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+        if ( ! is_string( $json ) ) { return array( 'status' => 'rejected' ); }
+        $digest = hash( 'sha256', "milano.checkout-intent.v1\n" . $json );
+        try {
+            $row = $db->get_row( $db->prepare(
+                "SELECT request_id,payload_hash,state,order_id
+                 FROM {$table} WHERE request_id=%s LIMIT 1",
+                $payload['request_id']
+            ) );
+        } catch ( Throwable $e ) {
+            return array( 'status' => 'unavailable' );
+        }
+        // wpdb::get_row() returns null both when absent and on SQL failure.
+        if ( null === $row ) {
+            if ( isset( $db->last_error ) && '' !== (string) $db->last_error ) {
+                return array( 'status' => 'unavailable' );
+            }
+            return array( 'status' => 'absent' );
+        }
+        if ( ! is_object( $row ) || ! isset( $row->payload_hash )
+            || ! is_string( $row->payload_hash )
+            || ! hash_equals( $digest, $row->payload_hash ) ) {
+            return array( 'status' => 'conflict' );
+        }
+        if ( 'ready' === ( $row->state ?? '' ) && isset( $row->order_id )
+            && (int) $row->order_id > 0 ) {
+            return array( 'status' => 'existing_order', 'order_id' => (int) $row->order_id );
+        }
+        if ( 'claimed' === ( $row->state ?? '' ) && empty( $row->order_id ) ) {
+            return array( 'status' => 'processing' );
+        }
+        return array( 'status' => 'reconcile_required' );
+    }
+
+    /**
      * Atomic claim; returns one of:
      * claimed (first worker + opaque token),
      * existing_order (same request already bound to order),

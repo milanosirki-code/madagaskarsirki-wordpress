@@ -487,6 +487,21 @@ class MMC_MDG_Bridge_Service {
             return MMC_MDG_Draft_Sync_Service::sync( $program_id );
         }
         $program_id = absint( $program_id );
+        // The legacy fallback below hardcodes "Madagaskar Sirki" in its
+        // MDG title, and materializes family_2_2 as a real 4-unit type.
+        // Milano must NEVER fall through into that unsafe compatibility path.
+        $source_program = class_exists( 'MMC_Program_Service' )
+            && method_exists( 'MMC_Program_Service', 'get_program' )
+            ? MMC_Program_Service::get_program( $program_id ) : null;
+        $source_brand = $source_program && class_exists( 'MMC_Program_Service' )
+            && method_exists( 'MMC_Program_Service', 'normalized_program_brand' )
+            ? MMC_Program_Service::normalized_program_brand( $source_program->brand ?? '' ) : '';
+        if ( 'Madagaskar Sirki' !== $source_brand ) {
+            return new WP_Error(
+                'mmc_milano_draft_sync_required',
+                'Bu program için marka güvenli MMC→MDG taslak senkronizasyonu gereklidir.'
+            );
+        }
         $preview = self::publish_preview( $program_id );
         if ( ! empty( $preview['bridge'] ) ) {
             $existing = self::get_mdg_event( (int) $preview['bridge']->mdg_event_id );
