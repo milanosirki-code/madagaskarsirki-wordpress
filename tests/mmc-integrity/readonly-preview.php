@@ -28,6 +28,8 @@ function wp_remote_request($url,$args){
 function wp_remote_retrieve_response_code($r){return $r['response']['code'];}
 function wp_remote_retrieve_body($r){return $r['body'];}
 class MMC_Program_Service {
+    static function public_brand_profile($program){return ['name'=>'Madagaskar Sirki','domain'=>'madagaskarsirki.com','ticket_url'=>'https://madagaskarsirki.com/bilet-al/'];}
+
     static function get_program($id){return $id===9?$GLOBALS['program']:null;}
     static function statuses(){return ['cancelled'=>'İptal','preparation'=>'Hazırlık','completed'=>'Arşiv'];}
 }

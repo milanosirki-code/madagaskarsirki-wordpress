@@ -143,7 +143,10 @@ if ( ! function_exists( 'mdg_ai_program_get' ) ) {
 
 if ( ! function_exists( 'mdg_ai_program_create' ) ) {
     function mdg_ai_program_create( $input ) {
+        // Explicit sales brand is mandatory. The MMC canonical service
+        // validates the allowlist; no implicit Madagaskar default for API calls.
         $data = array(
+            'brand'         => sanitize_text_field( $input['brand'] ?? '' ),
             'province_name' => sanitize_text_field( $input['province_name'] ?? '' ),
             'district_name' => sanitize_text_field( $input['district_name'] ?? '' ),
             'plan_year'     => absint( $input['plan_year'] ?? wp_date( 'Y' ) ),
@@ -335,13 +338,14 @@ add_action( 'wp_abilities_api_init', function() {
             'input_schema'=> array(
                 'type' => 'object',
                 'properties' => array(
+                    'brand' => array( 'type' => 'string', 'enum' => array( 'Madagaskar Sirki', 'Milano Sirki' ) ),
                     'province_name' => array( 'type' => 'string', 'minLength' => 1 ),
                     'district_name' => array( 'type' => 'string' ),
                     'plan_year'     => array( 'type' => 'integer', 'minimum' => 2020, 'maximum' => 2100 ),
                     'planned_date'  => array( 'type' => 'string', 'pattern' => '^\d{4}-\d{2}-\d{2}$' ),
                     'notes'         => array( 'type' => 'string' ),
                 ),
-                'required' => array( 'province_name' ),
+                'required' => array( 'province_name', 'brand' ),
             ),
             'output_schema'       => array( 'type' => 'object' ),
             'execute_callback'    => 'mdg_ai_program_create',

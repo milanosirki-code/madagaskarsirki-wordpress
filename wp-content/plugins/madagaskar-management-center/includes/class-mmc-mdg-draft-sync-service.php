@@ -27,6 +27,12 @@ final class MMC_MDG_Draft_Sync_Service {
         if ( ! $program || ! $source || ! $program->program_code ) {
             return new WP_Error( 'mmc_mdg_source', 'Program kodu veya MMC etkinliği eksik.' );
         }
+        // Never generate a Milano event with Madagaskar branding. If source
+        // brand is absent/ambiguous, stop BEFORE touching MDG draft tables.
+        $brand = self::verified_brand( $program );
+        if ( ! $brand ) {
+            return new WP_Error( 'mmc_mdg_brand_required', 'Program için doğrulanmış satış markası gerekli.' );
+        }
 
         $venues   = MMC_Venue_Service::venues_for_program( $program_id );
         $selected = array_values( array_filter( $venues, function( $v ) { return (int) $v->is_selected === 1; } ) );
@@ -166,7 +172,12 @@ final class MMC_MDG_Draft_Sync_Service {
             return new WP_Error( 'mmc_mdg_sync', $e->getMessage() );
         }
 
-        self::sync_family_package_option( $id, $source_tickets );
+        // The installed Madagaskar family plugin owns ONLY Madagaskar web
+        // carts. Milano family pricing is handled independently by signed
+        // central checkout, and must not be added to Madagaskar's option.
+        if ( 'Madagaskar Sirki' === $brand ) {
+            self::sync_family_package_option( $id, $source_tickets );
+        }
 
         return $id;
     }
@@ -229,9 +240,21 @@ final class MMC_MDG_Draft_Sync_Service {
         return substr( $hash, 0, 8 ) . '-' . substr( $hash, 8, 4 ) . '-5' . substr( $hash, 13, 3 ) . '-a' . substr( $hash, 17, 3 ) . '-' . substr( $hash, 20, 12 );
     }
 
+    private static function verified_brand( $program ) {
+        if ( ! is_object( $program )
+            || ! class_exists( 'MMC_Program_Service' )
+            || ! method_exists( 'MMC_Program_Service', 'normalized_program_brand' ) ) {
+            return '';
+        }
+        $brand = MMC_Program_Service::normalized_program_brand( $program->brand ?? '' );
+        return in_array( $brand, array( 'Madagaskar Sirki', 'Milano Sirki' ), true )
+            ? $brand : '';
+    }
+
     private static function public_event_title( $program ) {
-        if ( ! $program ) { return 'Madagaskar Sirki'; }
-        $title = 'Madagaskar Sirki — ' . (string) $program->province_name;
+        $brand = self::verified_brand( $program );
+        if ( '' === $brand ) { return ''; }
+        $title = $brand . ' — ' . (string) $program->province_name;
         $district = trim( (string) $program->district_name );
         if ( $district && 'merkez' !== self::normalize_text( $district ) ) {
             $title .= ' / ' . $district;
