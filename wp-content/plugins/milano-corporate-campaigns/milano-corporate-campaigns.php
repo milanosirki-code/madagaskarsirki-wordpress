@@ -94,3 +94,6 @@ add_action('plugins_loaded',array('Milano_Corporate_Campaigns','boot'),50);
 
 add_action('template_redirect',array('Milano_Corporate_Campaigns','template'),2);
 add_filter('pre_get_document_title',array('Milano_Corporate_Campaigns','document_title'));
+
+// Support native Code Snippets deployments that load after plugins_loaded.
+if(function_exists('did_action') && did_action('plugins_loaded')){Milano_Corporate_Campaigns::boot();}
