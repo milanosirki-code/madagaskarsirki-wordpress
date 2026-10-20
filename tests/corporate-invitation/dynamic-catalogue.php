@@ -6,7 +6,7 @@ function add_filter($k,$v){global $hooks;$hooks['filter'][]=$k;}
 function add_action($k,$v){global $hooks;$hooks['action'][]=$k;}
 function wp_json_encode($v){return json_encode($v);}
 function wp_salt($v){return 'test-secret';}
-function get_option($k,$default){global $registry;return $registry;}
+function get_option($k,$default){global $registry,$milano_registry;return $k==='milano_corporate_campaign_codes_v1'?($milano_registry??array()):$registry;}
 function current_time($f,$utc=false){return $f==='Y-m-d'?'2026-10-05':'2026-10-05 07:40:00';}
 function wc_get_product($id){global $products;return $products[$id]??null;}
 function get_post(){return (object)array('post_content'=>'[mdg_corporate_campaigns]');}

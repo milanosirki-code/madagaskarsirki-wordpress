@@ -29,6 +29,10 @@ jobs:
       - run: php tests/corporate-invitation/milano-sagliksen.php
       - run: php tests/corporate-invitation/handoff-designer.php
       - run: php tests/corporate-invitation/stage-content.php
+      - run: php -l wp-content/plugins/milano-corporate-campaigns/engine.php
+      - run: php -l wp-content/plugins/milano-corporate-campaigns/milano-corporate-campaigns.php
+      - run: php -l integrations/milano/sagliksen-20261018/corporate-preview.php
+      - run: php tests/corporate-invitation/milano-corporate.php
       - run: npm install --no-save jsdom@26
       - run: node tests/corporate-invitation/age-ui.cjs
       - run: node tests/corporate-invitation/milano-ui.cjs
