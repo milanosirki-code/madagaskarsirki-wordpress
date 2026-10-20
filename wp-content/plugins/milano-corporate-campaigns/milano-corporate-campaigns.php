@@ -2,26 +2,28 @@
 /**
  * Plugin Name: Milano Sirki Kurumsal Kampanyalar
  * Description: Ortak kurumsal kampanya ekranını Milano markasıyla kullanır; fiyat ve yaş kurallarını ortak motora bırakır.
- * Version: 0.2.1
+ * Version: 0.2.2
  */
 if(!defined('ABSPATH')){exit;}
+if(is_readable(__DIR__.'/engine.php')){require_once __DIR__.'/engine.php';}
+if(!class_exists('Milano_Corporate_Campaigns',false)){
 final class Milano_Corporate_Campaigns {
     const SHORTCODE='milano_corporate_campaigns';
     private static $previous_validation=null;
     public static function is_manifest($m) {
         if(!is_array($m) || isset($m['schema']) || !is_string($m['code']??null)
-            || !is_callable(array('MDG_Corporate_Campaigns_20261005','registry'))){return false;}
-        $engine='MDG_Corporate_Campaigns_20261005';
+            || !is_callable(array('Milano_Corporate_Engine','registry'))){return false;}
+        $engine='Milano_Corporate_Engine';
         $r=$engine::registry()[$engine::normalize($m['code'])]??array();
         return ($r['brand']??'')==='milano' && empty($r['schema']);
     }
     public static function authorize_item($data,$pid,$vid,$qty,$eid) {
-        $engine='MDG_Corporate_Campaigns_20261005';
-        $m=$data['mdg_campaign_manifest']??null;
+        $engine='Milano_Corporate_Engine';
+        $m=$data['milano_corporate_manifest']??null;
         if(!self::is_manifest($m) || !$engine::signed($data)){return false;}
         $q=$engine::manifest_quote($m);
         if(isset($q['error']) || (int)$q['event']->id!==(int)$eid){return false;}
-        $p=$engine::plan($q)[$data['mdg_campaign_role']??'']??null;
+        $p=$engine::plan($q)[$data['milano_corporate_role']??'']??null;
         return $p && $p['qty']>0 && (float)$qty===(float)$p['qty']
             && (int)$p['type']['parent']===(int)$pid && (int)$p['type']['variation']===(int)$vid
             && (int)($data['mdg_event_id']??0)===(int)$eid
@@ -70,8 +72,8 @@ final class Milano_Corporate_Campaigns {
         <?php wp_footer(); ?></body></html><?php exit;
     }
     public static function render() {
-        if(is_callable(array('MDG_Corporate_Campaigns_20261005','render'))){
-            return MDG_Corporate_Campaigns_20261005::render(array('brand'=>'milano'));
+        if(is_callable(array('Milano_Corporate_Engine','render'))){
+            return Milano_Corporate_Engine::render(array('brand'=>'milano'));
         }
         // The front site never copies campaign prices, keys or venue/session data.
         ob_start(); ?>
@@ -97,3 +99,4 @@ add_filter('pre_get_document_title',array('Milano_Corporate_Campaigns','document
 
 // Support native Code Snippets deployments that load after plugins_loaded.
 if(function_exists('did_action') && did_action('plugins_loaded')){Milano_Corporate_Campaigns::boot();}
+}

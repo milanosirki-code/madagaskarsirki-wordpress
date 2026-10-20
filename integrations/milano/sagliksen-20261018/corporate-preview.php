@@ -9,11 +9,11 @@ final class Milano_Corporate_Preview {
     }
     public static function registry($rows) {
         if(!self::page()){return $rows;}
-        $verified=MDG_Corporate_Campaigns_20261005::milano_sessions();$cities=array();
-        foreach(MDG_Corporate_Campaigns_20261005::source_events('milano') as $event){
+        $verified=Milano_Corporate_Engine::milano_sessions();$cities=array();
+        foreach(Milano_Corporate_Engine::source_events('milano') as $event){
             if(!isset($verified[(int)$event->id]))continue;
             $province=(string)$event->province_name;
-            $cities[MDG_Corporate_Campaigns_20261005::normalize($province)]=array('province'=>$province,'active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>245));
+            $cities[Milano_Corporate_Engine::normalize($province)]=array('province'=>$province,'active'=>true,'end_date'=>'','pricing'=>array('adult_campaign'=>475,'child_campaign'=>245));
         }
         $rows['milano-onizleme']=array('name'=>'Milano Sirki Kurumsal Kampanya Önizlemesi','active'=>true,'brand'=>'milano','preview_only'=>true,'cities'=>$cities,'schema_version'=>2);
         return $rows;
@@ -26,8 +26,8 @@ final class Milano_Corporate_Preview {
         <header class="milano-preview-header"><strong>Milano Sirki</strong><span>Kurumsal Kampanyalar</span></header>
         <main class="milano-preview-main"><?php echo do_shortcode(get_post()->post_content); ?></main>
         <footer class="milano-preview-footer">Test ortamı · Gerçek ödeme yapmayın.</footer>
-        <?php MDG_Corporate_Campaigns_20261005::script(); ?></body></html><?php exit;
+        <?php Milano_Corporate_Engine::script(); ?></body></html><?php exit;
     }
 }
-add_filter('mdg_corporate_campaign_registry',array('Milano_Corporate_Preview','registry'));
+add_filter('milano_corporate_campaign_registry',array('Milano_Corporate_Preview','registry'));
 add_action('template_redirect',array('Milano_Corporate_Preview','template'),2);
