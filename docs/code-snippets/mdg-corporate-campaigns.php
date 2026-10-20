@@ -33,7 +33,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $rows=get_option(self::OPTION,array());
             if(!is_array($rows)){return array();}
             foreach($rows as $key=>$row){$rows[$key]=self::adapt($row);}
-            return $rows;
+            return function_exists('apply_filters') ? apply_filters('mdg_corporate_campaign_registry',$rows) : $rows;
         }
 
         public static function resolve($raw,$events,$registry,$today) {
@@ -41,14 +41,14 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             if(!$key){return null;}
             if(isset($registry[$key])){
                 $row=self::adapt($registry[$key]);
-                if(empty($row['active']) || (!empty($row['end_date']) && $row['end_date']<$today)){return null;}
+                if(!empty($row['schema']) || empty($row['active']) || (!empty($row['end_date']) && $row['end_date']<$today)){return null;}
                 $cities=array();
                 foreach($row['cities'] as $city){
                     if(!is_array($city) || empty($city['active']) || empty($city['province']) || (!empty($city['end_date']) && $city['end_date']<$today)){continue;}
                     $cities[self::normalize($city['province'])]=$city;
                 }
                 if(!$cities){return null;}
-                return array('key'=>$key,'name'=>(string)($row['name']??''),'province'=>implode(' / ',array_column($cities,'province')),'cities'=>$cities,'test_only'=>false);
+                return array('key'=>$key,'name'=>(string)($row['name']??''),'province'=>implode(' / ',array_column($cities,'province')),'cities'=>$cities,'test_only'=>!empty($row['preview_only']),'brand'=>($row['brand']??'madagaskar'),'event_ids'=>$row['event_ids']??array());
             }
             foreach($events as $event){
                 $province=(string)$event->province_name;
@@ -57,19 +57,42 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             return null;
         }
 
-        public static function source_events() {
+        public static function source_events($brand='') {
+            if($brand==='milano'){
+                if(!is_callable(array('MDG_Events','get'))){return array();}
+                $events=array();
+                foreach(array_keys(self::milano_sessions()) as $id){$event=MDG_Events::get($id);if($event)$events[]=$event;}
+                return $events;
+            }
             if ( ! class_exists( 'MDG_Public_Tickets' ) || ! is_callable( array( 'MDG_Public_Tickets', 'active_events' ) ) ) { return array(); }
             return (array) MDG_Public_Tickets::active_events();
+        }
+
+        // The public handoff catalogue has already verified the canonical Milano bridge,
+        // products, Designer, stock and session window. Titles are never brand evidence.
+        public static function milano_sessions() {
+            if(!is_callable(array('Milano_Shared_Checkout_Handoff','catalog'))){return array();}
+            $result=Milano_Shared_Checkout_Handoff::catalog();
+            if(is_wp_error($result) || !is_object($result) || !is_callable(array($result,'get_data'))){return array();}
+            $data=$result->get_data();$sessions=array();
+            foreach($data['sessions']??array() as $s){
+                if(!empty($s['preview']) || empty($s['event_id']) || empty($s['session_id']))continue;
+                $sessions[(int)$s['event_id']][(int)$s['session_id']]=true;
+            }
+            return $sessions;
         }
 
         public static function catalogue( $campaign, $events ) {
             if ( ! $campaign || ! class_exists( 'MDG_Sessions' ) || ! function_exists( 'wc_get_product' ) ) { return array(); }
             $result = array();
+            $milano=($campaign['brand']??'')==='milano';
+            $verified=$milano?self::milano_sessions():array();
             $now = current_time( 'mysql', true );
             foreach ( $events as $event ) {
                 if('onsale' !== (string)$event->status){continue;}
+                if($milano && (!isset($verified[(int)$event->id]) || (!empty($campaign['event_ids']) && !in_array((int)$event->id,array_map('intval',$campaign['event_ids']),true))))continue;
                 $city_key=self::normalize((string)$event->province_name);
-                if(!empty($campaign['test_only'])){
+                if(!empty($campaign['test_only']) && !$milano){
                     if($city_key!==self::normalize($campaign['province'])){continue;}
                     $city=array('pricing'=>array());
                 }else{
@@ -78,6 +101,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 }
                 $sessions = array();
                 foreach ( (array) MDG_Sessions::by_event( $event->id ) as $s ) {
+                    if($milano && !isset($verified[(int)$event->id][(int)$s->id]))continue;
                     if ( 'onsale' !== (string)$s->status || empty( $s->start_at ) || (string)$s->start_at < $now || empty( $s->wc_product_id ) ) { continue; }
                     $parent = wc_get_product( (int)$s->wc_product_id );
                     if ( ! $parent || 'publish' !== $parent->get_status() || ! $parent->is_type( 'variable' ) ) { continue; }
@@ -95,7 +119,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         if ( ! is_numeric($price) || ! is_finite((float)$price) || (float)$price <= 0 ) { continue; }
                         $regular=(float)$price;
                         $effective=(float)$price;
-                        if ( empty($campaign['test_only']) ) {
+                        if ( empty($campaign['test_only']) || $milano ) {
                             $pricing=is_array($city['pricing']??null)?$city['pricing']:array();
                             $campaign_key=$role.'_campaign';
                             if(isset($pricing[$campaign_key]) && is_numeric($pricing[$campaign_key]) && (float)$pricing[$campaign_key]>0){
@@ -211,10 +235,11 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             return $pricing;
         }
 
-        public static function render() {
+        public static function render($attributes=array()) {
+            $brand=is_array($attributes) && ($attributes['brand']??'')==='milano'?'milano':'madagaskar';
             $page=get_post();
             if ( !$page || post_password_required($page) ) { return ''; }
-            $events=self::source_events();
+            $events=self::source_events($brand);
             $raw=self::input($_GET,'kod');
             $error=''; $quote=null;
             $post='POST'===($_SERVER['REQUEST_METHOD']??'') && isset($_POST['mdg_campaign_action']);
@@ -223,6 +248,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 if ( !wp_verify_nonce(self::input($_POST,'mdg_campaign_nonce'),self::SHORTCODE) ) { $error='Sayfanın süresi doldu. Yenileyip tekrar deneyin.'; $raw=''; }
             }
             $campaign=$raw!=='' ? self::resolve($raw,$events,self::registry(),current_time('Y-m-d')) : null;
+            if($campaign && ($campaign['brand']??'madagaskar')!==$brand){$campaign=null;}
             if ( $raw!=='' && !$campaign ) { $error='Kampanya kodu geçersiz, süresi dolmuş veya kullanıma kapatılmış. Lütfen size iletilen kodu kontrol edin.'; }
             $catalogue=self::catalogue($campaign,$events);
             if ($post && $campaign && 'quote'===self::input($_POST,'mdg_campaign_action')) {
@@ -232,12 +258,12 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 else { $quote=self::quote_birthdates($catalogue,self::input($_POST,'mdg_campaign_session'),self::input($_POST,'mdg_campaign_adults'),$births,current_time('Y-m-d')); }
             }
             ob_start(); ?>
-            <section class="mdg-campaigns" aria-label="Kurumsal kampanyalar">
+            <section class="mdg-campaigns<?php echo $brand==='milano'?' mc-milano':''; ?>" aria-label="Kurumsal kampanyalar">
             <style>
             .mdg-campaigns{max-width:900px;margin:24px auto;color:#29221c;font-family:inherit}.mdg-campaigns *{box-sizing:border-box}.mdg-campaigns .mc-intro,.mdg-campaigns .mc-card{padding:clamp(20px,4vw,36px);border:1px solid #e3d2b9;border-radius:16px;background:#fff8ed;margin-bottom:22px}.mdg-campaigns h2{font-size:clamp(26px,5vw,42px);line-height:1.15;margin:8px 0 18px}.mdg-campaigns .mc-poster{margin:0 auto 24px;max-width:560px}.mdg-campaigns .mc-poster-image{display:block;width:100%;height:auto;border-radius:10px}.mdg-campaigns .mc-about{padding:16px;background:#fff;border-radius:10px;margin-bottom:20px}.mdg-campaigns .mc-about h4{margin:0 0 8px;font-size:1.1em}.mdg-campaigns h3{margin:0 0 12px;color:#8e291e}.mdg-campaigns p{line-height:1.6}.mdg-campaigns .mc-kicker{font-weight:700;color:#9b3027;letter-spacing:.07em}.mdg-campaigns label{display:block;font-weight:600}.mdg-campaigns input,.mdg-campaigns select{display:block;width:100%;padding:12px;margin:8px 0 14px;border:1px solid #9a8870;border-radius:6px;background:#fff;color:#29221c;font:inherit;min-height:48px}.mdg-campaigns button{padding:14px 22px;border:0;border-radius:6px;background:#a93428;color:#fff;font:inherit;font-weight:700;cursor:pointer}.mdg-campaigns .mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.mdg-campaigns .mc-error{color:#96251c;font-weight:600}.mdg-campaigns .mc-result{border-top:2px solid #d6b979;padding-top:16px}.mdg-campaigns :focus-visible{outline:3px solid #987023;outline-offset:3px}@media(max-width:540px){.mdg-campaigns .mc-grid{grid-template-columns:1fr}}
             </style>
             <div class="mc-intro">
-                <p class="mc-kicker">MADAGASKAR SİRKİ · KURUMSAL KAMPANYALAR</p>
+                <p class="mc-kicker"><?php echo $brand==='milano'?'MİLANO SİRKİ':'MADAGASKAR SİRKİ'; ?> · KURUMSAL KAMPANYALAR</p>
                 <h2>Kampanya kodunuzu girin</h2>
                 <p>Size iletilen kodla ilinizdeki gösterileri ve seansları görüntüleyin. Kodlarda büyük veya küçük harf kullanabilirsiniz.</p>
                 <form method="post" action="<?php echo esc_url(get_permalink($page)); ?>">
@@ -246,10 +272,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                     <button name="mdg_campaign_action" value="open" type="submit">Gösterileri görüntüle</button>
                 </form>
                 <?php if($error): ?><p class="mc-error" role="alert"><?php echo esc_html($error); ?></p><?php endif; ?>
-                <p>Biletler başarılı ödeme sonrasında oluşturulur. TEST- kodları yalnız hesaplama içindir.</p>
+                <p>Biletler başarılı ödeme sonrasında oluşturulur. <?php echo $brand==='milano'?'Önizleme kodları yalnız hesaplama içindir.':'TEST- kodları yalnız hesaplama içindir.'; ?></p>
             </div>
             <?php if($campaign): ?>
-                <h2><?php echo esc_html($campaign['province']); ?> gösterileri</h2>
+                <h2><?php echo $brand==='milano'?'Kampanyanıza uygun gösteriler':esc_html($campaign['province']).' gösterileri'; ?></h2>
                 <p><?php echo esc_html($campaign['name']); ?> · Her ücretli yetişkin bileti için 3–12 yaş dahil iki ücretsiz çocuk hakkı vardır. Bu sayıyı aşan çocuklar tanımlı kampanya çocuk fiyatıyla; kampanya fiyatı yoksa güncel normal çocuk fiyatıyla hesaplanır. 0–2 yaş ücretsizdir ve kampanya hakkını kullanmaz; 13 yaş ve üzeri yetişkin fiyatıyla hesaplanır.</p>
                 <?php if(isset($quote['error'])): ?><p class="mc-error" role="alert"><?php echo esc_html($quote['error']); ?></p><?php endif; ?>
                 <?php if(!$catalogue): ?><p class="mc-card">Bu kod için şu anda satışa açık uygun seans bulunmuyor. Yeni gösteriler satışa açıldığında burada otomatik görünecek.</p><?php endif; ?>
@@ -306,7 +332,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                         <input type="hidden" name="mdg_campaign_birthdates[]" value="<?php echo esc_attr($birth); ?>">
                         <?php endforeach; ?>
                         <button type="submit">Ödemeye devam et</button></form>
-                        <?php else: ?><p>Test koduyla ödeme veya bilet oluşturulmaz.</p><?php endif; ?>
+                        <?php else: ?><p>Önizleme koduyla ödeme veya bilet oluşturulmaz.</p><?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </article>
@@ -319,7 +345,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
         // Footer scripts bypass the_content character conversion (e.g. && -> &#038;).
         public static function script() {
             $p=get_post();
-            if(!is_singular('page') || !$p || !has_shortcode($p->post_content,self::SHORTCODE)){return;}
+            if(!is_singular('page') || !$p || !(has_shortcode($p->post_content,self::SHORTCODE) || has_shortcode($p->post_content,'milano_corporate_campaigns'))){return;}
             ?>
             <script>
             (function(){
@@ -400,8 +426,11 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 return class_exists('Milano_Sagliksen') ? Milano_Sagliksen::manifest_quote($m) : array('error'=>'Milano kampanyası kullanıma kapalı.');
             }
             if(!is_array($m) || !isset($m['code'],$m['session'],$m['adults'],$m['births'])){return array('error'=>'Kampanya seçimi doğrulanamadı.');}
-            $events=self::source_events();
-            $campaign=self::resolve($m['code'],$events,self::registry(),current_time('Y-m-d'));
+            $registry=self::registry();
+            $brand=$registry[self::normalize($m['code'])]['brand']??'madagaskar';
+            if($brand==='milano' && !is_callable(array('Milano_Corporate_Campaigns','authorize_item'))){return array('error'=>'Milano kampanya bağlantısı hazır değil.');}
+            $events=self::source_events($brand);
+            $campaign=self::resolve($m['code'],$events,$registry,current_time('Y-m-d'));
             if(!$campaign || $campaign['test_only']){return array('error'=>'Kampanya kodu satış için geçerli değil.');}
             return self::quote_birthdates(self::catalogue($campaign,$events),$m['session'],$m['adults'],$m['births'],current_time('Y-m-d'));
         }
@@ -428,9 +457,9 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             if(function_exists('wc_load_cart') && (!WC()->cart || !WC()->session)){wc_load_cart();}
             if(!WC()->cart){wp_die('Sepet başlatılamadı.');}
             $cart=WC()->cart; $old=array(); $added=array();
-            if(($m['schema']??'')==='milano_bundle_v1'){
+            if(($m['schema']??'')==='milano_bundle_v1' || (is_callable(array('Milano_Corporate_Campaigns','is_manifest')) && Milano_Corporate_Campaigns::is_manifest($m))){
                 foreach($cart->get_cart() as $item){
-                    if(!isset($item['mdg_campaign_manifest']) || ($item['mdg_campaign_manifest']['schema']??'')!=='milano_bundle_v1'){
+                    if(!isset($item['mdg_campaign_manifest']) || ($item['mdg_campaign_manifest']['schema']??'')!==($m['schema']??'') || ($item['mdg_campaign_manifest']['code']??'')!==$m['code']){
                         wp_die('Sepetinizde başka bir seçim var. Önce mevcut sepetinizi kontrol edin; biletleriniz değiştirilmedi.');
                     }
                 }
@@ -480,6 +509,10 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                     $role=$item['mdg_campaign_role']??'';
                     if(($group['manifest']['schema']??'')==='milano_bundle_v1' &&
                         (!class_exists('Milano_Sagliksen') || !Milano_Sagliksen::authorize_item($item,$item['product_id'],$item['variation_id'],$item['quantity'],(int)$q['event']->id) || empty($item['milano_handoff']))){
+                        return array('error'=>'Milano kampanya bilet bağlantısı değişmiş.');
+                    }
+                    if(is_callable(array('Milano_Corporate_Campaigns','is_manifest')) && Milano_Corporate_Campaigns::is_manifest($group['manifest']) &&
+                        (!Milano_Corporate_Campaigns::authorize_item($item,$item['product_id'],$item['variation_id'],$item['quantity'],(int)$q['event']->id) || empty($item['milano_handoff']))){
                         return array('error'=>'Milano kampanya bilet bağlantısı değişmiş.');
                     }
                     if(!isset($plan[$role]) || (int)$item['variation_id']!==$plan[$role]['type']['variation'] || (int)$item['product_id']!==$plan[$role]['type']['parent'] || (int)$item['quantity']<1){return array('error'=>'Kampanya biletleri değişmiş. Kampanya sayfasından yeniden seçin.');}
@@ -584,6 +617,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             <?php else: ?>
             <h2>Yeni kampanya oluştur</h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="mdg_corporate_campaign_save"><?php wp_nonce_field(self::ADMIN); ?>
             <p><label>Kampanya adı <input name="name" required maxlength="120"></label></p><p><label>Kampanya kodu <input name="code" required maxlength="80" placeholder="Örn. demo-okul-c"></label></p>
+            <p><label>Marka <select name="brand"><option value="madagaskar">Madagaskar Sirki</option><option value="milano">Milano Sirki</option></select></label> Marka kayıttan sonra değiştirilemez.</p>
             <?php self::city_fields($provinces); ?><button class="button button-primary">Kampanyayı oluştur</button></form>
             <?php endif; ?>
             <h2>Tanımlı kampanyalar</h2><table class="widefat striped"><thead><tr><th>Kod</th><th>Kampanya</th><th>İller</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
@@ -608,7 +642,9 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
             $rows=self::registry();
             if(isset($rows[$key])){wp_die('Bu kod zaten tanımlı. Mevcut kodun Düzenle butonunu kullanın.');}
             if(count($rows)>=200){wp_die('En fazla 200 kurum kodu tanımlanabilir.');}
-            $rows[$key]=array('name'=>$name,'end_date'=>'','active'=>true,'schema_version'=>2,'cities'=>array(self::normalize($province)=>array('province'=>$province,'end_date'=>$date,'active'=>true,'pricing'=>$pricing,'legacy'=>false)));
+            $brand=self::input($_POST,'brand')?:'madagaskar';
+            if(!in_array($brand,array('madagaskar','milano'),true)){wp_die('Marka geçersiz.');}
+            $rows[$key]=array('brand'=>$brand,'name'=>$name,'end_date'=>'','active'=>true,'schema_version'=>2,'cities'=>array(self::normalize($province)=>array('province'=>$province,'end_date'=>$date,'active'=>true,'pricing'=>$pricing,'legacy'=>false)));
             update_option(self::OPTION,$rows,false);
             wp_safe_redirect(admin_url('admin.php?page='.self::ADMIN.'&saved=1')); exit;
         }
@@ -660,7 +696,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
 
         public static function robots($robots) {
             $p=get_post();
-            if(is_singular('page') && $p && has_shortcode($p->post_content,self::SHORTCODE)) { unset($robots['index'],$robots['follow']); $robots['noindex']=true; $robots['nofollow']=true; }
+            if(is_singular('page') && $p && (has_shortcode($p->post_content,self::SHORTCODE) || has_shortcode($p->post_content,'milano_corporate_campaigns'))) { unset($robots['index'],$robots['follow']); $robots['noindex']=true; $robots['nofollow']=true; }
             return $robots;
         }
 
@@ -673,7 +709,7 @@ if ( ! class_exists( 'MDG_Corporate_Campaigns_20261005', false ) ) {
                 wp_safe_redirect($target,'POST'===($_SERVER['REQUEST_METHOD']??'')?307:301);exit;
             }
             $p=get_post();
-            if(is_singular('page') && $p && has_shortcode($p->post_content,self::SHORTCODE)) {
+            if(is_singular('page') && $p && (has_shortcode($p->post_content,self::SHORTCODE) || has_shortcode($p->post_content,'milano_corporate_campaigns'))) {
                 if(!defined('DONOTCACHEPAGE')){define('DONOTCACHEPAGE',true);}
                 nocache_headers();
             }
