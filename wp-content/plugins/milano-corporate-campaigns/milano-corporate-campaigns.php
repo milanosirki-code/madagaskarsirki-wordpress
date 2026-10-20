@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Milano Sirki Kurumsal Kampanyalar
  * Description: Ortak kurumsal kampanya ekranını Milano markasıyla kullanır; fiyat ve yaş kurallarını ortak motora bırakır.
- * Version: 0.2.0
+ * Version: 0.2.1
  */
 if(!defined('ABSPATH')){exit;}
 final class Milano_Corporate_Campaigns {
@@ -49,6 +49,26 @@ final class Milano_Corporate_Campaigns {
         add_filter('woocommerce_add_to_cart_validation',array(__CLASS__,'validation'),90,6);
         add_filter('woocommerce_add_cart_item_data',array(__CLASS__,'mark'),62,4);
     }
+    public static function portal_page() {
+        // Front-site pages retain their own theme. Only the central Milano portal uses this shell.
+        if(strtolower((string)wp_parse_url(home_url('/'),PHP_URL_HOST))!=='madagaskarsirki.com'){return false;}
+        $p=get_post();
+        return is_singular('page') && $p && has_shortcode($p->post_content,self::SHORTCODE) && !post_password_required($p);
+    }
+    public static function document_title($title) {
+        return self::portal_page()?'Kurumsal Kampanyalar | Milano Sirki':$title;
+    }
+    public static function template() {
+        if(!self::portal_page()){return;}
+        if(!defined('DONOTCACHEPAGE')){define('DONOTCACHEPAGE',true);}
+        nocache_headers();
+        ?><!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><?php wp_head(); ?>
+        <style>html,body{margin:0;background:#fffdf8;color:#29221c;font-family:system-ui,-apple-system,sans-serif}body{line-height:1.55}a{color:#8e291e}.milano-corporate-header{padding:20px max(20px,calc((100% - 900px)/2));border-bottom:1px solid #e3d2b9;display:flex;gap:24px;justify-content:space-between;align-items:center}.milano-corporate-header strong{font-size:22px}.milano-corporate-main{padding:12px 20px 32px}.milano-corporate-footer{max-width:900px;padding:20px;margin:auto;border-top:1px solid #e3d2b9;font-size:14px}.mc-milano .mc-intro{border-top:4px solid #a93428}.mc-milano .mc-poster{max-width:390px}.mc-milano .mc-result{background:#fff;padding:20px;border-radius:8px}.mc-milano button{min-height:48px}.mc-milano .mc-error{padding:12px;background:#fff0eb;border-radius:8px}@media(max-width:540px){.milano-corporate-header{align-items:flex-start;flex-direction:column;gap:6px}.mc-milano button{width:100%}.mc-milano .mc-grid{grid-template-columns:minmax(0,1fr)}}</style></head><body>
+        <header class="milano-corporate-header"><a href="https://milanosirki.com/"><strong>Milano Sirki</strong></a><span>Kurumsal Kampanyalar</span></header>
+        <main class="milano-corporate-main"><?php echo self::render(); ?></main>
+        <footer class="milano-corporate-footer">Ödemeler Dünya Organizasyon’un ortak altyapısında tamamlanır. Biletiniz Milano Sirki içindir.</footer>
+        <?php wp_footer(); ?></body></html><?php exit;
+    }
     public static function render() {
         if(is_callable(array('MDG_Corporate_Campaigns_20261005','render'))){
             return MDG_Corporate_Campaigns_20261005::render(array('brand'=>'milano'));
@@ -71,3 +91,6 @@ final class Milano_Corporate_Campaigns {
 add_shortcode(Milano_Corporate_Campaigns::SHORTCODE,array('Milano_Corporate_Campaigns','render'));
 
 add_action('plugins_loaded',array('Milano_Corporate_Campaigns','boot'),50);
+
+add_action('template_redirect',array('Milano_Corporate_Campaigns','template'),2);
+add_filter('pre_get_document_title',array('Milano_Corporate_Campaigns','document_title'));
