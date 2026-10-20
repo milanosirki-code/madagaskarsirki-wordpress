@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Milano Sirki Kurumsal Kampanyalar
- * Description: Ortak kurumsal kampanya ekranını Milano markasıyla kullanır; fiyat ve yaş kurallarını ortak motora bırakır.
- * Version: 0.2.2
+ * Description: Milano kurumsal kampanya ekranını, ayrı kayıtları ve yaş kurallarını yönetir.
+ * Version: 0.2.3
  */
 if(!defined('ABSPATH')){exit;}
 if(is_readable(__DIR__.'/engine.php')){require_once __DIR__.'/engine.php';}
@@ -65,10 +65,10 @@ final class Milano_Corporate_Campaigns {
         if(!defined('DONOTCACHEPAGE')){define('DONOTCACHEPAGE',true);}
         nocache_headers();
         ?><!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><?php wp_head(); ?>
-        <style>html,body{margin:0;background:#fffdf8;color:#29221c;font-family:system-ui,-apple-system,sans-serif}body{line-height:1.55}a{color:#8e291e}.milano-corporate-header{padding:20px max(20px,calc((100% - 900px)/2));border-bottom:1px solid #e3d2b9;display:flex;gap:24px;justify-content:space-between;align-items:center}.milano-corporate-header strong{font-size:22px}.milano-corporate-main{padding:12px 20px 32px}.milano-corporate-footer{max-width:900px;padding:20px;margin:auto;border-top:1px solid #e3d2b9;font-size:14px}.mc-milano .mc-intro{border-top:4px solid #a93428}.mc-milano .mc-poster{max-width:390px}.mc-milano .mc-result{background:#fff;padding:20px;border-radius:8px}.mc-milano button{min-height:48px}.mc-milano .mc-error{padding:12px;background:#fff0eb;border-radius:8px}@media(max-width:540px){.milano-corporate-header{align-items:flex-start;flex-direction:column;gap:6px}.mc-milano button{width:100%}.mc-milano .mc-grid{grid-template-columns:minmax(0,1fr)}}</style></head><body>
+        <style>.ms-global-footer{display:none!important}html,body{margin:0;background:#fffdf8;color:#29221c;font-family:system-ui,-apple-system,sans-serif}body{line-height:1.55}a{color:#8e291e}.milano-corporate-header{padding:20px max(20px,calc((100% - 900px)/2));border-bottom:1px solid #e3d2b9;display:flex;gap:24px;justify-content:space-between;align-items:center}.milano-corporate-header strong{font-size:22px}.milano-corporate-main{padding:12px 20px 32px}.milano-corporate-footer{max-width:900px;padding:20px;margin:auto;border-top:1px solid #e3d2b9;font-size:14px}.mc-milano .mc-intro{border-top:4px solid #a93428}.mc-milano .mc-poster{max-width:390px}.mc-milano .mc-result{background:#fff;padding:20px;border-radius:8px}.mc-milano button{min-height:48px}.mc-milano .mc-error{padding:12px;background:#fff0eb;border-radius:8px}@media(max-width:540px){.milano-corporate-header{align-items:flex-start;flex-direction:column;gap:6px}.mc-milano button{width:100%}.mc-milano .mc-grid{grid-template-columns:minmax(0,1fr)}}</style></head><body>
         <header class="milano-corporate-header"><a href="https://milanosirki.com/"><strong>Milano Sirki</strong></a><span>Kurumsal Kampanyalar</span></header>
         <main class="milano-corporate-main"><?php echo self::render(); ?></main>
-        <footer class="milano-corporate-footer">Ödemeler Dünya Organizasyon’un ortak altyapısında tamamlanır. Biletiniz Milano Sirki içindir.</footer>
+        <footer class="milano-corporate-footer">Ödemeler Dünya Organizasyon’un ortak altyapısında tamamlanır. Biletiniz Milano Sirki içindir. <a href="https://madagaskarsirki.com/gizlilik-ve-cerez-politikasi/">Gizlilik</a> · <a href="https://madagaskarsirki.com/iptal-iade-ve-bilet-teslimati/">İptal, iade ve bilet teslimatı</a></footer>
         <?php wp_footer(); ?></body></html><?php exit;
     }
     public static function render() {
