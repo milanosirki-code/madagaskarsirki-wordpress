@@ -43,3 +43,6 @@
 - Kritik PDF/QR ve kalan kabul kontrolleri tamamlanmadan satış açılmadı. Milano ödeme ayarları, callback ve müşteri sipariş/biletlerine yazılmadı.
 
 Gerçek para çekilmedi, sahte başarılı ödeme bildirimi gönderilmedi. Bu rapor uçtan uca bilet üretimi başarısı olarak yorumlanmamalıdır.
+
+## SEO önizleme doğrulaması
+Torbalı SEO başlığı/açıklaması ve og:image mevcut afişle doğrulandı. JSON-LD Event + iki subEvent doğru 18.00/19.30 başlangıçları, 19.00/20.30 bitişleri, salon/adres/organizatörle üretiliyor. Taslak önizleme noindex. Aynı HTML’de genel siteye ait ikinci description ve Open Graph etiket grubu da görüldü; paylaşım önizlemesinin kesin doğruluğu için bu çakışma ve gerçek canlı URL ayrıca kontrol edilmeli. Genel SEO/ödeme ayarları değiştirilmedi.
