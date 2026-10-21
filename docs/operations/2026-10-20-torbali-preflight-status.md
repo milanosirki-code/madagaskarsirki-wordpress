@@ -1,48 +1,38 @@
-# Torbalı — 20 Ekim 2026 güncel kontrol sonucu
+# Torbalı — yayın ve satış kontrol kaydı
 
-**Durum: Taslak; satışa açılmadı.** Aşağıdaki kayıt önceki kontrol notunun son durumunu günceller.
+Güncelleme: 21 Ekim 2026. **Durum: Satışta.** Bu kayıt önceki taslak kontrol sonucunu günceller; önceki sürümler Git geçmişinde korunur.
 
-## Tamamlananlar
-- Kullanıcının WPVibe onayıyla yalnız Torbalı etkinlik içeriği güncellendi; seanslar ve hazır ürün bağlantıları korundu.
-- Başlık, Etiyopya ve Tanzanya ekibi tanıtımı, tarih/salon/adres, yaş/oturma/kapı/süre/hayvansız gösteri bilgileri ve resmî iletişim eklendi.
-- İzmir etkinliğinden uyarlanmış 15 SSS kaydedildi. İptal/iade cevaplarının kaynağı mevcut resmî satış koşullarıdır.
-- SEO başlığı/açıklaması ve sosyal paylaşım afişi kaydedildi. Mevcut afişin alternatif metni tamamlandı.
-- Afiş mevcut etkinlik ve iki seans ürününde bağlı; afiş dosyası özel operasyon arşivine eklendi.
-- Mevcut program/salon/seans/ürünler yeniden oluşturulmadı.
+## Yayın
+Mevcut Torbalı etkinliği sistemin kendi yayın servisiyle yayımlandı. İki seans satışta; WooCommerce ürünleri yayımlanmış ve satın alınabilir. Mevcut nesneler korundu, mükerrer program/etkinlik/bilet oluşturulmadı. MMC–MDG satış eşleştirmesi 4/4 tamamlandı; program durumu Satışta.
 
-## Fiyat ve kapasite
+Canlı etkinlik ve bilet seçimi: https://madagaskarsirki.com/etkinlik/uluslararasi-madagaskar-sirki-torbali-30-ekim-2026-30-ekim-2026/
+
+18.00 ve 19.30 seçimi aynı sayfada yapılır; ayrı seansa özel kalıcı bağlantı doğrulanmadı.
+
+## Fiyatlar ve kapasite
 |Seans|Çocuk 3–12|Yetişkin 13+|Aile 2+2|Kapasite|
 |---|---:|---:|---:|---:|
 |18.00|245 TL|490 TL|1.100 TL / 4 kişi|500 kişi|
 |19.30|245 TL|490 TL|1.100 TL / 4 kişi|500 kişi|
 
-0–2 yaş ücretsiz. Son kontrolde iki seansta da satılan ve rezerve edilen kişi sayısı sıfır.
+30 Ekim 2026 Cuma, Torbalı Spor Salonu. 0–2 yaş ücretsiz. Aile paketi 2 çocuk + 2 yetişkin satırıyla dört kişi olarak işlenir; 1.470 TL üzerinden 370 TL indirim uygulanır.
 
-## Test sonuçları
-|Kontrol|Sonuç|
-|---|---|
-|18.00 aile paketi seçimi|4 kişi, 1.100 TL|
-|18.00 sepet|2 çocuk + 2 yetişkin; 1.470 TL - 370 TL = 1.100 TL|
-|18.00 checkout|Doğru seans, 4 katılımcı alanı, PayTR seçeneği ve doğru toplam|
-|19.30 çocuk + yetişkin|2 kişi, 735 TL|
-|19.30 sepet/checkout|Doğru 19.30 ürünleri, 245+490 TL ve PayTR seçeneği|
-|Test sepeti temizliği|Torbalı test kalemleri kaldırıldı; boş sepet doğrulandı|
-|Native yayın hazırlığı|İçerik, salon/Maps/konum QR, ürün-varyasyon ve şablon bağlantısı için CANLI YAYINA HAZIR|
-|Tickera şablon bağlantısı|Mevcut Torbalı şablonu aktif ve ürünlere bağlı|
-|Native PDF örnek üretimi|Sample Event adlı örnek PDF sekmesi oluştu; güvenlik politikası içeriği açmayı engelledi|
-|PDF görsel kontrolü / gerçek giriş QR testi|Tamamlanmadı — başarılı sayılmadı|
-|PayTR tahsilat/bildirim testi|Yapılmadı; Sipariş Ver basılmadı|
-|Başarısız ödeme / iade sonrası kapasite|İşlemsel test yapılmadı; canlı ödeme/iade oluşturulmadı|
-|Mobil boyutta görsel test|Tamamlanmadı|
+## Tamamlanan kontroller
+- Native yayın hazırlık kontrolü başarılı; mevcut ürün, varyasyon, Tickera etkinliği ve PDF şablonu bağlantıları korundu.
+- Canlı 18.00 aile paketi: sepette 4 kişi / 1.100 TL; checkout doğru seans, dört katılımcı alanı ve PayTR seçeneği gösterdi.
+- Canlı 19.30 çocuk + yetişkin: sepette ve checkout'ta 735 TL, doğru seans ve PayTR seçeneği görüldü.
+- Sipariş Ver kullanılmadı; canlı müşteri siparişi, gerçek tahsilat veya sahte ödeme bildirimi oluşturulmadı. Test sepeti temizlendi; boş sepet doğrulandı.
+- Son kapasite kontrolü her seans 500; tutulan ve satılan kişi sıfır.
+- Anonim etkinlik, bilet-al ve şehirler sayfaları HTTP 200; Torbalı listelerde görünür, canlı etkinlik index/follow.
+- Milano bilet sayfası HTTP 200; marka ayrımı korunuyor. Ortak ödeme anahtarları, callback veya Milano siparişleri değiştirilmedi. Milano için tam checkout regresyonu yapılmadı.
+- Torbalı afişi etkinlik, paylaşım görseli ve ürünlere bağlı. İzmir'den uyarlanmış 15 SSS mevcut; iade cevapları resmî satış koşullarından alındı.
+- Etkinliğe özgü SEO başlığı/açıklaması, afiş OG görseli ve Event + iki subEvent yapılandırılmış verisi doğrulandı.
 
-## Açık işler
-- Gerçek Torbalı biletinde tarih/seans/salon/marka/fiyat alanlarının PDF çıktısını doğrulamak ve giriş QR/teslimat zincirini güvenli test ortamında doğrulamak.
-- Şablonda bağımsız fiyat alanı görülmedi; kullanılan custom ticket-type alanı ürün/varyasyon başlığını döndürüyor. Bilette ödenen fiyatın görünmesi henüz doğrulanmadı.
-- MMC satış eşleştirmesi hâlâ eksik. Kendi servisi taslak MDG kaydından canlı kimlik aktarımını güvenlik nedeniyle reddetti; zorlanmadı. Kontrollü yayın sonrasında native aktarım ve readback gerekir.
-- Yayın sonrası anonim satın alınabilirlik ve canlı seans bağlantıları kontrol edilmeli.
-- Kritik PDF/QR ve kalan kabul kontrolleri tamamlanmadan satış açılmadı. Milano ödeme ayarları, callback ve müşteri sipariş/biletlerine yazılmadı.
+## Test edilmemiş veya açık kalanlar
+- PayTR gateway aktif ve native sağlık durumu prepared. Başarılı ödeme/callback doğrulaması yapılmadı; verified ödeme iddiası yok.
+- Gerçek Torbalı PDF çıktısı, QR tarama/doğrulama ve müşteriye teslim zinciri uçtan uca doğrulanmadı. Native örnek PDF sekmesi oluştu fakat çıktı incelenemedi. Şablonda bağımsız fiyat alanı doğrulanmadı.
+- Başarısız ödeme, iptal ve iade sonrası kapasite davranışı işlemsel olarak test edilmedi.
+- Mobil ekran boyutunda görsel kontrol tamamlanmadı.
+- Genel site SEO katmanı aynı HTML'de ek description/OG etiketleri üretiyor; bu genel ayarlar değiştirilmedi.
 
-Gerçek para çekilmedi, sahte başarılı ödeme bildirimi gönderilmedi. Bu rapor uçtan uca bilet üretimi başarısı olarak yorumlanmamalıdır.
-
-## SEO önizleme doğrulaması
-Torbalı SEO başlığı/açıklaması ve og:image mevcut afişle doğrulandı. JSON-LD Event + iki subEvent doğru 18.00/19.30 başlangıçları, 19.00/20.30 bitişleri, salon/adres/organizatörle üretiliyor. Taslak önizleme noindex. Aynı HTML’de genel siteye ait ikinci description ve Open Graph etiket grubu da görüldü; paylaşım önizlemesinin kesin doğruluğu için bu çakışma ve gerçek canlı URL ayrıca kontrol edilmeli. Genel SEO/ödeme ayarları değiştirilmedi.
+Yayın, bu eksikler kullanıcıya bildirildikten sonra verilen “Devam et satışa aç” talimatıyla gerçekleştirildi. Bu kayıt tüm uçtan uca testlerin başarılı olduğu anlamına gelmez.
