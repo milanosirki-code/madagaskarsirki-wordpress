@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: USKD Madagaskar Etkinlik Akışı
- * Description: Madagaskar Sirki'nin yayındaki şehirler sayfasından şehir, tarih, salon ve seans bilgilerini güvenli biçimde gösterir. Fiyat bilgisi göstermez.
- * Version: 0.2.0
+ * Plugin Name: USKD Madagaskar ve Milano Etkinlik Akışı
+ * Description: Madagaskar ve Milano programlarını marka, şehir, tarih, salon ve seans bilgileriyle birleştirir. Fiyat bilgisi göstermez.
+ * Version: 0.3.0
  * Author: USKD
  */
 
@@ -10,12 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'USKD_MDG_EVENTS_VERSION', '0.2.0' );
+define( 'USKD_MDG_EVENTS_VERSION', '0.3.0' );
 define( 'USKD_MDG_EVENTS_SOURCE', 'https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content' );
 define( 'USKD_MDG_EVENTS_CACHE_KEY', 'uskd_mdg_events_source_v1' );
 define( 'USKD_MDG_EVENTS_CACHE_TTL', 5 * MINUTE_IN_SECONDS );
 
+require_once __DIR__ . '/dual-events.php';
+
 add_shortcode( 'uskd_madagaskar_events', 'uskd_mdg_events_shortcode' );
+add_shortcode( 'uskd_events', 'uskd_mdg_events_shortcode' );
 
 /**
  * Fetch the public Madagaskar cities page through WordPress REST.
@@ -191,14 +194,9 @@ function uskd_mdg_events_shortcode( $atts = array() ) {
 	);
 
 	$limit = absint( $atts['limit'] );
-	$html = uskd_mdg_events_source_html();
-
-	if ( is_wp_error( $html ) ) {
-		return uskd_mdg_events_fallback();
-	}
-
-	$events = uskd_mdg_events_parse( $html );
-	if ( is_wp_error( $events ) ) {
+	$calendar = uskd_events_collect();
+	$events = $calendar['events'];
+	if ( empty( $events ) && count( $calendar['failed'] ) === 2 ) {
 		return uskd_mdg_events_fallback();
 	}
 
@@ -215,6 +213,7 @@ function uskd_mdg_events_shortcode( $atts = array() ) {
 			.uskd-mdg-events__note{margin:0 0 20px;color:#6b6b6b;font-size:15px}
 			.uskd-mdg-events__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 			.uskd-mdg-events__card{background:#fff;border:1px solid #e2e2e2;border-radius:16px;padding:22px;box-shadow:0 7px 22px rgba(0,0,0,.045)}
+			.uskd-mdg-events__brand{display:inline-block;background:#f5f0e5;color:#5c4216;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:800;margin-bottom:14px}
 			.uskd-mdg-events__city{color:#8b0e1a;font-size:13px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;margin-bottom:14px}
 			.uskd-mdg-events__date{font-size:30px;line-height:1.08;font-weight:900;margin-bottom:14px}
 			.uskd-mdg-events__venue{font-size:15px;line-height:1.45;color:#5f5f5f;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #ececec}
@@ -224,10 +223,15 @@ function uskd_mdg_events_shortcode( $atts = array() ) {
 			@media(max-width:900px){.uskd-mdg-events__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 			@media(max-width:640px){.uskd-mdg-events__grid{grid-template-columns:1fr;gap:13px}.uskd-mdg-events__card{padding:18px}.uskd-mdg-events__date{font-size:27px}}
 		</style>
-		<p class="uskd-mdg-events__note">Program Madagaskar Sirki’nin güncel şehirler sayfasından otomatik alınır.</p>
+		<p class="uskd-mdg-events__note">Madagaskar Sirki ve Milano Sirki programları otomatik güncellenir.</p>
+		<?php foreach ( $calendar['failed'] as $brand ) : ?>
+			<p class="uskd-events-warning" role="status"><?php echo esc_html( $brand . ' programı şu anda yüklenemedi. Diğer mevcut etkinlikler aşağıda gösterilir.' ); ?></p>
+		<?php endforeach; ?>
+		<?php if ( empty( $events ) ) : ?><p>Şu anda yaklaşan etkinlik bulunmuyor.</p><?php endif; ?>
 		<div class="uskd-mdg-events__grid">
 			<?php foreach ( $events as $event ) : ?>
 				<article class="uskd-mdg-events__card">
+					<div class="uskd-mdg-events__brand"><?php echo esc_html( $event['brand'] ); ?></div>
 					<div class="uskd-mdg-events__city"><?php echo esc_html( $event['city'] ); ?></div>
 					<div class="uskd-mdg-events__date"><?php echo esc_html( $event['date'] ); ?></div>
 					<div class="uskd-mdg-events__venue"><?php echo esc_html( $event['venue'] ); ?></div>
@@ -253,5 +257,6 @@ function uskd_mdg_events_shortcode( $atts = array() ) {
 function uskd_mdg_events_fallback() {
 	return '<div class="uskd-mdg-events-fallback">Güncel etkinlik listesi şu anda yüklenemedi. <a href="' .
 		esc_url( 'https://madagaskarsirki.com/sehirler/' ) .
-		'" target="_blank" rel="noopener">Madagaskar Sirki Şehirler</a> sayfasını açabilirsiniz.</div>';
+		'" target="_blank" rel="noopener">Madagaskar Sirki</a> veya <a href="https://milanosirki.com/bilet-al/" target="_blank" rel="noopener">Milano Sirki</a> programını açabilirsiniz.</div>';
 }
+

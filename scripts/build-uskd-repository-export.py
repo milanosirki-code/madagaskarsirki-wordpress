@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 FILES = {
+    "integrations/uskd/uskd-madagaskar-events/dual-events.php": "wp-content/plugins/uskd-madagaskar-events/dual-events.php",
     "integrations/uskd/AGENTS.md": "AGENTS.md",
     "integrations/uskd/README.md": "README.md",
     "integrations/uskd/homepage-378-dynamic-events-ready.html": "backups/homepage-378-dynamic-events-ready.html",
