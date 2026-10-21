@@ -2,7 +2,7 @@
   "schema_version": 1,
   "integration": "uskd-madagaskar-events",
   "source_path": "integrations/uskd/uskd-madagaskar-events",
-  "plugin_version": "0.2.0",
+  "plugin_version": "0.3.0",
   "live_page": {
     "site": "https://uskdernegi.org",
     "page_id": 392,
@@ -16,6 +16,7 @@
   },
   "display_contract": {
     "include": [
+      "brand",
       "city",
       "date",
       "venue",
@@ -54,8 +55,8 @@
       "shortcode_present": true
     },
     "live_plugin_version": "0.1.0",
-    "target_plugin_version": "0.2.0",
-    "upgrade_status": "pending_manual_upload",
+    "target_plugin_version": "0.3.0",
+    "upgrade_status": "prepared_not_deployed",
     "homepage_shortcode": "[uskd_madagaskar_events limit=\"2\"]",
     "homepage_behavior_current": "v0.1.0 renders all events server-side; homepage CSS displays first two.",
     "homepage_behavior_after_upgrade": "v0.2.0 renders only first two events server-side on homepage.",
@@ -66,6 +67,20 @@
     "homepage": "[uskd_madagaskar_events limit=\"2\"]"
   },
   "notes": [
-    "v0.2.0 adds server-side limit support for homepage use."
+    "v0.2.0 adds server-side limit support for homepage use.",
+    "v0.3.0 combines public Madagaskar and Milano calendars, excludes past sessions in Europe/Istanbul and sorts before limit."
+  ],
+  "sources": [
+    {
+      "site": "https://madagaskarsirki.com",
+      "page_id": 1311,
+      "endpoint": "https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content"
+    },
+    {
+      "brand": "Milano Sirki",
+      "site": "https://milanosirki.com",
+      "endpoint": "https://madagaskarsirki.com/wp-json/milano-handoff/v1/catalog",
+      "note": "The same central public catalog consumed by Milano frontend."
+    }
   ]
 }
