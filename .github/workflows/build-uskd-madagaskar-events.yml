@@ -7,6 +7,7 @@ on:
       - 'integrations/uskd/uskd-madagaskar-events/**'
       - 'integrations/uskd/deployment-manifest.json'
       - 'tests/validate-uskd-madagaskar-events.py'
+      - 'tests/uskd-dual-events-test.php'
       - '.github/workflows/build-uskd-madagaskar-events.yml'
   push:
     branches:
@@ -15,6 +16,7 @@ on:
       - 'integrations/uskd/uskd-madagaskar-events/**'
       - 'integrations/uskd/deployment-manifest.json'
       - 'tests/validate-uskd-madagaskar-events.py'
+      - 'tests/uskd-dual-events-test.php'
       - '.github/workflows/build-uskd-madagaskar-events.yml'
 
 permissions:
@@ -43,6 +45,9 @@ jobs:
       - name: Validate deployment contract
         run: python tests/validate-uskd-madagaskar-events.py
 
+      - name: Test dual brand calendar behavior
+        run: php tests/uskd-dual-events-test.php
+
       - name: Build ZIP and checksum
         shell: bash
         run: |
@@ -65,3 +70,4 @@ jobs:
             build/uskd-madagaskar-events.zip.sha256
           if-no-files-found: error
           retention-days: 30
+
