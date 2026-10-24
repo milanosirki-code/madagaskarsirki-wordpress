@@ -1,0 +1,22 @@
+.ms-session-card-list{display:flex!important;flex-wrap:wrap;gap:10px!important}
+.ms-session-card-list .ms-session-time-card{display:inline-flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:110px;min-height:84px;padding:12px 15px!important;background:#eaf2ff!important;border:2px solid #1e4b8f!important;border-radius:12px!important;color:#12366a!important;text-decoration:none!important;line-height:1.35}
+.ms-session-card-list .ms-session-time-card strong{color:inherit!important;font-size:26px!important;font-weight:850!important}
+.ms-session-card-list .ms-session-time-card small{color:inherit!important;font-size:12px!important;font-weight:750!important;max-width:150px;text-align:center}
+.ms-session-card-list .ms-session-time-card[data-state="started"]{background:#fff0d5!important;color:#763400!important;border-color:#ad4b00!important}
+.ms-session-card-list .ms-session-time-card:is([data-state="ended"],[data-state="closed"]){background:#f0f0f0!important;color:#545454!important;border-color:#aaa!important}
+.ms-session-card-list a.ms-session-time-card:hover{background:#12366a!important;color:white!important}
+.ms-session-time-card:focus-visible{outline:3px solid #b51e36;outline-offset:4px}
+.ms-session-help{font-size:14px!important;font-weight:750!important;color:#17243a!important;margin:8px 0 12px!important}
+.mdg-ticket-event-card .ms-session-help{color:#f4f1e8!important}
+.mdg-session-picker{display:flex!important;flex-wrap:wrap!important;gap:12px!important}
+.mdg-session-picker .mdg-session-option{min-width:120px!important;min-height:98px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#eaf2ff!important;color:#12366a!important;border:2px solid #1e4b8f!important;border-radius:12px!important;padding:14px 18px!important}
+.mdg-session-picker .mdg-session-option strong{font-size:28px!important;font-weight:850!important;color:inherit!important}
+.mdg-session-picker .mdg-session-option small{font-size:12px!important;font-weight:750!important;color:inherit!important}
+.mdg-session-picker .mdg-session-option.is-selected{background:#12366a!important;color:#fff!important;outline:3px solid #b51e36;outline-offset:3px}
+.mdg-session-picker .mdg-session-option[data-state="started"]{background:#fff0d5!important;color:#763400!important;border-color:#ad4b00!important}
+.mdg-session-picker .mdg-session-option:is([data-state="closed"],[data-state="ended"]){background:#f0f0f0!important;color:#545454!important;border-color:#aaa!important}
+.mdg-session-picker .mdg-session-option:disabled{opacity:1!important;cursor:not-allowed}
+.ms-selected-session-note{padding:12px 16px;background:#b51e36;color:#fff!important;font-size:16px;font-weight:800;border-radius:9px;margin:12px 0 18px!important}
+#bilet-secimi{scroll-margin-top:45px}
+#bilet-secimi.ms-requested-session{border:3px solid #b51e36!important}
+@media(max-width:480px){.ms-session-card-list .ms-session-time-card{flex:1 1 85px;min-width:85px;padding:10px 8px!important}.mdg-session-picker .mdg-session-option{flex:1 1 90px;min-width:90px!important;padding:12px 8px!important}}
