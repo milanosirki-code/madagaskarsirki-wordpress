@@ -8,6 +8,15 @@
 .ms-session-time-card:focus-visible{outline:3px solid #b51e36;outline-offset:4px}
 .ms-session-help{font-size:14px!important;font-weight:750!important;color:#17243a!important;margin:8px 0 12px!important}
 .mdg-ticket-event-card .ms-session-help{color:#f4f1e8!important}
+.ms-venue-card{margin:16px 0!important;padding:16px!important;background:#f5f7fc!important;border:1px solid #c7d7ef!important;border-radius:12px!important;color:#17243a!important;line-height:1.6!important}
+.ms-venue-card>small{display:block;font-size:11px!important;font-weight:800!important;letter-spacing:.08em;color:#425574!important;margin:0 0 5px!important}
+.ms-venue-card>strong{display:block;color:#17243a!important;font-size:16px!important;font-weight:800!important;line-height:1.45!important}
+.ms-venue-card>p{margin:6px 0 12px!important;color:#425574!important;font-size:13px!important;line-height:1.6!important}
+.ms-venue-links{display:flex;flex-wrap:wrap;gap:8px}
+.ms-venue-links a{display:flex!important;align-items:center;justify-content:center;flex:1 1 130px;min-height:46px;padding:10px 12px!important;border:2px solid #12366a!important;border-radius:9px!important;background:white!important;color:#12366a!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;text-align:center;line-height:1.4!important}
+.ms-venue-links a+a{background:#12366a!important;color:white!important}
+.ms-venue-links a:hover{background:#b51e36!important;color:white!important;border-color:#b51e36!important}
+.ms-venue-links a:focus-visible{outline:3px solid #b51e36;outline-offset:3px}
 .mdg-session-picker{display:flex!important;flex-wrap:wrap!important;gap:12px!important}
 .mdg-session-picker .mdg-session-option{min-width:120px!important;min-height:98px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#eaf2ff!important;color:#12366a!important;border:2px solid #1e4b8f!important;border-radius:12px!important;padding:14px 18px!important}
 .mdg-session-picker .mdg-session-option strong{font-size:28px!important;font-weight:850!important;color:inherit!important}

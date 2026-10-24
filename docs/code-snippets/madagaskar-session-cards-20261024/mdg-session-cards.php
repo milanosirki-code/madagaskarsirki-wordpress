@@ -28,7 +28,7 @@ if ( ! class_exists( 'MDG_Session_Cards_20261024' ) ) {
                     list( $date, $time ) = MDG_Sessions::local_parts( $session->start_at );
                     $sessions[] = array( 'id'=>(int)$session->id, 'time'=>$time, 'start'=>$start->format( DATE_ATOM ), 'end'=>$end->format( DATE_ATOM ), 'closed'=>MDG_Sessions::sales_closed_by_time( $session ) || ( isset( $session->status ) && 'onsale' !== $session->status ) );
                 }
-                $manifest[$id] = array( 'id'=>$id, 'title'=>(string)$event->title, 'url'=>$url, 'sessions'=>$sessions );
+                $manifest[$id] = array( 'id'=>$id, 'title'=>(string)$event->title, 'url'=>$url, 'sessions'=>$sessions, 'venueName'=>(string)$event->venue_name, 'venueAddress'=>(string)$event->venue_address, 'venueMap'=>esc_url_raw( (string)$event->venue_maps_url, array('https') ) );
             }
             $data = array( 'serverNow'=>time()*1000, 'events'=>array_values( $manifest ) );
             ?>
@@ -43,6 +43,15 @@ if ( ! class_exists( 'MDG_Session_Cards_20261024' ) ) {
 .ms-session-time-card:focus-visible{outline:3px solid #b51e36;outline-offset:4px}
 .ms-session-help{font-size:14px!important;font-weight:750!important;color:#17243a!important;margin:8px 0 12px!important}
 .mdg-ticket-event-card .ms-session-help{color:#f4f1e8!important}
+.ms-venue-card{margin:16px 0!important;padding:16px!important;background:#f5f7fc!important;border:1px solid #c7d7ef!important;border-radius:12px!important;color:#17243a!important;line-height:1.6!important}
+.ms-venue-card>small{display:block;font-size:11px!important;font-weight:800!important;letter-spacing:.08em;color:#425574!important;margin:0 0 5px!important}
+.ms-venue-card>strong{display:block;color:#17243a!important;font-size:16px!important;font-weight:800!important;line-height:1.45!important}
+.ms-venue-card>p{margin:6px 0 12px!important;color:#425574!important;font-size:13px!important;line-height:1.6!important}
+.ms-venue-links{display:flex;flex-wrap:wrap;gap:8px}
+.ms-venue-links a{display:flex!important;align-items:center;justify-content:center;flex:1 1 130px;min-height:46px;padding:10px 12px!important;border:2px solid #12366a!important;border-radius:9px!important;background:white!important;color:#12366a!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;text-align:center;line-height:1.4!important}
+.ms-venue-links a+a{background:#12366a!important;color:white!important}
+.ms-venue-links a:hover{background:#b51e36!important;color:white!important;border-color:#b51e36!important}
+.ms-venue-links a:focus-visible{outline:3px solid #b51e36;outline-offset:3px}
 .mdg-session-picker{display:flex!important;flex-wrap:wrap!important;gap:12px!important}
 .mdg-session-picker .mdg-session-option{min-width:120px!important;min-height:98px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#eaf2ff!important;color:#12366a!important;border:2px solid #1e4b8f!important;border-radius:12px!important;padding:14px 18px!important}
 .mdg-session-picker .mdg-session-option strong{font-size:28px!important;font-weight:850!important;color:inherit!important}
@@ -70,12 +79,32 @@ if ( ! class_exists( 'MDG_Session_Cards_20261024' ) ) {
   }
   function label(state){return state==='started'?'Seans başladı · Satış kapandı':state==='ended'?'Tamamlandı':state==='closed'?'Satış kapandı':'Bilet seç →';}
   function eventFor(url){try{var u=new URL(url,location.origin);if(u.origin!==location.origin)return null;return data.events.find(function(e){return new URL(e.url).pathname===u.pathname;})||null;}catch(e){return null;}}
+  function venueLinks(event){
+    var query=[event.venueName,event.venueAddress].filter(Boolean).join(', ');
+    if(!query)return null;
+    var map=new URL('https://www.google.com/maps/search/');map.searchParams.set('api','1');map.searchParams.set('query',query);
+    try{var saved=new URL(event.venueMap);if(saved.protocol==='https:' && (saved.hostname==='maps.app.goo.gl' || saved.hostname==='maps.google.com' || ((saved.hostname==='www.google.com'||saved.hostname==='google.com') && saved.pathname.indexOf('/maps')===0)))map=saved;}catch(e){}
+    var route=new URL('https://www.google.com/maps/dir/');route.searchParams.set('api','1');route.searchParams.set('destination',query);
+    return {map:map.href,route:route.href};
+  }
+  function addVenueCard(card,container,event){
+    if(card.querySelector('.ms-venue-card'))return;
+    var urls=venueLinks(event);if(!urls)return;
+    var box=document.createElement('section');box.className='ms-venue-card';box.setAttribute('aria-label','Salon ve Ulaşım — '+event.venueName);
+    var kicker=document.createElement('small');kicker.textContent='SALON VE ULAŞIM';
+    var name=document.createElement('strong');name.textContent=event.venueName;
+    var address=document.createElement('p');address.textContent=event.venueAddress||'';
+    var links=document.createElement('div');links.className='ms-venue-links';
+    [['Salon Haritasını Aç ↗',urls.map],['Yol Tarifi Al ↗',urls.route]].forEach(function(item){var a=document.createElement('a');a.textContent=item[0];a.href=item[1];a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label',event.venueName+' — '+item[0]);links.append(a);});
+    box.append(kicker,name,address,links);container.after(box);
+  }
   function buildCards(){
     document.querySelectorAll('.msh-event,.mdg-ticket-event-card').forEach(function(card){
       var source=card.querySelector('a[href*="/etkinlik/"]');
       var container=card.querySelector('.msh-sessions,.mdg-ticket-event-card__sessions');
       if(!source||!container)return;
       var event=eventFor(source.href);if(!event)return;
+      addVenueCard(card,container,event);
       var states=event.sessions.map(function(s){return sessionState(s,now());});
       var signature=event.id+':'+states.join(',');if(container.dataset.msSessionSignature===signature)return;
       container.dataset.msSessionSignature=signature;container.classList.add('ms-session-card-list');container.replaceChildren();
