@@ -42,6 +42,7 @@ if ( ! class_exists( 'MDG_Session_Cards_20261024' ) ) {
 .ms-session-card-list a.ms-session-time-card:hover{background:#12366a!important;color:white!important}
 .ms-session-time-card:focus-visible{outline:3px solid #b51e36;outline-offset:4px}
 .ms-session-help{font-size:14px!important;font-weight:750!important;color:#17243a!important;margin:8px 0 12px!important}
+.mdg-ticket-event-card .ms-session-help{color:#f4f1e8!important}
 .mdg-session-picker{display:flex!important;flex-wrap:wrap!important;gap:12px!important}
 .mdg-session-picker .mdg-session-option{min-width:120px!important;min-height:98px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#eaf2ff!important;color:#12366a!important;border:2px solid #1e4b8f!important;border-radius:12px!important;padding:14px 18px!important}
 .mdg-session-picker .mdg-session-option strong{font-size:28px!important;font-weight:850!important;color:inherit!important}
@@ -102,6 +103,7 @@ if ( ! class_exists( 'MDG_Session_Cards_20261024' ) ) {
       }
       button.dataset.msStart=s.start;button.dataset.msEnd=s.end;button.dataset.msClosed=s.closed?'1':'0';
       if(!button.querySelector('.ms-session-label')){var text=document.createElement('small');text.className='ms-session-label';button.append(text);}
+      picker.append(button);
     });
     function refreshEvent(){
       var selected=picker.querySelector('.mdg-session-option.is-selected');

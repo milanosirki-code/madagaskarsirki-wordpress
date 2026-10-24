@@ -45,6 +45,7 @@
       }
       button.dataset.msStart=s.start;button.dataset.msEnd=s.end;button.dataset.msClosed=s.closed?'1':'0';
       if(!button.querySelector('.ms-session-label')){var text=document.createElement('small');text.className='ms-session-label';button.append(text);}
+      picker.append(button);
     });
     function refreshEvent(){
       var selected=picker.querySelector('.mdg-session-option.is-selected');
