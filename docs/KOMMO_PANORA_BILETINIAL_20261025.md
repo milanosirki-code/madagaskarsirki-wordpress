@@ -10,4 +10,4 @@ Kanıt: kullanıcı afişi; sağlanan Biletinial sayfasında Panora 29 Ekim 13/1
 
 Önizleme kabul testi: “29 Ekim Panora gösterisinde çocuk ve yetişkin biletleri kaç TL? Aile paketi var mı, nereden alabilirim? Seansları nedir?” Yanıt: çocuk/yetişkin ayrımı yok, kişi başı 750 TL + Biletinial hizmet bedeli, aile paketi/çocuk indirimi yok, 13/15/17 ve doğru Biletinial URL'si. Başarılı.
 
-İzmir'e fiyat sızması kontrolü ayrıca başlatıldı; sonucu ek notla kaydedilecek. Canlı müşteriye mesaj gönderilmedi; sipariş, satış, ödeme veya bot akışları değiştirilmedi. Kaynak Kommo UI'den düzenlenerek geri alınabilir. Bu dosya yalnız operasyon kaydıdır; PHP deploy içermez.
+İzmir regresyon testi de başarılı: “İzmir 8 Kasım gösterisinde de çocuk ve yetişkin kişi başı 750 TL mi?” sorusuna Kommo hayır dedi; kendi site fiyatlarını çocuk 290 TL, yetişkin 585 TL, aile 1.300 TL ve madagaskarsirki.com/bilet-al/ bağlantısıyla verdi. Panora'nın 750 TL kuralı diğer programa uygulanmadı. Canlı müşteriye mesaj gönderilmedi; sipariş, satış, ödeme veya bot akışları değiştirilmedi. Kaynak Kommo UI'den düzenlenerek geri alınabilir. Bu dosya yalnız operasyon kaydıdır; PHP deploy içermez.
