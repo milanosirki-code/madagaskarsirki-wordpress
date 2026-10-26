@@ -216,6 +216,7 @@ if ( ! function_exists( 'mdg_ai_v5_web_summary' ) ) {
             $gross += (float) $row->gross;
             $tickets += (int) $row->tickets;
         }
+        if (class_exists('MDG_V5_Finance') && is_callable(array('MDG_V5_Finance','web_revenues_for_events'))) $gross=array_sum(MDG_V5_Finance::web_revenues_for_events($event_ids));
         return array(
             'gross'       => round( $gross, 2 ),
             'net'         => round( $gross, 2 ),
@@ -268,10 +269,7 @@ if ( ! function_exists( 'mdg_ai_v5_operating_expense_summary' ) ) {
         $total = 0.0;
         $refunds = 0.0;
         foreach ( $rows as $row ) {
-            $is_refund = 'program' === (string) $row->scope && (
-                'İade / WooCommerce' === trim( (string) $row->category ) ||
-                ( 15 === (int) $row->event_id && 'İade / Biletinial' === trim( (string) $row->category ) )
-            );
+            $is_refund = class_exists('MDG_V5_Finance') && is_callable(array('MDG_V5_Finance','is_ticket_refund')) && MDG_V5_Finance::is_ticket_refund($row);
             if ( $is_refund ) {
                 $refunds += (float) $row->amount;
                 continue;
@@ -287,6 +285,8 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
     function mdg_ai_v5_finance_summary( $input = array() ) {
         global $wpdb;
 
+        $event_id=absint($input['event_id']??0);
+        if($event_id){unset($input['month']);$input['scope']='program';}
         $manual = mdg_ai_v5_manual_income_summary( $input );
         $web = mdg_ai_v5_web_summary( $input );
         $expense_summary = mdg_ai_v5_operating_expense_summary( $input );
@@ -303,8 +303,16 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
         $income_count = (int) $manual['count'] + (int) $web['event_count'];
         $expenses = (float) $expense_summary['total'];
         $fixed = (float) $fixed_row->total;
+        $common=0.0;
+        if($event_id&&class_exists('MDG_V5_Finance')){
+            $shares=MDG_V5_Finance::cost_shares($event_id);
+            $fixed=$shares['fixed_share'];$common=$shares['common'];
+            $fixed_row->c=$shares['fixed_count'];
+        }
+
 
         return array(
+            'basis'=>$event_id?'program_lifetime':'record_month',
             'filters'=>array(
                 'month'=>sanitize_text_field($input['month']??''),
                 'event_id'=>absint($input['event_id']??0),
@@ -324,11 +332,12 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
             'expenses'=>array(
                 'count'=>(int)$expense_summary['count'],
                 'total'=>$expenses,
+                'shared_allocated'=>round($common,2),
                 'ticket_refund_cash'=>(float)$expense_summary['refund_cash']
             ),
-            'fixed_costs'=>array('count'=>(int)$fixed_row->c,'total'=>$fixed),
-            'total_cost'=>round($expenses+$fixed,2),
-            'profit'=>round($income_net-$expenses-$fixed,2)
+            'fixed_costs'=>array('count'=>(int)$fixed_row->c,'total'=>round($fixed,2)),
+            'total_cost'=>round($expenses+$common+$fixed,2),
+            'profit'=>round($income_net-$expenses-$common-$fixed,2)
         );
     }
 }
@@ -344,6 +353,11 @@ if ( ! function_exists( 'mdg_ai_v5_expense_create' ) ) {
         if(!in_array($scope,array('program','province','general','person','vehicle'),true))$scope='program';
         if($amount<=0||!mdg_ai_v5_date_ok($date)||!$category||('program'===$scope&&!$event)){
             return new WP_Error('mdg_ai_finance_required','Gider için tutar, tarih, kategori ve program kapsamındaysa event_id zorunludur.');
+        }
+        if ($scope==='program' &&
+            (!class_exists('MDG_V5_Finance_Identity') ||
+             !MDG_V5_Finance_Identity::valid($event.'|'.($input['event_uuid']??'')))) {
+            return new WP_Error('mdg_ai_finance_identity','MDG etkinlik kimliği ve event_uuid birlikte doğrulanmalıdır; MMC program_id kullanılamaz.');
         }
         $now=current_time('mysql');
         $ok=$wpdb->insert(mdg_ai_v5_finance_table('expenses'),array(
@@ -380,6 +394,11 @@ if ( ! function_exists( 'mdg_ai_v5_income_create' ) ) {
         if($ref){
             $dup=(int)$wpdb->get_var($wpdb->prepare('SELECT id FROM '.mdg_ai_v5_finance_table('incomes').' WHERE source_ref=%s AND channel=%s LIMIT 1',$ref,$channel));
             if($dup)return new WP_Error('mdg_ai_finance_duplicate','Aynı source_ref ve kanal ile gelir kaydı zaten var. Kayıt ID: '.$dup);
+        }
+        if ($scope==='program' &&
+            (!class_exists('MDG_V5_Finance_Identity') ||
+             !MDG_V5_Finance_Identity::valid($event.'|'.($input['event_uuid']??'')))) {
+            return new WP_Error('mdg_ai_finance_identity','MDG etkinlik kimliği ve event_uuid birlikte doğrulanmalıdır; MMC program_id kullanılamaz.');
         }
         $commission=min($gross,$commission); $now=current_time('mysql');
         $ok=$wpdb->insert(mdg_ai_v5_finance_table('incomes'),array(
@@ -429,6 +448,11 @@ if ( ! function_exists( 'mdg_ai_v5_attendance_set' ) ) {
         global $wpdb;
         $event=absint($input['event_id']??0);
         $avg=(float)($input['avg_ticket_price']??0);
+        if (($input['scope']??'program')==='program' &&
+            (!class_exists('MDG_V5_Finance_Identity') ||
+             !MDG_V5_Finance_Identity::valid($event.'|'.($input['event_uuid']??'')))) {
+            return new WP_Error('mdg_ai_finance_identity','MDG etkinlik kimliği ve event_uuid birlikte doğrulanmalıdır; MMC program_id kullanılamaz.');
+        }
         if(!$event||$avg<=0)return new WP_Error('mdg_ai_finance_required','Katılım kaydı için event_id ve ortalama bilet fiyatı zorunludur.');
         $data=array(
             'event_id'=>$event,'avg_ticket_price'=>$avg,'manual_attendance'=>absint($input['manual_attendance']??0),
@@ -511,7 +535,7 @@ add_action('wp_abilities_api_init',function(){
   'category'=>'madagaskar-finans-v5',
   'input_schema'=>array('type'=>'object','properties'=>array(
    'scope'=>array('type'=>'string','enum'=>array('program','province','general','person','vehicle')),
-   'event_id'=>array('type'=>'integer','minimum'=>1),'province'=>array('type'=>'string'),'related_name'=>array('type'=>'string'),
+   'event_id'=>array('type'=>'integer','minimum'=>1),'event_uuid'=>array('type'=>'string','description'=>'Program kapsamı için zorunlu MDG public_uuid; MMC kimliği değildir.'),'province'=>array('type'=>'string'),'related_name'=>array('type'=>'string'),
    'category'=>array('type'=>'string'),'description'=>array('type'=>'string'),'vendor'=>array('type'=>'string'),
    'amount'=>array('type'=>'number','exclusiveMinimum'=>0),'expense_date'=>array('type'=>'string','pattern'=>'^\d{4}-\d{2}-\d{2}$'),
    'payment_method'=>array('type'=>'string'),'document_no'=>array('type'=>'string'),'notes'=>array('type'=>'string')
@@ -523,7 +547,7 @@ add_action('wp_abilities_api_init',function(){
   'category'=>'madagaskar-finans-v5',
   'input_schema'=>array('type'=>'object','properties'=>array(
    'scope'=>array('type'=>'string','enum'=>array('program','province','general','person','vehicle')),
-   'event_id'=>array('type'=>'integer','minimum'=>1),'province'=>array('type'=>'string'),'category'=>array('type'=>'string'),
+   'event_id'=>array('type'=>'integer','minimum'=>1),'event_uuid'=>array('type'=>'string','description'=>'Program kapsamı için zorunlu MDG public_uuid; MMC kimliği değildir.'),'province'=>array('type'=>'string'),'category'=>array('type'=>'string'),
    'channel'=>array('type'=>'string'),'description'=>array('type'=>'string'),'gross_amount'=>array('type'=>'number','exclusiveMinimum'=>0),
    'commission_amount'=>array('type'=>'number','minimum'=>0),'ticket_count'=>array('type'=>'integer','minimum'=>0),
    'income_date'=>array('type'=>'string','pattern'=>'^\d{4}-\d{2}-\d{2}$'),'collection_status'=>array('type'=>'string'),
@@ -547,7 +571,7 @@ add_action('wp_abilities_api_init',function(){
   'label'=>'Etkinlik Katılımını Kaydet','description'=>'Etkinlik için ortalama bilet fiyatı, manuel katılım ve rapora dahil edilme durumunu kaydeder. Kritik ve idempotent yazma işlemidir.',
   'category'=>'madagaskar-finans-v5',
   'input_schema'=>array('type'=>'object','properties'=>array(
-   'event_id'=>array('type'=>'integer','minimum'=>1),'avg_ticket_price'=>array('type'=>'number','exclusiveMinimum'=>0),
+   'event_id'=>array('type'=>'integer','minimum'=>1),'event_uuid'=>array('type'=>'string','description'=>'MDG public_uuid; program kapsamında zorunlu.'),'avg_ticket_price'=>array('type'=>'number','exclusiveMinimum'=>0),
    'manual_attendance'=>array('type'=>'integer','minimum'=>0),'include_in_reports'=>array('type'=>'boolean'),'notes'=>array('type'=>'string')
   ),'required'=>array('event_id','avg_ticket_price')),
   'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_ai_v5_attendance_set','permission_callback'=>'mdg_ai_v5_finance_can_run','meta'=>$idemwrite
