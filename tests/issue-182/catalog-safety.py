@@ -5,7 +5,7 @@ legacy = (ROOT / "wp-content/plugins/madagaskar-legacy-redirects/madagaskar-lega
 v4 = (ROOT / "wp-content/plugins/madagaskar-bilet-yonetimi-v4/madagaskar-bilet-yonetimi-v4.php").read_text(encoding="utf-8")
 
 for needle in [
-    "Version: 1.0.2",
+    "Version: 1.0.3",
     "'/shop' => '/bilet-al/'",
     "'/urun/madagaskar-sirki-ankara-26-eylul-2026-1400-bileti' => '/bilet-al/'",
     "'/urun/madagaskar-sirki-ankara-26-eylul-2026-1600-bileti' => '/bilet-al/'",
