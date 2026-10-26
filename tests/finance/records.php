@@ -38,7 +38,7 @@ class TestFinanceDb {
  }
  function get_var($sql){$a=$this->args($sql);if(strpos($sql,'GET_LOCK')!==false)return $this->lock;if(strpos($sql,'RELEASE_LOCK')!==false){$this->released++;return 1;}
   if(strpos($sql,'SUM(amount)')!==false){$total=0;foreach($this->payments as $p)if($p['record_type']===$a[0]&&$p['record_id']===$a[1]&&$p['status']==='posted')$total+=$p['amount'];return $total;}
-  if(strpos($sql,'wp_mdg_events')!==false)return $a[0]===53?53:null;return 0;
+  if(strpos($sql,'wp_mdg_events')!==false)return $a[0]===53?'11111111-2222-4333-8444-555555555555':null;return 0;
  }
  function get_results($sql,$mode=null){return array();}
  function query($sql){if($this->readonly)throw new Exception('Read wrote SQL: '.$sql);if($sql==='START TRANSACTION')$this->snapshot=serialize(array($this->rows,$this->payments,$this->starts,$this->history));if($sql==='ROLLBACK')list($this->rows,$this->payments,$this->starts,$this->history)=unserialize($this->snapshot);return 1;}
@@ -66,7 +66,7 @@ check(submit('payment',array('amount'=>'30','payment_date'=>'2026-10-10','accoun
 check(submit('payment',array('amount'=>'50.01','payment_date'=>'2026-10-10','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Overpayment accepted');
 check(submit('payment',array('amount'=>'10','payment_date'=>'2026-02-30','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Invalid calendar date accepted');
 check(submit('payment',array('amount'=>'10','payment_date'=>'2026-10-11','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Future payment accepted');
-$edit=array('expected_hash'=>hash('sha256',json_encode($row)),'description'=>'Yeni','amount'=>'49','record_date'=>'2026-10-09','scope'=>'program','event_id'=>53);
+$edit=array('expected_hash'=>hash('sha256',json_encode($row)),'description'=>'Yeni','amount'=>'49','record_date'=>'2026-10-09','scope'=>'program','event_id'=>'53|11111111-2222-4333-8444-555555555555');
 check(submit('edit',$edit)!=='ok'&&$wpdb->rows[1]['amount']===100,'Edit below settlement accepted');
 $edit['amount']='110';$edit['expected_hash']='stale';check(submit('edit',$edit)!=='ok','Stale edit accepted');
 $edit['expected_hash']=hash('sha256',json_encode($row));$wpdb->fail_history=true;
