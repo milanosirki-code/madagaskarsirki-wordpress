@@ -41,6 +41,123 @@ if ( ! function_exists( 'mdg_ai_v5_month_ok' ) ) {
     }
 }
 
+/** Manual refund cash is an accounting disclosure, never a gateway refund request. */
+if ( ! function_exists( 'mdg_ai_v5_refund_cash_can_run' ) ) {
+    function mdg_ai_v5_refund_cash_can_run( $input = null ) {
+        if ( ! current_user_can('manage_options') || ! current_user_can('manage_woocommerce') ) {
+            return new WP_Error('mdg_refund_cash_forbidden','Yönetici ve WooCommerce yönetim yetkisi gerekir.');
+        }
+        return mdg_ai_v5_finance_can_run($input);
+    }
+}
+if ( ! function_exists( 'mdg_ai_v5_refund_cash_hash' ) ) {
+    function mdg_ai_v5_refund_cash_hash( $row ) {
+        $data=(array)$row; ksort($data);
+        return hash('sha256',wp_json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+    }
+}
+if ( ! function_exists( 'mdg_ai_v5_refund_cash_reconcile' ) ) {
+    function mdg_ai_v5_refund_cash_reconcile( $input = array() ) {
+        global $wpdb;
+        $permission=mdg_ai_v5_refund_cash_can_run($input);
+        if (is_wp_error($permission)) return $permission;
+        $key=(string)($input['plan_id']??''); $operation=(string)($input['operation']??'preview');
+        if (!preg_match('/^[a-zA-Z0-9_-]{8,64}$/D',$key) || !in_array($operation,array('preview','apply','rollback'),true)) {
+            return new WP_Error('mdg_refund_cash_input','Plan veya işlem geçersiz.');
+        }
+        // Plans are private, non-autoload site options. No amount or arbitrary row can be supplied by the API caller.
+        $plans=(array)get_option('mdg_v5_refund_cash_review_plans',array()); $plan=$plans[$key]??null;
+        if (!is_array($plan) || empty($plan['record_id']) || empty($plan['event_id']) || empty($plan['event_uuid']) ||
+            !is_int($plan['amount_cents']??null) || $plan['amount_cents']<=0 || $plan['amount_cents']>10000000000 ||
+            !preg_match('/^[a-f0-9]{64}$/D',(string)($plan['expected_hash']??'')) ||
+            (int)($plan['confirmed_by']??0)!==get_current_user_id() || empty($plan['confirmed_at']) ||
+            empty($plan['evidence_ref']) || empty($plan['notes']) || strlen((string)($plan['reason']??''))<10) {
+            return new WP_Error('mdg_refund_cash_plan','Özel doğrulanmış düzeltme planı bulunamadı.');
+        }
+        if (!class_exists('MDG_V5_Finance_Identity') || !class_exists('MDG_V5_Finance') ||
+            !MDG_V5_Finance_Identity::valid((int)$plan['event_id'].'|'.$plan['event_uuid'])) {
+            return new WP_Error('mdg_refund_cash_identity','Kanonik program doğrulanamadı.');
+        }
+        $id=(int)$plan['record_id']; $table=mdg_ai_v5_finance_table('expenses');
+        $history=$wpdb->prefix.'mdg_v5_finance_history';
+        // Same lock as the owning Finance Records editor; row locks cover other writers too.
+        $lock='mdg_fin_'.substr(hash('sha256',$wpdb->prefix.'expense'.$id),0,40);
+        if ((int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s,5)',$lock))!==1) {
+            return new WP_Error('mdg_refund_cash_busy','Kayıt başka işlemde.');
+        }
+        $transaction=false;
+        try {
+            foreach (array($table,$history,$wpdb->prefix.'mdg_v5_settlements',$wpdb->prefix.'mdg_v5_payments') as $required) {
+                $status=$wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS WHERE Name=%s',$required));
+                if (!$status || strtolower($status->Engine)!=='innodb') throw new RuntimeException('İşlem tabloları InnoDB olmalıdır.');
+            }
+            if (false===$wpdb->query('START TRANSACTION')) throw new RuntimeException('İşlem başlatılamadı.');
+            $transaction=true;
+            $row=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d FOR UPDATE",$id));
+            if (!$row || $row->scope!=='program' || (int)$row->event_id!==(int)$plan['event_id'] ||
+                !in_array($row->category,array('İade / WooCommerce','İade / Biletinial'),true) ||
+                !MDG_V5_Finance::is_ticket_refund($row) ||
+                preg_match('/^(woo|meta|mmc)[_:\-]/i',(string)($row->document_no??''))) {
+                throw new RuntimeException('Yalnız doğrulanmış manuel bilet iade anaparası düzeltilebilir.');
+            }
+            foreach (array('settlements','payments') as $kind) {
+                $tracking=$wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM '.$wpdb->prefix.'mdg_v5_'.$kind.' WHERE record_type=%s AND record_id=%d','expense',$id));
+                if ($tracking===null || (int)$tracking!==0) {
+                    throw new RuntimeException('Ödeme takibi bulunan kayıt kaynak hareketleriyle ayrıca mutabakat edilmelidir.');
+                }
+            }
+            $marker='[refund-cash:'.$key.':'.mdg_ai_v5_refund_cash_hash($plan).']';
+            $latest=$wpdb->get_row($wpdb->prepare("SELECT * FROM $history WHERE record_type=%s AND record_id=%d AND operation IN ('refund_cash','refund_cash_rollback') ORDER BY id DESC LIMIT 1",'expense',$id));
+            $same=$latest && strpos($latest->reason,$marker)===0;
+            $current_hash=mdg_ai_v5_refund_cash_hash($row);
+            $target_notes=sanitize_textarea_field($plan['notes']);
+            $target_amount=number_format($plan['amount_cents']/100,2,'.','');
+            if ($same && $latest->operation==='refund_cash_rollback') {
+                if ($current_hash!==mdg_ai_v5_refund_cash_hash(json_decode($latest->after_data,true))) throw new RuntimeException('Geri alınan kayıt sonradan değişmiş.');
+                if ($operation==='apply') throw new RuntimeException('Bu plan geri alınmış; yeniden uygulama için yeni doğrulama gerekir.');
+                $result=array('status'=>'already_rolled_back','record_id'=>$id,'amount'=>(float)$row->amount);
+            } elseif ($operation==='rollback') {
+                if (!$same || $latest->operation!=='refund_cash' || $current_hash!==mdg_ai_v5_refund_cash_hash(json_decode($latest->after_data,true))) throw new RuntimeException('Geri alma görüntüsü eşleşmiyor; sonraki değişiklikler korunur.');
+                $original=json_decode($latest->before_data,true);
+                if (!is_array($original) || mdg_ai_v5_refund_cash_hash($original)!==$plan['expected_hash']) throw new RuntimeException('Önceki kayıt doğrulanamadı.');
+                $data=array_intersect_key($original,array_flip(array('amount','notes','updated_at')));
+                $result=array('status'=>'rolled_back','record_id'=>$id,'amount'=>(float)$original['amount']);
+            } elseif ($same && $latest->operation==='refund_cash') {
+                if ($current_hash!==mdg_ai_v5_refund_cash_hash(json_decode($latest->after_data,true))) throw new RuntimeException('Düzeltilen kayıt sonradan değişmiş.');
+                $result=array('status'=>'already_applied','record_id'=>$id,'amount'=>(float)$row->amount);
+            } else {
+                if ($current_hash!==$plan['expected_hash']) throw new RuntimeException('Kayıt doğrulanan önceki görüntüden farklı; işlem yapılmadı.');
+                $result=array('status'=>$operation==='preview'?'preview':'applied','record_id'=>$id,'event_id'=>(int)$row->event_id,'before_amount'=>(float)$row->amount,'amount'=>(float)$target_amount,'gateway_refund_created'=>false);
+                if ($operation==='apply') $data=array('amount'=>$target_amount,'notes'=>$target_notes,'updated_at'=>current_time('mysql'));
+            }
+            if (isset($data)) {
+                if (false===$wpdb->update($table,$data,array('id'=>$id))) throw new RuntimeException('Düzeltme yazılamadı.');
+                $after=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d FOR UPDATE",$id));
+                $expected=array_merge((array)$row,$data);
+                if (!$after || mdg_ai_v5_refund_cash_hash($after)!==mdg_ai_v5_refund_cash_hash($expected)) throw new RuntimeException('Düzeltme yeniden okuma doğrulaması başarısız.');
+                $audit=array('record_type'=>'expense','record_id'=>$id,'operation'=>$operation==='rollback'?'refund_cash_rollback':'refund_cash','before_data'=>wp_json_encode($row),'after_data'=>wp_json_encode($after),'reason'=>$marker.' '.sanitize_textarea_field($plan['reason']).' | '.sanitize_textarea_field($plan['evidence_ref']),'created_by'=>get_current_user_id(),'created_at'=>current_time('mysql'));
+                if (false===$wpdb->insert($history,$audit)) throw new RuntimeException('İşlem geçmişi yazılamadı; düzeltme geri alındı.');
+                if (false===$wpdb->query('COMMIT')) throw new RuntimeException('İşlem tamamlanamadı.');
+            } else {
+                $wpdb->query('ROLLBACK');
+            }
+            $transaction=false;
+            return $result;
+        } catch (Throwable $e) {
+            if ($transaction) $wpdb->query('ROLLBACK');
+            return new WP_Error('mdg_refund_cash_rejected',$e instanceof RuntimeException?$e->getMessage():'Düzeltme tamamlanamadı; işlem geri alındı.');
+        } finally {
+            $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));
+        }
+    }
+}
+if ( ! function_exists( 'mdg_ai_v5_refund_cash_preview' ) ) {
+    function mdg_ai_v5_refund_cash_preview( $input = array() ) {
+        $input['operation']='preview';
+        return mdg_ai_v5_refund_cash_reconcile($input);
+    }
+}
+
 if ( ! function_exists( 'mdg_ai_v5_finance_where' ) ) {
     function mdg_ai_v5_finance_where( $type, $input, &$params ) {
         global $wpdb;
@@ -495,6 +612,16 @@ add_action('wp_abilities_api_init',function(){
  $read=array('annotations'=>array('readonly'=>true,'destructive'=>false,'idempotent'=>true),'public'=>true);
  $write=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>false),'public'=>true);
  $idemwrite=array('annotations'=>array('readonly'=>false,'destructive'=>true,'idempotent'=>true),'public'=>true);
+ wp_register_ability('madagaskar/finance-refund-cash-preview',array(
+  'label'=>'Manuel İade Muhasebe Düzeltmesini Önizle','description'=>'Özel teyit planındaki manuel iade anaparası düzeltmesini salt okunur önizler; para iadesi başlatmaz.',
+  'category'=>'madagaskar-finans-v5','input_schema'=>array('type'=>'object','properties'=>array('plan_id'=>array('type'=>'string','pattern'=>'^[a-zA-Z0-9_-]{8,64}$')),'required'=>array('plan_id'),'additionalProperties'=>false),
+  'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_ai_v5_refund_cash_preview','permission_callback'=>'mdg_ai_v5_refund_cash_can_run','meta'=>$read
+ ));
+ wp_register_ability('madagaskar/finance-refund-cash-reconcile',array(
+  'label'=>'Manuel İade Muhasebe Kaydını Mutabıklaştır','description'=>'Yalnız özel teyit planındaki manuel iade kaydını eski görüntü ve program UUID kontrolüyle gerekçeli düzeltir veya geri alır. Sipariş ve ödeme sağlayıcısında para iadesi başlatmaz.',
+  'category'=>'madagaskar-finans-v5','input_schema'=>array('type'=>'object','properties'=>array('plan_id'=>array('type'=>'string','pattern'=>'^[a-zA-Z0-9_-]{8,64}$'),'operation'=>array('type'=>'string','enum'=>array('apply','rollback'))),'required'=>array('plan_id','operation'),'additionalProperties'=>false),
+  'output_schema'=>array('type'=>'object'),'execute_callback'=>'mdg_ai_v5_refund_cash_reconcile','permission_callback'=>'mdg_ai_v5_refund_cash_can_run','meta'=>$write
+ ));
  $filter=array(
   'month'=>array('type'=>'string','pattern'=>'^\d{4}-\d{2}$'),
   'event_id'=>array('type'=>'integer','minimum'=>1),
