@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'wp-content/plugins/madagaskar-yonetim-merkezi-v5/**'
+      - 'wp-content/plugins/madagaskar-ai-abilities/modules/v5-finance.php'
       - 'tests/finance/**'
       - '.github/workflows/finance-web-snapshot.yml'
 permissions:
@@ -24,6 +25,8 @@ jobs:
           php tests/finance/records.php
           php tests/finance/identity-repair.php
           php tests/finance/program-costs.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/modules/v5-finance.php
+          php tests/finance/refund-cash.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-service.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-admin.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
