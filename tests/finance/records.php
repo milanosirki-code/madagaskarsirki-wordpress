@@ -83,6 +83,7 @@ $wpdb->lock=0;check(submit('edit',$edit)!=='ok','Concurrent lock bypass');$wpdb-
 $_REQUEST=array('summary_event'=>53,'program_id'=>99,'month'=>'2026-09');check(MDG_V5_Finance::context_event()===53,'Explicit event lost');check(strpos(MDG_V5_Finance::url(array('section'=>'expense')),'summary_event=53')!==false,'Tab context lost');
 $cent=MDG_V5_Finance_Records::amounts(0.03,0.01,0.01);check($cent['remaining']===0.01,'Cent math failed');
 $income=(object)array('id'=>7,'net_amount'=>80,'collection_status'=>'collected');check(MDG_V5_Finance_Records::state('income',$income,true)['settled']===80.0,'Historical collected income changed');
+$alias=(object)array('id'=>999,'net_amount'=>10,'collection_status'=>'tahsiledildi');check(MDG_V5_Finance_Records::collected($alias)===10.0,'Imported collected alias ignored');
 $wpdb->readonly=true;$summary=MMC_Finance_Service::summary(99);check($summary['total_revenue']===0.0&&$summary['manual_paid_audience']===0,'Summary default/readonly failed');
 $legacy=(object)array_merge($wpdb->rows[1],array('id'=>81,'notes'=>'Ödendi - dekont ile teyit','document_no'=>'REF-1','attachment_id'=>0));
 $unknown=array('known'=>false,'tracked'=>false,'overpaid'=>false,'opening'=>0,'settled'=>0,'remaining'=>110);

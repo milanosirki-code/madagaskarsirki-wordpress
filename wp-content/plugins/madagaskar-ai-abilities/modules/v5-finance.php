@@ -285,6 +285,8 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
     function mdg_ai_v5_finance_summary( $input = array() ) {
         global $wpdb;
 
+        $event_id=absint($input['event_id']??0);
+        if($event_id){unset($input['month']);$input['scope']='program';}
         $manual = mdg_ai_v5_manual_income_summary( $input );
         $web = mdg_ai_v5_web_summary( $input );
         $expense_summary = mdg_ai_v5_operating_expense_summary( $input );
@@ -301,8 +303,16 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
         $income_count = (int) $manual['count'] + (int) $web['event_count'];
         $expenses = (float) $expense_summary['total'];
         $fixed = (float) $fixed_row->total;
+        $common=0.0;
+        if($event_id&&class_exists('MDG_V5_Finance')){
+            $shares=MDG_V5_Finance::cost_shares($event_id);
+            $fixed=$shares['fixed_share'];$common=$shares['common'];
+            $fixed_row->c=$shares['fixed_count'];
+        }
+
 
         return array(
+            'basis'=>$event_id?'program_lifetime':'record_month',
             'filters'=>array(
                 'month'=>sanitize_text_field($input['month']??''),
                 'event_id'=>absint($input['event_id']??0),
@@ -322,11 +332,12 @@ if ( ! function_exists( 'mdg_ai_v5_finance_summary' ) ) {
             'expenses'=>array(
                 'count'=>(int)$expense_summary['count'],
                 'total'=>$expenses,
+                'shared_allocated'=>round($common,2),
                 'ticket_refund_cash'=>(float)$expense_summary['refund_cash']
             ),
-            'fixed_costs'=>array('count'=>(int)$fixed_row->c,'total'=>$fixed),
-            'total_cost'=>round($expenses+$fixed,2),
-            'profit'=>round($income_net-$expenses-$fixed,2)
+            'fixed_costs'=>array('count'=>(int)$fixed_row->c,'total'=>round($fixed,2)),
+            'total_cost'=>round($expenses+$common+$fixed,2),
+            'profit'=>round($income_net-$expenses-$common-$fixed,2)
         );
     }
 }

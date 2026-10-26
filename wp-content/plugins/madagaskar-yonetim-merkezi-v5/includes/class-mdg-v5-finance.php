@@ -373,6 +373,28 @@ final class MDG_V5_Finance {
         return self::web_revenues_for_events(array_keys($month_events));
     }
     public static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
+    /** One event's share; never charge all business fixed costs to one program. */
+    public static function cost_shares($id) {
+        global $wpdb;
+        $events=self::events();$selected=null;
+        foreach($events as $event)if((int)$event->id===(int)$id)$selected=$event;
+        $out=array('month'=>'','fixed_count'=>0,'fixed_month_total'=>0.0,'allocation_count'=>0,'fixed_share'=>0.0,'common'=>0.0);
+        if(!$selected)return $out;
+        $month=substr(self::event_date($selected),0,7);$out['month']=$month;
+        if(self::month_ok($month)){
+            $fixed=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('fixed_costs').' WHERE cost_month=%s',$month));
+            foreach($fixed as $row)$out['fixed_month_total']+=(float)$row->total_amount;
+            $out['fixed_count']=count($fixed);
+            $attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);
+            $eligible=array_filter(self::month_events($events,$month),static function($e)use($attendance){return !isset($attendance[$e->id])||(int)$attendance[$e->id]->include_in_reports===1;});
+            $counts=(array)get_option(self::COUNT_OPTION,array());$count=isset($counts[$month])?absint($counts[$month]):count($eligible);
+            $out['allocation_count']=$count;
+            $out['fixed_share']=isset($eligible[$id])&&$count?$out['fixed_month_total']/$count:0.0;
+        }
+        foreach(self::allocated_rows((array)$wpdb->get_results('SELECT * FROM '.self::table('expenses').' WHERE scope <> "program"'),$id) as $part)$out['common']+=$part['amount'];
+        return $out;
+    }
+
     private static function money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_price((float)$n)):number_format_i18n((float)$n,2).' TL';}
 
     public static function render(){
@@ -413,8 +435,8 @@ final class MDG_V5_Finance {
         $refund_cash=0;$refund_channels=array();$collected=0;$pending=0;$total_exp=0;$unpaid=0;$unknown=0;$channels=array('Web sitesi'=>$web);$categories=array();
         foreach($inc as $r){if(self::is_web_snapshot($r))continue;$paid=MDG_V5_Finance_Records::collected($r);$collected+=$paid;$channels[$r->channel]=($channels[$r->channel]??0)+$paid;$pending+=max(0,(float)$r->net_amount-$paid);}
         foreach($exp as $r){if(self::is_ticket_refund($r)){$refund_cash+=(float)$r->amount;$refund_channels[$r->category]=($refund_channels[$r->category]??0)+(float)$r->amount;continue;}$total_exp+=(float)$r->amount;$categories[$r->category]=($categories[$r->category]??0)+(float)$r->amount;$state=MDG_V5_Finance_Records::state('expense',$r);if($state['known'])$unpaid+=$state['remaining'];else$unknown+=(float)$r->amount;}
-        $fixed=0;$share=0;$count=0;
-        if(self::month_ok($month)){$fixed=(float)$wpdb->get_var($wpdb->prepare('SELECT COALESCE(SUM(total_amount),0) FROM '.self::table('fixed_costs').' WHERE cost_month=%s',$month));$attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);$eligible=array_filter(self::month_events($events,$month),static function($e)use($attendance){return !isset($attendance[$e->id])||(int)$attendance[$e->id]->include_in_reports===1;});$counts=(array)get_option(self::COUNT_OPTION,array());$count=isset($counts[$month])?absint($counts[$month]):count($eligible);$share=isset($eligible[$id])&&$count?$fixed/$count:0;}
+        $cost_shares=self::cost_shares($id);
+        $fixed=$cost_shares['fixed_month_total'];$share=$cost_shares['fixed_share'];$count=$cost_shares['allocation_count'];
         $common_rows = self::allocated_rows((array)$wpdb->get_results('SELECT * FROM '.self::table('expenses').' WHERE scope <> "program"'), $id);
         $common = 0;
         foreach ($common_rows as $part) {
@@ -566,7 +588,7 @@ final class MDG_V5_Finance_Records {
         $payments=(float)$wpdb->get_var($wpdb->prepare('SELECT COALESCE(SUM(amount),0) FROM '.self::table('payments')." WHERE record_type=%s AND record_id=%d AND status='posted'",$type,$row->id));
         $known=!!$start;
         $opening=$start?(float)$start->opening_amount:0;
-        if(!$start&&$type==='income'){$known=true;$opening=$row->collection_status==='collected'?self::amount($type,$row):0;}
+        if(!$start&&$type==='income'){$known=true;$opening=in_array($row->collection_status,array('collected','tahsiledildi'),true)?self::amount($type,$row):0;}
         if(!$start&&$type==='expense'&&$row->payment_method==='Ödenmedi')$known=true;
         return self::$cache[$key]=array_merge(self::amounts(self::amount($type,$row),$opening,$payments),array('known'=>$known,'tracked'=>!!$start,'opening'=>$opening));
     }
@@ -577,7 +599,7 @@ final class MDG_V5_Finance_Records {
         if(self::protected_source($type,$row))return 'source';
         if($state['overpaid'])return 'difference';
         if($state['tracked'])return 'tracked';
-        if($type==='income'&&($row->collection_status??'')==='collected')return 'declared';
+        if($type==='income'&&in_array(($row->collection_status??''),array('collected','tahsiledildi'),true))return 'declared';
         if(preg_match('/(?:^|\s)ödendi(?:$|\s|[\/\-])/iu',(string)($row->notes??'')))return 'declared';
         return $state['known']?'pending':'unverified';
     }
