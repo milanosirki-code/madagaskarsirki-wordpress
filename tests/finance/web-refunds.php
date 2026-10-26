@@ -54,3 +54,7 @@ $parts=$m->invoke(null,$o);
 if(array_sum($parts)!==1100.0||$parts[1]!==733.33||$parts[2]!==366.67)throw new Exception('Family fee or cent conservation failed');
 $o->total=0;if(array_sum($m->invoke(null,$o))!==0.0)throw new Exception('Free order');
 echo "Family discount and multi-program cent conservation passed\n";
+
+$o->items=array(1=>new FinanceItem(0));$o->total=0;
+if($m->invoke(null,$o)!==array(1=>0.0))throw new Exception('Zero-value invitation flagged as missing item');
+echo "Zero-value invitation contract passed\n";

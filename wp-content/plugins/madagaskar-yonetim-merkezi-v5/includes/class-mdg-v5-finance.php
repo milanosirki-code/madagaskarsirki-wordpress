@@ -354,7 +354,7 @@ final class MDG_V5_Finance {
             $cents=max(0,(int)round((float)$item->get_total()*100));
             $weights[(int)$id]=$cents;$sum+=$cents;
         }
-        if(!$sum)return array();
+        if(!$sum)return array_fill_keys(array_keys($weights),0.0);
         $target=max(0,(int)round(((float)$order->get_total()-(float)$order->get_total_tax()-(float)$order->get_shipping_total())*100));
         $out=array();$remainders=array();$used=0;ksort($weights,SORT_NUMERIC);
         foreach($weights as $id=>$weight){
