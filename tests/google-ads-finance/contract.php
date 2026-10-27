@@ -3,6 +3,7 @@
 define('ABSPATH',__DIR__.'/');define('ARRAY_A','ARRAY_A');
 $options=array();$transients=array();$remote=array();$hooks=array();$responses=array();
 function add_action($hook,$callback,$priority=10){global$hooks;$hooks[$hook][$priority]=$callback;}
+function add_submenu_page($parent,$title,$menu,$cap,$slug,$callback){global$registered_menu;$registered_menu=compact('parent','cap','slug');}
 function register_activation_hook($f,$cb){}function register_deactivation_hook($f,$cb){}
 function get_option($k,$d=false){global$options;return$options[$k]??$d;}
 function update_option($k,$v,$autoload=false){global$options;$options[$k]=$v;return true;}
@@ -78,6 +79,7 @@ $m=new ReflectionMethod('MDG_GAds_Finance','access_token');$m->setAccessible(tru
 $m=new ReflectionMethod('MDG_GAds_Finance','token_request');$m->setAccessible(true);try{$m->invoke(null,array());}catch(Throwable$e){ok(strpos($e->getMessage(),'secret-must-not-leak')===false,'OAuth error body is not leaked');}
 ok(isset($hooks['admin_post_mdg_v5_finance_record'][1]),'source ownership guard registered before native writes');
 ok(!isset($hooks['woocommerce_checkout_create_order'])&&!isset($hooks['mdgy_meta_sync']),'no checkout or Meta hooks');
+$hooks['admin_menu'][10]();ok($registered_menu===array('parent'=>'tools.php','cap'=>'manage_options','slug'=>'mdg-gads-finance'),'admin page uses registered WordPress Tools parent');
 $m=new ReflectionMethod('MDG_GAds_Finance','secret');$m->setAccessible(true);
 $secrets=array('client_id'=>'test-client','client_secret'=>'synthetic-secret','refresh_token'=>'synthetic-refresh');$m->invoke(null,$secrets);
 ok($m->invoke(null)===$secrets&&strpos($options[MDG_GAds_Finance::SECRET],'synthetic')===false,'encrypted credentials round trip without plaintext options');

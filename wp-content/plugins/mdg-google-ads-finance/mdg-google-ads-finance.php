@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Google Ads Finans
  * Description: Google Ads günlük gerçekleşen harcamalarını Finans V5'e kontrollü aktarır.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) { exit; }
@@ -14,7 +14,7 @@ final class MDG_GAds_Finance {
     const VENDOR = 'Google Ads API';
 
     public static function boot() {
-        add_action('admin_menu', function () { add_submenu_page('mdg-dashboard', 'Google Ads Finans', 'Google Ads Finans', 'manage_options', 'mdg-gads-finance', array(__CLASS__, 'render')); });
+        add_action('admin_menu', function () { add_submenu_page('tools.php', 'Google Ads Finans', 'Google Ads Finans', 'manage_options', 'mdg-gads-finance', array(__CLASS__, 'render')); });
         add_action('admin_post_mdg_gads_action', array(__CLASS__, 'admin_action'));
         add_action('admin_post_mdg_gads_callback', array(__CLASS__, 'callback'));
         add_action(self::HOOK, array(__CLASS__, 'cron'));
