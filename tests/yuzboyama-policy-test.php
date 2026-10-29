@@ -42,4 +42,11 @@ $order->paid=true;$order->marker='no';check(MDG_Yuzboyama::capacity($order),0,'U
 $order->marker='yes';$order->gateway='bacs';check(MDG_Yuzboyama::capacity($order),0,'Other payment method');
 $order->gateway='paytr_payment_gateway';$order->refund=100;$order->refunded_qty=1;check(MDG_Yuzboyama::capacity($order),2,'Order partial refund');
 $order->refunded_qty=0;check(MDG_Yuzboyama::capacity($order),0,'Order amount-only refund');
+check(MDG_Yuzboyama::vat_breakdown(100),array('rate'=>20,'base'=>83.33,'vat'=>16.67,'total'=>100),'One-person inclusive VAT');
+check(MDG_Yuzboyama::vat_breakdown(200),array('rate'=>20,'base'=>166.67,'vat'=>33.33,'total'=>200),'Two-person inclusive VAT');
+check(MDG_Yuzboyama::vat_breakdown(300),array('rate'=>20,'base'=>250,'vat'=>50,'total'=>300),'Three-person inclusive VAT');
+for ($n=1;$n<=50;$n++) {
+    $v=MDG_Yuzboyama::vat_breakdown($n*100);
+    check((int)round(($v['base']+$v['vat'])*100),$n*10000,'VAT sum for '.$n.' people');
+}
 echo $checks." checks passed\n";
