@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Yüz Boyama
  * Description: Sürekli açık yüz boyama ödemesi, tek kullanımlı kişi hakları ve V5 gelir bağlantısı.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * Author: Dünya Organizasyon
@@ -11,7 +11,7 @@ defined('ABSPATH') || exit;
 require_once __DIR__ . '/policy.php';
 
 final class MDG_Yuzboyama {
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
     const SKU = 'MDG-YUZBOYAMA-100';
     const CAP = 'manage_woocommerce';
 
@@ -136,7 +136,7 @@ final class MDG_Yuzboyama {
         return (int)$product->get_id() === self::product() ? false : $valid;
     }
     public static function gateways($gateways) {
-        if (self::only_yb()) return isset($gateways['paytr_payment_gateway']) ? array('paytr_payment_gateway' => $gateways['paytr_payment_gateway']) : array();
+        if (self::only_yb() || (function_exists('is_checkout_pay_page') && is_checkout_pay_page() && self::order_is_yb(wc_get_order(absint(get_query_var('order-pay')))))) return isset($gateways['paytr_payment_gateway']) ? array('paytr_payment_gateway' => $gateways['paytr_payment_gateway']) : array();
         return $gateways;
     }
     public static function check_cart() {
@@ -218,7 +218,7 @@ final class MDG_Yuzboyama {
         $order->update_meta_data('_mdg_yb_vat_included', 'yes');
     }
     private static function order_is_yb($order) {
-        if (!$order || $order->get_meta('_mdg_yb') !== 'yes') return false;
+        if (!$order || ($order->get_meta('_mdg_yb') !== 'yes' && $order->get_meta('_mdg_yb_pos') !== 'yes')) return false;
         foreach ($order->get_items() as $item) if ((int)$item->get_product_id() !== self::product()) return false;
         return count($order->get_items()) > 0;
     }
@@ -235,6 +235,7 @@ final class MDG_Yuzboyama {
         global $wpdb;
         $order = wc_get_order($order_id);
         if (!self::order_is_yb($order)) return;
+        if ($order->get_meta('_mdg_yb') !== 'yes') { self::order_meta($order); $order->save(); }
         $row = self::row($order_id);
         if (!$row && self::capacity($order) > 0) {
             $d = $order->get_date_paid();
@@ -245,6 +246,12 @@ final class MDG_Yuzboyama {
             $wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.self::table().' (order_id,code,used_qty,event_id,event_uuid,paid_at) VALUES (%d,%s,%d,%d,%s,%s)', array_values($data)));
         }
         if (self::row($order_id)) self::finance($order_id);
+    }
+    /** Only expose the canonical, verified code; never the legacy four-digit POS code. */
+    public static function payment_code($order) {
+        if (!self::order_is_yb($order) || self::capacity($order) < 1) return '';
+        $row = self::row($order->get_id());
+        return $row ? (string)$row->code : '';
     }
     public static function status_changed($id, $old, $new, $order) { self::paid($id); }
 
