@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Yüz Boyama POS
  * Description: Yüz boyama için POS benzeri hızlı ödeme. [mdg_yuzboyama_pos] kısa kodu kişi sayısını alır, fatura formu göstermeden siparişi hazırlar ve doğrudan kart ödeme ekranına yönlendirir. Ödeme sonrası teşekkür sayfasında büyük işlem kodu gösterir. Bilet ödeme sayfasına (/odeme/) dokunmaz.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Madagaskar Sirki
  * Requires PHP: 7.4
  */
@@ -41,7 +41,7 @@ add_shortcode( 'mdg_yuzboyama_pos', function () {
 		return '';
 	}
 	$product = wc_get_product( MDG_YBPOS_PRODUCT_ID );
-	if ( ! class_exists( 'MDG_Yuzboyama' ) || version_compare( MDG_Yuzboyama::VERSION, '1.0.2', '<' ) || ! $product || ! $product->is_purchasable() ) {
+	if ( ! class_exists( 'MDG_Yuzboyama' ) || version_compare( MDG_Yuzboyama::VERSION, '1.0.3', '<' ) || ! $product || ! $product->is_purchasable() ) {
 		return '<section class="mdg-yb-card"><h2>Yüz boyama ödemesi şu an kapalı.</h2><p>Lütfen görevliye danışın.</p></section>';
 	}
 	$price = (float) wc_get_price_to_display( $product );
@@ -62,6 +62,9 @@ add_shortcode( 'mdg_yuzboyama_pos', function () {
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( get_permalink() ); ?>">
 			<input type="hidden" name="mdg_ybpos_buy" value="1">
+			<label for="mdg-yb-name">Ad soyad (isteğe bağlı)</label>
+			<input id="mdg-yb-name" name="customer_name" type="text" autocomplete="name" maxlength="160" placeholder="Ödeme yapan kişinin adı">
+			<p class="mdg-yb-small">İsminizi girerseniz görevli ödemenizi isminizle de bulabilir.</p>
 			<label for="mdg-yb-qty">Kaç kişi?</label>
 			<div class="mdg-yb-quantity">
 				<button type="button" data-yb-step="-1" aria-label="Kişi sayısını azalt">−</button>
@@ -71,7 +74,7 @@ add_shortcode( 'mdg_yuzboyama_pos', function () {
 			<p class="mdg-yb-total">Toplam <strong id="mdg-yb-total" data-unit="<?php echo esc_attr( $price ); ?>" aria-live="polite"><?php echo esc_html( wc_format_localized_price( $price ) ); ?> TL</strong></p>
 			<button class="mdg-yb-primary" type="submit">Kartla öde</button>
 		</form>
-		<p class="mdg-yb-small">Bilgi girmenize gerek yok, doğrudan kart ekranı açılır. Bu ödeme yalnız yüz boyama içindir; gösteri giriş bileti değildir.</p>
+		<p class="mdg-yb-small">Ad soyad isteğe bağlıdır; kart ekranında ödemenizi tamamlayın. Bu ödeme yalnız yüz boyama içindir; gösteri giriş bileti değildir.</p>
 	</section>
 	<script>
 	(function(){
@@ -114,7 +117,7 @@ add_action( 'template_redirect', function () {
 
 	try {
 		$product = wc_get_product( MDG_YBPOS_PRODUCT_ID );
-		if ( ! class_exists( 'MDG_Yuzboyama' ) || version_compare( MDG_Yuzboyama::VERSION, '1.0.2', '<' ) || ! $product || ! $product->is_purchasable() ) {
+		if ( ! class_exists( 'MDG_Yuzboyama' ) || version_compare( MDG_Yuzboyama::VERSION, '1.0.3', '<' ) || ! $product || ! $product->is_purchasable() ) {
 			throw new Exception( 'urun' );
 		}
 		if ( ! $qty || 'TRY' !== get_woocommerce_currency() || (int) round( (float) wc_get_price_to_display( $product ) * 100 ) !== 10000 ) {
@@ -129,6 +132,8 @@ add_action( 'template_redirect', function () {
 		}
 		$order->add_product( $product, $qty );
 		$order->set_address( mdg_ybpos_billing(), 'billing' );
+		$name = MDG_Yuzboyama::clean_name( wp_unslash( $_POST['customer_name'] ?? '' ) );
+		if ( $name !== '' ) { $order->set_billing_first_name( $name ); $order->set_billing_last_name( '' ); }
 		$order->set_customer_ip_address( $ip );
 
 		$order->set_payment_method( $gateway );
