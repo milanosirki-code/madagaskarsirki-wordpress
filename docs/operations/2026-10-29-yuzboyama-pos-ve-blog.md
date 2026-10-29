@@ -2,6 +2,8 @@
 
 Durum: **Canlıda (hotfix olarak doğrudan yüklendi).** Bu kayıt, canlı değişikliği repository'ye geri işlemek için hazırlandı.
 
+GitHub: PR #299 — https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/299 (dal `claude/yuzboyama-pos-2026-10-29`)
+
 ## 1. Yüz Boyama — POS benzeri hızlı ödeme (29.10.2026)
 
 ### Amaç
