@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Yüz Boyama
  * Description: Sürekli açık yüz boyama ödemesi, tek kullanımlı kişi hakları ve V5 gelir bağlantısı.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * Author: Dünya Organizasyon
@@ -11,12 +11,13 @@ defined('ABSPATH') || exit;
 require_once __DIR__ . '/policy.php';
 
 final class MDG_Yuzboyama {
-    const VERSION = '1.0.2';
+    const VERSION = '1.0.3';
     const SKU = 'MDG-YUZBOYAMA-100';
     const CAP = 'manage_woocommerce';
 
     public static function boot() {
         register_activation_hook(__FILE__, array(__CLASS__, 'install'));
+        add_action('init', function() { if (get_option('mdg_yb_version') !== self::VERSION) self::install(); }, 5);
         add_action('before_woocommerce_init', function() {
             if (class_exists('Automattic\\WooCommerce\\Utilities\\FeaturesUtil')) {
                 Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
@@ -69,6 +70,7 @@ final class MDG_Yuzboyama {
         dbDelta("CREATE TABLE $t (
             order_id bigint unsigned NOT NULL,
             code varchar(32) NOT NULL,
+            customer_name varchar(160) NOT NULL DEFAULT '',
             used_qty int unsigned NOT NULL DEFAULT 0,
             event_id bigint unsigned NOT NULL DEFAULT 0,
             event_uuid varchar(64) NOT NULL DEFAULT '',
@@ -206,6 +208,9 @@ final class MDG_Yuzboyama {
             $qty += (int)$item->get_quantity();
         }
         if (!$qty) return;
+        $name = sanitize_text_field($order->get_formatted_billing_full_name());
+        if ($name === 'Yüz Boyama Müşterisi') $name = '';
+        $order->update_meta_data('_mdg_yb_customer_name', self::clean_name($name));
         $event = self::choose_event(wp_date('Y-m-d'));
         $order->update_meta_data('_mdg_yb', 'yes');
         $order->update_meta_data('_mdg_yb_event_id', $event ? (int)$event->id : 0);
@@ -242,8 +247,8 @@ final class MDG_Yuzboyama {
             $date = wp_date('Y-m-d', $d->getTimestamp());
             $event = self::choose_event($date);
             // Assignment uses the actual paid day, rather than an earlier abandoned checkout day.
-            $data = array('order_id'=>$order_id,'code'=>strtoupper(bin2hex(random_bytes(8))), 'used_qty'=>0, 'event_id'=>$event ? $event->id : 0, 'event_uuid'=>$event ? $event->event_uuid : '', 'paid_at'=>wp_date('Y-m-d H:i:s', $d->getTimestamp()));
-            $wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.self::table().' (order_id,code,used_qty,event_id,event_uuid,paid_at) VALUES (%d,%s,%d,%d,%s,%s)', array_values($data)));
+            $data = array('order_id'=>$order_id,'code'=>strtoupper(bin2hex(random_bytes(8))), 'customer_name'=>self::clean_name($order->get_meta('_mdg_yb_customer_name')), 'used_qty'=>0, 'event_id'=>$event ? $event->id : 0, 'event_uuid'=>$event ? $event->event_uuid : '', 'paid_at'=>wp_date('Y-m-d H:i:s', $d->getTimestamp()));
+            $wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.self::table().' (order_id,code,customer_name,used_qty,event_id,event_uuid,paid_at) VALUES (%d,%s,%s,%d,%d,%s,%s)', array_values($data)));
         }
         if (self::row($order_id)) self::finance($order_id);
     }
@@ -269,7 +274,9 @@ final class MDG_Yuzboyama {
             $people = 0; foreach ($order->get_items() as $item) $people += (int)$item->get_quantity();
             $paid_date = $order->get_date_paid();
             $date = $paid_date ? wp_date('d.m.Y H:i', $paid_date->getTimestamp()) : $row->paid_at;
-            echo '<p><strong>Yüz Boyama Ödeme Belgesi</strong></p><table style="width:100%;border-collapse:collapse;text-align:left"><tbody>';
+            echo '<p><strong>Yüz Boyama Ödeme Belgesi</strong></p>';
+            if (!empty($row->customer_name)) echo '<p>'.esc_html($row->customer_name).'</p>';
+            echo '<table style="width:100%;border-collapse:collapse;text-align:left"><tbody>';
             foreach (array('İşlem tarihi'=>$date, 'Kişi sayısı'=>$people.' kişi', 'KDV hariç tutar'=>self::money($vat['base']), 'KDV (%20)'=>self::money($vat['vat']), 'Toplam tutar (KDV dahil)'=>self::money($vat['total'])) as $label=>$value) {
                 echo '<tr><th scope="row" style="padding:10px 0;border-bottom:1px solid #d8d5c5">'.esc_html($label).'</th><td style="padding:10px 0;border-bottom:1px solid #d8d5c5;text-align:right">'.esc_html($value).'</td></tr>';
             }
@@ -346,6 +353,7 @@ final class MDG_Yuzboyama {
     public static function routes() {
         register_rest_route('mdg-yuzboyama/v1','/status',array('methods'=>'GET','permission_callback'=>function(){return self::can_staff();},'callback'=>function(){global $wpdb;$engines=array();foreach(array('orders','uses') as $suffix){$s=$wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS WHERE Name=%s',self::table($suffix)));$engines[$suffix]=$s?$s->Engine:'missing';}return array('version'=>self::VERSION,'product_id'=>self::product(),'engines'=>$engines,'finance_adapter'=>function_exists('mdg_ai_v5_income_create'),'canonical_identity'=>class_exists('MDG_V5_Finance_Identity'),'today_candidates'=>count(self::events(wp_date('Y-m-d'))),'orders'=>(int)$wpdb->get_var('SELECT COUNT(*) FROM '.self::table()),'unassigned'=>(int)$wpdb->get_var('SELECT COUNT(*) FROM '.self::table().' WHERE event_id=0'));}));
         register_rest_route('mdg-yuzboyama/v1','/lookup',array('methods'=>'POST','permission_callback'=>function(){return self::can_staff();},'callback'=>array(__CLASS__,'lookup')));
+        register_rest_route('mdg-yuzboyama/v1','/search',array('methods'=>'POST','permission_callback'=>function(){return self::can_staff();},'callback'=>array(__CLASS__,'search')));
         register_rest_route('mdg-yuzboyama/v1','/redeem',array('methods'=>'POST','permission_callback'=>function(){return self::can_staff();},'callback'=>array(__CLASS__,'redeem')));
     }
     public static function lookup($request) {
@@ -355,7 +363,7 @@ final class MDG_Yuzboyama {
         $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::table().' WHERE code=%s',$code));
         if (!$row) return new WP_Error('not_found','İşlem bulunamadı.',array('status'=>404));
         $order = wc_get_order($row->order_id); $capacity = self::capacity($order);
-        return array('order_id'=>(int)$row->order_id,'code'=>$code,'paid'=>$capacity>0,'qty'=>$capacity,'used'=>(int)$row->used_qty,'remaining'=>max(0,$capacity-$row->used_qty),'amount'=>$order ? self::money($order->get_total()):'','paid_at'=>$row->paid_at,'request_key'=>wp_generate_uuid4());
+        return array('order_id'=>(int)$row->order_id,'code'=>$code,'customer_name'=>(string)($row->customer_name ?? ''),'event_id'=>(int)$row->event_id,'paid'=>$capacity>0,'qty'=>$capacity,'used'=>(int)$row->used_qty,'remaining'=>max(0,$capacity-$row->used_qty),'amount'=>$order ? self::money($order->get_total()):'','paid_at'=>$row->paid_at,'request_key'=>wp_generate_uuid4());
     }
     public static function redeem($request) {
         global $wpdb;
@@ -384,10 +392,49 @@ final class MDG_Yuzboyama {
         } finally { $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock)); }
     }
 
+    public static function clean_name($name) {
+        $name = sanitize_text_field(is_scalar($name) ? (string)$name : '');
+        return function_exists('mb_substr') ? mb_substr($name,0,160) : substr($name,0,160);
+    }
+    public static function day_bounds($date) {
+        if (!is_string($date)) return false;
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D',(string)$date,$m) || !checkdate((int)$m[2],(int)$m[3],(int)$m[1])) return false;
+        return array($date.' 00:00:00',(new DateTimeImmutable($date))->modify('+1 day')->format('Y-m-d').' 00:00:00');
+    }
+    public static function search($request) {
+        global $wpdb;
+        $query = trim(sanitize_text_field($request['query'] ?? ''));
+        if (preg_match('/^[A-Fa-f0-9]{16}$/D',$query)) {
+            $info = self::lookup(array('code'=>$query));
+            return is_wp_error($info) ? $info : array('matches'=>array($info),'more'=>false);
+        }
+        $bounds = self::day_bounds($request['date'] ?? wp_date('Y-m-d'));
+        if (!$bounds || strlen($query) < 2 || strlen($query) > 640) return new WP_Error('invalid_search','Arama için geçerli bir tarih ve en az iki harf girin.',array('status'=>400));
+        $codes = $wpdb->get_col($wpdb->prepare('SELECT code FROM '.self::table().' WHERE paid_at >= %s AND paid_at < %s AND customer_name LIKE %s ORDER BY paid_at DESC LIMIT 21',$bounds[0],$bounds[1],'%'.$wpdb->esc_like($query).'%'));
+        $more = count($codes) > 20; $matches = array();
+        foreach (array_slice($codes,0,20) as $code) {
+            $info = self::lookup(array('code'=>$code));
+            if (!is_wp_error($info)) $matches[] = $info;
+        }
+        return array('matches'=>$matches,'more'=>$more);
+    }
+    /** Selecting today's stand also allocates earlier unassigned receipts from that day. */
+    private static function assign_day($event) {
+        global $wpdb;
+        $date = MDG_V5_Finance::event_date($event);
+        $bounds = self::day_bounds($date);
+        if (!$bounds || $date !== wp_date('Y-m-d')) return;
+        $ids = $wpdb->get_col($wpdb->prepare('SELECT order_id FROM '.self::table().' WHERE event_id=0 AND paid_at >= %s AND paid_at < %s',$bounds[0],$bounds[1]));
+        foreach ($ids as $id) {
+            if ($wpdb->update(self::table(),array('event_id'=>$event->id,'event_uuid'=>$event->event_uuid),array('order_id'=>$id,'event_id'=>0))) self::finance((int)$id);
+        }
+    }
     public static function staff() {
         if (!self::can_staff()) return '<p>Bu ekran için WooCommerce yönetim yetkisi olan görevli hesabıyla giriş yapın.</p>';
         self::assets();
-        return '<section class="mdg-yb-card"><h2>Yüz Boyama · Ödeme Kontrolü</h2><p>Müşterinin 16 haneli işlem kodunu girin. Yalnız sistemde doğrulanan kalan hakları kullanın.</p><form id="mdg-yb-lookup"><label for="mdg-yb-code">İşlem kodu</label><input id="mdg-yb-code" name="code" autocomplete="off" maxlength="16" required><button class="mdg-yb-primary">Ödemeyi kontrol et</button></form><div id="mdg-yb-result" aria-live="polite"></div></section>';
+        $date = wp_date('Y-m-d'); $event = self::choose_event($date);
+        $label = $event ? MDG_V5_Finance::event_name($event) : 'Bugünün stand programı seçilmemiş';
+        return '<section class="mdg-yb-card"><h2>Yüz Boyama · Personel Kontrolü</h2><p><strong>Etkinlik:</strong> '.esc_html($label).'</p><p>İşlem koduyla veya ödeme yapan kişinin adıyla arayın. İsim aramasında ödeme gününü seçin. İsmi girilmeyen ödemeler kodla bulunur.</p><form id="mdg-yb-lookup"><label for="mdg-yb-code">İşlem kodu veya ad soyad</label><input id="mdg-yb-code" name="code" autocomplete="off" maxlength="160" required><label for="mdg-yb-date">Ödeme günü (isim araması)</label><input id="mdg-yb-date" name="date" type="date" value="'.esc_attr($date).'" required><button class="mdg-yb-primary">Ödemeyi kontrol et</button></form><div id="mdg-yb-result" aria-live="polite"></div><p class="mdg-yb-small">Yalnız doğrulanmış kalan kişi haklarını kullanın. Aynı isimle birden çok ödeme bulunursa işlem kodu ve saatini karşılaştırın.</p></section>';
     }
 
     public static function admin() {
@@ -398,7 +445,10 @@ final class MDG_Yuzboyama {
             if (isset($_POST['stand_event'])) {
                 $id = absint($_POST['stand_event']); $valid = !$id;
                 foreach (self::events() as $e) if ((int)$e->id === $id) $valid = true;
-                if ($valid) update_option('mdg_yb_stand_event',$id,false);
+                if ($valid) {
+                    update_option('mdg_yb_stand_event',$id,false);
+                    foreach (self::events(wp_date('Y-m-d')) as $event) if ((int)$event->id === $id) self::assign_day($event);
+                }
             }
             if (isset($_POST['assign_order'])) {
                 $id = absint($_POST['assign_order']); $event = absint($_POST['event']); $row = self::row($id);
@@ -409,15 +459,16 @@ final class MDG_Yuzboyama {
             if (isset($_POST['retry'])) foreach ($wpdb->get_col('SELECT order_id FROM '.self::table().' ORDER BY paid_at DESC LIMIT 100') as $id) self::finance((int)$id);
         }
         $date = sanitize_text_field(wp_unslash($_GET['date'] ?? wp_date('Y-m-d')));
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date)) $date=wp_date('Y-m-d');
-        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table().' WHERE paid_at >= %s AND paid_at < %s ORDER BY paid_at DESC', $date.' 00:00:00',wp_date('Y-m-d',strtotime($date.' +1 day')).' 00:00:00'));
+        $bounds = self::day_bounds($date);
+        if (!$bounds) { $date=wp_date('Y-m-d'); $bounds=self::day_bounds($date); }
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table().' WHERE paid_at >= %s AND paid_at < %s ORDER BY paid_at DESC', $bounds[0],$bounds[1]));
         $total=0;$qty=0;$used=0;
         foreach ($rows as $r) { $o=wc_get_order($r->order_id); if ($o && $o->is_paid()) $total+=max(0,$o->get_total()-$o->get_total_refunded()); $qty+=self::capacity($o);$used+=$r->used_qty; }
         echo '<div class="wrap"><h1>Yüz Boyama</h1><p><a href="'.esc_url(self::url()).'" target="_blank">Müşteri ödeme sayfası</a> · <a href="'.esc_url(home_url('/yuzboyama-kontrol/')).'" target="_blank">Personel kontrol ekranı</a></p><p>100 TL / kişi · '.esc_html($date).' · Tahsilat (iade sonrası, PayTR komisyonu öncesi): <strong>'.esc_html(self::money($total)).'</strong> · Hak: '.$qty.' · Kullanılan: '.$used.'</p>';
         echo '<form method="get"><input type="hidden" name="page" value="mdg-yuzboyama"><input type="date" name="date" value="'.esc_attr($date).'"><button class="button">Günü göster</button></form><hr><form method="post">';wp_nonce_field('mdg_yb_admin');
         echo '<label>Stand programı <select name="stand_event"><option value="0">O gün tek program varsa otomatik; yoksa atanmamış</option>';
         foreach (self::events() as $e) echo '<option value="'.(int)$e->id.'" '.selected(get_option('mdg_yb_stand_event',0),$e->id,false).'>'.esc_html(MDG_V5_Finance::event_date($e).' · '.MDG_V5_Finance::event_name($e)).'</option>';
-        echo '</select></label> <button class="button">Kaydet</button><p>Seçim yalnız ödeme günüyle aynı tarihteyse uygulanır; başka günün programına satış yazılmaz. Programı olmayan satışlar genel gelirde kalır.</p></form><table class="widefat striped"><thead><tr><th>Sipariş / saat</th><th>Ödeme / hak</th><th>Program</th><th>Finans</th></tr></thead><tbody>';
+        echo '</select></label> <button class="button">Kaydet</button><p>Seçim yalnız ödeme günüyle aynı tarihteyse uygulanır; başka günün programına satış yazılmaz. Bugünün programını seçtiğinizde bugün daha önce atanmamış yüz boyama gelirleri de bu programa eklenir. Programı olmayan satışlar genel gelirde kalır.</p></form><table class="widefat striped"><thead><tr><th>Sipariş / saat</th><th>Ödeme / hak</th><th>Program</th><th>Finans</th></tr></thead><tbody>';
         foreach ($rows as $r) {
             $o=wc_get_order($r->order_id);$cap=self::capacity($o);
             echo '<tr><td>#'.(int)$r->order_id.'<br>'.esc_html($r->paid_at).'</td><td>'.esc_html($o ? wc_get_order_status_name($o->get_status()):'Sipariş yok').' · '.esc_html($o ? self::money($o->get_total()):'').'<br>Kullanılan '.$r->used_qty.' / Kalan '.max(0,$cap-$r->used_qty).'</td><td>';
