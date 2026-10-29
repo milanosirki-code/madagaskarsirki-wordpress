@@ -1,7 +1,7 @@
 (function(){'use strict';
 function init(){
  const qty=document.getElementById('mdg-yb-qty'),total=document.getElementById('mdg-yb-total');
- if(qty){const show=()=>{const n=Number(qty.value);total.textContent=Number.isInteger(n)&&n>=1&&n<=50?(n*100).toLocaleString('tr-TR')+' TL':'Kişi sayısını kontrol edin';};qty.addEventListener('input',show);document.querySelectorAll('[data-yb-step]').forEach(b=>b.addEventListener('click',()=>{qty.value=Math.max(1,Math.min(50,(Number(qty.value)||1)+Number(b.dataset.ybStep)));show();}));show();}
+ if(qty&&qty.form&&qty.form.querySelector('[name="mdg_yb_buy"]')){const show=()=>{const n=Number(qty.value);total.textContent=Number.isInteger(n)&&n>=1&&n<=50?(n*100).toLocaleString('tr-TR')+' TL':'Kişi sayısını kontrol edin';};qty.addEventListener('input',show);document.querySelectorAll('[data-yb-step]').forEach(b=>b.addEventListener('click',()=>{qty.value=Math.max(1,Math.min(50,(Number(qty.value)||1)+Number(b.dataset.ybStep)));show();}));show();}
  const form=document.getElementById('mdg-yb-lookup'),result=document.getElementById('mdg-yb-result');
  if(!form)return;
  async function api(path,data){const r=await fetch(MDGYB.api+path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-WP-Nonce':MDGYB.nonce},body:JSON.stringify(data)});const body=await r.json();if(!r.ok)throw new Error(body.message||'İşlem tamamlanamadı.');return body;}
