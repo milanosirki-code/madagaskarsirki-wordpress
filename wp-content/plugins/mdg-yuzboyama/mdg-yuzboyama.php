@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Yüz Boyama
  * Description: Sürekli açık yüz boyama ödemesi, tek kullanımlı kişi hakları ve V5 gelir bağlantısı.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * Author: Dünya Organizasyon
@@ -11,7 +11,7 @@ defined('ABSPATH') || exit;
 require_once __DIR__ . '/policy.php';
 
 final class MDG_Yuzboyama {
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
     const SKU = 'MDG-YUZBOYAMA-100';
     const CAP = 'manage_woocommerce';
 
@@ -54,6 +54,12 @@ final class MDG_Yuzboyama {
     private static function url() { return home_url('/yuzboyama/'); }
     private static function can_staff() { return current_user_can(self::CAP); }
     private static function money($n) { return number_format_i18n($n, 2) . ' TL'; }
+    /** VAT is included in the agreed gross service price; never added on top. */
+    public static function vat_breakdown($gross) {
+        $total = max(0, (int)round((float)$gross * 100));
+        $base = (int)round($total * 100 / 120);
+        return array('rate'=>20, 'base'=>$base / 100, 'vat'=>($total-$base) / 100, 'total'=>$total / 100);
+    }
 
     public static function install() {
         global $wpdb;
@@ -205,6 +211,11 @@ final class MDG_Yuzboyama {
         $order->update_meta_data('_mdg_yb_event_id', $event ? (int)$event->id : 0);
         $order->update_meta_data('_mdg_yb_event_uuid', $event ? (string)$event->event_uuid : '');
         $order->update_meta_data('_mdg_yb_event_date', wp_date('Y-m-d'));
+        $vat = self::vat_breakdown($order->get_total());
+        $order->update_meta_data('_mdg_yb_vat_rate', $vat['rate']);
+        $order->update_meta_data('_mdg_yb_vat_base', $vat['base']);
+        $order->update_meta_data('_mdg_yb_vat_amount', $vat['vat']);
+        $order->update_meta_data('_mdg_yb_vat_included', 'yes');
     }
     private static function order_is_yb($order) {
         if (!$order || $order->get_meta('_mdg_yb') !== 'yes') return false;
@@ -247,7 +258,15 @@ final class MDG_Yuzboyama {
         self::paid($id); $row = self::row($id); $capacity = self::capacity($order);
         echo '<section class="mdg-yb-card mdg-yb-receipt"><h2>'.esc_html($capacity ? 'Ödemeniz alındı' : 'Ödeme / iade durumunu kontrol edin').'</h2>';
         if ($row && $capacity) {
-            echo '<p>Yüz boyama · '.esc_html($capacity).' kişi · '.esc_html(self::money($order->get_total())).'</p><p>Görevliye bu işlem kodunu gösterin:</p><strong class="mdg-yb-code">'.esc_html($row->code).'</strong><p>Kullanılan: '.(int)$row->used_qty.' · Kalan: '.max(0,$capacity-(int)$row->used_qty).'</p><p class="mdg-yb-small">Sipariş #'.(int)$id.' · '.esc_html($row->paid_at).'<br>Görevli, kodu kendi kontrol ekranından doğrular.</p>';
+            $vat = self::vat_breakdown($order->get_total());
+            $people = 0; foreach ($order->get_items() as $item) $people += (int)$item->get_quantity();
+            $paid_date = $order->get_date_paid();
+            $date = $paid_date ? wp_date('d.m.Y H:i', $paid_date->getTimestamp()) : $row->paid_at;
+            echo '<p><strong>Yüz Boyama Ödeme Belgesi</strong></p><table style="width:100%;border-collapse:collapse;text-align:left"><tbody>';
+            foreach (array('İşlem tarihi'=>$date, 'Kişi sayısı'=>$people.' kişi', 'KDV hariç tutar'=>self::money($vat['base']), 'KDV (%20)'=>self::money($vat['vat']), 'Toplam tutar (KDV dahil)'=>self::money($vat['total'])) as $label=>$value) {
+                echo '<tr><th scope="row" style="padding:10px 0;border-bottom:1px solid #d8d5c5">'.esc_html($label).'</th><td style="padding:10px 0;border-bottom:1px solid #d8d5c5;text-align:right">'.esc_html($value).'</td></tr>';
+            }
+            echo '</tbody></table><p>Görevliye bu işlem kodunu gösterin:</p><strong class="mdg-yb-code">'.esc_html($row->code).'</strong><p>Kullanılan: '.(int)$row->used_qty.' · Kalan: '.max(0,$capacity-(int)$row->used_qty).'</p><p class="mdg-yb-small">Sipariş #'.(int)$id.'<br>Görevli, kodu kendi kontrol ekranından doğrular.</p>';
         } else {
             echo '<p>Ödeme henüz doğrulanmadıysa kısa bir süre sonra sayfayı yenileyin. Görevli onayı için ödeme sistemde doğrulanmış olmalıdır.</p>';
         }
