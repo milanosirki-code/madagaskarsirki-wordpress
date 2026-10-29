@@ -23,8 +23,8 @@ check(MDG_YB_Policy::can_redeem(3,0,0),false,'Zero use blocked');
 check(MDG_YB_Policy::can_redeem(3,0,1.5),false,'Fractional use blocked');
 class FakeItem { function get_product_id(){return 999;} function get_quantity(){return 3;} }
 class FakeOrder {
-    public $paid=true,$marker='yes',$confirmation='PAYTRWOO1234',$refund=0,$refunded_qty=0,$gateway='paytr_payment_gateway';
-    function get_meta($key){return $key==='_mdg_yb'?$this->marker:$this->confirmation;}
+    public $paid=true,$marker='yes',$confirmation='PAYTRWOO1234',$refund=0,$refunded_qty=0,$gateway='paytr_payment_gateway',$pos='no';
+    function get_meta($key){return $key==='_mdg_yb'?$this->marker:($key==='_mdg_yb_pos'?$this->pos:$this->confirmation);}
     function get_items(){return array(123=>new FakeItem());}
     function get_qty_refunded_for_item($id){return $this->refunded_qty;}
     function get_total_refunded(){return $this->refund;}
@@ -49,4 +49,20 @@ for ($n=1;$n<=50;$n++) {
     $v=MDG_Yuzboyama::vat_breakdown($n*100);
     check((int)round(($v['base']+$v['vat'])*100),$n*10000,'VAT sum for '.$n.' people');
 }
+$order=new FakeOrder();$order->marker='no';$order->pos='yes';
+check(MDG_Yuzboyama::capacity($order),3,'Legacy POS uses canonical entitlements');
+$order->confirmation='';check(MDG_Yuzboyama::capacity($order),0,'Unconfirmed POS has no rights');
+check(MDG_Yuzboyama::payment_code($order),'','Unconfirmed POS exposes no code');
+$order->confirmation='PAYTRWOO1234';$order->gateway='paytr_eft';check(MDG_Yuzboyama::capacity($order),0,'Non-card PayTR blocked');
+function wp_date($format){return '2026-10-29';}
+function get_option($key,$default=false){return $default;}
+class SnapshotOrder extends FakeOrder {
+    public $metadata=array();
+    function update_meta_data($key,$value){$this->metadata[$key]=$value;}
+}
+$order=new SnapshotOrder();MDG_Yuzboyama::order_meta($order);
+check($order->metadata['_mdg_yb'],'yes','POS creation sets canonical marker');
+check($order->metadata['_mdg_yb_vat_base'],250,'POS snapshot base');
+check($order->metadata['_mdg_yb_vat_amount'],50,'POS snapshot VAT');
+check($order->metadata['_mdg_yb_event_id'],0,'Sale without program');
 echo $checks." checks passed\n";
