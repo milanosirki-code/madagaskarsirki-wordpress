@@ -16,3 +16,4 @@ jobs:
           coverage: none
       - run: php -l wp-content/plugins/madagaskar-legacy-redirects/madagaskar-legacy-redirects.php
       - run: php tests/legacy-redirects/contract.php
+      - run: php tests/legacy-redirects/runtime.php

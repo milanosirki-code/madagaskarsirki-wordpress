@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Legacy Redirects
  * Description: Kaldırılmış eski Madagaskar URL'lerini güncel kanonik sayfalara 301 ile yönlendirir.
- * Version: 1.0.2
+ * Version: 1.0.4
  * Author: Dünya Organizasyon
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MDG_LEGACY_REDIRECTS_VERSION', '1.0.2' );
+define( 'MDG_LEGACY_REDIRECTS_VERSION', '1.0.4' );
 
 add_action(
 	'template_redirect',
@@ -33,6 +33,28 @@ add_action(
 			'/hula-hoop'      => '/gosteriler/hula-hoop/',
 			'/palyaco'        => '/gosteriler/palyaco/',
 			'/tum-gosteriler' => '/gosteriler/',
+			// Preserve the verified production 1.0.3 redirects (26 October 2026).
+			'/ana-sayfa' => '/',
+			'/gosteriler__trashed/sahne-arkasi' => '/sahne-arkasi/',
+			'/sehirler__trashed-2/gaziantep' => '/sehirler/gaziantep/',
+			'/galeri/basin-gorselleri' => '/galeri/',
+			'/gosteriler__trashed/akrobasi' => '/gosteriler/akrobasi/',
+			'/galeri__trashed/basin-gorselleri' => '/galeri/',
+			'/galeri/fotograflar' => '/galeri/',
+			'/gosteriler/jonglor' => '/jonglor/',
+			'/sehirler-2' => '/sehirler/',
+			'/sehirler-2/mersin' => '/sehirler/mersin/',
+			'/festival-organizasyonlari' => '/kurumsal/festival-organizasyonlari/',
+			'/sehirler-2/ankara' => '/sehirler/ankara/',
+			'/sehirler-2/konya' => '/sehirler/konya/',
+			'/galeri-2' => '/galeri/',
+			'/gosteriler-2' => '/gosteriler/',
+			// Search Console: exact legacy URLs and verified live destinations, 31 October 2026.
+			'/iletisim' => '/iletisim-2/',
+			'/sehirler-2/antalya' => '/sehirler/antalya/',
+			'/sehirler-2/gaziantep' => '/sehirler/gaziantep/',
+			'/gosteriler/sahne-arkasi' => '/sahne-arkasi/',
+			'/madagaskar-blog/cocuklar-ilk-kez-sirke-giderken-bilmeniz-gerekenler' => '/madagaskar-blog/cocuklar-ilk-kez-sirke-giderken-bilmeniz-gereken-10-sey/',
 			'/shop' => '/bilet-al/',
 			'/urun/madagaskar-sirki-ankara-26-eylul-2026-1200-bileti' => '/bilet-al/',
 			'/urun/madagaskar-sirki-ankara-26-eylul-2026-1400-bileti' => '/bilet-al/',
