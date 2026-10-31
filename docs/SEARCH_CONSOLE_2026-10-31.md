@@ -32,5 +32,6 @@ Do not claim all 52 404 entries resolved: API URLs, share-query URLs and removed
 - PHP syntax, contract, and all 20 runtime cases passed in GitHub Actions: https://github.com/milanosirki-code/madagaskarsirki-wordpress/actions/runs/41214982968
 - Updated exactly the live Legacy Redirects plugin PHP file to 1.0.4 via the authenticated WordPress plugin editor. WordPress reported “Dosya düzenlendi.” Readback matched the prepared source exactly.
 - All five new source URLs returned one 301 directly to the expected target, then HTTP 200. Home, Izmir event, and cart returned HTTP 200. Empty-cart checkout redirected to cart without error; no order or payment submitted.
-- Search Console reauthentication is required: Google account session is signed out, so the Madagaskar location validation has NOT been started in this continuation.
+- Google authentication completed by the user. Search Console location-missing validation successfully STARTED on 31 October 2026 for 8 affected event items (Torbali, Manisa, Aydin/Efeler). UI confirmed “Doğrulama başladı”. Final Google outcome remains pending.
+- Validation report: https://search.google.com/search-console/r/events/drilldown?resource_id=sc-domain:madagaskarsirki.com&item_key=CgwICRoIbG9jYXRpb24QAxgB
 - Existing live routing rules retained. Global 404 validation NOT started: technical and removed URLs remain in the report.
