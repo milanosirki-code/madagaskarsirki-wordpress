@@ -1,0 +1,26 @@
+name: Ticket FAQ and price advisor
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/ms-*.php'
+      - 'docs/code-snippets/assets/ms-family-advisor.js'
+      - 'tests/family-package/**'
+      - '.github/workflows/ticket-faq-advisor.yml'
+  push:
+    branches: ['codex/ticket-faq-family-20261102']
+permissions:
+  contents: read
+jobs:
+  policy-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l docs/code-snippets/ms-44.php
+      - run: php -l docs/code-snippets/ms-204.php
+      - run: php -l docs/code-snippets/ms-205.php
+      - run: node --check docs/code-snippets/assets/ms-family-advisor.js
+      - run: node tests/family-package/advisor.cjs
