@@ -113,3 +113,8 @@ Sonraki teknik adım A0'dır: canlı kaynak eşleştirmesi ve satın alınabilir
 Her sonraki çalışma kaydı şu alanları tutmalı: tarih, kapsam, kullanılan kaynak commit'i, değişiklik/PR, doğrulama kanıtı, canlıya alındı mı, kalan işler, geri dönüş ve iki arşiv bağlantısı. Tarihsel notların üzerine bugünkü durum yazılmaz; yeni kontrol tarihi ve kanıtı ayrıca eklenir.
 
 Bu çalışmanın Drive raporu: https://docs.google.com/document/d/1ji2wr6hxwdIr875azZDYHullsEwZjyu735dhR4v3ozQ/edit?usp=drivesdk
+
+## A0 canlı kontrol tamamlandı — 5 Kasım 2026
+
+Ayrıntılar: [A0 raporu](AI_WEB_ASSISTANT_A0_2026-11-05.md) ve [sanitize snapshot](AI_WEB_ASSISTANT_A0_2026-11-05.snapshot.json).
+8 etkinlik/17 seans/34 çocuk-yetişkin varyasyonu incelendi; fiyatlar 34/34 eşleşti. Keşan MMC ve MDG durumları çelişkili; yeni asistan önerisinde ayrı çözüm gerektirir. Aile sanal paketinin gerçek tarayıcı etkileşimi açık. A0 bulguları önceki varsayımların üstüne geçer; canlı iş verisi değiştirilmedi.
