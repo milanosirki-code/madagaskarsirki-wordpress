@@ -1,0 +1,11 @@
+# Gemini-assisted intake on private staging
+
+The existing Google credential successfully generated the fixed synthetic `MDG_GEMINI_OK` response with `gemini-3.1-flash-lite`. Gemini 2.5 Flash Lite had listed successfully but generation returned 404. The independent diagnostic is tracked in draft PR #307; no key was created or exported.
+
+This separate addon targets the unchanged assistant preview from PR #306. It extracts a proposed city/district and adult/child/infant counts from a short Turkish sentence using the existing server-side Google key. The model receives only the submitted text and a list of canonical city/district choices, never prices, customer records, admin abilities or sales write tools. Its output is constrained and validated: exact keys, known city or null, integer counts or null, adult minimum one, maximum twenty each. Unknown fields stay blank. No model prose, prices or URLs are displayed.
+
+The UI fills the existing form without submitting or choosing a session. The user is explicitly asked to check the proposed fields and select the session before the unchanged native quote engine runs. Both server and client enforce the exact staging origin. manage_options, normal REST nonce/cookie authentication, no-store, an atomic global lock, a 30-second per-user cooldown and a fifty-request UTC daily cap apply. These budget/lock/transient records are the only new local state; input and output text are not saved by this plugin. The UI discloses that input goes to Google. Provider/host logging is outside this plugin's guarantees.
+
+No production deployment. Requires PR #305 and #306 code on staging; this PR targets the #306 feature branch. Browser screenshots/mobile appearance remain unverified; real PHP markup is exercised with JSDOM. Run PHP 7.4/8.4 safety tests, the existing core contract, and UI lifecycle tests before staging installation. Live synthetic parsing and subsequent quote smoke tests are pending.
+
+Rollback: deactivate only mdg-gemini-intake. Existing selectors and quote calculation still work. After a hard process termination, clear only mdg_gemini_intake_lock after confirming no request is running. Do not replace the older production Google plugin with staging files or copy API keys between environments.
