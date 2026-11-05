@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-05",
+  "scope": "Source and institutional-memory review; proposed public web recommendation assistant",
+  "repository": "milanosirki-code/madagaskarsirki-wordpress",
+  "base_commit": "83c04d8857ed9d312c872533ae653e6a1fc07393",
+  "latest_family_record": {
+    "pr": 303,
+    "head": "c386c9bc60c766dd3cc39ad44e03eaf033a2e396",
+    "state_observed": "open_unmerged",
+    "file_sha": "0545410169d1b1c29a31feb328feea5166bfd2c2"
+  },
+  "sources": [
+    "README.md",
+    "AGENTS.md",
+    "docs/CODEX_MASTER_WORKFLOW.md",
+    "docs/CODEX_PROJECT_STATE.md",
+    "docs/ISSUE_82_KOMMO_SOURCE_CHECKPOINT.md",
+    "docs/code-snippets/mdg-kommo-unified-source-v2.php",
+    "wp-content/plugins/madagaskar-ai-abilities/README.md",
+    "wp-content/plugins/madagaskar-ai-abilities/madagaskar-ai-abilities.php",
+    "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-public-event.php",
+    "wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-sessions.php",
+    "wp-content/plugins/madagaskar-bilet-yonetimi/assets/public-event.js",
+    "wp-content/plugins/madagaskar-kommo-automation/modules/active-events-source.php"
+  ],
+  "drive_report": "https://docs.google.com/document/d/1ji2wr6hxwdIr875azZDYHullsEwZjyu735dhR4v3ozQ/edit?usp=drivesdk",
+  "drive_folder": "196yJBRMajDa1B4TJUwYQVU0NahsndFTM",
+  "next_step": "A0: verify installed source ownership, brand/mapping, native ticket purchasability and current family policy",
+  "validation": {
+    "source_review": true,
+    "github_and_drive_readback": "verify_after_publication",
+    "local_clone": "failed_proxy_unreachable",
+    "php_tests": "not_run_documentation_only",
+    "live_admin": "not_checked",
+    "live_checkout": "not_tested",
+    "model_runtime": "not_implemented"
+  },
+  "production_changes": false,
+  "customer_messages_sent": false
+}
