@@ -32,10 +32,12 @@
             if (requestRevision !== revision || before !== snapshot()) { status.textContent = 'Bilgiler değiştiği için önceki yanıt uygulanmadı.'; return; }
             if (!response.ok || data.requires_confirmation !== true || !data.proposal) throw new Error();
             var p = data.proposal, city = document.getElementById('mdg-wa-city');
+            if (p.city_key !== null && typeof p.city_key !== 'string') throw new Error();
+            var proposedCity = p.city_key === null ? null : p.city_key.normalize('NFC');
             // Validate the whole response before changing any form field.
             ['adults', 'children', 'infants'].forEach(function (key) { if (p[key] !== null && (!Number.isInteger(p[key]) || p[key] < (key === 'adults' ? 1 : 0) || p[key] > 20)) throw new Error(); });
-            if (p.city_key !== null && !Array.from(city.options).some(function (o) { return o.value === p.city_key && o.value; })) throw new Error();
-            city.value = p.city_key === null ? '' : p.city_key; city.dispatchEvent(new Event('change', {bubbles: true}));
+            if (proposedCity !== null && !Array.from(city.options).some(function (o) { return o.value === proposedCity && o.value; })) throw new Error();
+            city.value = proposedCity === null ? '' : proposedCity; city.dispatchEvent(new Event('change', {bubbles: true}));
             ['adults', 'children', 'infants'].forEach(function (key) {
                 var field = document.getElementById('mdg-wa-' + key); field.value = p[key] === null ? '' : String(p[key]); field.dispatchEvent(new Event('input', {bubbles: true}));
             });

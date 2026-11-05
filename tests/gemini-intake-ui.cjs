@@ -25,5 +25,6 @@ const tick=()=>new Promise(r=>setImmediate(r));
  s=setup();s.button.click();s.input.value='başka';s.input.dispatchEvent(new s.w.Event('input'));s.input.value='İzmir iki yetişkin üç çocuk';s.finish(result);await tick();assert.equal(s.d.getElementById('mdg-wa-children').value,'2');s.w.close();
  s=setup();s.button.click();s.finish({...result,proposal:{...result.proposal,city_key:'<img src=x onerror=alert(1)>'}});await tick();assert.equal(s.d.getElementById('mdg-wa-children').value,'2');assert.equal(s.d.querySelectorAll('img').length,0);s.w.close();
  s=setup();s.button.click();s.finish({...result,incomplete:true,proposal:{city_key:null,adults:null,children:3,infants:0}});await tick();assert.equal(s.d.getElementById('mdg-wa-adults').value,'');assert.equal(s.d.getElementById('mdg-wa-city').value,'');assert.equal(s.submits(),0);s.w.close();
- console.log('PASS Gemini intake UI: confirmation, duplicate clicks, stale/reverted edits, unsafe city, missing counts');
+ s=setup();s.button.click();s.finish({...result,proposal:{...result.proposal,city_key:'I\u0307zmir / Konak'}});await tick();assert.equal(s.d.getElementById('mdg-wa-city').value,'İzmir / Konak');assert.equal(s.d.getElementById('mdg-wa-children').value,'3');s.w.close();
+ console.log('PASS Gemini intake UI: confirmation, duplicate clicks, stale/reverted edits, unsafe city, missing counts, Turkish Unicode normalization');
 })().catch(e=>{console.error(e);process.exitCode=1;});
