@@ -4,8 +4,13 @@ namespace Madagaskar\WebAssistant;
 /** Validates normalized native source records. No WordPress/DB writes. */
 final class Catalogue {
     const BRAND = 'Madagaskar Sirki';
+    const PRODUCTION_ORIGIN = 'https://madagaskarsirki.com';
+    const STAGING_ORIGIN = 'https://staging-f321-milanosirki-lgajf.wpcomstaging.com';
 
-    public static function offers( array $b, $now ) {
+    public static function offers( array $b, $now, $origin = self::PRODUCTION_ORIGIN ) {
+        if ( ! in_array( $origin, array( self::PRODUCTION_ORIGIN, self::STAGING_ORIGIN ), true ) ) {
+            throw new Failure( 'UNVERIFIED_ORIGIN' );
+        }
         $program = $b['program'];
         $mmc = $b['mmc_event'];
         $mdg = $b['mdg_event'];
@@ -25,7 +30,7 @@ final class Catalogue {
         }
         if ( ! $b['venue_matches'] ) { throw new Failure( 'VENUE_MISMATCH' ); }
         $url = parse_url( $b['ticket_url'] );
-        if ( ! $url || ( $url['scheme'] ?? '' ) !== 'https' || ( $url['host'] ?? '' ) !== 'madagaskarsirki.com'
+        if ( ! $url || ( $url['scheme'] ?? '' ) !== 'https' || ( $url['host'] ?? '' ) !== parse_url( $origin, PHP_URL_HOST )
             || isset( $url['user'] ) || isset( $url['pass'] ) || isset( $url['port'] ) || isset( $url['query'] ) || isset( $url['fragment'] )
             || ! preg_match( '#\A/etkinlik/[a-z0-9-]+/\z#', $url['path'] ?? '' ) ) {
             throw new Failure( 'UNVERIFIED_URL' );

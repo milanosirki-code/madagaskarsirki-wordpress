@@ -29,3 +29,12 @@ jobs:
         run: find wp-content/plugins/madagaskar-web-assistant-core tests/web-assistant-core -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Behaviour, independent optimality oracle and no-write adapter tests
         run: php -d error_reporting=E_ALL -d display_errors=1 tests/web-assistant-core/run.php
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: node --check wp-content/plugins/madagaskar-web-assistant-core/assets/preview.js
+      - name: Install isolated DOM test dependency
+        run: npm install --prefix "$RUNNER_TEMP/mdg-web-ui" --ignore-scripts --no-audit --no-fund jsdom@26.1.0
+      - name: UI and request lifecycle
+        run: NODE_PATH="$RUNNER_TEMP/mdg-web-ui/node_modules" node tests/web-assistant-core/ui.cjs

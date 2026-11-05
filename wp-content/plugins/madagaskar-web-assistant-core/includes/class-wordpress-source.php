@@ -3,6 +3,14 @@ namespace Madagaskar\WebAssistant;
 
 /** Bounded, read-only adapter over existing domain services. Never calls ensure/sync. */
 final class WordPressSource {
+    public function origin() {
+        $origin = rtrim( home_url( '/' ), '/' );
+        if ( ! in_array( $origin, array( Catalogue::PRODUCTION_ORIGIN, Catalogue::STAGING_ORIGIN ), true ) ) {
+            throw new Failure( 'UNVERIFIED_ORIGIN' );
+        }
+        return $origin;
+    }
+
     public function __construct() {
         foreach ( array( 'MMC_Program_Service', 'MMC_Event_Service', 'MMC_Venue_Service', 'MDG_Events', 'MDG_Sessions', 'MDG_Capacity', 'MDG_Public_Event', 'MDG_DB' ) as $class ) {
             if ( ! class_exists( $class ) ) { throw new Failure( 'DEPENDENCY_UNAVAILABLE' ); }
