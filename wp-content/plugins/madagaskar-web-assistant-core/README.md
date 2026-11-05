@@ -1,6 +1,12 @@
-# Madagaskar Web Assistant Core 0.1.0
+# Madagaskar Web Assistant Core 0.2.0
 
-Internal, read-only PHP services for the proposed web assistant. This package does not register a public API, UI, agent tool, cron, activation migration or checkout hook. Loading it only defines classes. It has not been deployed.
+Internal, read-only PHP services for the proposed web assistant. Version 0.2.0 adds a restricted preview on the explicitly verified staging origin only. It has no anonymous API, agent tool, cron, activation migration or checkout hook. On production it only defines classes and registers no preview hooks. Deployment state is recorded separately in PR #306 and the Drive worklog.
+
+## Staging preview
+
+On `https://staging-f321-milanosirki-lgajf.wpcomstaging.com` only, Tools → Bilet Önerisi Önizleme shows the proposed customer form to users with `manage_woocommerce`. Two REST routes (`GET mdg-web-assistant/v1/catalogue`, `POST mdg-web-assistant/v1/quote`) require the same site/permission gate, including an independent check in each callback. Cookie requests use the WordPress REST nonce. Responses are private/no-store; POST accepts only session ID, party counts and a mandatory source revision, with a 2 KiB body bound.
+
+The UI requires explicit city and session selection, sends only validated integer counts, invalidates results on edits and rejects late responses. Source strings render with textContent, and event links must remain on the verified staging origin. Clicking the link opens the existing event page; it does not select cart items or complete checkout. Production/public rollout is a separate review step. The preview includes no LLM or chat integration.
 
 ## Use from a trusted administrator context
 
@@ -23,7 +29,7 @@ try {
 }
 ```
 
-The example requires a real offer selected by the caller. Never accept a client-supplied offer, price, URL, capacity or product/variation ID. A future public controller must call these services through a separately reviewed, restricted interface; do not give the anonymous caller administrator permissions or a generic abilities execution endpoint. No web controller is included in this phase.
+The example requires a real offer selected by the caller. Never accept a client-supplied offer, price, URL, capacity or product/variation ID. A future public controller must call these services through a separately reviewed, restricted interface; do not give the anonymous caller administrator permissions or a generic abilities execution endpoint. The included staging controller does not grant public access.
 
 ## Source contract
 
@@ -31,7 +37,7 @@ The example requires a real offer selected by the caller. Never accept a client-
 - MMC event must be `sales_open`; program may be `sales_open`, `promotion`, `operations` or `show_day`; MDG event and session must be `onsale`. Disagreement blocks automatic recommendations. This includes A0's Keşan case; the source is not repaired automatically.
 - UTC MDG time must match the active MMC local seans and event/program date in `Europe/Istanbul`. Closed, malformed, future-sale-window and sold-out sessions cannot become offers.
 - Read each session's own active child/adult catalogue; do not reuse the first session's prices. Require matching published variation parent, native purchasability/stock and exact decimal price. Respect MDG shared capacity, Woo maximum quantity and the parent product quantity limit.
-- Allow only the canonical HTTPS Madagaskar event URL, with no query, fragment, credentials, custom port or alternate host.
+- Allow only the canonical HTTPS event URL on the trusted current production or explicitly allowlisted staging origin, with no query, fragment, credentials, custom port or alternate host. The origin is selected by the server, never supplied by a request.
 - Virtual family package availability needs the existing family plugin, per-event enablement and no active MDG multi-unit ticket collision. Price precedence follows native checkout: active MMC family price, else the event setting/default. The inactive İzmir 1,100 TL row therefore cannot override the event's 1,300 TL setting. Malformed or ambiguous family data disables family quotes, while valid singles remain usable.
 - No source cache is added. Each `Service::quote` reads native data again. Optional `source_revision` detects price, stock, mapping or family-policy changes since selection. Offers expire after at most 60 seconds, earlier at session start/sale end. Offers are advisory; native checkout must revalidate and reserve capacity.
 
@@ -47,8 +53,8 @@ School invitations, campaign stacking, group sales and accessible-seat promises 
 
 ## Tests and rollout
 
-`php tests/web-assistant-core/run.php` runs fixture-backed behaviour checks, an independent recursive price-optimality oracle, age/price/stock/time/brand/state/URL failures and native-source integration with DB writes/cart initialization forbidden. GitHub Actions tests PHP 7.4 and 8.4. These are synthetic tests, not live checkout or QR acceptance.
+`php tests/web-assistant-core/run.php` runs fixture-backed behaviour checks, an independent recursive price-optimality oracle, age/price/stock/time/brand/state/URL failures, native-source integration with DB writes/cart initialization forbidden and preview permission/request contracts. GitHub Actions tests PHP 7.4 and 8.4, then the actual JS against the actual PHP markup in JSDOM (selection, nonce, invalidation, stale/late responses, XSS and safe links). JSDOM is test-only and is not shipped in the plugin. These are synthetic tests, not visual browser, live checkout or QR acceptance.
 
 Before production, read back the installed dependencies, load only this package in staging, inspect `Service::catalogue()` including blocked records, explicitly test the chosen session/revision/quote and the native JS family row. Recheck native guest purchase and family allocation/4QR if a later UI or checkout integration is added. Do not change Keşan status, prices, Woo mappings or active snippets to make a test pass.
 
-Rollback: deactivate/remove only this new package. There are no migrations, settings, jobs, holds or data records to undo. Existing sales plugins and snippets remain active. Research and A0 evidence: PR #304. Implementation tracked independently in PR #305.
+Rollback: deactivate/remove only this new package; if replacing 0.1.0 in staging, preserve and restore that exact ZIP. There are no migrations, settings, jobs, holds or data records to undo. Existing sales plugins and snippets remain active. Research and A0 evidence: PR #304. Core implementation: PR #305; staging UI continuation is a separate dependent PR.

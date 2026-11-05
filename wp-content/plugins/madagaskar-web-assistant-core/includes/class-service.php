@@ -15,7 +15,7 @@ final class Service {
         foreach ( $source->programs() as $program ) {
             if ( (string) ( $program->brand ?? '' ) !== Catalogue::BRAND || (string) $program->planned_date < $today ) { continue; }
             try {
-                $result = Catalogue::offers( $source->bundle( (int) $program->id ), $now );
+                $result = Catalogue::offers( $source->bundle( (int) $program->id ), $now, $source->origin() );
                 $offers = array_merge( $offers, $result['offers'] );
                 $blocked = array_merge( $blocked, $result['blocked'] );
             } catch ( Failure $e ) {
@@ -35,7 +35,7 @@ final class Service {
             throw new Failure( 'INVALID_REVISION' );
         }
         $source = self::source(); $now = time();
-        $result = Catalogue::offers( $source->bundle_for_session( $session_id ), $now );
+        $result = Catalogue::offers( $source->bundle_for_session( $session_id ), $now, $source->origin() );
         foreach ( $result['offers'] as $offer ) {
             if ( $offer['session_id'] !== $session_id ) { continue; }
             if ( null !== $expected_revision && ! hash_equals( $offer['source_revision'], $expected_revision ) ) {

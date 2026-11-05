@@ -206,4 +206,5 @@ fails( static function() { Service::quote( 223, array( 'adults' => 2, 'children'
 $GLOBALS['fixture_can_manage'] = true;
 check( $GLOBALS['wpdb']->writes === 0, 'native adapter writes zero' );
 check( $GLOBALS['fixture_cart_calls'] === 0, 'no cart initialization' );
+require __DIR__ . '/preview-contract.php';
 echo json_encode( array( 'result' => 'PASS', 'assertions' => $assertions, 'native_writes' => $GLOBALS['wpdb']->writes, 'cart_calls' => $GLOBALS['fixture_cart_calls'] ) ) . "\n";

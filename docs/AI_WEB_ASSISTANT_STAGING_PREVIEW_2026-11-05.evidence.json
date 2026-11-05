@@ -1,0 +1,131 @@
+{
+  "phase": "A2",
+  "date": "2026-11-05",
+  "code_commit": "965f3d08ccdda9899725af268736ac3cc626aef0",
+  "parent_core_pr": 305,
+  "preview_pr": 306,
+  "staging": {
+    "site_id": 257930487,
+    "origin": "https://staging-f321-milanosirki-lgajf.wpcomstaging.com",
+    "private": true,
+    "installed": "madagaskar-web-assistant-core",
+    "version": "0.2.0",
+    "active": true,
+    "initially_absent": true
+  },
+  "package": {
+    "sha256": "c04b80e09673371f330ffadc1854b71082ba284ffd074355ef21a711c45c2410",
+    "bytes": 19916,
+    "entries": [
+      "madagaskar-web-assistant-core/README.md",
+      "madagaskar-web-assistant-core/assets/preview.css",
+      "madagaskar-web-assistant-core/assets/preview.js",
+      "madagaskar-web-assistant-core/includes/class-catalogue.php",
+      "madagaskar-web-assistant-core/includes/class-core.php",
+      "madagaskar-web-assistant-core/includes/class-preview.php",
+      "madagaskar-web-assistant-core/includes/class-service.php",
+      "madagaskar-web-assistant-core/includes/class-wordpress-source.php",
+      "madagaskar-web-assistant-core/madagaskar-web-assistant-core.php"
+    ]
+  },
+  "ci": {
+    "workflow_run": 41983121179,
+    "php74_job": 127097557250,
+    "php84_job": 127097557546,
+    "assertions_each": 347,
+    "dom_tests": "PASS",
+    "workflow_success_count": 14
+  },
+  "runtime": {
+    "catalogue_offers": 3,
+    "mdg_event_id": 10,
+    "session_ids": [
+      88,
+      89,
+      90
+    ],
+    "data_scope": "old staging clone, not complete production catalogue",
+    "quotes": [
+      {
+        "adults": 2,
+        "children": 2,
+        "total_minor": 130000,
+        "expected_minor": 130000,
+        "passed": true,
+        "reservation": false
+      },
+      {
+        "adults": 1,
+        "children": 2,
+        "total_minor": 116500,
+        "expected_minor": 116500,
+        "passed": true,
+        "reservation": false
+      },
+      {
+        "adults": 1,
+        "children": 3,
+        "total_minor": 130000,
+        "expected_minor": 130000,
+        "passed": true,
+        "reservation": false
+      },
+      {
+        "adults": 2,
+        "children": 1,
+        "total_minor": 130000,
+        "expected_minor": 130000,
+        "passed": true,
+        "reservation": false
+      },
+      {
+        "adults": 2,
+        "children": 3,
+        "total_minor": 159000,
+        "expected_minor": 159000,
+        "passed": true,
+        "reservation": false
+      },
+      {
+        "adults": 2,
+        "children": 4,
+        "total_minor": 188000,
+        "expected_minor": 188000,
+        "passed": true,
+        "reservation": false
+      }
+    ],
+    "rejections": {
+      "stale_revision": 409,
+      "client_price": 400,
+      "oversized_body": 413
+    },
+    "domain_row_counts": {
+      "seven_tables_equal": true,
+      "full_database_equality": "NOT_MEASURED"
+    },
+    "no_order_or_payment_or_cart_call_initiated": true
+  },
+  "source_readback": {
+    "unmasked_files_match": 7,
+    "total_files": 8,
+    "javascript": "121/122 lines match; one request-epoch assignment is automatically redacted by WPVibe (token = epoch). No raw-byte JS equality attested.",
+    "scope": "numbered source readback, not filesystem hash"
+  },
+  "production": {
+    "site_id": 255726534,
+    "plugin_uploaded": false,
+    "preview_namespace_get": "404 rest_no_route",
+    "business_write_calls_initiated": 0
+  },
+  "visual_verification": {
+    "actual_browser_available": false,
+    "admin_html_capture": "private-site sign-in page; preview not visually inspected",
+    "jsdom_actual_php_markup_and_js": "PASS",
+    "mobile_visual": "NOT_VERIFIED",
+    "native_family_js": "NOT_VERIFIED_IN_REAL_BROWSER",
+    "real_payment_qr": "NOT_TESTED",
+    "llm": "NOT_ADDED"
+  },
+  "rollback": "Deactivate/remove only the new staging plugin. No data migration to reverse. Preserve existing sales modules."
+}
