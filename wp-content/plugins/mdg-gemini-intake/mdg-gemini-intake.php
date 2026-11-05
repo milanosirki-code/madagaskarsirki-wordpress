@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Gemini Intake Preview
  * Description: Gemini-assisted form filling for the private Madagaskar staging preview.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires PHP: 7.4
  */
 namespace Madagaskar\GeminiIntake;
@@ -67,7 +67,8 @@ final class Intake {
     }
     public static function assets( $hook ) {
         if ( $hook !== 'tools_page_mdg-web-assistant-preview' || ! self::permission() ) { return; }
-        wp_enqueue_script( 'mdg-gemini-intake', plugins_url( 'intake.js', __FILE__ ), array( 'mdg-web-assistant-preview' ), '0.1.1', true );
+        wp_enqueue_style( 'mdg-gemini-intake', plugins_url( 'intake.css', __FILE__ ), array( 'mdg-web-assistant-preview' ), '0.1.2' );
+        wp_enqueue_script( 'mdg-gemini-intake', plugins_url( 'intake.js', __FILE__ ), array( 'mdg-web-assistant-preview' ), '0.1.2', true );
         wp_add_inline_script( 'mdg-gemini-intake', 'window.mdgGeminiIntake=' . wp_json_encode( array( 'url' => rest_url( 'mdg-gemini-intake/v1/parse' ), 'nonce' => wp_create_nonce( 'wp_rest' ) ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';', 'before' );
     }
 }

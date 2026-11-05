@@ -1,0 +1,6 @@
+.mdg-wa .mdg-wa-intake{margin-top:24px;padding:20px;border:1px solid #e4d8b3;border-radius:14px;background:#fffbef;min-width:0}
+.mdg-wa .mdg-wa-intake textarea{display:block;width:100%;max-width:100%;min-width:0;min-height:108px;padding:12px;font:inherit;font-size:16px;line-height:1.5;color:var(--wa-ink,#151515);background:#fff;border:1px solid #777;border-radius:10px;resize:vertical}
+.mdg-wa .mdg-wa-intake textarea[aria-invalid=true]{border-color:#a11416}
+.mdg-wa #mdg-wa-intake-status{margin:12px 0 0;min-height:24px;overflow-wrap:anywhere}
+.mdg-wa .mdg-wa-intake .mdg-wa-note{margin:12px 0}
+@media(max-width:650px){.mdg-wa .mdg-wa-intake{padding:14px}.mdg-wa .mdg-wa-intake button{width:100%;white-space:normal}}
