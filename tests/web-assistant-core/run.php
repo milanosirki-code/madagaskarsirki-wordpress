@@ -8,9 +8,14 @@ require __DIR__ . '/../../wp-content/plugins/madagaskar-web-assistant-core/inclu
 use Madagaskar\WebAssistant\Catalogue;
 use Madagaskar\WebAssistant\Failure;
 use Madagaskar\WebAssistant\Quote;
+use Madagaskar\WebAssistant\Party;
 use Madagaskar\WebAssistant\Service;
 use Madagaskar\WebAssistant\Value;
 use Madagaskar\WebAssistant\WordPressSource;
+
+set_error_handler( static function( $severity, $message, $file, $line ) {
+    throw new ErrorException( $message, 0, $severity, $file, $line );
+} );
 
 $assertions = 0;
 function check( $condition, $label ) {
@@ -61,6 +66,9 @@ function quote( $a, $c, $o = null, $infants = 0 ) {
 check( Value::minor( '585.05' ) === 58505 && Value::minor( '0.5' ) === 50, 'decimal cents' );
 foreach ( array( '1e3', '10,50', '-1', 'NaN', '1.001', '', '01.00', 12.5 ) as $bad ) { fails( static function() use ( $bad ) { Value::minor( $bad ); }, 'INVALID_MONEY' ); }
 fails( static function() { Value::timestamp( '2026-02-30 12:00:00' ); }, 'INVALID_DATE' );
+check( Party::from_ages( array( 30, 2, 3, 12, 13 ) ) === array( 'adults' => 2, 'children' => 2, 'infants' => 1 ), 'age boundaries 2/3/12/13' );
+fails( static function() { Party::from_ages( array( 5, 12 ) ); }, 'INVALID_INTEGER' );
+fails( static function() { Party::from_ages( array( 30, '5' ) ); }, 'INVALID_INTEGER' );
 check( offer()['starts_at'] === '2026-11-12T18:00:00+03:00', 'UTC to Istanbul' );
 foreach ( array( array( 1, 2, 98000 ), array( 1, 3, 110000 ), array( 2, 1, 110000 ), array( 2, 2, 110000 ), array( 3, 0, 147000 ) ) as $case ) {
     check( quote( $case[0], $case[1] )['recommended']['total_minor'] === $case[2], 'standard family example' );
@@ -165,6 +173,8 @@ check( Catalogue::offers( $b, $now )['offers'][0]['source_revision'] !== $revisi
 // Exercise the production WordPressSource using domain stubs, including real
 // family fallback precedence and explicit rejection of database writes.
 require __DIR__ . '/wordpress-fixture.php';
+require __DIR__ . '/fixture-clock.php';
+$GLOBALS['fixture_clock'] = $now;
 $native = new WordPressSource();
 $normalized = $native->bundle( 26 );
 check( $normalized['family']['price_minor'] === 110000, 'native active MMC family precedence' );
@@ -182,6 +192,18 @@ $GLOBALS['fixture_wrong_parent'] = true;
 $out = Catalogue::offers( $native->bundle( 26 ), $now );
 check( ! $out['offers'], 'native wrong parent excluded' );
 $GLOBALS['fixture_wrong_parent'] = false;
+$current = Service::catalogue();
+check( count( $current['offers'] ) === 1 && ! $current['blocked'], 'service builds native catalogue' );
+$current_offer = $current['offers'][0];
+$quoted = Service::quote( 223, array( 'adults' => 2, 'children' => 2 ), $current_offer['source_revision'] );
+check( $quoted['recommended']['total_minor'] === 110000 && ! $quoted['reservation'], 'service native quote without cart' );
+fails( static function() { Service::quote( 223, array( 'adults' => 2, 'children' => 2 ), str_repeat( '0', 64 ) ); }, 'STALE_SELECTION' );
+$GLOBALS['fixture_capacity'] = 3;
+fails( static function() use ( $current_offer ) { Service::quote( 223, array( 'adults' => 2, 'children' => 2 ), $current_offer['source_revision'] ); }, 'STALE_SELECTION' );
+$GLOBALS['fixture_capacity'] = 500;
+$GLOBALS['fixture_can_manage'] = false;
+fails( static function() { Service::quote( 223, array( 'adults' => 2, 'children' => 2 ) ); }, 'FORBIDDEN' );
+$GLOBALS['fixture_can_manage'] = true;
 check( $GLOBALS['wpdb']->writes === 0, 'native adapter writes zero' );
 check( $GLOBALS['fixture_cart_calls'] === 0, 'no cart initialization' );
 echo json_encode( array( 'result' => 'PASS', 'assertions' => $assertions, 'native_writes' => $GLOBALS['wpdb']->writes, 'cart_calls' => $GLOBALS['fixture_cart_calls'] ) ) . "\n";

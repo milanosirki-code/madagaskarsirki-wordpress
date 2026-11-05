@@ -34,6 +34,23 @@ final class Value {
     }
 }
 
+final class Party {
+    /** Age ranges only; callers need not retain dates of birth or identities. */
+    public static function from_ages( array $ages ) {
+        if ( ! $ages || count( $ages ) > 60 ) { throw new Failure( 'INVALID_PARTY' ); }
+        $party = array( 'adults' => 0, 'children' => 0, 'infants' => 0 );
+        foreach ( $ages as $age ) {
+            Value::integer( $age, 0, 120 );
+            $key = $age <= 2 ? 'infants' : ( $age <= 12 ? 'children' : 'adults' );
+            $party[ $key ]++;
+        }
+        Value::integer( $party['adults'], 1, 20 );
+        Value::integer( $party['children'], 0, 20 );
+        Value::integer( $party['infants'], 0, 20 );
+        return $party;
+    }
+}
+
 /** Pure calculation over a server-created offer; not a client-facing API. */
 final class Quote {
     const POLICY = 'family-policy-2026-11-03';

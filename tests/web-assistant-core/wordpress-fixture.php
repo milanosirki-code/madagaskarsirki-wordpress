@@ -4,6 +4,7 @@ $GLOBALS['fixture_can_manage'] = true;
 $GLOBALS['fixture_mmc_status'] = 'sales_open';
 $GLOBALS['fixture_wrong_parent'] = false;
 $GLOBALS['fixture_cart_calls'] = 0;
+$GLOBALS['fixture_capacity'] = 500;
 function current_user_can( $cap ) { return $cap === 'manage_woocommerce' && $GLOBALS['fixture_can_manage']; }
 function wp_timezone_string() { return 'Europe/Istanbul'; }
 function wc_load_cart() { $GLOBALS['fixture_cart_calls']++; throw new RuntimeException( 'Cart write attempted' ); }
@@ -54,7 +55,7 @@ class MDG_Sessions {
     }
     public static function sales_closed_by_time( $s ) { return false; }
 }
-class MDG_Capacity { public static function available( $id ) { return 500; } }
+class MDG_Capacity { public static function available( $id ) { return $GLOBALS['fixture_capacity']; } }
 class MDG_Public_Event { public static function live_url( $e ) { return 'https://madagaskarsirki.com/etkinlik/fixture-2026/'; } }
 class MDG_DB { public static function table( $name ) { return 'fixture_mdg_' . $name; } }
 class MDG_Family_Package_22_V1 {}
