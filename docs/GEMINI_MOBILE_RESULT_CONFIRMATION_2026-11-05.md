@@ -1,0 +1,7 @@
+# Mobile result card confirmation — 2026-11-05
+
+The user reported “Çalışıyor” and supplied screenshot 1001816643.jpg from a phone. The visible recommendation card shows 8 November at 12:00, Halkapınar Spor Salonu; one family_2_2 package at TRY1300 and one child ticket at TRY290, total TRY1590, savings TRY450. These match the earlier synthetic staging quote for two adults and three children. The displayed card fits the pictured phone width; its button text, price, line items and reservation disclaimer are readable with no visible horizontal clipping in this image.
+
+This is user-reported operation plus visual evidence of the result card. The screenshot does not show the Gemini input, parsing, city/session selection, button destination or checkout. It does not establish full mobile journey, keyboard, accessibility, desktop or payment verification. No production publication is inferred from “Çalışıyor”. The image has no visible site URL or plugin version; the staging context comes from the conversation. Addon0.1.2 was the last confirmed installed staging version.
+
+No code, site setting or sales record changed in this step. This evidence note is recorded on the existing draft PR308 branch and in the ongoing Drive report. No new model requests were made. Remaining release gates: verify the ticket-link destination and native ticket screen in an authenticated browser, complete relevant desktop/mobile flow review and existing production pilot/sales checks before controlled publication.
