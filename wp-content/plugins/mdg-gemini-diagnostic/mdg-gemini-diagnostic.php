@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Gemini Staging Diagnostic
  * Description: Fixed-prompt, administrator-only Gemini connectivity check on the approved staging origin.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  */
 namespace Madagaskar\GeminiDiagnostic;
@@ -22,6 +22,10 @@ final class Check {
             'methods' => 'POST', 'permission_callback' => array( __CLASS__, 'permission' ),
             'callback' => array( __CLASS__, 'run' ),
         ) );
+        register_rest_route( 'mdg-gemini-diagnostic/v1', '/models', array(
+            'methods' => 'POST', 'permission_callback' => array( __CLASS__, 'permission' ),
+            'callback' => array( __CLASS__, 'models' ),
+        ) );
     }
     private static function response( $code, $status, $extra = array() ) {
         $response = new \WP_REST_Response( array_merge( array( 'code' => $code, 'provider' => 'google', 'success' => $code === 'GEMINI_OK' ), $extra ), $status );
@@ -38,13 +42,17 @@ final class Check {
         $status = (int) wp_remote_retrieve_response_code( $raw );
         if ( $status !== 200 ) {
             $codes = array( 400 => 'GOOGLE_REQUEST_REJECTED', 401 => 'GOOGLE_AUTH_REJECTED', 403 => 'GOOGLE_ACCESS_DENIED', 404 => 'GOOGLE_MODEL_UNAVAILABLE', 429 => 'GOOGLE_QUOTA_OR_RATE_LIMIT' );
-            return array( 'code' => $codes[$status] ?? 'GOOGLE_SERVICE_ERROR', 'status' => 502, 'upstream_status' => $status );
+            $error = json_decode( wp_remote_retrieve_body( $raw ), true );
+            $safe_status = $error['error']['status'] ?? null;
+            if ( ! in_array( $safe_status, array( 'INVALID_ARGUMENT', 'UNAUTHENTICATED', 'PERMISSION_DENIED', 'NOT_FOUND', 'RESOURCE_EXHAUSTED', 'UNAVAILABLE', 'INTERNAL' ), true ) ) { $safe_status = null; }
+            return array( 'code' => $codes[$status] ?? 'GOOGLE_SERVICE_ERROR', 'status' => 502, 'upstream_status' => $status, 'upstream_code' => $safe_status );
         }
         $data = json_decode( wp_remote_retrieve_body( $raw ), true );
         if ( ! is_array( $data ) ) { return array( 'code' => 'GOOGLE_INVALID_RESPONSE', 'status' => 502 ); }
         return array( 'data' => $data );
     }
-    public static function run( $request ) {
+    public static function models( $request ) { return self::run( $request, true ); }
+    public static function run( $request, $list_only = false ) {
         if ( ! self::permission() ) { return self::response( 'FORBIDDEN', 403 ); }
         if ( strlen( $request->get_body() ) > 16 || ! in_array( trim( $request->get_body() ), array( '', '{}' ), true ) ) {
             return self::response( 'FIXED_TEST_ONLY', 400 );
@@ -63,8 +71,10 @@ final class Check {
             if ( isset( $models['code'] ) ) { return self::response( $models['code'], $models['status'], array( 'phase' => 'models', 'upstream_status' => $models['upstream_status'] ?? null ) ); }
             $available = array();
             foreach ( $models['data']['models'] ?? array() as $model ) {
-                if ( is_array( $model ) && in_array( 'generateContent', $model['supportedGenerationMethods'] ?? array(), true ) ) { $available[] = $model['name'] ?? ''; }
+                if ( is_array( $model ) && in_array( 'generateContent', $model['supportedGenerationMethods'] ?? array(), true )
+                    && preg_match( '#^models/gemini-[a-z0-9.-]{1,70}$#D', $model['name'] ?? '' ) ) { $available[] = $model['name']; }
             }
+            if ( $list_only ) { return self::response( 'MODEL_LIST_OK', 200, array( 'models' => array_slice( $available, 0, 100 ) ) ); }
             $selected = null;
             foreach ( array( 'models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.0-flash' ) as $model ) {
                 if ( in_array( $model, $available, true ) ) { $selected = $model; break; }
@@ -76,7 +86,7 @@ final class Check {
                 'contents' => array( array( 'role' => 'user', 'parts' => array( array( 'text' => 'Reply with exactly MDG_GEMINI_OK and nothing else.' ) ) ) ),
                 'generationConfig' => $config,
             ) );
-            if ( isset( $result['code'] ) ) { return self::response( $result['code'], $result['status'], array( 'phase' => 'generation', 'upstream_status' => $result['upstream_status'] ?? null ) ); }
+            if ( isset( $result['code'] ) ) { return self::response( $result['code'], $result['status'], array( 'phase' => 'generation', 'model' => $selected, 'upstream_status' => $result['upstream_status'] ?? null, 'upstream_code' => $result['upstream_code'] ?? null ) ); }
             $text = '';
             foreach ( $result['data']['candidates'][0]['content']['parts'] ?? array() as $part ) {
                 if ( is_string( $part['text'] ?? null ) && empty( $part['thought'] ) ) { $text .= $part['text']; }

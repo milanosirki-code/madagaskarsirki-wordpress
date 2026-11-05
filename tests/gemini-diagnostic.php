@@ -39,7 +39,7 @@ function reset_case(){
     );
 }
 function run_case(){ $result=Check::run(new DiagnosticRequest());ok(strpos(json_encode($result),'fake-secret')===false,'no secret in output');return $result; }
-reset_case();Check::routes();ok(count($GLOBALS['routes'])===1,'staging registered');ok($GLOBALS['routes'][0][2]['methods']==='POST','POST only');
+reset_case();Check::routes();ok(count($GLOBALS['routes'])===2,'staging registered');ok($GLOBALS['routes'][0][2]['methods']==='POST','POST only');
 $r=run_case();ok($r->status===200 && $r->data['success'],'confirmed generation');ok(count($GLOBALS['calls'])===2,'one list plus one generation');
 foreach($GLOBALS['calls'] as $call){ok(strpos($call[0],'fake-secret')===false,'secret absent from URL');ok($call[1]['redirection']===0,'no redirects');ok($call[1]['headers']['x-goog-api-key']==='fake-secret','header authentication');}
 ok(!isset($GLOBALS['options'][Check::LOCK]),'lock released');ok($r->headers['Cache-Control']==='private, no-store','no caching');
@@ -57,4 +57,6 @@ reset_case();$GLOBALS['responses'][0]['body']='{"models":[]}';ok(run_case()->dat
 reset_case();$GLOBALS['responses'][1]['body']='{"candidates":[]}';ok(run_case()->data['code']==='GENERATION_NOT_CONFIRMED','empty text not success');
 reset_case();$GLOBALS['responses'][1]=array('status'=>429,'body'=>'fake-secret');$r=run_case();ok($r->data['phase']==='generation' && !$r->data['success'],'generation failure not success');
 reset_case();$GLOBALS['throw']=true;ok(run_case()->data['code']==='DIAGNOSTIC_INTERNAL_ERROR','exception redaction');ok(!isset($GLOBALS['options'][Check::LOCK]),'lock released on exception');
+reset_case();$r=Check::models(new DiagnosticRequest());ok($r->status===200 && count($GLOBALS['calls'])===1 && count($r->data['models'])===1,'model inspection without generation');
+reset_case();$GLOBALS['responses'][1]=array('status'=>404,'body'=>'{"error":{"status":"NOT_FOUND","message":"fake-secret"}}');$r=run_case();ok($r->data['upstream_code']==='NOT_FOUND' && $r->data['model']==='models/gemini-2.5-flash-lite','safe model error evidence');
 echo "PASS $checks assertions; no live API calls in tests\n";
