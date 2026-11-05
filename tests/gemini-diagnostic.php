@@ -59,4 +59,5 @@ reset_case();$GLOBALS['responses'][1]=array('status'=>429,'body'=>'fake-secret')
 reset_case();$GLOBALS['throw']=true;ok(run_case()->data['code']==='DIAGNOSTIC_INTERNAL_ERROR','exception redaction');ok(!isset($GLOBALS['options'][Check::LOCK]),'lock released on exception');
 reset_case();$r=Check::models(new DiagnosticRequest());ok($r->status===200 && count($GLOBALS['calls'])===1 && count($r->data['models'])===1,'model inspection without generation');
 reset_case();$GLOBALS['responses'][1]=array('status'=>404,'body'=>'{"error":{"status":"NOT_FOUND","message":"fake-secret"}}');$r=run_case();ok($r->data['upstream_code']==='NOT_FOUND' && $r->data['model']==='models/gemini-2.5-flash-lite','safe model error evidence');
+reset_case();$GLOBALS['responses'][0]['body']='{"models":[{"name":"models/gemini-3.1-flash-lite","supportedGenerationMethods":["generateContent"]}]}';$r=run_case();ok($r->data['model']==='models/gemini-3.1-flash-lite','currently listed stable model');ok(strpos($GLOBALS['calls'][1][1]['body'],'thinkingBudget')===false,'no unsupported thinking config for new model');
 echo "PASS $checks assertions; no live API calls in tests\n";

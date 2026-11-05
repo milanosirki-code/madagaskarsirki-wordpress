@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Gemini Staging Diagnostic
  * Description: Fixed-prompt, administrator-only Gemini connectivity check on the approved staging origin.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires PHP: 7.4
  */
 namespace Madagaskar\GeminiDiagnostic;
@@ -76,7 +76,7 @@ final class Check {
             }
             if ( $list_only ) { return self::response( 'MODEL_LIST_OK', 200, array( 'models' => array_slice( $available, 0, 100 ) ) ); }
             $selected = null;
-            foreach ( array( 'models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash', 'models/gemini-2.0-flash' ) as $model ) {
+            foreach ( array( 'models/gemini-3.1-flash-lite', 'models/gemini-2.5-flash-lite', 'models/gemini-2.5-flash' ) as $model ) {
                 if ( in_array( $model, $available, true ) ) { $selected = $model; break; }
             }
             if ( $selected === null ) { return self::response( 'SUPPORTED_MODEL_NOT_FOUND', 503 ); }
