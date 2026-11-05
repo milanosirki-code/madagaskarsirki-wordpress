@@ -26,3 +26,20 @@ Staging kurulumu yalnız CI doğrulanmış ZIP'ten yapılmalı; önce yeni plugi
 Gerçek kurulum, smoke sonuçları, test edilen commit, ZIP hash'i ve kalan sınırlar PR açıklaması/Drive günlüğünde tarihlenir. Bu dosya tek başına staging kurulmuş veya görsel olarak doğrulanmış demek değildir. Bağlı browser-control aracı bu oturumda mevcut değil; gerçek tarayıcı/mobil görsel QA ayrıca gerekir.
 
 Rollback yalnız yeni plugin'i staging'de devre dışı bırakmak/kaldırmaktır; önceki kurulu çekirdek varsa aynı ZIP'i geri yükle. Üretimde değişiklik yapılmaz. Sonraki ürün kararı: staging sonuçları ve müşteri ekranı incelemesi sonrası public pilot için ayrı kısıtlı controller/gönderim politikası.
+
+
+## Staging kurulumu ve smoke sonucu — 5 Kasım 2026
+
+Test edilen kod commit'i `965f3d08ccdda9899725af268736ac3cc626aef0`; core tabanı PR305, dependent preview PR306. GitHub run41983121179 üzerinde PHP7.4 job127097557250 ve PHP8.4 job127097557546: her birinde 347 assertion PASS, native_writes=0/cart_calls=0; gerçek PHP markup + gerçek JS JSDOM yaşam döngüsü testleri başarılı. 14/14 workflow başarıyla tamamlandı.
+
+Önceden bu plugin'in bulunmadığı özel staging site257930487'ye 0.2.0 ZIP overwrite=false ile yüklendi; upload sonucu inactive, ayrı activate sonucu active=true. ZIP19916bayt, SHA256 `c04b80e09673371f330ffadc1854b71082ba284ffd074355ef21a711c45c2410`. Üretime upload/activation yapılmadı; üretim yeni namespace GET'i404/rest_no_route döndürdü.
+
+Gerçek staging catalogue GET'i İzmir MDG10 için seans88/89/90 ve 1.300TL sanal aile fallback fiyatını döndürdü. Altı POST quote hesabı: 2+2=1300; 1+3=1300; 1+2=1165 (tekil); 2+1=1300; 2+3=1590; 2+4=1880TL. Her sonuç reservation=false ve yalnız staging satış bağlantısı içeriyor. Stale revision409, istemci fiyat alanı400,2KiB aşımı413 geri okundu. Kimliği doğrulanmamış kullanıcı sınırı kaynak/CI ile doğrulandı; canlı anonim REST isteği ayrıca yapılmadı.
+
+Test öncesi/sonrası MDG etkinlik,seans,bilet türü,MMC program,bridge,hold,order_map olmak üzere yedi tablonun kayıt sayıları eşit. Bu dar row-count smoke testidir, tüm alanların/veritabanının eşitlik kanıtı değildir. Sipariş/ödeme/sepet/QR veya müşteri mesajı başlatılmadı.
+
+Yüklü sekiz kaynak dosyasının yedisinde numaralı satır içerikleri eşleşti. JS'de121/122satır eşleşti; `var token = epoch` ataması WPVibe tarafından `[REDACTED]` yapıldığı için bu satırın ham byte eşitliği iddia edilmez. Bu otomatik maskeleme ürün hatası olarak sınıflandırılmadı.
+
+Önizleme adresi: https://staging-f321-milanosirki-lgajf.wpcomstaging.com/wp-admin/tools.php?page=mdg-web-assistant-preview . WordPress girişi ve manage_woocommerce yetkisi gerekir. get_page_html özel site giriş ekranına döndü; gerçek tarayıcı/mobil görsel QA veya native JS aile satırı etkileşimi doğrulanmadı. Giriş sınırı gevşetilmedi. Staging eski kopyadır; üretimin güncel8etkinlik/17seans verisine eşit sayılmaz. LLM/sohbet ve halka açık controller eklenmedi.
+
+Sonraki adım yetkili tarayıcıda görsel/mobil önizleme, native aile satırı ve yönlendirme kontrolü; ardından üretim için ayrı public-pilot incelemesidir. Geri dönüş yalnız yeni staging plugin'ini deaktive etmektir.
