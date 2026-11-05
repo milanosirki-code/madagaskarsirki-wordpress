@@ -1,0 +1,58 @@
+{
+  "code_commit": "dd53372766df34c3d19973dff91eb5d07e3dea64",
+  "version": "0.1.2",
+  "site_id": "257930487",
+  "active": true,
+  "production_modified": false,
+  "ci_run": 42089428102,
+  "php_jobs": [
+    127463257727,
+    127463257929
+  ],
+  "intake_assertions": 39,
+  "core_assertions": 347,
+  "all_observed_workflows_passed": 15,
+  "ui_checks": [
+    "explicit_session_before_quote",
+    "timeout_recovery",
+    "HTML_429_and_JSON_limit",
+    "preserve_manual_edits",
+    "accessible_description",
+    "specific_missing_fields",
+    "Turkish_NFC"
+  ],
+  "real_synthetic_cases": {
+    "unknown_family": {
+      "city_key": null,
+      "adults": null,
+      "children": null,
+      "infants": 0
+    },
+    "ages_2_7_13_with_two_guardians": {
+      "adults": 3,
+      "children": 1,
+      "infants": 1
+    },
+    "unsupported_Istanbul": {
+      "city_key": null,
+      "adults": 2,
+      "children": 1,
+      "infants": 0
+    },
+    "complete_Izmir": {
+      "adults": 2,
+      "children": 1,
+      "infants": 0
+    }
+  },
+  "observed_rapid_request": {
+    "http": 429,
+    "body_type": "HTML",
+    "limiter_owner": "unverified"
+  },
+  "browser_visual_verified": false,
+  "zip_sha256": "27267b514b64e99315d385baf779dc11124a599050bed9187f4c8c59f782c252",
+  "zip_bytes": 5700,
+  "drive_zip_id": "1nIMLAYpOyfTpZaAGdycrEAnWitzj_FLl",
+  "no_secrets_archived": true
+}

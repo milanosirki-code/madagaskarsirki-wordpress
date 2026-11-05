@@ -18,3 +18,11 @@ These are small synthetic observations, not a general model accuracy guarantee. 
 A subsequent rapid request returned an HTML HTTP429 page from the request path, not the plugin's JSON PLEASE_WAIT response. This does not identify which upstream limiter acted or prove the plugin cooldown ran. No further live generation checks were made. The UI now handles both JSON limits and an HTML429 page with a fixed wait message while keeping the manual form available.
 
 Rollback: replace the intake addon with archived 0.1.1 or deactivate it; the standalone native form/quote plugin is unchanged. Production publication remains subject to authenticated mobile/desktop review and the existing sales/checkout gates. Do not open anonymous access simply to obtain a screenshot.
+
+## Completed staging update
+
+Code commit dd53372766df34c3d19973dff91eb5d07e3dea64 passed all15observed workflows. Gemini intake safety run42089428102 passed on PHP7.4 and8.4:39intake assertions,347unchanged core assertions, and the expanded actual-markup/two-script DOM interaction suite. No real browser layout was exercised.
+
+Addon0.1.2 was installed over0.1.1 on private staging257930487; upload readback confirmed active=true and version0.1.2. Installed JS readback confirmed35000ms timeout, HTML429handling and explicit missing-field guidance. No further real model requests were made after the HTML429. The server model-request/validation logic is unchanged from the successful synthetic cases. Production was not modified.
+
+ZIP5700bytes,SHA25627267b514b64e99315d385baf779dc11124a599050bed9187f4c8c59f782c252. Drive https://drive.google.com/file/d/1nIMLAYpOyfTpZaAGdycrEAnWitzj_FLl/view; MIME/size/technical-folder metadata verified. DraftPR308 remains unmerged and dependent on305/306. The outstanding gate is authenticated desktop/mobile visual review; existing production checkout/pilot gates also remain.
