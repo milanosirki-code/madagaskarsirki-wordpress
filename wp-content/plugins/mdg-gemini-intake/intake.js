@@ -33,7 +33,9 @@
         busy = true; button.disabled = true; box.setAttribute('aria-busy', 'true'); status.textContent = 'Bilgileriniz forma hazırlanıyor…';
         try {
             var response = await fetch(url.href, {method: 'POST', credentials: 'same-origin', signal: controller.signal, headers: {'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce}, body: JSON.stringify({text: input.value})});
-            var data = await response.json();
+            var data;
+            try { data = await response.json(); }
+            catch (parseError) { if (response.status === 429) throw new Error('PLEASE_WAIT'); throw parseError; }
             if (controller.signal.aborted) throw new Error('TIMEOUT');
             if (requestRevision !== revision || before !== snapshot()) { status.textContent = 'Bilgiler değiştiği için önceki yanıt uygulanmadı.'; return; }
             if (!response.ok) throw new Error(data && data.code);

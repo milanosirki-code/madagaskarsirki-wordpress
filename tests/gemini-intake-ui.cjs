@@ -18,7 +18,7 @@ function setup(){
   let resets=0;city.addEventListener('change',()=>{resets++;d.getElementById('mdg-wa-session').value='';});
   w.eval(source);
   const input=d.querySelector('textarea'),button=input.closest('section').querySelector('button');input.value='İzmir iki yetişkin üç çocuk';
-  return {w,d,input,button,calls,expire:()=>timers.at(-1)(),finish:(data,status=200)=>resolve({ok:status===200,json:async()=>data}),submits:()=>submits,resets:()=>resets};
+  return {w,d,input,button,calls,expire:()=>timers.at(-1)(),finish:(data,status=200)=>resolve({ok:status===200,status,json:async()=>data}),htmlRateLimit:()=>resolve({ok:false,status:429,json:async()=>{throw new Error('HTML response');}}),submits:()=>submits,resets:()=>resets};
 }
 const result={requires_confirmation:true,incomplete:false,proposal:{city_key:'İzmir / Konak',adults:2,children:3,infants:0}};
 const tick=()=>new Promise(r=>setImmediate(r));
@@ -31,6 +31,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
  s=setup();s.input.value=' ';s.button.click();assert.equal(s.calls.length,0);assert.equal(s.input.getAttribute('aria-invalid'),'true');assert.equal(s.d.activeElement,s.input);s.w.close();
  s=setup();assert.equal(s.input.getAttribute('aria-describedby'),'mdg-wa-intake-note');s.button.click();assert.equal(s.input.closest('section').getAttribute('aria-busy'),'true');s.d.getElementById('mdg-wa-adults').value='9';s.expire();await tick();assert.equal(s.calls[0].args.signal.aborted,true);assert.equal(s.button.disabled,false);assert.equal(s.d.getElementById('mdg-wa-adults').value,'9');assert.ok(s.d.getElementById('mdg-wa-intake-status').textContent.includes('Yanıt gecikti'));assert.equal(s.input.closest('section').hasAttribute('aria-busy'),false);s.w.close();
  s=setup();s.button.click();s.finish({code:'PLEASE_WAIT'},429);await tick();assert.ok(s.d.getElementById('mdg-wa-intake-status').textContent.includes('bekleyin'));assert.equal(s.button.disabled,false);s.w.close();
+ s=setup();s.button.click();s.htmlRateLimit();await tick();assert.ok(s.d.getElementById('mdg-wa-intake-status').textContent.includes('bekleyin'));assert.equal(s.d.getElementById('mdg-wa-adults').disabled,false);assert.equal(s.button.disabled,false);s.w.close();
  s=setup();s.button.click();s.finish({...result,incomplete:true,proposal:{city_key:null,adults:null,children:null,infants:0}});await tick();assert.ok(s.d.getElementById('mdg-wa-intake-status').textContent.includes('şehir/ilçe, yetişkin sayısı, çocuk sayısı'));s.w.close();
  // Exercise both real scripts together: intake cannot select a session or submit a quote.
  const dom=new JSDOM(html,{url:origin+'/wp-admin/tools.php',runScripts:'outside-only'}),w=dom.window,d=w.document;

@@ -15,4 +15,6 @@ Synthetic real staging requests before this UI-only update:
 
 These are small synthetic observations, not a general model accuracy guarantee. The user must review proposed fields. No customer records or secret values were used. Diagnostic option/transient writes and the bounded API test requests are expected. Production remains untouched. PHP/DOM CI, staging install, package archive and final readback are pending for 0.1.2.
 
+A subsequent rapid request returned an HTML HTTP429 page from the request path, not the plugin's JSON PLEASE_WAIT response. This does not identify which upstream limiter acted or prove the plugin cooldown ran. No further live generation checks were made. The UI now handles both JSON limits and an HTML429 page with a fixed wait message while keeping the manual form available.
+
 Rollback: replace the intake addon with archived 0.1.1 or deactivate it; the standalone native form/quote plugin is unchanged. Production publication remains subject to authenticated mobile/desktop review and the existing sales/checkout gates. Do not open anonymous access simply to obtain a screenshot.
