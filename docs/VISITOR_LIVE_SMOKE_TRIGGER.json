@@ -1,5 +1,5 @@
 {
-  "phase": "manual-anonymous-form-check",
-  "expect_ai": false,
-  "attempt": 2
+  "phase": "anonymous-gemini-production-check",
+  "expect_ai": true,
+  "attempt": 3
 }
