@@ -25,7 +25,7 @@ jobs:
       - run: |
           mkdir -p dist
           cd wp-content/plugins
-          zip -qr ../../../dist/madagaskar-aile-paketi-24-v0.1.0.zip madagaskar-aile-paketi-24
+          zip -qr ../../dist/madagaskar-aile-paketi-24-v0.1.0.zip madagaskar-aile-paketi-24
       - uses: actions/upload-artifact@v4
         if: matrix.php == '8.4'
         with:

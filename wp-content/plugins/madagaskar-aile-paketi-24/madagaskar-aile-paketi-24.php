@@ -33,6 +33,9 @@ final class MDG_Family_Package_24 {
         }
         add_action( 'admin_menu', array( __CLASS__, 'menu' ), 100 );
         add_action( 'admin_post_mdg_family24_save', array( __CLASS__, 'save' ) );
+        if ( 'staging-f321-milanosirki-lgajf.wpcomstaging.com' === wp_parse_url( home_url(), PHP_URL_HOST ) ) {
+            add_action( 'rest_api_init', array( __CLASS__, 'audit_route' ) );
+        }
     }
 
     private static function settings() {
@@ -245,6 +248,30 @@ final class MDG_Family_Package_24 {
         update_option( self::OPTION, array( 'events' => $events ), false );
         wp_safe_redirect( admin_url( 'tools.php?page=mdg-family-package-24' ) );
         exit;
+    }
+
+    /** Authorized, non-purchasing smoke check on the identified private staging only. */
+    public static function audit_route() {
+        register_rest_route( 'mdg-family24/v1', '/audit', array(
+            'methods' => 'GET',
+            'permission_callback' => static function() { return current_user_can( 'manage_woocommerce' ); },
+            'callback' => static function( $request ) {
+                $event_id = absint( $request->get_param( 'event_id' ) );
+                $session_id = absint( $request->get_param( 'session_id' ) );
+                $before = $_POST;
+                try {
+                    $offer = self::offer( $event_id );
+                    if ( ! $offer ) { return new WP_Error( 'family24_disabled', 'Paket bu etkinlikte etkin değil.', array( 'status' => 409 ) ); }
+                    $types = self::types( $event_id, $session_id );
+                    $expanded = MDG_Family24_Pricing::expand( array( array( 'code' => self::CODE, 'qty' => 1 ) ), strtoupper( $types['child']->code ), strtoupper( $types['adult']->code ) );
+                    $packages = array( 'family_2_4' => array( 'qty' => 1, 'price' => $offer['price'] ) );
+                    $result = MDG_Family24_Pricing::discount( $packages, 4, 2, (float) $types['child']->price, (float) $types['adult']->price );
+                    return array( 'event_id' => $event_id, 'session_id' => $session_id, 'offer' => $offer, 'native_lines' => $expanded['lines'], 'child_variation' => (int) $types['child']->wc_variation_id, 'adult_variation' => (int) $types['adult']->wc_variation_id, 'normal_total' => round( 4 * $types['child']->price + 2 * $types['adult']->price, 2 ), 'discount' => $result['amount'], 'requested_units' => 6, 'available_units' => MDG_Capacity::available( $session_id ), 'reservation' => false, 'order_created' => false, 'tickets_created' => false );
+                } catch ( Throwable $e ) {
+                    return new WP_Error( 'family24_audit', $e->getMessage(), array( 'status' => 409 ) );
+                } finally { $_POST = $before; }
+            },
+        ) );
     }
 }
 add_action( 'plugins_loaded', array( 'MDG_Family_Package_24', 'boot' ), 40 );
