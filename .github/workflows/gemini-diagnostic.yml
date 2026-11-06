@@ -1,0 +1,16 @@
+name: Gemini diagnostic safety
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: php -l wp-content/plugins/mdg-gemini-diagnostic/mdg-gemini-diagnostic.php
+      - run: php tests/gemini-diagnostic.php
