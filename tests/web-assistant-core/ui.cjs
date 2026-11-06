@@ -7,7 +7,7 @@ const html = execFileSync('php', [path.join(__dirname, 'export-preview.php')], {
 const script = fs.readFileSync(path.join(__dirname, '../../wp-content/plugins/madagaskar-web-assistant-core/assets/preview.js'), 'utf8');
 const origin = 'https://staging-f321-milanosirki-lgajf.wpcomstaging.com';
 const sample = {session_id:223,source_revision:'a'.repeat(64),city:'Tekirdağ',district:'Çerkezköy',starts_at:'2026-11-12T18:00:00+03:00',venue:{name:'Fixture <img src=x onerror=alert(1)>'}};
-const quote = {session_id:223,reservation:false,ticket_url:origin+'/etkinlik/fixture-2026/',regular_option_available:true,recommended:{lines:[{code:'family_2_2',quantity:1,unit_minor:110000}],total_minor:110000,savings_minor:37000,family_quantity:1}};
+const quote = {session_id:223,reservation:false,verified_at:1000,expires_at:1060,ticket_url:origin+'/etkinlik/fixture-2026/',regular_option_available:true,recommended:{lines:[{code:'family_2_2',quantity:1,unit_minor:110000}],total_minor:110000,savings_minor:37000,family_quantity:1}};
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function response(data, status=200) {return {ok:status===200,json:async()=>data};}
 async function setup(fetcher) {
@@ -39,7 +39,8 @@ function submit(dom) {dom.window.document.getElementById('mdg-wa-form').dispatch
  assert.ok(d.getElementById('mdg-wa-total').textContent.includes('1.100'));
  assert.ok(d.getElementById('mdg-wa-result-session').textContent.includes('<img'));
  assert.equal(d.querySelectorAll('img').length,0); // source content is always text
- assert.equal(d.getElementById('mdg-wa-ticket').href,quote.ticket_url);
+ assert.equal(d.getElementById('mdg-wa-ticket').href,quote.ticket_url+'#bilet-secimi');
+ assert.ok(d.getElementById('mdg-wa-handoff').textContent.includes('seçimleriniz otomatik aktarılmaz'));
  d.getElementById('mdg-wa-adults').value='3';d.getElementById('mdg-wa-adults').dispatchEvent(new dom.window.Event('input'));
  assert.equal(d.getElementById('mdg-wa-result').hidden,true);
  assert.equal(d.getElementById('mdg-wa-ticket').hasAttribute('href'),false);
@@ -69,5 +70,18 @@ function submit(dom) {dom.window.document.getElementById('mdg-wa-form').dispatch
  assert.equal(unavailable.window.document.getElementById('mdg-wa-submit').disabled,true);
  assert.ok(unavailable.window.document.getElementById('mdg-wa-status').classList.contains('is-error'));
  unavailable.window.close();
+ let clock=0;
+ const expiry=await setup(async(url)=>response(url.endsWith('catalogue')?{offers:[sample]}:quote));
+ Object.defineProperty(expiry.window.performance,'now',{value:()=>clock});
+ choose(expiry);submit(expiry);await tick();await tick();
+ assert.equal(expiry.window.document.getElementById('mdg-wa-result').hidden,false);
+ clock=60001;const event=new expiry.window.MouseEvent('click',{cancelable:true});
+ expiry.window.document.getElementById('mdg-wa-ticket').dispatchEvent(event);
+ assert.equal(event.defaultPrevented,true);assert.equal(expiry.window.document.getElementById('mdg-wa-result').hidden,true);
+ assert.equal(expiry.window.document.getElementById('mdg-wa-ticket').hasAttribute('href'),false);
+ assert.ok(expiry.window.document.getElementById('mdg-wa-status').textContent.includes('süresi doldu'));
+ expiry.window.close();
+ const badTTL=await setup(async(url)=>response(url.endsWith('catalogue')?{offers:[sample]}:{...quote,expires_at:quote.verified_at+61}));
+ choose(badTTL);submit(badTTL);await tick();await tick();assert.equal(badTTL.window.document.getElementById('mdg-wa-result').hidden,true);badTTL.window.close();
  console.log('PASS: UI load, explicit selection, nonce, quote, duplicate-submit, XSS, invalidation, late response, stale revision, unsafe URL and auth error');
 })().catch(error=>{console.error(error);process.exit(1);});

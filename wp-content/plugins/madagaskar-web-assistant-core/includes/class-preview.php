@@ -69,8 +69,8 @@ final class Preview {
     public static function assets( $hook ) {
         if ( $hook !== 'tools_page_mdg-web-assistant-preview' || ! self::permission() ) { return; }
         $main = dirname( __DIR__ ) . '/madagaskar-web-assistant-core.php';
-        wp_enqueue_style( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.css', $main ), array(), '0.2.0' );
-        wp_enqueue_script( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.js', $main ), array(), '0.2.0', true );
+        wp_enqueue_style( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.css', $main ), array(), '0.2.1' );
+        wp_enqueue_script( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.js', $main ), array(), '0.2.1', true );
     }
 
     public static function markup() {
@@ -91,7 +91,7 @@ final class Preview {
 <span class="mdg-wa-kicker">SİZE UYGUN SEÇENEK</span><h2 id="mdg-wa-result-title"></h2><p id="mdg-wa-result-session"></p><ul id="mdg-wa-lines"></ul>
 <div class="mdg-wa-total"><span>Toplam</span><strong id="mdg-wa-total"></strong></div><p id="mdg-wa-savings"></p><p id="mdg-wa-capacity" class="mdg-wa-note"></p>
 <a id="mdg-wa-ticket" class="mdg-wa-primary">Gösterinin bilet ekranına git</a>
-<p class="mdg-wa-note">Bu öneri rezervasyon oluşturmaz. Seansınızı ve bilet adetlerinizi satış ekranında kontrol ederek ilerleyin.</p>
+<p class="mdg-wa-note" id="mdg-wa-handoff">Bu öneri rezervasyon oluşturmaz. Bilet ekranında seansınızı ve bilet adetlerinizi yeniden seçin.</p>
 </section><noscript>Öneri ekranı için JavaScript gerekir. Güncel gösterilere mevcut Bilet Al sayfasından ulaşabilirsiniz.</noscript></section>';
     }
 }

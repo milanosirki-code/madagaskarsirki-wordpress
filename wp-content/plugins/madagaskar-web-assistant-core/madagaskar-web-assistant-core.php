@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Web Assistant Core
  * Description: Read-only catalogue, ticket quotes and an administrator-only preview on the verified staging site.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }

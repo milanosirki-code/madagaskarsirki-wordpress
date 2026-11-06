@@ -1,0 +1,17 @@
+{
+  "file": "AI_ASSISTANT_RELEASE_REVIEW_2026-11-06.zip",
+  "bytes": 30882,
+  "sha256": "b62c2d3ae1fdca757fa03b74ccf12588026a8c53e25bfe9ded81677db307295c",
+  "drive_file_id": "1sASYkfZMMtnKEb4uVNblVOQ9_85Iltfv",
+  "drive_url": "https://drive.google.com/file/d/1sASYkfZMMtnKEb4uVNblVOQ9_85Iltfv/view",
+  "purpose": "review_and_reproduction_only_not_a_production_installer",
+  "contents": [
+    "NOT_FOR_PRODUCTION.txt",
+    "manifest.json",
+    "AI_ASSISTANT_RELEASE_REVIEW_2026-11-06.md",
+    "packages/madagaskar-web-assistant-core-0.2.1-staging.zip",
+    "packages/mdg-gemini-intake-0.1.2-staging.zip"
+  ],
+  "nested_hashes_versions_and_zip_integrity_verified": true,
+  "production_deployed": false
+}

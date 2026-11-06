@@ -1,0 +1,32 @@
+{
+  "code_commit": "2abbdcded7ccfc6f95ad0fa3a038ae429a46cc82",
+  "stage_site": "257930487",
+  "version": "0.1.1",
+  "production_installed": false,
+  "ci_run": 42081920588,
+  "php": [
+    "7.4",
+    "8.4"
+  ],
+  "intake_assertions": 39,
+  "core_assertions": 347,
+  "all_code_workflows_passed": 15,
+  "synthetic_parse": {
+    "adults": 2,
+    "children": 3,
+    "infants": 0,
+    "requires_confirmation": true
+  },
+  "native_quote": {
+    "session_id": 88,
+    "total_minor": 159000,
+    "savings_minor": 45000,
+    "reservation": false
+  },
+  "production_namespace_http": 404,
+  "extra_price_http": 400,
+  "zip_sha256": "96d477a5a37e87c4933b678ff41d5b33812ba3c5a07bf75e9b492ae3a30418df",
+  "zip_bytes": 4627,
+  "browser_visual_verified": false,
+  "secrets_archived": false
+}
