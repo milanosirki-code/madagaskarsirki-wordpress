@@ -69,8 +69,8 @@ final class Preview {
     public static function assets( $hook ) {
         if ( $hook !== 'tools_page_mdg-web-assistant-preview' || ! self::permission() ) { return; }
         $main = dirname( __DIR__ ) . '/madagaskar-web-assistant-core.php';
-        wp_enqueue_style( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.css', $main ), array(), '0.2.1' );
-        wp_enqueue_script( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.js', $main ), array(), '0.2.1', true );
+        wp_enqueue_style( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.css', $main ), array(), '0.3.0' );
+        wp_enqueue_script( 'mdg-web-assistant-preview', plugins_url( 'assets/preview.js', $main ), array(), '0.3.0', true );
     }
 
     public static function markup() {
@@ -95,3 +95,4 @@ final class Preview {
 </section><noscript>Öneri ekranı için JavaScript gerekir. Güncel gösterilere mevcut Bilet Al sayfasından ulaşabilirsiniz.</noscript></section>';
     }
 }
+

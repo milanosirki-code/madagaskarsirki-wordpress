@@ -53,7 +53,7 @@ final class Party {
 
 /** Pure calculation over a server-created offer; not a client-facing API. */
 final class Quote {
-    const POLICY = 'family-policy-2026-11-03';
+    const POLICY = 'family-policy-2026-11-06';
 
     public static function calculate( array $offer, array $party, $now ) {
         Value::integer( $now, 1, PHP_INT_MAX );
@@ -78,31 +78,40 @@ final class Quote {
         $parent_max = Value::integer( $offer['parent_max_quantity'], 0, 40 );
         $family = $offer['family'];
         $f_price = ! empty( $family['available'] ) ? Value::integer( $family['price_minor'], 1, 999999999 ) : 0;
+        $family24 = $offer['family24'] ?? array( 'available' => false );
+        $f24_price = ! empty( $family24['available'] ) ? Value::integer( $family24['price_minor'], 1, 999999999 ) : 0;
         $baseline = $adults * $a_price + $children * $c_price;
         $options = array();
         // Each package covers 1 or 2 actual adults, at most 4 actual people;
         // unused child allowances are permitted. It always issues 2+2 components.
-        for ( $f = 0; $f <= ( $f_price ? min( 10, $adults ) : 0 ); $f++ ) {
-            for ( $covered_adults = $f; $covered_adults <= min( 2 * $f, $adults ); $covered_adults++ ) {
-                $covered_children = min( $children, 4 * $f - $covered_adults );
-                $single_adults = $adults - $covered_adults;
-                $single_children = $children - $covered_children;
-                $issued_adults = 2 * $f + $single_adults;
-                $issued_children = 2 * $f + $single_children;
-                $units = 4 * $f + $single_adults + $single_children;
+        // The new 2+4 policy covers exactly two adults and four children.
+        // Existing 2+2 alternative family compositions remain unchanged.
+        for ( $f24 = 0; $f24 <= ( $f24_price ? min( 5, (int) floor( $adults / 2 ), (int) floor( $children / 4 ) ) : 0 ); $f24++ ) {
+          $remaining_adults = $adults - 2 * $f24;
+          $remaining_children = $children - 4 * $f24;
+          for ( $f = 0; $f <= ( $f_price ? min( 10, $remaining_adults ) : 0 ); $f++ ) {
+            for ( $covered_adults = $f; $covered_adults <= min( 2 * $f, $remaining_adults ); $covered_adults++ ) {
+                $covered_children = min( $remaining_children, 4 * $f - $covered_adults );
+                $single_adults = $remaining_adults - $covered_adults;
+                $single_children = $remaining_children - $covered_children;
+                $issued_adults = 2 * $f24 + 2 * $f + $single_adults;
+                $issued_children = 4 * $f24 + 2 * $f + $single_children;
+                $units = 6 * $f24 + 4 * $f + $single_adults + $single_children;
                 if ( $units > $available || $units > $parent_max || $issued_adults > $a_max || $issued_children > $c_max ) { continue; }
-                $total = $f * $f_price + $single_adults * $a_price + $single_children * $c_price;
-                $key = $f . ':' . $single_adults . ':' . $single_children;
+                $total = $f24 * $f24_price + $f * $f_price + $single_adults * $a_price + $single_children * $c_price;
+                $key = $f24 . ':' . $f . ':' . $single_adults . ':' . $single_children;
                 $lines = array();
+                if ( $f24 ) { $lines[] = array( 'code' => 'family_2_4', 'quantity' => $f24, 'unit_minor' => $f24_price ); }
                 if ( $f ) { $lines[] = array( 'code' => 'family_2_2', 'quantity' => $f, 'unit_minor' => $f_price ); }
                 if ( $single_adults ) { $lines[] = array( 'code' => $adult['code'], 'quantity' => $single_adults, 'unit_minor' => $a_price ); }
                 if ( $single_children ) { $lines[] = array( 'code' => $child['code'], 'quantity' => $single_children, 'unit_minor' => $c_price ); }
                 $options[ $key ] = array(
                     'lines' => $lines, 'total_minor' => $total, 'savings_minor' => $baseline - $total,
-                    'capacity_units' => $units, 'family_quantity' => $f,
+                    'capacity_units' => $units, 'family_quantity' => $f + $f24, 'family24_quantity' => $f24,
                     'issued_adults' => $issued_adults, 'issued_children' => $issued_children,
                 );
             }
+          }
         }
         $options = array_values( $options );
         usort( $options, static function( $a, $b ) {
@@ -125,3 +134,4 @@ final class Quote {
         );
     }
 }
+

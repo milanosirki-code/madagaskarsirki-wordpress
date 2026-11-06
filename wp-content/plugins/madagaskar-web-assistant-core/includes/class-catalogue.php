@@ -71,6 +71,11 @@ final class Catalogue {
                     $family = array( 'available' => false, 'price_minor' => null, 'reason' => 'FAMILY_CATALOGUE_CONFLICT' );
                 }
                 $expiry = min( $now + 60, $start );
+                $family24 = $b['family24'] ?? array( 'available' => false, 'price_minor' => null );
+                if ( ! empty( $family24['available'] ) && ( $b['family_conflict'] || ! is_int( $family24['price_minor'] )
+                    || $family24['price_minor'] < 1 || $family24['price_minor'] > 2 * $tickets['adult']['price_minor'] + 4 * $tickets['child']['price_minor'] ) ) {
+                    $family24 = array( 'available' => false, 'price_minor' => null, 'reason' => 'FAMILY24_CATALOGUE_CONFLICT' );
+                }
                 foreach ( array( $mdg['sale_end'], $s['sale_end'] ) as $end ) {
                     if ( $end ) { $expiry = min( $expiry, Value::timestamp( $end ) ); }
                 }
@@ -79,7 +84,7 @@ final class Catalogue {
                     'mmc_event_id' => $mmc['id'], 'mdg_event_id' => $mdg['id'], 'session_id' => $s['id'],
                     'title' => $mdg['title'], 'city' => $program['city'], 'district' => $program['district'],
                     'venue' => $b['venue'], 'starts_at' => $local->format( DATE_ATOM ), 'timezone' => 'Europe/Istanbul',
-                    'tickets' => $tickets, 'family' => $family, 'available_units' => $available,
+                    'tickets' => $tickets, 'family' => $family, 'family24' => $family24, 'available_units' => $available,
                     'parent_max_quantity' => $s['parent_max_quantity'],
                     'ticket_url' => $b['ticket_url'], 'policy_version' => Quote::POLICY,
                 );
@@ -93,3 +98,4 @@ final class Catalogue {
         return array( 'offers' => $offers, 'blocked' => $blocked );
     }
 }
+

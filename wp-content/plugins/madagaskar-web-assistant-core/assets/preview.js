@@ -82,7 +82,7 @@
             var remaining = (quote.expires_at - quote.verified_at) * 1000 - (performance.now() - started);
             if (remaining <= 0) throw new Error('STALE_OFFER');
             var url = eventURL(quote.ticket_url);
-            var labels = { ADULT: 'Yetişkin bileti', YETISKIN: 'Yetişkin bileti', CHILD: 'Çocuk bileti', COCUK: 'Çocuk bileti', family_2_2: 'Aile Paketi 2+2' };
+            var labels = { ADULT: 'Yetişkin bileti', YETISKIN: 'Yetişkin bileti', CHILD: 'Çocuk bileti', COCUK: 'Çocuk bileti', family_2_2: 'Aile Paketi 2+2', family_2_4: 'Aile Paketi 2 (2 Yetişkin + 4 Çocuk)' };
             var list = document.getElementById('mdg-wa-lines'); list.replaceChildren();
             quote.recommended.lines.forEach(function (line) {
                 if (!labels[line.code] || !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 20) throw new Error('INVALID_QUOTE');
@@ -94,7 +94,7 @@
             document.getElementById('mdg-wa-savings').textContent = quote.regular_option_available && quote.recommended.savings_minor > 0
                 ? 'Tekil biletlere göre ' + minor(quote.recommended.savings_minor) + ' daha uygun.' : 'Bu grup için güncel fiyatlarla en uygun geçerli seçenek.';
             document.getElementById('mdg-wa-capacity').textContent = quote.recommended.family_quantity > 0
-                ? 'Aile paketinin kullanılmayan hakları olsa da her paket 4 kişilik kapasite kullanır.' : '';
+                ? 'Aile Paketi 2+2 dört, Aile Paketi 2 (2+4) altı kişilik kapasite kullanır.' : '';
             document.getElementById('mdg-wa-ticket').href = url;
             document.getElementById('mdg-wa-handoff').textContent = 'Bilet ekranında ' + date.format(new Date(offer.starts_at)) +
                 ' seansını ve yukarıdaki bilet adetlerini yeniden seçin. Bu öneri rezervasyon oluşturmaz; seçimleriniz otomatik aktarılmaz.';
@@ -134,3 +134,4 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
     else start();
 })();
+

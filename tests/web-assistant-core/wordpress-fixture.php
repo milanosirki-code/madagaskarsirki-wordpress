@@ -61,6 +61,7 @@ class MDG_Capacity { public static function available( $id ) { return $GLOBALS['
 class MDG_Public_Event { public static function live_url( $e ) { return home_url( '/etkinlik/fixture-2026/' ); } }
 class MDG_DB { public static function table( $name ) { return 'fixture_mdg_' . $name; } }
 class MDG_Family_Package_22_V1 {}
+class MDG_Family_Package_24 { public static function offer( $id ) { return $GLOBALS['fixture_family24'] ?? null; } }
 class FixtureProduct {
     private $id;
     public function __construct( $id ) { $this->id = $id; }
@@ -73,3 +74,4 @@ class FixtureProduct {
     public function get_price() { return $this->id === 901 ? '490' : '245'; }
 }
 function wc_get_product( $id ) { return new FixtureProduct( $id ); }
+
