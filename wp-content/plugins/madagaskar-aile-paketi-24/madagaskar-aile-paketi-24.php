@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Aile Paketi 2
  * Description: 2 yetişkin + 4 çocuk sanal paketi; mevcut 2+2 paketini korur. Altı gerçek bilet, altı kapasite birimi.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires PHP: 7.4
  * Author: Dünya Organizasyon
  */
@@ -214,8 +214,9 @@ final class MDG_Family_Package_24 {
         $offers = array();
         foreach ( self::settings() as $id => $price ) { $offer = self::offer( $id ); if ( $offer ) { $offers[ $id ] = $offer; } }
         if ( ! $offers ) { return; }
+        echo '<link rel="stylesheet" href="' . esc_url( plugins_url( 'public-row.css', __FILE__ ) ) . '?ver=0.1.2">';
         echo '<script id="mdg-family24-config">window.MDG_FAMILY24_OFFERS=' . wp_json_encode( $offers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';</script>';
-        echo '<script src="' . esc_url( plugins_url( 'public-row.js', __FILE__ ) ) . '?ver=0.1.1"></script>';
+        echo '<script src="' . esc_url( plugins_url( 'public-row.js', __FILE__ ) ) . '?ver=0.1.2"></script>';
     }
 
     public static function menu() {
