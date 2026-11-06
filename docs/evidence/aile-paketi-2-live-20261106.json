@@ -1,0 +1,143 @@
+{
+  "date": "2026-11-06",
+  "production": {
+    "plugin": "madagaskar-aile-paketi-24",
+    "version": "0.1.1",
+    "active": true,
+    "merged_pr": 310,
+    "merge_sha": "eece8a201985354f02f544466920b5eaefa125de",
+    "code_sha": "754eb81b66a5da791f52dee640ae3d0f84c58ed7",
+    "zip_sha256": "7984b199782e3a731372e0ba5709850c72f8b229401fe7d0ae5ff3662df53129",
+    "events": {
+      "10": 1500,
+      "35": 1250,
+      "36": 1250,
+      "37": 1250,
+      "38": 1250,
+      "40": 1250,
+      "41": 1250
+    },
+    "legacy_family22_settings_unchanged": true,
+    "all_three_runtime_files_match": true,
+    "excluded": {
+      "39": "Keşan: program venue_confirmed / MDG onsale state conflict"
+    },
+    "real_order_created_by_test": false
+  },
+  "staging": {
+    "assistant_version": "0.3.0",
+    "assistant_pr": 311,
+    "assistant_commit": "6d1642e867d456155bc7729db4345705fb7f8144",
+    "family24_version": "0.1.1",
+    "lab_version": "0.2.1",
+    "lab_deactivated": true,
+    "synthetic_order_id": 6166,
+    "synthetic_order_total": 1500,
+    "ticket_instances": 6,
+    "distinct_ticket_codes": 6,
+    "capacity_before": {
+      "sold": 4,
+      "held": 0
+    },
+    "capacity_reserved": {
+      "sold": 4,
+      "held": 6
+    },
+    "capacity_paid": {
+      "sold": 10,
+      "held": 0
+    },
+    "replay_capacity": {
+      "sold": 10,
+      "held": 0
+    },
+    "mmc_gross": 1500,
+    "mmc_net": 1500,
+    "v5_total": 1500,
+    "real_money_charged": false,
+    "gateway_called": false,
+    "outbound_mail_and_http_blocked": true
+  },
+  "checks": {
+    "family_php74": 221,
+    "family_php84": 221,
+    "assistant_php74": 886,
+    "assistant_php84": 886,
+    "independent_optimality_oracle": true,
+    "staging_native_cart": {
+      "family24": {
+        "total": 1500,
+        "units": 6,
+        "components": [
+          4,
+          2
+        ]
+      },
+      "family22": {
+        "total": 1300,
+        "units": 4,
+        "components": [
+          2,
+          2
+        ]
+      },
+      "mixed": {
+        "total": 2800,
+        "units": 10,
+        "components": [
+          6,
+          4
+        ]
+      },
+      "bad_nonce": {
+        "rejected": true,
+        "cart_empty": true
+      },
+      "all_persistent_admin_cart_unchanged": true
+    },
+    "live_mobile_390": {
+      "izmir": {
+        "new_row_visible": true,
+        "old_row_visible": true,
+        "people": 6,
+        "price": 1500,
+        "no_horizontal_overflow": true,
+        "no_js_errors": true,
+        "cart_quantities": [
+          4,
+          2
+        ],
+        "cart_total": 1500,
+        "checkout_page_visible": true,
+        "checkout_total_visual": 1500
+      },
+      "tire": {
+        "new_row_visible": true,
+        "old_row_visible": true,
+        "people": 6,
+        "price": 1250,
+        "no_horizontal_overflow": true,
+        "no_js_errors": true,
+        "cart_quantities": [
+          4,
+          2
+        ],
+        "cart_total": 1250,
+        "checkout_total": 1250
+      },
+      "order_submitted": false,
+      "test_cart_empty_not_confirmed": true
+    }
+  },
+  "resolved_test_issues": [
+    "Initial private lab merged an admin saved cart; exact guarded match removed only the two added fixture lines and anonymous/nonpersistent contexts prevented recurrence.",
+    "Temporary Woo cart lifecycle hooks leaked into REST request shutdown. New lab detaches only its new Woo callbacks. Native cart test transport subsequently returned success.",
+    "The first browser cart probe used classic selectors although the site uses Woo Blocks. The corrected probe waited for block hydration and validated actual visitor cart/checkout."
+  ],
+  "pending": {
+    "kommo_source110": "Active and unchanged. Automatic approval rejected the production snippet update as outside the declared plugin-only rollout scope. Explicit user approval requested asynchronously; not received at this record.",
+    "physical_qr_scan": false,
+    "real_paytr_charge": false
+  },
+  "rollback": "Empty the new package event allowlist to stop new selections; retain fee/reconciliation hooks for existing new-format carts/orders. Do not disable old 2+2 or unrelated modules."
+}
