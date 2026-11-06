@@ -1,0 +1,18 @@
+[
+  {
+    "old_content": "    while ((m = re.exec(text||''))) { var h=+m[1], mi=+m[2]; if (h<24 && mi<60) out.push(h*60+mi); }",
+    "new_content": "    while ((m = re.exec(text||''))) { var h=+m[1], mi=+m[2]; if (24 > h && 60 > mi) out.push(h*60+mi); }"
+  },
+  {
+    "old_content": "  var NOW = qs.get('ml_now') ? new Date(qs.get('ml_now')) : new Date();",
+    "new_content": "  var NOW = new Date();"
+  },
+  {
+    "old_content": "  function run(){ try{ cityCards(); }catch(e){} try{ homeTour(); }catch(e){} try{ ticketPage(); }catch(e){} }",
+    "new_content": "  function run(){ NOW = new Date(); try{ cityCards(); }catch(e){} try{ homeTour(); }catch(e){} try{ ticketPage(); }catch(e){} }\n  setInterval(run,15000);\n  document.addEventListener('visibilitychange',run);"
+  },
+  {
+    "old_content": "<style id=\"ml-archived-static-v1\">",
+    "new_content": "<style id=\"ml-home-clarity-v2\">\n.ml-home-city:has(a[href=\"/bilet-al/#darica\"]){display:none!important}\n.ml-home-tour .ml-home-city-date{font-size:15px!important;font-weight:800!important;color:#a32231!important}\n.ml-home-tour .ml-home-city-times{font-size:21px!important;font-weight:800!important;color:#12366a!important;background:#eaf2ff;padding:10px 12px;border-radius:8px}\n.ml-home-tour .ml-location-links a{background:#101e43!important;color:#fff!important;border:2px solid #101e43!important;font-weight:800!important;opacity:1!important}\n.ml-home-tour .ml-location-links a+a{background:#fff!important;color:#101e43!important}\n.ml-home-tour .ml-location-links a:hover{background:#b51e36!important;border-color:#b51e36!important;color:#fff!important}\n</style>\n<style id=\"ml-archived-static-v1\">"
+  }
+]
