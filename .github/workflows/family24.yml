@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'wp-content/plugins/madagaskar-aile-paketi-24/**'
+      - 'wp-content/plugins/mdg-family24-stage-lab/**'
       - 'tests/family24/**'
       - '.github/workflows/family24.yml'
   push:
@@ -19,7 +20,7 @@ jobs:
         with:
           php-version: '${{ matrix.php }}'
           coverage: none
-      - run: find wp-content/plugins/madagaskar-aile-paketi-24 tests/family24 -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: find wp-content/plugins/madagaskar-aile-paketi-24 wp-content/plugins/mdg-family24-stage-lab tests/family24 -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/family24/contract.php
       - run: node tests/family24/public-row.cjs
       - run: |
