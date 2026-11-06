@@ -2,7 +2,7 @@
   "schema_version": 1,
   "integration": "uskd-madagaskar-events",
   "source_path": "integrations/uskd/uskd-madagaskar-events",
-  "plugin_version": "0.2.0",
+  "plugin_version": "0.3.0",
   "live_page": {
     "site": "https://uskdernegi.org",
     "page_id": 392,
@@ -16,6 +16,7 @@
   },
   "display_contract": {
     "include": [
+      "brand",
       "city",
       "date",
       "venue",
@@ -30,42 +31,47 @@
   "shortcode": "uskd_madagaskar_events",
   "deployment": {
     "status": "live",
-    "smoke": [
-      "activate plugin without fatal",
-      "render shortcode on draft/staging page",
-      "compare event card count with Madagaskar cities page",
-      "verify city/date/venue/session on first middle last cards",
-      "verify no price is rendered",
-      "verify fallback when source is unavailable"
-    ],
-    "rollback": "restore Page 392 from integrations/uskd/live-page-392.html and deactivate plugin",
-    "deployed_at": "2026-10-01T14:24:54+03:00",
+    "deployed_at": "2026-10-21T04:49:00+03:00",
     "plugin_active": true,
+    "live_plugin_version": "0.3.0",
+    "target_plugin_version": "0.3.0",
+    "upgrade_status": "deployed_verified",
     "live_page_id": 392,
     "live_page_url": "https://uskdernegi.org/etkinlik-takvimi/",
+    "homepage_shortcode": "[uskd_madagaskar_events limit=\"2\"]",
     "smoke_result": {
       "passed": true,
-      "event_card_count": 12,
-      "first_event": "Ankara – Pursaklar / Ankara",
-      "last_event": "İzmir",
+      "event_card_count": 10,
+      "milano_count": 7,
+      "madagaskar_count": 3,
+      "homepage_count": 2,
       "price_visible": false,
       "checkout_link_visible": false,
-      "client_side_fetch_present": false,
-      "shortcode_present": true
+      "source_failure_visible": false
     },
-    "live_plugin_version": "0.1.0",
-    "target_plugin_version": "0.2.0",
-    "upgrade_status": "pending_manual_upload",
-    "homepage_shortcode": "[uskd_madagaskar_events limit=\"2\"]",
-    "homepage_behavior_current": "v0.1.0 renders all events server-side; homepage CSS displays first two.",
-    "homepage_behavior_after_upgrade": "v0.2.0 renders only first two events server-side on homepage.",
-    "last_live_check": "2026-10-01T14:58:40+03:00"
+    "rollback": "Repackage backups/plugin-before-dual-20261021.php as uskd-madagaskar-events/uskd-madagaskar-events.php. Restore both 20261021 page backups if needed.",
+    "tested_source_commit": "daf40489931de3ad991d4ebf35af83b41baf1396",
+    "package_sha256": "5c93b506b1da6f865071bdcbb011957ea93721dbc46afba270aa962cb900a26c"
   },
   "shortcode_examples": {
     "full": "[uskd_madagaskar_events]",
     "homepage": "[uskd_madagaskar_events limit=\"2\"]"
   },
   "notes": [
-    "v0.2.0 adds server-side limit support for homepage use."
+    "v0.2.0 adds server-side limit support for homepage use.",
+    "v0.3.0 combines public Madagaskar and Milano calendars, excludes past sessions in Europe/Istanbul and sorts before limit."
+  ],
+  "sources": [
+    {
+      "site": "https://madagaskarsirki.com",
+      "page_id": 1311,
+      "endpoint": "https://madagaskarsirki.com/wp-json/wp/v2/pages/1311?_fields=content"
+    },
+    {
+      "brand": "Milano Sirki",
+      "site": "https://milanosirki.com",
+      "endpoint": "https://madagaskarsirki.com/wp-json/milano-handoff/v1/catalog",
+      "note": "The same central public catalog consumed by Milano frontend."
+    }
   ]
 }

@@ -15,6 +15,7 @@ with tempfile.TemporaryDirectory() as td:
 
     required = [
         "AGENTS.md",
+        "wp-content/plugins/uskd-madagaskar-events/dual-events.php",
         "README.md",
         "deployment-manifest.json",
         "repository-export-manifest.json",
@@ -33,12 +34,12 @@ with tempfile.TemporaryDirectory() as td:
     assert manifest["source_path"] == "wp-content/plugins/uskd-madagaskar-events"
     assert manifest["live_page"]["backup_path"] == "backups/live-page-392.html"
     assert manifest["repository_split"]["target_repository"] == "milanosirki-code/uskdernegi-wordpress"
-    assert manifest["display_contract"]["include"] == ["city", "date", "venue", "sessions"]
+    assert manifest["display_contract"]["include"] == ["brand", "city", "date", "venue", "sessions"]
     assert {"price", "checkout_link", "woocommerce_order_data"} <= set(manifest["display_contract"]["exclude"])
 
     plugin = (out / "wp-content/plugins/uskd-madagaskar-events/uskd-madagaskar-events.php").read_text(encoding="utf-8")
-    assert "Version: 0.2.0" in plugin
-    assert "USKD_MDG_EVENTS_VERSION', '0.2.0'" in plugin
+    assert f"Version: {manifest['plugin_version']}" in plugin
+    assert f"USKD_MDG_EVENTS_VERSION', '{manifest['plugin_version']}'" in plugin
     assert "$event['price']" not in plugin
     assert 'woocommerce_' not in plugin.lower()
     assert 'wc_get_' not in plugin.lower()
