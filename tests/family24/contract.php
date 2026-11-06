@@ -69,6 +69,7 @@ check(MDG_Family_Package_24::offer(10)['price']===1500.0,'explicit event price')
 check(MDG_Family_Package_24::offer(40)===null,'no automatic city/event opt-in');
 $GLOBALS['brand']='Milano Sirki'; check(MDG_Family_Package_24::offer(10)===null,'other brand excluded'); unset($GLOBALS['brand']);
 $GLOBALS['program_status']='venue_confirmed';check(MDG_Family_Package_24::offer(10)===null,'contradictory sale state excluded');unset($GLOBALS['program_status']);
+foreach(array('promotion','operations','show_day') as $status){$GLOBALS['program_status']=$status;check(MDG_Family_Package_24::offer(10)['price']===1500.0,'active program lifecycle preserves package');}unset($GLOBALS['program_status']);
 $GLOBALS['types']=array((object)array('id'=>1,'label'=>'Çocuk','code'=>'CHILD','price'=>290,'capacity_units'=>1,'wc_variation_id'=>101),(object)array('id'=>2,'label'=>'Yetişkin','code'=>'ADULT','price'=>585,'capacity_units'=>1,'wc_variation_id'=>102));
 $_POST=array('event_id'=>10,'session_id'=>88,'lines'=>json_encode(array(selection('MDG_FAMILY_2_4',1),selection('MDG_FAMILY_2_2',1))));
 MDG_Family_Package_24::preprocess();

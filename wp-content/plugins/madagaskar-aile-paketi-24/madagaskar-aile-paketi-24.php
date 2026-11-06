@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Aile Paketi 2
  * Description: 2 yetişkin + 4 çocuk sanal paketi; mevcut 2+2 paketini korur. Altı gerçek bilet, altı kapasite birimi.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  * Author: Dünya Organizasyon
  */
@@ -54,7 +54,7 @@ final class MDG_Family_Package_24 {
         $program = $program_id ? MMC_Program_Service::get_program( $program_id ) : null;
         if ( ! $event || ! $program || 'Madagaskar Sirki' !== (string) $program->brand
             || ! in_array( (string) $event->status, array( 'draft', 'onsale' ), true )
-            || ( 'onsale' === (string) $event->status && 'sales_open' !== (string) $program->status ) ) { return null; }
+            || ( 'onsale' === (string) $event->status && ! in_array( (string) $program->status, array( 'sales_open', 'promotion', 'operations', 'show_day' ), true ) ) ) { return null; }
         // The established 2+2 event allowlist remains a prerequisite.
         $old = get_option( 'mdg_family_package_22_v1', array() );
         $enabled = (array) ( $old['events'] ?? array() );
@@ -215,7 +215,7 @@ final class MDG_Family_Package_24 {
         foreach ( self::settings() as $id => $price ) { $offer = self::offer( $id ); if ( $offer ) { $offers[ $id ] = $offer; } }
         if ( ! $offers ) { return; }
         echo '<script id="mdg-family24-config">window.MDG_FAMILY24_OFFERS=' . wp_json_encode( $offers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ';</script>';
-        echo '<script src="' . esc_url( plugins_url( 'public-row.js', __FILE__ ) ) . '?ver=0.1.0"></script>';
+        echo '<script src="' . esc_url( plugins_url( 'public-row.js', __FILE__ ) ) . '?ver=0.1.1"></script>';
     }
 
     public static function menu() {
