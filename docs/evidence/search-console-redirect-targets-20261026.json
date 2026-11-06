@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/",
+    "result": "200 0 https://madagaskarsirki.com/",
+    "exit": 0
+  },
+  {
+    "path": "/basin-gorselleri/",
+    "result": "200 1 https://madagaskarsirki.com/galeri/",
+    "exit": 0
+  },
+  {
+    "path": "/fotograflar/",
+    "result": "200 1 https://madagaskarsirki.com/galeri/",
+    "exit": 0
+  },
+  {
+    "path": "/galeri/",
+    "result": "200 0 https://madagaskarsirki.com/galeri/",
+    "exit": 0
+  },
+  {
+    "path": "/gosteriler/",
+    "result": "200 0 https://madagaskarsirki.com/gosteriler/",
+    "exit": 0
+  },
+  {
+    "path": "/gosteriler/akrobasi/",
+    "result": "200 0 https://madagaskarsirki.com/gosteriler/akrobasi/",
+    "exit": 0
+  },
+  {
+    "path": "/jonglor/",
+    "result": "200 0 https://madagaskarsirki.com/jonglor/",
+    "exit": 0
+  },
+  {
+    "path": "/kurumsal/festival-organizasyonlari/",
+    "result": "200 0 https://madagaskarsirki.com/kurumsal/festival-organizasyonlari/",
+    "exit": 0
+  },
+  {
+    "path": "/sahne-arkasi/",
+    "result": "200 0 https://madagaskarsirki.com/sahne-arkasi/",
+    "exit": 0
+  },
+  {
+    "path": "/sehirler/",
+    "result": "200 0 https://madagaskarsirki.com/sehirler/",
+    "exit": 0
+  },
+  {
+    "path": "/sehirler/ankara/",
+    "result": "200 0 https://madagaskarsirki.com/sehirler/ankara/",
+    "exit": 0
+  },
+  {
+    "path": "/sehirler/gaziantep/",
+    "result": "200 0 https://madagaskarsirki.com/sehirler/gaziantep/",
+    "exit": 0
+  },
+  {
+    "path": "/sehirler/konya/",
+    "result": "200 0 https://madagaskarsirki.com/sehirler/konya/",
+    "exit": 0
+  },
+  {
+    "path": "/sehirler/mersin/",
+    "result": "200 0 https://madagaskarsirki.com/sehirler/mersin/",
+    "exit": 0
+  }
+]
