@@ -1,0 +1,7 @@
+{
+  "phase": "final-public-entry-and-anonymous-check",
+  "expect_ai": true,
+  "skip_ai_generation": true,
+  "verify_listing": true,
+  "attempt": 4
+}
