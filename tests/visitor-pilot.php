@@ -25,6 +25,7 @@ use Madagaskar\Visitor\Gate;use Madagaskar\Visitor\Model;use Madagaskar\Visitor\
 $checks=0;function ok($v,$label){global $checks;$checks++;if(!$v)throw new \Exception('FAIL '.$label);}
 function problem($fn,$code){try{$fn();throw new \Exception('Expected '.$code);}catch(Problem $e){ok($e->getMessage()===$code,'expected '.$code);}}
 function reset_case(){
+ $property=new \ReflectionProperty(\Madagaskar\Visitor\Page::class,'entry_rendered');$property->setAccessible(true);$property->setValue(false);
  $GLOBALS['clock']=strtotime('2026-11-06 00:00:00 UTC');$GLOBALS['origin']=Gate::LIVE;$GLOBALS['admin']=false;$_SERVER['REMOTE_ADDR']='192.0.2.1';
  $GLOBALS['opts']=array('mdg_vp_enabled'=>'1','mdg_vp_ai_enabled'=>'1','connectors_ai_google_api_key'=>'fixture-secret');$GLOBALS['cache']=array();$GLOBALS['calls']=array();$GLOBALS['routes']=array();$GLOBALS['wpdb']=new DB;
  $bridge=array('program_id'=>13,'mmc_event_id'=>13,'mdg_event_id'=>10);
@@ -64,5 +65,7 @@ reset_case();$new=($GLOBALS['clock']+100).'|'.str_repeat('b',24);Gate::locked('o
 reset_case();foreach(array(array('adults'=>0),array('adults'=>2.5),array('children'=>21),array('city_key'=>'İstanbul / Fake'),array('price'=>1)) as $patch){$p=array_merge(array('city_key'=>'İzmir / Konak','adults'=>2,'children'=>3,'infants'=>0),$patch);problem(function()use($p){Gemini::validate($p,array('İzmir / Konak'));},'PARSE_NOT_CONFIRMED');}
 reset_case();$GLOBALS['admin']=true;ok(Api::health()->data['google_credential_present'],'admin health only presence');
 reset_case();ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','listing off by default');$GLOBALS['opts']['mdg_vp_listed']='1';ok(strpos(\Madagaskar\Visitor\Page::entry('Original'),'/bilet-onerisi/')!==false,'explicit entry switch');$GLOBALS['opts']['mdg_vp_enabled']='0';ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','master removes entry');
+reset_case();$_SERVER['REQUEST_URI']='/bilet-al/';ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','footer listing off');$GLOBALS['opts']['mdg_vp_listed']='1';ob_start();\Madagaskar\Visitor\Page::footer_entry();$entry=ob_get_clean();ok(strpos($entry,'id="mdg-vp-entry"')!==false&&strpos($entry,'hero.appendChild(entry)')!==false,'native template footer entry');ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','entry not duplicated');
+reset_case();$GLOBALS['opts']['mdg_vp_listed']='1';$_SERVER['REQUEST_URI']='/checkout/';ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','no entry on checkout');
 echo "PASS $checks anonymous-boundary, canonical-pilot, budget and secret-isolation assertions; no live HTTP\n";
 }

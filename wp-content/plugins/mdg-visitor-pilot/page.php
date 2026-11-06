@@ -1,6 +1,7 @@
 <?php
 namespace Madagaskar\Visitor;
 final class Page {
+    private static $entry_rendered = false;
     public static function markup() {
         return '<main class="mdg-wa" id="mdg-vp"><header class="mdg-wa-header"><span class="mdg-wa-kicker">MADAGASKAR SİRKİ</span><h1>Ailenize uygun bileti bulalım.</h1><p>Şu an İzmir gösterisi için deniyoruz. Diğer şehirler için <a href="' . esc_url( home_url( '/bilet-al/' ) ) . '">tüm gösterilere bakın</a>.</p></header>
 <section class="mdg-vp-intake" aria-label="Planınızı yazın"><label for="vp-text">Nasıl bir planınız var?</label><textarea id="vp-text" rows="3" maxlength="600" aria-describedby="vp-privacy" placeholder="İzmir’de iki yetişkin, üç çocuk geleceğiz."></textarea><p id="vp-privacy" class="mdg-wa-note">Metniniz Google Gemini’ye gönderilir. Telefon, sipariş veya ödeme bilgisi yazmayın. Aşağıdaki formu doğrudan da kullanabilirsiniz.</p><button id="vp-parse" type="button" class="mdg-wa-primary" disabled>Yapay zekâ ile forma aktar</button><p id="vp-ai-status" role="status" aria-live="polite"></p></section>
@@ -12,14 +13,26 @@ final class Page {
     }
     public static function entry( $content ) {
         if ( ! Gate::enabled() || (string) get_option( 'mdg_vp_listed', '0' ) !== '1' || ! is_page( 'bilet-al' ) || ! in_the_loop() || ! is_main_query() ) { return $content; }
-        return '<aside style="padding:20px;margin:20px 0;border:1px solid #e4c56c;border-radius:12px;background:#fffbef"><strong>Ailenize uygun bileti bulalım</strong><p>İzmir gösterisi için kişi sayılarınıza göre seçenekleri karşılaştırın.</p><a href="' . esc_url( home_url( '/bilet-onerisi/' ) ) . '">Bilet önerisini aç →</a></aside>' . $content;
+        self::$entry_rendered = true;
+        return self::entry_markup() . $content;
+    }
+    private static function entry_markup() {
+        return '<aside id="mdg-vp-entry" aria-label="Bilet önerisi" style="padding:20px;margin:20px 0;max-width:100%;box-sizing:border-box;border:1px solid #e4c56c;border-radius:12px;background:#fffbef;color:#151515"><strong>Ailenize uygun bileti bulalım</strong><p>İzmir gösterisi için kişi sayılarınıza göre seçenekleri karşılaştırın.</p><a style="display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;box-sizing:border-box;border-radius:10px;background:#c91f22;color:#fff;font-weight:700;text-decoration:none" href="' . esc_url( home_url( '/bilet-onerisi/' ) ) . '">Bilet önerisini aç →</a></aside>';
+    }
+    public static function footer_entry() {
+        if ( self::$entry_rendered || ! Gate::enabled() || (string) get_option( 'mdg_vp_listed', '0' ) !== '1'
+            || rtrim( (string) parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' ) !== '/bilet-al' ) { return; }
+        self::$entry_rendered = true;
+        echo self::entry_markup();
+        // The native directory bypasses the_content but calls wp_footer. Preserve its event DOM.
+        echo '<script>(function(){var entry=document.getElementById("mdg-vp-entry"),hero=document.querySelector(".mdg-tickets__hero");if(entry&&hero)hero.appendChild(entry);})();</script>';
     }
     public static function render() {
         if ( ! Gate::enabled() || rtrim( (string) parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' ) !== '/bilet-onerisi' ) { return; }
         status_header( 200 ); nocache_headers(); header( 'X-Robots-Tag: noindex, nofollow', true );
         $main = __DIR__ . '/mdg-visitor-pilot.php';
-        wp_enqueue_style( 'mdg-visitor-pilot', plugins_url( 'style.css', $main ), array(), '1.0.1' );
-        wp_enqueue_script( 'mdg-visitor-pilot', plugins_url( 'client.js', $main ), array(), '1.0.1', true );
+        wp_enqueue_style( 'mdg-visitor-pilot', plugins_url( 'style.css', $main ), array(), '1.0.2' );
+        wp_enqueue_script( 'mdg-visitor-pilot', plugins_url( 'client.js', $main ), array(), '1.0.2', true );
         ?><!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ailenize Uygun Bilet · Madagaskar Sirki</title><?php wp_head(); ?></head><body class="mdg-vp-page"><nav aria-label="Siteye dön"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">← Madagaskar Sirki</a></nav><?php echo self::markup(); ?>
 <script id="vp-config" type="application/json"><?php echo wp_json_encode( array( 'api' => rest_url( 'mdg-visitor/v1/' ), 'origin' => Gate::origin() ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?></script><?php wp_footer(); ?></body></html><?php
         exit;

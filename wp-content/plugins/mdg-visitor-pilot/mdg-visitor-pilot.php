@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Visitor Recommendation Pilot
  * Description: Bounded, read-only İzmir ticket recommendation pilot with optional Gemini intake.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Requires PHP: 7.4
  */
 namespace Madagaskar\Visitor;
@@ -15,3 +15,4 @@ require_once __DIR__ . '/page.php';
 add_action( 'rest_api_init', array( Api::class, 'routes' ) );
 add_action( 'template_redirect', array( Page::class, 'render' ), 1 );
 add_filter( 'the_content', array( Page::class, 'entry' ), 20 );
+add_action( 'wp_footer', array( Page::class, 'footer_entry' ), 20 );
