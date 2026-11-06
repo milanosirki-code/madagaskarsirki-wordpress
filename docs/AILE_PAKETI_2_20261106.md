@@ -37,4 +37,10 @@ Fixture testleri gerçek ödeme, gerçek Tickera PDF/QR üretimi veya eş zamanl
 
 ## Durum
 
-Kod ve otomatik test hazırlığı sürüyor. Canlıya kurulum veya satış açılışı bu belgenin ilk yazımında yapılmadı. Son doğrulama sonuçları ayrı kanıt ekiyle kaydedilecektir.
+Kod e19072d8ea1db1a349998a46d91e1a0eb79c134f, PR310 draft/open. PHP7.4 ve8.4 üzerinde218'er kontrol, native JS DOM testleri ve15/15 GitHub workflow çalışması SUCCESS. İlk ZIP output yolu hatası düzeltildi; çalışma zamanı testleri ilk denemede de başarılıydı.
+
+Yeni modül yalnız özel staging257930487'ye kuruldu ve active0.1.0 doğrulandı. Kurulu üç kaynak dosyasının satır metni GitHub ile eşleşti (yalnız son transport satır sonu hariç). Son staging ayarı yalnız MDG10=1500; mevcut 2+2 ayarları değiştirilmedi. Gerçek İzmir88/89/90 kataloğunda4çocuk+2yetişkin,normal2330,indirim830,sonuç1500,istenen6birim doğrulandı. Ankara7/seans60 eski katalog kaydında1250 hedefi,2000 normal–750 indirim doğrulandı; bu geçici test ayarı kaldırıldı. Hiçbir audit sipariş/hold/bilet üretmedi. Yanlış seans409; üretimde yeni audit route404. Ayrıntı: `docs/evidence/aile-paketi-2-20261106.json`.
+
+Özel staging etkinlik sayfası giriş ekranına dönüyor ve bu oturumda yetkili tarayıcı aracı yok. Bu nedenle gerçek sepet→checkout→ödeme,6benzersizQR/PDF ve6kapasite düşümü testi AÇIK. Canlıya modül kurulmadı ve yeni paket satışa açılmadı. Aktif Kommo #110 değişmedi; uzantısı yalnız PR'da hazır. PR305–308 özel web-asistanı dalları yeni paketi okuyacak ayrı adaptör güncellemesi bekliyor. Repository AGENTS.md kuralındaki kontrollü akış ve checkout doğrulaması tamamlanmadan doğrudan canlı yazma yapılmadı.
+
+Yetkili test sayfası: https://staging-f321-milanosirki-lgajf.wpcomstaging.com/etkinlik/madagaskar-sirki-izmir-08-kasim-2026/ . Ayarlar: aynı sitede `/wp-admin/tools.php?page=mdg-family-package-24`.

@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-06",
+  "pr": "https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/310",
+  "code_commit": "e19072d8ea1db1a349998a46d91e1a0eb79c134f",
+  "production_deployed": false,
+  "production_sales_enabled": false,
+  "staging": {
+    "site": "https://staging-f321-milanosirki-lgajf.wpcomstaging.com",
+    "plugin": "madagaskar-aile-paketi-24",
+    "version": "0.1.0",
+    "active": true,
+    "events": {
+      "10": 1500
+    },
+    "source_readback": "All 3 installed files match repository line text, ignoring final transport newline.",
+    "zip_sha256": "ecf333bc6baebca7456fe6efbdb354569c29e78b9fbf458d5132b00e11dd2cad",
+    "audit": [
+      {
+        "event": 10,
+        "sessions": [
+          88,
+          89,
+          90
+        ],
+        "child": 4,
+        "adult": 2,
+        "normal_total": 2330,
+        "discount": 830,
+        "target": 1500,
+        "requested_units": 6
+      },
+      {
+        "event": 7,
+        "sessions": [
+          60
+        ],
+        "child": 4,
+        "adult": 2,
+        "normal_total": 2000,
+        "discount": 750,
+        "target": 1250,
+        "requested_units": 6,
+        "temporary_setting_restored": true
+      }
+    ]
+  },
+  "tests": {
+    "php74_assertions": 218,
+    "php84_assertions": 218,
+    "node_dom": true,
+    "github_runs": [
+      {
+        "name": "Changed PHP Syntax",
+        "event": "pull_request",
+        "id": 42168101517,
+        "conclusion": "success"
+      },
+      {
+        "name": "Kommo secret hygiene",
+        "event": "pull_request",
+        "id": 42168101569,
+        "conclusion": "success"
+      },
+      {
+        "name": "Campaign code hygiene",
+        "event": "pull_request",
+        "id": 42168101566,
+        "conclusion": "success"
+      },
+      {
+        "name": "Past shows archive contract",
+        "event": "pull_request",
+        "id": 42168101740,
+        "conclusion": "success"
+      },
+      {
+        "name": "Corporate campaign contract",
+        "event": "pull_request",
+        "id": 42168101512,
+        "conclusion": "success"
+      },
+      {
+        "name": "Issue 182 shop and catalogue safety",
+        "event": "pull_request",
+        "id": 42168101638,
+        "conclusion": "success"
+      },
+      {
+        "name": "Family Package 2",
+        "event": "pull_request",
+        "id": 42168101603,
+        "conclusion": "success"
+      },
+      {
+        "name": "Kommo source HTTP contract",
+        "event": "pull_request",
+        "id": 42168101597,
+        "conclusion": "success"
+      },
+      {
+        "name": "Production Source Archive",
+        "event": "pull_request",
+        "id": 42168101811,
+        "conclusion": "success"
+      },
+      {
+        "name": "Read-only integrity contract",
+        "event": "pull_request",
+        "id": 42168101500,
+        "conclusion": "success"
+      },
+      {
+        "name": "Legacy redirect contract",
+        "event": "pull_request",
+        "id": 42168101612,
+        "conclusion": "success"
+      },
+      {
+        "name": "Raffle replacement contract",
+        "event": "pull_request",
+        "id": 42168101522,
+        "conclusion": "success"
+      },
+      {
+        "name": "Protocol ticket contract",
+        "event": "pull_request",
+        "id": 42168101642,
+        "conclusion": "success"
+      },
+      {
+        "name": "Operations automation contract",
+        "event": "pull_request",
+        "id": 42168101578,
+        "conclusion": "success"
+      },
+      {
+        "name": "Family Package 2",
+        "event": "push",
+        "id": 42168095708,
+        "conclusion": "success"
+      }
+    ],
+    "negative_wrong_session_http": 409,
+    "production_audit_route": 404
+  },
+  "limitations": [
+    "Staging is private; HTML read reaches login page, no authenticated browser tool is available.",
+    "No real cart/checkout/payment/PDF or 6-QR check-in E2E was performed.",
+    "No capacity mutation, order or ticket creation during staging audit.",
+    "Kommo source code extension is in PR only; active snippet #110 was not changed.",
+    "Private web-assistant branches PR305–308 require a separate adapter update before deployment with this package."
+  ],
+  "rollback": "Empty the new package allowlist first. Keep the companion plugin's fee/ledger callbacks while new-format carts/orders exist; do not remove old 2+2 or other working modules."
+}
