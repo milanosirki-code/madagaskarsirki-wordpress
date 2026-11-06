@@ -1,7 +1,9 @@
 {
-  "phase": "final-public-entry-and-anonymous-check",
+  "phase": "all-eligible-shows",
   "expect_ai": true,
-  "skip_ai_generation": true,
+  "skip_ai_generation": false,
   "verify_listing": true,
-  "attempt": 4
+  "verify_all_events": true,
+  "minimum_events": 7,
+  "attempt": 5
 }
