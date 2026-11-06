@@ -1,0 +1,195 @@
+{
+  "review_date": "2026-11-06",
+  "status": "staging_review_only_not_a_production_installer",
+  "production_site_id": "255726534",
+  "staging_site_id": "257930487",
+  "repository": "milanosirki-code/madagaskarsirki-wordpress",
+  "review_source_head": "39296b765c4564f50814d38b47bade967e2f99fb",
+  "draft_pr": 308,
+  "dependent_prs": [
+    305,
+    306
+  ],
+  "packages": [
+    {
+      "file": "madagaskar-web-assistant-core-0.2.1-staging.zip",
+      "version": "0.2.1",
+      "source_commit": "61daa738f2877d6e9198de5dbde1c3dff434b0ec",
+      "sha256": "09cd435f5ae7ad54b9a7bf149258da9c58b4456656d651f976673a0d599fac17",
+      "bytes": 20524
+    },
+    {
+      "file": "mdg-gemini-intake-0.1.2-staging.zip",
+      "version": "0.1.2",
+      "source_commit": "dd53372766df34c3d19973dff91eb5d07e3dea64",
+      "sha256": "27267b514b64e99315d385baf779dc11124a599050bed9187f4c8c59f782c252",
+      "bytes": 5700
+    }
+  ],
+  "production_dependencies": [
+    {
+      "name": "AI Provider for Google",
+      "version": "1.2.1",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar AI Abilities",
+      "version": "0.7.0",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Aile Paketi 2+2",
+      "version": "1.1.3",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Bilet Yönetimi",
+      "version": "3.6.3-ticket-invalidation-dry-run",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Management Center",
+      "version": "1.3.49",
+      "status": "active"
+    },
+    {
+      "name": "WooCommerce",
+      "version": "11.2.2",
+      "status": "active"
+    }
+  ],
+  "staging_dependencies": [
+    {
+      "name": "AI Provider for Google",
+      "version": "1.2.0",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar AI Abilities",
+      "version": "0.7.1",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Aile Paketi 2+2",
+      "version": "1.1.3",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Management Center",
+      "version": "1.3.50",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Web Assistant Core",
+      "version": "0.2.1",
+      "status": "active"
+    },
+    {
+      "name": "MDG Gemini Intake Preview",
+      "version": "0.1.2",
+      "status": "active"
+    }
+  ],
+  "future_production_programs": [
+    {
+      "program_id": "30",
+      "planned_date": "2026-11-07",
+      "program_status": "sales_open",
+      "mmc_event_id": "30",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "40",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-tire-07-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "31",
+      "planned_date": "2026-11-07",
+      "program_status": "sales_open",
+      "mmc_event_id": "31",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "41",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-odemis-07-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "13",
+      "planned_date": "2026-11-08",
+      "program_status": "sales_open",
+      "mmc_event_id": "13",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "10",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-izmir-08-kasim-2026",
+      "onsale_sessions": "3"
+    },
+    {
+      "program_id": "25",
+      "planned_date": "2026-11-11",
+      "program_status": "sales_open",
+      "mmc_event_id": "25",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "35",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-corlu-11-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "26",
+      "planned_date": "2026-11-12",
+      "program_status": "sales_open",
+      "mmc_event_id": "26",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "36",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-cerkezkoy-12-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "27",
+      "planned_date": "2026-11-13",
+      "program_status": "sales_open",
+      "mmc_event_id": "27",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "37",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-kirklareli-13-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "28",
+      "planned_date": "2026-11-15",
+      "program_status": "sales_open",
+      "mmc_event_id": "28",
+      "mmc_status": "sales_open",
+      "mdg_event_id": "38",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-edirne-15-kasim-2026",
+      "onsale_sessions": "2"
+    },
+    {
+      "program_id": "29",
+      "planned_date": "2026-11-15",
+      "program_status": "venue_confirmed",
+      "mmc_event_id": "29",
+      "mmc_status": "configured",
+      "mdg_event_id": "39",
+      "mdg_status": "onsale",
+      "public_slug": "madagaskar-sirki-kesan-15-kasim-2026",
+      "onsale_sessions": "2"
+    }
+  ],
+  "status_aligned_candidate_events": 7,
+  "status_aligned_candidate_sessions": 15,
+  "counts_do_not_prove_full_purchase_readiness": true,
+  "production_google_credential_presence": "nonempty_only_value_not_read",
+  "production_google_generation_tested": false,
+  "production_plugins_installed": false,
+  "public_visitor_layer_implemented": false,
+  "red_button_user_confirmation": false,
+  "mobile_result_card_user_confirmation": true,
+  "production_writes": false,
+  "model_requests": false,
+  "secret_or_customer_values_included": false
+}
