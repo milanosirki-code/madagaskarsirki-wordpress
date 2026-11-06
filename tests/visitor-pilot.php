@@ -1,7 +1,9 @@
 <?php
 namespace Madagaskar\WebAssistant {
     class WordPressSource {
-        public function bundle($id){if($id!==13)throw new \Exception('wrong program');return $GLOBALS['bundle'];}
+        public function programs(){return array_map(static function($b){return (object)$b['program'];},$GLOBALS['bundles']??array($GLOBALS['bundle']));}
+        public function bundle($id){foreach($GLOBALS['bundles']??array($GLOBALS['bundle']) as $b){if($b['program']['id']===$id)return $b;}throw new Failure('PROGRAM_NOT_FOUND');}
+        public function bundle_for_session($id){foreach($GLOBALS['bundles']??array($GLOBALS['bundle']) as $b){foreach($b['sessions'] as $s){if($s['id']===$id)return $b;}}throw new Failure('SESSION_NOT_FOUND');}
         public function origin(){return $GLOBALS['origin'];}
     }
 }
@@ -9,6 +11,7 @@ namespace Madagaskar\Visitor { function time(){return $GLOBALS['clock'];} }
 namespace {
 define('ABSPATH',__DIR__);
 class WP_Error {public $code;public $data;function __construct($c,$m,$d){$this->code=$c;$this->data=$d;}}
+class MMC_Event_Service {public static function event_for_program($id){foreach($GLOBALS['bundles']??array($GLOBALS['bundle']) as $b){if($b['program']['id']===$id)return (object)$b['mmc_event'];}return null;}}
 class WP_REST_Response {public $data;public $status;public $headers=array();function __construct($d,$s){$this->data=$d;$this->status=$s;}function header($k,$v){$this->headers[$k]=$v;}}
 class Request {private $data;public $headers;public $raw;function __construct($d=array(),$h=array()){$this->data=$d;$this->headers=$h;$this->raw=json_encode($d);}function get_body(){return $this->raw;}function get_json_params(){return $this->data;}function get_header($h){return $this->headers[$h]??'';}}
 class DB {public $options='wp_options';public $deletes=0;function delete($table,$where,$formats){if($table!==$this->options||strpos($where['option_name'],'mdg_vp_lock_')!==0)throw new \Exception('business write');$this->deletes++;$name=$where['option_name'];if(($GLOBALS['opts'][$name]??null)===$where['option_value']){unset($GLOBALS['opts'][$name]);return 1;}return 0;}}
@@ -25,6 +28,7 @@ use Madagaskar\Visitor\Gate;use Madagaskar\Visitor\Model;use Madagaskar\Visitor\
 $checks=0;function ok($v,$label){global $checks;$checks++;if(!$v)throw new \Exception('FAIL '.$label);}
 function problem($fn,$code){try{$fn();throw new \Exception('Expected '.$code);}catch(Problem $e){ok($e->getMessage()===$code,'expected '.$code);}}
 function reset_case(){
+ unset($GLOBALS['bundles']);
  $property=new \ReflectionProperty(\Madagaskar\Visitor\Page::class,'entry_rendered');$property->setAccessible(true);$property->setValue(false);
  $GLOBALS['clock']=strtotime('2026-11-06 00:00:00 UTC');$GLOBALS['origin']=Gate::LIVE;$GLOBALS['admin']=false;$_SERVER['REMOTE_ADDR']='192.0.2.1';
  $GLOBALS['opts']=array('mdg_vp_enabled'=>'1','mdg_vp_ai_enabled'=>'1','connectors_ai_google_api_key'=>'fixture-secret');$GLOBALS['cache']=array();$GLOBALS['calls']=array();$GLOBALS['routes']=array();$GLOBALS['wpdb']=new DB;
@@ -52,7 +56,7 @@ reset_case();ok(dispatch('catalogue',array('token'=>'fake'))->status===403,'forg
 reset_case();$bad=$input;$bad['token']=Gate::issue();$bad['session_id']=999;ok(dispatch('quote',$bad)->status===409,'other event/session excluded');
 reset_case();$bad=$input;$bad['token']=Gate::issue();$bad['source_revision']=str_repeat('0',64);ok(dispatch('quote',$bad)->data['code']==='STALE_SELECTION','stale quote');
 reset_case();$GLOBALS['bundle']['program']['status']='venue_confirmed';ok(Model::catalogue()['offers']===array(),'state conflict excluded');
-reset_case();$GLOBALS['bundle']['mdg_event']['id']=39;ok(Model::catalogue()['offers']===array(),'other event rejected before quote');
+reset_case();$GLOBALS['bundle']['mdg_event']['id']=39;ok(Model::catalogue()['offers']===array(),'mismatched event bridge rejected');
 reset_case();$GLOBALS['clock']=strtotime('2026-11-09 00:00:00 UTC');ok(Model::catalogue()['offers']===array(),'expired pilot not rolled forward');
 reset_case();$GLOBALS['opts']['mdg_vp_ai_enabled']='0';ok(dispatch('parse',array('token'=>Gate::issue(),'text'=>'İzmir iki yetişkin'))->status===503&&!$GLOBALS['calls'],'AI independent kill switch');ok(count(Model::catalogue()['offers'])===1,'manual catalogue still works');
 reset_case();$GLOBALS['upstream']=array('status'=>429,'body'=>'fixture-secret');$r=dispatch('parse',array('token'=>Gate::issue(),'text'=>'İzmir iki yetişkin'));ok($r->status===502&&count($GLOBALS['calls'])===1,'no retry/error leak');
@@ -67,5 +71,10 @@ reset_case();$GLOBALS['admin']=true;ok(Api::health()->data['google_credential_pr
 reset_case();ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','listing off by default');$GLOBALS['opts']['mdg_vp_listed']='1';ok(strpos(\Madagaskar\Visitor\Page::entry('Original'),'/bilet-onerisi/')!==false,'explicit entry switch');$GLOBALS['opts']['mdg_vp_enabled']='0';ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','master removes entry');
 reset_case();$_SERVER['REQUEST_URI']='/bilet-al/';ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','footer listing off');$GLOBALS['opts']['mdg_vp_listed']='1';ob_start();\Madagaskar\Visitor\Page::footer_entry();$entry=ob_get_clean();ok(strpos($entry,'id="mdg-vp-entry"')!==false&&strpos($entry,'hero.appendChild(entry)')!==false,'native template footer entry');ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','entry not duplicated');
 reset_case();$GLOBALS['opts']['mdg_vp_listed']='1';$_SERVER['REQUEST_URI']='/checkout/';ob_start();\Madagaskar\Visitor\Page::footer_entry();ok(ob_get_clean()==='','no entry on checkout');
+reset_case();$second=$GLOBALS['bundle'];$second['program']['id']=30;$second['program']['district']='Tire';$second['mmc_event']['id']=30;$second['mmc_event']['program_id']=30;$second['mdg_event']['id']=40;$second['mdg_event']['title']='Madagaskar Tire';$bridge=array('program_id'=>30,'mmc_event_id'=>30,'mdg_event_id'=>40);$second['program_bridges']=array($bridge);$second['event_bridges']=array($bridge);$second['ticket_url']=Gate::LIVE.'/etkinlik/fixture-tire/';$second['sessions'][0]['id']=235;$second['sessions'][0]['event_id']=40;$GLOBALS['bundles']=array($GLOBALS['bundle'],$second);
+$all=Model::catalogue();ok($all['scope']==='eligible_madagaskar'&&$all['event_count']===2&&count($all['offers'])===2,'multiple programs included dynamically');$other=$input;$other['session_id']=235;$other['source_revision']=$all['offers'][1]['source_revision'];$other['token']=Gate::issue();ok(dispatch('quote',$other)->status===200,'non-Izmir session quote');
+$GLOBALS['bundles'][1]['mmc_event']['status']='sales_ready';ok(Model::catalogue()['event_count']===1,'readiness does not bypass sales-open gate');ok(Model::diagnostics()[0]['program_id']===30,'blocked detail restricted to health');ok(!isset(Model::catalogue()['blocked_programs']),'no private diagnostics in catalogue');
+$GLOBALS['bundles'][1]['mmc_event']['status']='sales_open';$GLOBALS['bundles'][1]['program']['brand']='Milano Sirki';ok(Model::catalogue()['event_count']===1,'Milano excluded from Madagaskar catalogue');ok(dispatch('quote',$other)->status===409,'direct Milano session rejected');
+$GLOBALS['bundles'][1]['program']['brand']='Madagaskar Sirki';$GLOBALS['bundles'][1]['program']['status']='cancelled';ok(Model::catalogue()['event_count']===1,'cancelled future program excluded');
 echo "PASS $checks anonymous-boundary, canonical-pilot, budget and secret-isolation assertions; no live HTTP\n";
 }

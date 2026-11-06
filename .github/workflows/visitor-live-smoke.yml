@@ -1,7 +1,7 @@
 name: Visitor anonymous production smoke
 on:
   push:
-    branches: [feature/visitor-pilot-launch-20261106]
+    branches: [feature/visitor-pilot-launch-20261106, feature/all-show-recommendations-20261106]
     paths: [docs/VISITOR_LIVE_SMOKE_TRIGGER.json]
 permissions:
   contents: read
