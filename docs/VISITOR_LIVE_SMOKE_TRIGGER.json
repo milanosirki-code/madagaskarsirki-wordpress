@@ -1,0 +1,7 @@
+{
+  "phase": "manual-read-only",
+  "expect_ai": false,
+  "requested_by": "explicit user launch instruction",
+  "site": "https://madagaskarsirki.com",
+  "purpose": "anonymous production page/session/catalogue/quote and rejected-forgery/origin checks; no cart/payment"
+}
