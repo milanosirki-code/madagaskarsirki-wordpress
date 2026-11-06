@@ -1,0 +1,31 @@
+name: Web Assistant Core
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-web-assistant-core/**'
+      - 'tests/web-assistant-core/**'
+      - '.github/workflows/web-assistant-core.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/plugins/madagaskar-web-assistant-core/**'
+      - 'tests/web-assistant-core/**'
+      - '.github/workflows/web-assistant-core.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          coverage: none
+      - name: PHP syntax
+        run: find wp-content/plugins/madagaskar-web-assistant-core tests/web-assistant-core -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Behaviour, independent optimality oracle and no-write adapter tests
+        run: php -d error_reporting=E_ALL -d display_errors=1 tests/web-assistant-core/run.php
