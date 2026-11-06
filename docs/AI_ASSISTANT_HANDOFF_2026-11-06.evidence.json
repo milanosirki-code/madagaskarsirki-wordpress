@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-06",
+  "code_commit": "61daa738f2877d6e9198de5dbde1c3dff434b0ec",
+  "core_version": "0.2.1",
+  "gemini_intake_version": "0.1.2",
+  "stage_site_id": "257930487",
+  "core_active": true,
+  "catalogue_sessions": [
+    88,
+    89,
+    90
+  ],
+  "mdg_event": {
+    "id": 10,
+    "public_slug": "madagaskar-sirki-izmir-08-kasim-2026",
+    "status": "onsale"
+  },
+  "fixed_fragment": "bilet-secimi",
+  "native_session_or_quantity_prefill": false,
+  "quote_expiry_ui_seconds_max": 60,
+  "quote_request": {
+    "session_id": 89,
+    "party": {
+      "adults": 2,
+      "children": 3,
+      "infants": 0
+    },
+    "total_minor": 159000,
+    "reservation": false,
+    "verified_at": 1793925767,
+    "expires_at": 1793925827
+  },
+  "ci": {
+    "core_run": 42138759217,
+    "gemini_run": 42138748595,
+    "all_observed_workflows_success": 16
+  },
+  "installed_js_readback": {
+    "anchor": true,
+    "expiry": true,
+    "reselection_copy": true
+  },
+  "private_destination_fetch": "login_screen",
+  "user_click_confirmation": false,
+  "user_reply": "Görmedim",
+  "production_modified": false,
+  "model_requests_made": false,
+  "zip_bytes": 20524,
+  "zip_sha256": "09cd435f5ae7ad54b9a7bf149258da9c58b4456656d651f976673a0d599fac17",
+  "drive_zip_id": "1O0WPWd07Yh750c1_UZr-pi5GcnBstqeu"
+}
