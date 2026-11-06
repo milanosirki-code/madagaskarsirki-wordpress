@@ -46,7 +46,7 @@
             $('city').replaceChildren();option($('city'),'Şehrinizi seçin','');
             Array.from(new Set(offers.map(key))).forEach(function(c){option($('city'),c.normalize('NFC'),c);});
             $('city').disabled=!offers.length;sessions();
-            status(offers.length?'Şehrinizi ve seansınızı seçerek başlayın.':'Bu pilot için güncel seans bulunmuyor. Tüm gösterilere Bilet Al sayfasından ulaşabilirsiniz.');
+            status(offers.length?'Şehrinizi ve seansınızı seçerek başlayın.':'Şu anda öneri sunabileceğimiz güncel seans bulunmuyor. Tüm gösterilere Bilet Al sayfasından ulaşabilirsiniz.');
             if(!aiEnabled)$('ai-status').textContent='Yapay zekâ şu anda kapalı. Aşağıdaki formu kullanabilirsiniz.';
             ready();
         } catch (_) { token='';aiEnabled=false;ready();status('Öneri servisi şu anda kullanılamıyor. Tüm gösteriler için Bilet Al sayfasını kullanın.'); }

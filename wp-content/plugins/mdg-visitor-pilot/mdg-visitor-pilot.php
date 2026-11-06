@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Madagaskar Visitor Recommendation Pilot
- * Description: Bounded, read-only İzmir ticket recommendation pilot with optional Gemini intake.
- * Version: 1.0.2
+ * Description: Read-only recommendations for all eligible Madagaskar shows, with optional Gemini intake.
+ * Version: 1.1.0
  * Requires PHP: 7.4
  */
 namespace Madagaskar\Visitor;

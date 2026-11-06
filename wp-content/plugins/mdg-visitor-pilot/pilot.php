@@ -74,26 +74,42 @@ final class Gate {
     }
 }
 final class Model {
-    const PROGRAM = 13;
-    const EVENT = 10;
+    private static $blocked = array();
+    public static function diagnostics() { return self::$blocked; }
     public static function offers() {
-        try {
-            $source = new WordPressSource();
-            $bundle = $source->bundle( self::PROGRAM );
-            if ( ( $bundle['program']['id'] ?? 0 ) !== self::PROGRAM || ( $bundle['mdg_event']['id'] ?? 0 ) !== self::EVENT ) { return array(); }
-            return Catalogue::offers( $bundle, time(), $source->origin() )['offers'];
-        } catch ( Failure $e ) { return array(); }
+        self::$blocked = array(); $source = new WordPressSource(); $offers = array(); $now = time();
+        $today = ( new \DateTimeImmutable( '@' . $now ) )->setTimezone( new \DateTimeZone( 'Europe/Istanbul' ) )->format( 'Y-m-d' );
+        foreach ( $source->programs() as $program ) {
+            if ( (string) ( $program->brand ?? '' ) !== Catalogue::BRAND || (string) $program->planned_date < $today ) { continue; }
+            try {
+                if ( ! in_array( (string) $program->status, array( 'sales_open', 'promotion', 'operations', 'show_day' ), true ) ) { throw new Failure( 'PROGRAM_NOT_OPEN' ); }
+                // A cheap canonical preflight avoids resolving Woo products for unreconciled programs.
+                $event = \MMC_Event_Service::event_for_program( (int) $program->id );
+                if ( ! $event || (string) $event->status !== 'sales_open' ) { throw new Failure( 'MMC_NOT_SALES_OPEN' ); }
+                $result = Catalogue::offers( $source->bundle( (int) $program->id ), $now, $source->origin() );
+                $offers = array_merge( $offers, $result['offers'] );
+                if ( $result['blocked'] ) { self::$blocked[] = array( 'program_id' => (int) $program->id, 'reason' => 'SESSION_CHECK_FAILED' ); }
+            } catch ( Failure $e ) { self::$blocked[] = array( 'program_id' => (int) $program->id, 'reason' => $e->getMessage() ); }
+            if ( count( $offers ) > 1000 ) { throw new Problem( 'CATALOGUE_TOO_LARGE', 503 ); }
+        }
+        usort( $offers, static function( $a, $b ) { return strcmp( $a['starts_at'], $b['starts_at'] ) ?: ( $a['session_id'] <=> $b['session_id'] ); } );
+        return $offers;
     }
     public static function catalogue() {
         $safe = array();
         foreach ( self::offers() as $offer ) {
-            $safe[] = array_intersect_key( $offer, array_flip( array( 'session_id', 'source_revision', 'title', 'city', 'district', 'venue', 'starts_at', 'ticket_url' ) ) );
+            $row = array_intersect_key( $offer, array_flip( array( 'session_id', 'source_revision', 'title', 'city', 'district', 'venue', 'starts_at', 'ticket_url' ) ) );
+            $row['event_id'] = $offer['mdg_event_id']; $safe[] = $row;
         }
-        return array( 'offers' => $safe, 'pilot_event' => self::EVENT, 'ai_enabled' => Gate::ai() );
+        return array( 'offers' => $safe, 'scope' => 'eligible_madagaskar', 'event_count' => count( array_unique( array_column( $safe, 'event_id' ) ) ), 'ai_enabled' => Gate::ai() );
     }
     public static function quote( array $data ) {
         if ( ! is_int( $data['session_id'] ?? null ) || ! is_array( $data['party'] ?? null ) || ! is_string( $data['source_revision'] ?? null ) || ! preg_match( '/\A[a-f0-9]{64}\z/', $data['source_revision'] ) ) { throw new Problem( 'INVALID_INPUT' ); }
-        foreach ( self::offers() as $offer ) {
+        try {
+            $source = new WordPressSource();
+            $result = Catalogue::offers( $source->bundle_for_session( $data['session_id'] ), time(), $source->origin() );
+        } catch ( Failure $e ) { throw new Problem( 'SESSION_UNAVAILABLE', 409 ); }
+        foreach ( $result['offers'] as $offer ) {
             if ( $offer['session_id'] !== $data['session_id'] ) { continue; }
             if ( ! hash_equals( $offer['source_revision'], $data['source_revision'] ) ) { throw new Problem( 'STALE_SELECTION', 409 ); }
             $quote = Quote::calculate( $offer, $data['party'], time() );
@@ -122,6 +138,7 @@ final class Gemini {
         foreach ( Model::offers() as $offer ) { $cities[] = $offer['city'] . ' / ' . $offer['district']; }
         $cities = array_values( array_unique( $cities ) );
         if ( ! $cities ) { throw new Problem( 'SESSION_UNAVAILABLE', 409 ); }
+        if ( count( $cities ) > 100 ) { throw new Problem( 'AI_UNAVAILABLE', 503 ); }
         $properties = array( 'city_key' => array( 'type' => 'STRING', 'nullable' => true, 'enum' => $cities ) );
         foreach ( array( 'adults', 'children', 'infants' ) as $field ) { $properties[$field] = array( 'type' => 'INTEGER', 'nullable' => true ); }
         return Gate::locked( 'model', static function() use ( $text, $session, $cities, $properties, $key ) {
@@ -190,7 +207,7 @@ final class Api {
         if ( ! current_user_can( 'manage_options' ) ) { return self::response( array( 'code' => 'FORBIDDEN' ), 403 ); }
         try {
             $catalogue = Model::catalogue();
-            return self::response( array( 'version' => '1.0.2', 'enabled' => Gate::enabled(), 'ai_enabled' => Gate::ai(), 'listed' => (string) get_option( 'mdg_vp_listed', '0' ) === '1', 'pilot_event' => Model::EVENT, 'sessions' => array_column( $catalogue['offers'], 'session_id' ), 'google_credential_present' => is_string( get_option( 'connectors_ai_google_api_key', '' ) ) && trim( get_option( 'connectors_ai_google_api_key', '' ) ) !== '' ) );
+            return self::response( array( 'version' => '1.1.0', 'enabled' => Gate::enabled(), 'ai_enabled' => Gate::ai(), 'listed' => (string) get_option( 'mdg_vp_listed', '0' ) === '1', 'scope' => 'eligible_madagaskar', 'event_count' => $catalogue['event_count'], 'sessions' => array_column( $catalogue['offers'], 'session_id' ), 'blocked_programs' => Model::diagnostics(), 'google_credential_present' => is_string( get_option( 'connectors_ai_google_api_key', '' ) ) && trim( get_option( 'connectors_ai_google_api_key', '' ) ) !== '' ) );
         } catch ( \Throwable $e ) { return self::response( array( 'code' => 'SOURCE_UNAVAILABLE', 'enabled' => Gate::enabled() ), 503 ); }
     }
 }
