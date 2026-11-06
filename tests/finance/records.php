@@ -38,7 +38,7 @@ class TestFinanceDb {
  }
  function get_var($sql){$a=$this->args($sql);if(strpos($sql,'GET_LOCK')!==false)return $this->lock;if(strpos($sql,'RELEASE_LOCK')!==false){$this->released++;return 1;}
   if(strpos($sql,'SUM(amount)')!==false){$total=0;foreach($this->payments as $p)if($p['record_type']===$a[0]&&$p['record_id']===$a[1]&&$p['status']==='posted')$total+=$p['amount'];return $total;}
-  if(strpos($sql,'wp_mdg_events')!==false)return $a[0]===53?53:null;return 0;
+  if(strpos($sql,'wp_mdg_events')!==false)return $a[0]===53?'11111111-2222-4333-8444-555555555555':null;return 0;
  }
  function get_results($sql,$mode=null){return array();}
  function query($sql){if($this->readonly)throw new Exception('Read wrote SQL: '.$sql);if($sql==='START TRANSACTION')$this->snapshot=serialize(array($this->rows,$this->payments,$this->starts,$this->history));if($sql==='ROLLBACK')list($this->rows,$this->payments,$this->starts,$this->history)=unserialize($this->snapshot);return 1;}
@@ -66,7 +66,7 @@ check(submit('payment',array('amount'=>'30','payment_date'=>'2026-10-10','accoun
 check(submit('payment',array('amount'=>'50.01','payment_date'=>'2026-10-10','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Overpayment accepted');
 check(submit('payment',array('amount'=>'10','payment_date'=>'2026-02-30','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Invalid calendar date accepted');
 check(submit('payment',array('amount'=>'10','payment_date'=>'2026-10-11','account_id'=>'cash','request_key'=>'22222222-2222-4222-8222-222222222222'))!=='ok','Future payment accepted');
-$edit=array('expected_hash'=>hash('sha256',json_encode($row)),'description'=>'Yeni','amount'=>'49','record_date'=>'2026-10-09','scope'=>'program','event_id'=>53);
+$edit=array('expected_hash'=>hash('sha256',json_encode($row)),'description'=>'Yeni','amount'=>'49','record_date'=>'2026-10-09','scope'=>'program','event_id'=>'53|11111111-2222-4333-8444-555555555555');
 check(submit('edit',$edit)!=='ok'&&$wpdb->rows[1]['amount']===100,'Edit below settlement accepted');
 $edit['amount']='110';$edit['expected_hash']='stale';check(submit('edit',$edit)!=='ok','Stale edit accepted');
 $edit['expected_hash']=hash('sha256',json_encode($row));$wpdb->fail_history=true;
@@ -83,6 +83,7 @@ $wpdb->lock=0;check(submit('edit',$edit)!=='ok','Concurrent lock bypass');$wpdb-
 $_REQUEST=array('summary_event'=>53,'program_id'=>99,'month'=>'2026-09');check(MDG_V5_Finance::context_event()===53,'Explicit event lost');check(strpos(MDG_V5_Finance::url(array('section'=>'expense')),'summary_event=53')!==false,'Tab context lost');
 $cent=MDG_V5_Finance_Records::amounts(0.03,0.01,0.01);check($cent['remaining']===0.01,'Cent math failed');
 $income=(object)array('id'=>7,'net_amount'=>80,'collection_status'=>'collected');check(MDG_V5_Finance_Records::state('income',$income,true)['settled']===80.0,'Historical collected income changed');
+$alias=(object)array('id'=>999,'net_amount'=>10,'collection_status'=>'tahsiledildi');check(MDG_V5_Finance_Records::collected($alias)===10.0,'Imported collected alias ignored');
 $wpdb->readonly=true;$summary=MMC_Finance_Service::summary(99);check($summary['total_revenue']===0.0&&$summary['manual_paid_audience']===0,'Summary default/readonly failed');
 $legacy=(object)array_merge($wpdb->rows[1],array('id'=>81,'notes'=>'Ödendi - dekont ile teyit','document_no'=>'REF-1','attachment_id'=>0));
 $unknown=array('known'=>false,'tracked'=>false,'overpaid'=>false,'opening'=>0,'settled'=>0,'remaining'=>110);
