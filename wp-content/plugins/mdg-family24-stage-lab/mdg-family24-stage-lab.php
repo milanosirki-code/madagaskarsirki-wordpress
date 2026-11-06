@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Family24 Private Staging Lab
  * Description: Restricted staging-only native cart tests with an in-memory Woo session; never runs a gateway.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -67,6 +67,30 @@ final class MDG_Family24_Lab {
         global $wpdb;
         return $wpdb->get_row( 'SELECT id,capacity_total,sold_units,held_units FROM ' . MDG_DB::table( 'sessions' ) . ' WHERE id=88', ARRAY_A );
     }
+    private static function hook_ids() {
+        global $wp_filter; $ids = array();
+        foreach ( $wp_filter as $hook => $object ) {
+            foreach ( $object->callbacks as $priority => $callbacks ) {
+                foreach ( $callbacks as $id => $row ) { $ids[$hook][$priority][$id] = true; }
+            }
+        }
+        return $ids;
+    }
+    private static function remove_temporary_cart_hooks( $before ) {
+        global $wp_filter; $count = 0;
+        foreach ( $wp_filter as $hook => $object ) {
+            foreach ( $object->callbacks as $priority => $callbacks ) {
+                foreach ( $callbacks as $id => $row ) {
+                    $f = $row['function'];
+                    if ( isset( $before[$hook][$priority][$id] ) || ! is_array( $f ) || ! is_object( $f[0] ) ) { continue; }
+                    if ( in_array( get_class( $f[0] ), array( 'WC_Cart', 'WC_Cart_Session', 'WC_Customer', 'WC_Customer_Data_Store_Session' ), true ) ) {
+                        remove_filter( $hook, $f, $priority ); $count++;
+                    }
+                }
+            }
+        }
+        return $count;
+    }
     /** One synthetic staging order, no gateway, no email and no external integration. */
     public static function order_fixture( $request ) {
         if ( ! self::permission() ) { return self::response( array( 'code' => 'FORBIDDEN' ), 403 ); }
@@ -77,6 +101,7 @@ final class MDG_Family24_Lab {
         if ( ! add_option( $key, array( 'state' => 'started' ), '', false ) ) { return self::response( array( 'code' => 'FIXTURE_ALREADY_STARTED' ), 409 ); }
         $wc = WC(); $user = get_current_user_id();
         $original = array( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST );
+        $original_hooks = self::hook_ids();
         $before = self::snapshot(); $removed = array();
         $mail = static function() { return true; };
         $http = static function() { return new WP_Error( 'family24_lab_no_network', 'No external calls in this staging fixture.' ); };
@@ -155,6 +180,7 @@ final class MDG_Family24_Lab {
             $result = array( 'state' => 'failed', 'error' => $e->getMessage(), 'record' => get_option( $key ), 'capacity' => self::snapshot() );
             update_option( $key, $result, false ); return self::response( $result, 409 );
         } finally {
+            self::remove_temporary_cart_hooks( $original_hooks );
             list( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST ) = $original; wp_set_current_user( $user );
             remove_filter( 'pre_wp_mail', $mail, PHP_INT_MAX ); remove_filter( 'pre_http_request', $http, PHP_INT_MAX );
             remove_filter( 'woocommerce_persistent_cart_enabled', '__return_false', PHP_INT_MAX ); remove_filter( 'woocommerce_webhook_should_deliver', '__return_false', PHP_INT_MAX );
@@ -169,16 +195,19 @@ final class MDG_Family24_Lab {
         if ( ! class_exists( 'MDG_Family_Package_24' ) || ! class_exists( 'MDG_Live_Sales' ) || ! class_exists( 'WC_Cart' ) ) { return self::response( array( 'code' => 'MISSING_DEPENDENCY' ), 503 ); }
         $wc = WC();
         $original = array( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST );
+        $original_hooks = self::hook_ids();
         $original_user = get_current_user_id();
         $persistent_before = get_user_meta( $original_user, '_woocommerce_persistent_cart_' . get_current_blog_id(), true );
         $before = self::snapshot();
         $mail = static function() { return true; };
         $http = static function() { return new WP_Error( 'family24_lab_no_network', 'External HTTP is disabled in this staging test.' ); };
         $die = static function() { return static function( $message = '' ) { if ( is_scalar( $message ) ) { echo $message; } throw new MDG_Family24_Lab_Stop(); }; };
+        $doing_wrong = static function( $trigger, $function ) { return $function === 'wp_send_json' ? false : $trigger; };
         add_filter( 'pre_wp_mail', $mail, PHP_INT_MAX );
         add_filter( 'pre_http_request', $http, PHP_INT_MAX );
         add_filter( 'wp_die_ajax_handler', $die, PHP_INT_MAX );
         add_filter( 'woocommerce_persistent_cart_enabled', '__return_false', PHP_INT_MAX );
+        add_filter( 'doing_it_wrong_trigger_error', $doing_wrong, PHP_INT_MAX, 2 );
         if ( ! defined( 'DOING_AJAX' ) ) { define( 'DOING_AJAX', true ); }
         $buffer = ob_get_level();
         try {
@@ -218,12 +247,14 @@ final class MDG_Family24_Lab {
             return self::response( array( 'code' => 'LAB_FAILED', 'message' => $e->getMessage(), 'class' => get_class( $e ), 'capacity_unchanged' => $before === self::snapshot() ), 500 );
         } finally {
             while ( ob_get_level() > $buffer ) { ob_end_clean(); }
+            self::remove_temporary_cart_hooks( $original_hooks );
             list( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST ) = $original;
             wp_set_current_user( $original_user );
             remove_filter( 'pre_wp_mail', $mail, PHP_INT_MAX );
             remove_filter( 'pre_http_request', $http, PHP_INT_MAX );
             remove_filter( 'wp_die_ajax_handler', $die, PHP_INT_MAX );
             remove_filter( 'woocommerce_persistent_cart_enabled', '__return_false', PHP_INT_MAX );
+            remove_filter( 'doing_it_wrong_trigger_error', $doing_wrong, PHP_INT_MAX );
         }
     }
 }
