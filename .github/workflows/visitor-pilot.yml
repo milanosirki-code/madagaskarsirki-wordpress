@@ -1,0 +1,26 @@
+name: Visitor pilot boundary and UI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: find wp-content/plugins/mdg-visitor-pilot -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php -d error_reporting=E_ALL -d display_errors=1 tests/visitor-pilot.php
+      - run: php tests/web-assistant-core/run.php
+      - run: for file in class-core.php class-catalogue.php class-wordpress-source.php; do cmp "wp-content/plugins/mdg-visitor-pilot/domain/$file" "wp-content/plugins/madagaskar-web-assistant-core/includes/$file"; done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check wp-content/plugins/mdg-visitor-pilot/client.js
+      - run: npm install --prefix "$RUNNER_TEMP/mdg-visitor-ui" --ignore-scripts --no-audit --no-fund jsdom@26.1.0
+      - run: NODE_PATH="$RUNNER_TEMP/mdg-visitor-ui/node_modules" node tests/visitor-ui.cjs
