@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MDG Family24 Private Staging Lab
  * Description: Restricted staging-only native cart tests with an in-memory Woo session; never runs a gateway.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -15,8 +15,10 @@ final class MDG_Family24_Lab {
         if ( wp_parse_url( home_url(), PHP_URL_HOST ) !== self::HOST ) { return; }
         register_rest_route( 'mdg-family24-lab/v1', '/inventory', array( 'methods' => 'GET', 'permission_callback' => array( __CLASS__, 'permission' ), 'callback' => array( __CLASS__, 'inventory' ) ) );
         register_rest_route( 'mdg-family24-lab/v1', '/cart', array( 'methods' => 'POST', 'permission_callback' => array( __CLASS__, 'permission' ), 'callback' => array( __CLASS__, 'cart' ) ) );
+        register_rest_route( 'mdg-family24-lab/v1', '/restore-cart', array( 'methods' => 'POST', 'permission_callback' => array( __CLASS__, 'permission' ), 'callback' => array( __CLASS__, 'restore_cart' ) ) );
     }
     private static function response( $data, $status = 200 ) {
+        status_header( $status );
         $r = new WP_REST_Response( $data, $status ); $r->header( 'Cache-Control', 'private, no-store' ); return $r;
     }
     public static function inventory() {
@@ -36,7 +38,29 @@ final class MDG_Family24_Lab {
         foreach ( $GLOBALS as $name => $value ) {
             if ( is_object( $value ) && is_a( $value, 'TC_WooCommerce_Bridge' ) ) { $bridge[] = array( 'global' => $name, 'methods' => array_values( array_intersect( get_class_methods( $value ), array( 'tc_order_created', 'create_order_ticket_instances', 'check_tickets_action', 'check_order_tickets' ) ) ) ); }
         }
-        return self::response( array( 'hooks' => $out, 'bridge' => $bridge, 'wc_version' => defined( 'WC_VERSION' ) ? WC_VERSION : null, 'orders_created' => false ) );
+        $saved = get_user_meta( get_current_user_id(), '_woocommerce_persistent_cart_' . get_current_blog_id(), true );
+        $summary = array();
+        foreach ( (array) ( $saved['cart'] ?? array() ) as $item ) { $summary[] = array( 'variation' => (int) ( $item['variation_id'] ?? 0 ), 'qty' => (int) ( $item['quantity'] ?? 0 ), 'family24' => ! empty( $item['mdg_family24'] ) ); }
+        return self::response( array( 'hooks' => $out, 'bridge' => $bridge, 'wc_version' => defined( 'WC_VERSION' ) ? WC_VERSION : null, 'persistent_cart' => $summary, 'orders_created' => false ) );
+    }
+    public static function restore_cart() {
+        if ( ! self::permission() ) { return self::response( array( 'code' => 'FORBIDDEN' ), 403 ); }
+        $key = '_woocommerce_persistent_cart_' . get_current_blog_id();
+        $saved = get_user_meta( get_current_user_id(), $key, true );
+        $cart = (array) ( $saved['cart'] ?? array() ); $actual = array();
+        foreach ( $cart as $item ) { $actual[(int) ( $item['variation_id'] ?? 0 )] = (int) ( $item['quantity'] ?? 0 ); }
+        ksort( $actual ); $expected = array( 2388 => 4, 2389 => 2, 6082 => 2, 6083 => 1 );
+        if ( $actual !== $expected || count( $cart ) !== 4 ) { return self::response( array( 'restored' => false, 'reason' => 'No exact match to the first lab result; no write.' ) ); }
+        $removed = 0; $groups = array();
+        foreach ( $cart as $id => $item ) {
+            if ( ! in_array( (int) $item['variation_id'], array( 2388, 2389 ), true ) ) { continue; }
+            $meta = $item['mdg_family24'] ?? null;
+            if ( ! is_array( $meta ) || (int) ( $meta['event'] ?? 0 ) !== 10 || (int) ( $meta['session'] ?? 0 ) !== 88 ) { return self::response( array( 'restored' => false, 'reason' => 'Group differs; no write.' ) ); }
+            $groups[] = $meta['group']; unset( $cart[$id] ); $removed++;
+        }
+        if ( $removed !== 2 || count( array_unique( $groups ) ) !== 1 ) { return self::response( array( 'restored' => false, 'reason' => 'Ambiguous group; no write.' ) ); }
+        $saved['cart'] = $cart; update_user_meta( get_current_user_id(), $key, $saved );
+        return self::response( array( 'restored' => true, 'remaining_items' => count( $cart ), 'removed_lab_components' => 2 ) );
     }
     private static function snapshot() {
         global $wpdb;
@@ -49,6 +73,8 @@ final class MDG_Family24_Lab {
         if ( ! class_exists( 'MDG_Family_Package_24' ) || ! class_exists( 'MDG_Live_Sales' ) || ! class_exists( 'WC_Cart' ) ) { return self::response( array( 'code' => 'MISSING_DEPENDENCY' ), 503 ); }
         $wc = WC();
         $original = array( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST );
+        $original_user = get_current_user_id();
+        $persistent_before = get_user_meta( $original_user, '_woocommerce_persistent_cart_' . get_current_blog_id(), true );
         $before = self::snapshot();
         $mail = static function() { return true; };
         $http = static function() { return new WP_Error( 'family24_lab_no_network', 'External HTTP is disabled in this staging test.' ); };
@@ -56,9 +82,11 @@ final class MDG_Family24_Lab {
         add_filter( 'pre_wp_mail', $mail, PHP_INT_MAX );
         add_filter( 'pre_http_request', $http, PHP_INT_MAX );
         add_filter( 'wp_die_ajax_handler', $die, PHP_INT_MAX );
+        add_filter( 'woocommerce_persistent_cart_enabled', '__return_false', PHP_INT_MAX );
         if ( ! defined( 'DOING_AJAX' ) ) { define( 'DOING_AJAX', true ); }
         $buffer = ob_get_level();
         try {
+            wp_set_current_user( 0 );
             // This session has no persistence methods, cookie or logged-in customer's cart.
             $wc->session = new class extends WC_Session {
                 public function __construct() { $this->_customer_id = 'family24-lab'; $this->_data = array(); }
@@ -88,16 +116,18 @@ final class MDG_Family24_Lab {
             }
             $fees = array();
             foreach ( $wc->cart->get_fees() as $fee ) { $fees[] = array( 'name' => $fee->name, 'total' => (float) $fee->total ); }
-            $out = array( 'case' => $input['case'], 'native_success' => is_array( $payload ) ? (bool) ( $payload['success'] ?? false ) : false, 'nonce_rejected' => trim( $body ) === '-1', 'items' => $items, 'fees' => $fees, 'total' => (float) $wc->cart->get_total( 'edit' ), 'capacity_units' => $units, 'capacity_unchanged' => $before === self::snapshot(), 'session_persisted' => false, 'order_created' => false, 'payment_called' => false );
+            $out = array( 'case' => $input['case'], 'native_success' => is_array( $payload ) ? (bool) ( $payload['success'] ?? false ) : false, 'nonce_rejected' => trim( $body ) === '-1', 'items' => $items, 'fees' => $fees, 'total' => (float) $wc->cart->get_total( 'edit' ), 'capacity_units' => $units, 'capacity_unchanged' => $before === self::snapshot(), 'persistent_cart_unchanged' => $persistent_before === get_user_meta( $original_user, '_woocommerce_persistent_cart_' . get_current_blog_id(), true ), 'session_persisted' => false, 'order_created' => false, 'payment_called' => false );
             return self::response( $out );
         } catch ( Throwable $e ) {
             return self::response( array( 'code' => 'LAB_FAILED', 'message' => $e->getMessage(), 'class' => get_class( $e ), 'capacity_unchanged' => $before === self::snapshot() ), 500 );
         } finally {
             while ( ob_get_level() > $buffer ) { ob_end_clean(); }
             list( $wc->cart, $wc->session, $wc->customer, $_POST, $_REQUEST ) = $original;
+            wp_set_current_user( $original_user );
             remove_filter( 'pre_wp_mail', $mail, PHP_INT_MAX );
             remove_filter( 'pre_http_request', $http, PHP_INT_MAX );
             remove_filter( 'wp_die_ajax_handler', $die, PHP_INT_MAX );
+            remove_filter( 'woocommerce_persistent_cart_enabled', '__return_false', PHP_INT_MAX );
         }
     }
 }
