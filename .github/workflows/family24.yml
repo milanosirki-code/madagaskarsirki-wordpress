@@ -1,0 +1,34 @@
+name: Family Package 2
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-aile-paketi-24/**'
+      - 'tests/family24/**'
+      - '.github/workflows/family24.yml'
+  push:
+    branches: ['feature/aile-paketi-2-20261106']
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          coverage: none
+      - run: find wp-content/plugins/madagaskar-aile-paketi-24 tests/family24 -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/family24/contract.php
+      - run: node tests/family24/public-row.cjs
+      - run: |
+          mkdir -p dist
+          cd wp-content/plugins
+          zip -qr ../../../dist/madagaskar-aile-paketi-24-v0.1.0.zip madagaskar-aile-paketi-24
+      - uses: actions/upload-artifact@v4
+        if: matrix.php == '8.4'
+        with:
+          name: family-package-2
+          path: dist/madagaskar-aile-paketi-24-v0.1.0.zip
+          if-no-files-found: error

@@ -104,6 +104,13 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_collect' ) ) {
             }
 
             $tickets = mdg_kommo_unified_v2_family_fallback( $program_id, $tickets );
+            // Same explicit event policy as the native ticket selector. No new
+            // external message or Kommo write; this only extends the read source.
+            if ( class_exists( 'MDG_Family_Package_24' ) && class_exists( 'MMC_MDG_Bridge_Service' ) ) {
+                $family24_bridge = MMC_MDG_Bridge_Service::bridge_for_program( $program_id );
+                $family24_offer = $family24_bridge ? MDG_Family_Package_24::offer( (int) $family24_bridge->mdg_event_id ) : null;
+                if ( $family24_offer ) { $tickets[] = $family24_offer; }
+            }
 
             $price_parts = array();
             foreach ( $tickets as $ticket ) {
@@ -419,3 +426,4 @@ if ( ! function_exists( 'mdg_kommo_unified_v2_admin_page' ) ) {
         echo '</tbody></table></div>';
     }
 }
+
