@@ -1,0 +1,22 @@
+{
+  "version": "1.1.0",
+  "event_count": 7,
+  "session_count": 15,
+  "blocked_program_count": 11,
+  "code_commit": "87be7cac5a4a944b470d68d36a58c10a8dc40a9d",
+  "code_ci_run": 42270082968,
+  "boundary_assertions": 203,
+  "core_assertions": 347,
+  "anonymous_live_run": 42270802216,
+  "anonymous_live_job": 128074535063,
+  "anonymous_result": "PASS",
+  "events_quoted": 7,
+  "gemini_tire_intake": "PASS",
+  "native_sales_states_changed": false,
+  "cart_order_payment_mutations": false,
+  "raw_keys_or_tokens_archived": false,
+  "zip_sha256": "80cbb365d9cf95a6023843308657ec3f67889fd805c6e650cc1fe216672c5ce2",
+  "zip_bytes": 20954,
+  "drive_zip_id": "1va9QOBlVQq4KHuX5Wlet7QMmQkxrhY73",
+  "new_mobile_screenshot_visually_inspected": false
+}
