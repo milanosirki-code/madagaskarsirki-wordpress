@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Web Assistant Core
  * Description: Read-only catalogue, ticket quotes and an administrator-only preview on the verified staging site.
- * Version: 0.2.1
+ * Version: 0.3.0
  * Requires PHP: 7.4
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -18,3 +18,4 @@ if ( \Madagaskar\WebAssistant\Preview::is_staging() ) {
     add_action( 'admin_menu', array( '\Madagaskar\WebAssistant\Preview', 'menu' ) );
     add_action( 'admin_enqueue_scripts', array( '\Madagaskar\WebAssistant\Preview', 'assets' ) );
 }
+

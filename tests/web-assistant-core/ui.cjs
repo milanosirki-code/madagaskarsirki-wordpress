@@ -83,5 +83,14 @@ function submit(dom) {dom.window.document.getElementById('mdg-wa-form').dispatch
  expiry.window.close();
  const badTTL=await setup(async(url)=>response(url.endsWith('catalogue')?{offers:[sample]}:{...quote,expires_at:quote.verified_at+61}));
  choose(badTTL);submit(badTTL);await tick();await tick();assert.equal(badTTL.window.document.getElementById('mdg-wa-result').hidden,true);badTTL.window.close();
- console.log('PASS: UI load, explicit selection, nonce, quote, duplicate-submit, XSS, invalidation, late response, stale revision, unsafe URL and auth error');
+ const largeQuote={...quote,recommended:{...quote.recommended,lines:[{code:'family_2_4',quantity:1,unit_minor:150000}],total_minor:150000,family_quantity:1,family24_quantity:1}};
+ const large=await setup(async(url)=>response(url.endsWith('catalogue')?{offers:[sample]}:largeQuote));
+ choose(large);submit(large);await tick();await tick();
+ assert.equal(large.window.document.getElementById('mdg-wa-result').hidden,false);
+ assert.ok(large.window.document.getElementById('mdg-wa-lines').textContent.includes('2 Yetişkin + 4 Çocuk'));
+ assert.ok(large.window.document.getElementById('mdg-wa-total').textContent.includes('1.500'));
+ assert.ok(large.window.document.getElementById('mdg-wa-capacity').textContent.includes('altı'));
+ large.window.close();
+ console.log('PASS: UI lifecycle, security, original 2+2 and new 2+4 result card');
 })().catch(error=>{console.error(error);process.exit(1);});
+

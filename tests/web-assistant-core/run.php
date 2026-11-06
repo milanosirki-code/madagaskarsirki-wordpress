@@ -112,6 +112,9 @@ function oracle( $adults, $children, array $o ) {
         $seen[$key] = $cost;
         if ( $a ) { $walk( $a - 1, $c, $ia + 1, $ic, $f, $cost + $o['tickets']['adult']['price_minor'] ); }
         if ( $c ) { $walk( $a, $c - 1, $ia, $ic + 1, $f, $cost + $o['tickets']['child']['price_minor'] ); }
+        if ( ! empty( $o['family24']['available'] ) && $a >= 2 && $c >= 4 ) {
+            $walk( $a - 2, $c - 4, $ia + 2, $ic + 4, $f + 1, $cost + $o['family24']['price_minor'] );
+        }
         if ( $o['family']['available'] ) {
             foreach ( array( 1, 2 ) as $pa ) {
                 for ( $pc = 0; $pc <= 4 - $pa; $pc++ ) {
@@ -206,5 +209,39 @@ fails( static function() { Service::quote( 223, array( 'adults' => 2, 'children'
 $GLOBALS['fixture_can_manage'] = true;
 check( $GLOBALS['wpdb']->writes === 0, 'native adapter writes zero' );
 check( $GLOBALS['fixture_cart_calls'] === 0, 'no cart initialization' );
+
+// A new native 2+4 offer is optional. It is never inferred from the 2+2 price.
+$standard24 = offer(); $standard24['family24'] = array( 'available' => true, 'price_minor' => 125000 );
+$izmir24 = $izmir; $izmir24['family24'] = array( 'available' => true, 'price_minor' => 150000 );
+check( quote( 2, 4, $izmir24 )['recommended']['total_minor'] === 150000, 'Izmir new package 1500' );
+check( quote( 2, 4, $standard24 )['recommended']['total_minor'] === 125000, 'other programs new package 1250' );
+check( quote( 2, 4, $izmir24 )['recommended']['issued_children'] === 4 && quote( 2, 4, $izmir24 )['recommended']['capacity_units'] === 6, 'native 2+4 issuance' );
+check( quote( 2, 5, $izmir24 )['recommended']['total_minor'] === 179000, '2+4 with extra child' );
+check( quote( 4, 6, $izmir24 )['recommended']['total_minor'] === 280000, 'mixed small and large packages' );
+check( quote( 1, 5, $izmir24 )['recommended']['family24_quantity'] === 0, 'new package does not invent unapproved 1+5 composition' );
+$changed = bundle(); $changed['family24'] = array( 'available' => true, 'price_minor' => 125000 );
+$rev24 = Catalogue::offers( $changed, $now )['offers'][0]['source_revision'];
+$changed['family24']['price_minor'] = 126000;
+check( Catalogue::offers( $changed, $now )['offers'][0]['source_revision'] !== $rev24, 'new price invalidates quote revision' );
+$changed['family_conflict'] = true;
+check( ! Catalogue::offers( $changed, $now )['offers'][0]['family24']['available'], 'real multi-unit conflict disables new family too' );
+$GLOBALS['fixture_family24'] = array( 'code' => 'family_2_4', 'price' => 1250, 'capacity_units' => 6, 'adults' => 2, 'children' => 4 );
+check( $native->bundle(26)['family24']['price_minor'] === 125000, 'native 2+4 policy source' );
+$GLOBALS['fixture_family24']['capacity_units'] = 4;
+check( !$native->bundle(26)['family24']['available'], 'wrong native 2+4 components rejected' );
+$GLOBALS['fixture_family24'] = null;
+check( !$native->bundle(26)['family24']['available'], 'disabled native package remains disabled' );
+foreach ( array( $standard24, $izmir24 ) as $o ) {
+    for ( $a = 1; $a <= 6; $a++ ) {
+        for ( $c = 0; $c <= 10; $c++ ) {
+            foreach ( array( 5, 6, 10, 20 ) as $cap ) {
+                $o['available_units'] = $cap;
+                $expected = oracle( $a, $c, $o );
+                if ( $expected === PHP_INT_MAX ) { fails( static function() use ( $a, $c, $o ) { quote( $a, $c, $o ); }, 'NO_FEASIBLE_COMBINATION' ); }
+                else { check( quote( $a, $c, $o )['recommended']['total_minor'] === $expected, 'two-package independent oracle optimality' ); }
+            }
+        }
+    }
+}
 require __DIR__ . '/preview-contract.php';
 echo json_encode( array( 'result' => 'PASS', 'assertions' => $assertions, 'native_writes' => $GLOBALS['wpdb']->writes, 'cart_calls' => $GLOBALS['fixture_cart_calls'] ) ) . "\n";

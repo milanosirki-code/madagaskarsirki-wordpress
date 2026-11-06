@@ -118,7 +118,21 @@ final class WordPressSource {
             'ticket_url' => \MDG_Public_Event::live_url( $mdg ), 'sessions' => $sessions,
             'mmc_session_times' => $mmc_times, 'family_conflict' => $family_conflict,
             'family' => $this->family( (int) $mdg->id, (int) $mmc->id ),
+            'family24' => $this->family24( (int) $mdg->id ),
         );
+    }
+
+    /** Read the same authoritative offer as the native 2+4 selector, without opting in. */
+    private function family24( $mdg_id ) {
+        $off = array( 'available' => false, 'price_minor' => null, 'reason' => 'FAMILY24_NOT_ENABLED' );
+        if ( ! class_exists( 'MDG_Family_Package_24' ) || ! method_exists( 'MDG_Family_Package_24', 'offer' ) ) { return $off; }
+        $offer = \MDG_Family_Package_24::offer( $mdg_id );
+        if ( ! is_array( $offer ) ) { return $off; }
+        if ( ( $offer['code'] ?? '' ) !== 'family_2_4' || ( $offer['capacity_units'] ?? 0 ) !== 6
+            || ( $offer['adults'] ?? 0 ) !== 2 || ( $offer['children'] ?? 0 ) !== 4
+            || ! isset( $offer['price'] ) || ! is_numeric( $offer['price'] ) || (float) $offer['price'] <= 0 ) { return $off; }
+        $price = Value::minor( number_format( (float) $offer['price'], 2, '.', '' ) );
+        return array( 'available' => true, 'price_minor' => $price, 'source' => 'native_family24_offer', 'capacity_units' => 6 );
     }
 
     /** Mirrors native plugin enablement and price precedence, without invoking its private methods. */
@@ -151,3 +165,4 @@ final class WordPressSource {
         }
     }
 }
+

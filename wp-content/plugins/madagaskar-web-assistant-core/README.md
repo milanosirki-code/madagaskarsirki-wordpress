@@ -1,4 +1,6 @@
-# Madagaskar Web Assistant Core 0.2.1
+# Madagaskar Web Assistant Core 0.3.0
+
+0.3.0 adds the optional native Aile Paketi 2 (2 adults + 4 children) policy from `MDG_Family_Package_24::offer()`. It never infers availability from a city name or from the old 2+2 price. The deterministic search compares singles, existing 2+2 compositions, exact 2+4 packages and mixed combinations, honoring the actual quantities issued, six-person capacity and component limits. The old 2+2 policy is preserved. The native 2+4 module is tracked separately in PR310; an absent/disabled module leaves previous recommendations unchanged. This branch depends on the already installed 0.2.1 preview from PR308; it is not a reason to deploy the entire branch to production. No new Gemini call or external integration is added.
 
 Internal, read-only PHP services for the proposed web assistant. Version 0.2.0 adds a restricted preview on the explicitly verified staging origin only. It has no anonymous API, agent tool, cron, activation migration or checkout hook. On production it only defines classes and registers no preview hooks. Deployment state is recorded separately in PR #306 and the Drive worklog.
 
@@ -60,3 +62,4 @@ School invitations, campaign stacking, group sales and accessible-seat promises 
 Before production, read back the installed dependencies, load only this package in staging, inspect `Service::catalogue()` including blocked records, explicitly test the chosen session/revision/quote and the native JS family row. Recheck native guest purchase and family allocation/4QR if a later UI or checkout integration is added. Do not change Keşan status, prices, Woo mappings or active snippets to make a test pass.
 
 Rollback: deactivate/remove only this new package; if replacing 0.1.0 in staging, preserve and restore that exact ZIP. There are no migrations, settings, jobs, holds or data records to undo. Existing sales plugins and snippets remain active. Research and A0 evidence: PR #304. Core implementation: PR #305; staging UI continuation is a separate dependent PR.
+
