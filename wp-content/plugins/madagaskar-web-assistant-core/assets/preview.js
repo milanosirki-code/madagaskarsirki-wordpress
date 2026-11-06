@@ -17,7 +17,7 @@
         var submit = document.getElementById('mdg-wa-submit');
         var status = document.getElementById('mdg-wa-status');
         var result = document.getElementById('mdg-wa-result');
-        var offers = [], busy = false, epoch = 0, controller = null;
+        var offers = [], busy = false, epoch = 0, controller = null, expiryTimer = null, expiresAt = 0;
         var money = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
         var date = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
         function message(text, error) { status.textContent = text; status.classList.toggle('is-error', !!error); }
@@ -25,10 +25,15 @@
         function ready() { submit.disabled = busy || !selected(); }
         function clear() {
             epoch++;
+            clearTimeout(expiryTimer); expiryTimer = null; expiresAt = 0;
             if (controller) controller.abort();
             controller = null; busy = false; result.hidden = true;
             document.getElementById('mdg-wa-ticket').removeAttribute('href');
             message(''); ready();
+        }
+        function expire() { clear(); message('Önerinin süresi doldu. Güncel fiyat için bilet seçeneklerini yeniden karşılaştırın.'); }
+        function checkExpiry(event) {
+            if (expiresAt && performance.now() >= expiresAt) { if (event) event.preventDefault(); expire(); }
         }
         function option(select, text, value) {
             var el = document.createElement('option'); el.textContent = text; el.value = value; select.appendChild(el);
@@ -67,10 +72,15 @@
         function eventURL(value) {
             var u = new URL(value);
             if (u.origin !== config.origin || u.username || u.password || u.search || u.hash || !/^\/etkinlik\/[a-z0-9-]+\/$/.test(u.pathname)) throw new Error('INVALID_URL');
+            u.hash = 'bilet-secimi';
             return u.href;
         }
-        function render(quote, offer) {
+        function render(quote, offer, started) {
             if (quote.session_id !== offer.session_id || quote.reservation !== false || !quote.recommended || !Array.isArray(quote.recommended.lines)) throw new Error('INVALID_QUOTE');
+            if (!Number.isSafeInteger(quote.verified_at) || !Number.isSafeInteger(quote.expires_at) || quote.verified_at < 1 ||
+                quote.expires_at <= quote.verified_at || quote.expires_at - quote.verified_at > 60) throw new Error('INVALID_QUOTE');
+            var remaining = (quote.expires_at - quote.verified_at) * 1000 - (performance.now() - started);
+            if (remaining <= 0) throw new Error('STALE_OFFER');
             var url = eventURL(quote.ticket_url);
             var labels = { ADULT: 'Yetişkin bileti', YETISKIN: 'Yetişkin bileti', CHILD: 'Çocuk bileti', COCUK: 'Çocuk bileti', family_2_2: 'Aile Paketi 2+2' };
             var list = document.getElementById('mdg-wa-lines'); list.replaceChildren();
@@ -86,8 +96,13 @@
             document.getElementById('mdg-wa-capacity').textContent = quote.recommended.family_quantity > 0
                 ? 'Aile paketinin kullanılmayan hakları olsa da her paket 4 kişilik kapasite kullanır.' : '';
             document.getElementById('mdg-wa-ticket').href = url;
-            result.hidden = false; message('Bilet öneriniz hazır. Seansınızı ve adetlerinizi satış ekranında kontrol edin.');
+            document.getElementById('mdg-wa-handoff').textContent = 'Bilet ekranında ' + date.format(new Date(offer.starts_at)) +
+                ' seansını ve yukarıdaki bilet adetlerini yeniden seçin. Bu öneri rezervasyon oluşturmaz; seçimleriniz otomatik aktarılmaz.';
+            expiresAt = performance.now() + remaining; expiryTimer = setTimeout(expire, remaining);
+            result.hidden = false; message('Bilet öneriniz hazır. Bilet ekranında seansınızı ve adetlerinizi yeniden seçin.');
         }
+        document.getElementById('mdg-wa-ticket').addEventListener('click', checkExpiry);
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') checkExpiry(); });
         city.addEventListener('change', function () { clear(); sessions(); });
         session.addEventListener('change', clear);
         ['adults', 'children', 'infants'].forEach(function (key) { document.getElementById('mdg-wa-' + key).addEventListener('input', clear); });
@@ -100,11 +115,11 @@
                 if (!/^(0|[1-9][0-9]?)$/.test(raw) || Number(raw) > 20 || (key === 'adults' && Number(raw) < 1)) { message('Lütfen kişi sayılarını kontrol edin.', true); return; }
                 party[key] = Number(raw);
             }
-            clear(); var offer = selected(); var token = epoch;
+            clear(); var offer = selected(); var token = epoch, started = performance.now();
             controller = new AbortController(); busy = true; ready(); message('Güncel bilet seçenekleri karşılaştırılıyor…');
             try {
                 var quote = await request('quote', { method: 'POST', signal: controller.signal, body: JSON.stringify({ session_id: offer.session_id, party: party, source_revision: offer.source_revision }) });
-                if (epoch === token) render(quote, offer);
+                if (epoch === token) render(quote, offer, started);
             } catch (error) {
                 if (error.name === 'AbortError' || epoch !== token) return;
                 result.hidden = true;

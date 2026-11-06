@@ -36,7 +36,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
  // Exercise both real scripts together: intake cannot select a session or submit a quote.
  const dom=new JSDOM(html,{url:origin+'/wp-admin/tools.php',runScripts:'outside-only'}),w=dom.window,d=w.document;
  const offer={session_id:88,source_revision:'a'.repeat(64),city:'I\u0307zmir',district:'Konak',starts_at:'2026-11-08T12:00:00+03:00',venue:{name:'Fixture venue'}};
- const quote={session_id:88,reservation:false,ticket_url:origin+'/etkinlik/fixture-2026/',regular_option_available:true,recommended:{lines:[{code:'family_2_2',quantity:1,unit_minor:130000},{code:'COCUK',quantity:1,unit_minor:29000}],total_minor:159000,savings_minor:45000,family_quantity:1}};
+ const quote={session_id:88,reservation:false,verified_at:1000,expires_at:1060,ticket_url:origin+'/etkinlik/fixture-2026/',regular_option_available:true,recommended:{lines:[{code:'family_2_2',quantity:1,unit_minor:130000},{code:'COCUK',quantity:1,unit_minor:29000}],total_minor:159000,savings_minor:45000,family_quantity:1}};
  const combinedCalls=[];
  w.fetch=async(url,args)=>{combinedCalls.push({url,args});return {ok:true,json:async()=>url.endsWith('catalogue')?{offers:[offer]}:url.endsWith('parse')?result:quote};};
  w.eval(fs.readFileSync('wp-content/plugins/madagaskar-web-assistant-core/assets/preview.js','utf8'));d.dispatchEvent(new w.Event('DOMContentLoaded'));await tick();await tick();

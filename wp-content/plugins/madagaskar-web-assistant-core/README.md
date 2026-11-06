@@ -1,4 +1,4 @@
-# Madagaskar Web Assistant Core 0.2.0
+# Madagaskar Web Assistant Core 0.2.1
 
 Internal, read-only PHP services for the proposed web assistant. Version 0.2.0 adds a restricted preview on the explicitly verified staging origin only. It has no anonymous API, agent tool, cron, activation migration or checkout hook. On production it only defines classes and registers no preview hooks. Deployment state is recorded separately in PR #306 and the Drive worklog.
 
@@ -7,6 +7,8 @@ Internal, read-only PHP services for the proposed web assistant. Version 0.2.0 a
 On `https://staging-f321-milanosirki-lgajf.wpcomstaging.com` only, Tools → Bilet Önerisi Önizleme shows the proposed customer form to users with `manage_woocommerce`. Two REST routes (`GET mdg-web-assistant/v1/catalogue`, `POST mdg-web-assistant/v1/quote`) require the same site/permission gate, including an independent check in each callback. Cookie requests use the WordPress REST nonce. Responses are private/no-store; POST accepts only session ID, party counts and a mandatory source revision, with a 2 KiB body bound.
 
 The UI requires explicit city and session selection, sends only validated integer counts, invalidates results on edits and rejects late responses. Source strings render with textContent, and event links must remain on the verified staging origin. Clicking the link opens the existing event page; it does not select cart items or complete checkout. Production/public rollout is a separate review step. The preview includes no LLM or chat integration.
+
+Version 0.2.1 appends only the fixed `#bilet-secimi` anchor after validating the canonical event URL. The result names the chosen date/time and explains that the user must reselect that session and ticket quantities on the native page. The native renderer defaults to its first open session; this package does not alter it. The card expires within the server-issued quote lifetime (at most 60 seconds), conservatively counting from the start of the request with a monotonic browser timer. Timeout, link activation and returning to a visible tab invalidate expired cards. The separate Gemini intake addon remains independent.
 
 ## Use from a trusted administrator context
 
