@@ -1,0 +1,312 @@
+{
+  "schema_version": "1.0",
+  "observed_at_utc": "2026-11-05 05:31:39 UTC",
+  "site": "https://madagaskarsirki.com",
+  "timezone": "Europe/Istanbul",
+  "source_commit": "83c04d8857ed9d312c872533ae653e6a1fc07393",
+  "scope": "A0 bounded read-only catalog and source readiness review",
+  "installed_plugins": [
+    {
+      "name": "Madagaskar AI Abilities",
+      "version": "0.7.0",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Management Center",
+      "version": "1.3.49",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Bilet Yönetimi",
+      "version": "3.6.3-ticket-invalidation-dry-run",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Aile Paketi 2+2",
+      "version": "1.1.3",
+      "status": "active"
+    },
+    {
+      "name": "Madagaskar Kommo Automation",
+      "version": "0.1.1",
+      "status": "active"
+    },
+    {
+      "name": "WooCommerce",
+      "version": "11.2.2",
+      "status": "active"
+    },
+    {
+      "name": "PayTR Virtual POS WooCommerce - iFrame API",
+      "version": "3.1.2",
+      "status": "active"
+    },
+    {
+      "name": "Tickera – Sell Tickets & Manage Events",
+      "version": "3.6.0.9",
+      "status": "active"
+    }
+  ],
+  "source_ownership": {
+    "snippet70": "inactive",
+    "snippet101": "inactive",
+    "snippet110": "active",
+    "snippet186": "active",
+    "snippet110_matches_main_without_php_opening_tag": true,
+    "snippet110_sha256": "fb6865b17e3953419030947de7d049739c8e4fabbd11b61f199e421661b4074a",
+    "plugin_source_checks": {
+      "files": [
+        "class-mdg-live-sales.php",
+        "class-mdg-public-event.php",
+        "madagaskar-aile-paketi-22.php"
+      ],
+      "result": "ALL_RECONSTRUCTED_LINE_CONTENT_MATCHES_MAIN",
+      "limits": "WPVibe numbered source readback; not raw filesystem byte/hash attestation"
+    }
+  },
+  "checks": {
+    "sessions": 17,
+    "variations": 34,
+    "purchasable": 34,
+    "price_mismatches": [],
+    "source110_hash_match": true
+  },
+  "catalogue": [
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 30,
+      "mmc_event_id": 30,
+      "mdg_event_id": 40,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Tire",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-tire-07-kasim-2026/",
+      "session_ids": [
+        235,
+        236
+      ],
+      "session_starts_utc": [
+        "2026-11-07 09:00:00",
+        "2026-11-07 10:30:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 31,
+      "mmc_event_id": 31,
+      "mdg_event_id": 41,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Ödemiş",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-odemis-07-kasim-2026/",
+      "session_ids": [
+        237,
+        238
+      ],
+      "session_starts_utc": [
+        "2026-11-07 14:30:00",
+        "2026-11-07 16:00:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 13,
+      "mmc_event_id": 13,
+      "mdg_event_id": 10,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki – İzmir",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-izmir-08-kasim-2026/",
+      "session_ids": [
+        88,
+        89,
+        90
+      ],
+      "session_starts_utc": [
+        "2026-11-08 09:00:00",
+        "2026-11-08 11:00:00",
+        "2026-11-08 13:00:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 25,
+      "mmc_event_id": 25,
+      "mdg_event_id": 35,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Çorlu",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-corlu-11-kasim-2026/",
+      "session_ids": [
+        221,
+        222
+      ],
+      "session_starts_utc": [
+        "2026-11-11 15:00:00",
+        "2026-11-11 16:30:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 26,
+      "mmc_event_id": 26,
+      "mdg_event_id": 36,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Çerkezköy",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-cerkezkoy-12-kasim-2026/",
+      "session_ids": [
+        223,
+        224
+      ],
+      "session_starts_utc": [
+        "2026-11-12 15:00:00",
+        "2026-11-12 16:30:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 27,
+      "mmc_event_id": 27,
+      "mdg_event_id": 37,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Kırklareli",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-kirklareli-13-kasim-2026/",
+      "session_ids": [
+        225,
+        226
+      ],
+      "session_starts_utc": [
+        "2026-11-13 15:00:00",
+        "2026-11-13 16:30:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 28,
+      "mmc_event_id": 28,
+      "mdg_event_id": 38,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Edirne",
+      "mmc_program_status": "sales_open",
+      "mmc_event_status": "sales_open",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-edirne-15-kasim-2026/",
+      "session_ids": [
+        227,
+        228
+      ],
+      "session_starts_utc": [
+        "2026-11-15 09:00:00",
+        "2026-11-15 10:30:00"
+      ],
+      "recommendation_gate": "PASSED_BASIC_CATALOG_CHECKS_FAMILY_JS_NOT_VERIFIED"
+    },
+    {
+      "brand": "Madagaskar Sirki",
+      "program_id": 29,
+      "mmc_event_id": 29,
+      "mdg_event_id": 39,
+      "bridge_count": 1,
+      "title": "Madagaskar Sirki — Keşan",
+      "mmc_program_status": "venue_confirmed",
+      "mmc_event_status": "configured",
+      "mdg_event_status": "onsale",
+      "url": "https://madagaskarsirki.com/etkinlik/madagaskar-sirki-kesan-15-kasim-2026/",
+      "session_ids": [
+        229,
+        230
+      ],
+      "session_starts_utc": [
+        "2026-11-15 15:00:00",
+        "2026-11-15 16:30:00"
+      ],
+      "recommendation_gate": "BLOCKED_STATE_CONFLICT"
+    }
+  ],
+  "family_adapter": {
+    "type": "virtual_package",
+    "code": "family_2_2",
+    "capacity_units": 4,
+    "normal_woocommerce_variation_exists": false,
+    "absence_is_expected": true,
+    "price_source_order": [
+      "active MMC family_2_2 ticket via canonical bridge",
+      "event-specific family plugin setting",
+      "family plugin default"
+    ],
+    "izmir": {
+      "mmc_event_id": 13,
+      "mdg_event_id": 10,
+      "inactive_mmc_family_price_minor": 110000,
+      "effective_fallback_price_minor": 130000,
+      "reason": "MMC family row inactive; plugin falls back to event setting"
+    },
+    "other_seven_events": {
+      "effective_family_price_minor": 110000,
+      "active_mmc_family_rows": true
+    },
+    "js_injected_family_dom": "NOT_VERIFIED_WITH_INTERACTIVE_BROWSER",
+    "family_cart_expansion": "SOURCE_REVIEW_ONLY_NO_ADD_TO_CART"
+  },
+  "notable_findings": [
+    {
+      "id": "STATE-01",
+      "severity": "blocks Keşan in new assistant",
+      "program_id": 29,
+      "mmc_event_status": "configured",
+      "program_status": "venue_confirmed",
+      "mdg_event_status": "onsale",
+      "native_wc_read_purchasable": true,
+      "action": "resolve canonical state disagreement before automatic recommendation; do not change live sales automatically"
+    },
+    {
+      "id": "FILTER-01",
+      "severity": "required catalog contract",
+      "detail": "MMC sales_open results include historical and Milano records; filter explicit owner brand, current time and both domain states"
+    },
+    {
+      "id": "FAMILY-01",
+      "severity": "required price contract",
+      "detail": "virtual family price cannot be derived only from MDG variations or inactive MMC row"
+    },
+    {
+      "id": "FEED-01",
+      "severity": "not accepted as primary catalog",
+      "detail": "Eventpal full response exceeds connector 100k output cap; nested _fields projection returned events=[] while total=53; not evidence that there are no events"
+    }
+  ],
+  "verification_limits": [
+    "No database equality snapshot; intentional production business write calls = 0, technical read/audit/cache effects not excluded",
+    "No add-to-cart/order/payment/refund/ticket/messaging calls",
+    "No interactive browser, mobile or QR E2E tests",
+    "WooCommerce authenticated API purchasable flags are point-in-time evidence, not checkout completion or guest-channel guarantee",
+    "17 session checks are sequential observations, not one atomic stock snapshot",
+    "No automatic Kommo reindex or real customer AI response tested",
+    "One guessed MMC ticket table query failed read-only; canonical class-mmc-event-service table name was then used successfully"
+  ],
+  "next": "A1: implement a non-public catalog adapter and pure quote engine against this contract; keep Keşan excluded until a dedicated state-resolution step; then browser/staging pilot",
+  "archive": {
+    "github_pr": "https://github.com/milanosirki-code/madagaskarsirki-wordpress/pull/304",
+    "drive_report": "https://docs.google.com/document/d/1ji2wr6hxwdIr875azZDYHullsEwZjyu735dhR4v3ozQ/edit?usp=drivesdk"
+  }
+}
