@@ -190,7 +190,7 @@ final class Api {
         if ( ! current_user_can( 'manage_options' ) ) { return self::response( array( 'code' => 'FORBIDDEN' ), 403 ); }
         try {
             $catalogue = Model::catalogue();
-            return self::response( array( 'version' => '1.0.0', 'enabled' => Gate::enabled(), 'ai_enabled' => Gate::ai(), 'pilot_event' => Model::EVENT, 'sessions' => array_column( $catalogue['offers'], 'session_id' ), 'google_credential_present' => is_string( get_option( 'connectors_ai_google_api_key', '' ) ) && trim( get_option( 'connectors_ai_google_api_key', '' ) ) !== '' ) );
+            return self::response( array( 'version' => '1.0.1', 'enabled' => Gate::enabled(), 'ai_enabled' => Gate::ai(), 'listed' => (string) get_option( 'mdg_vp_listed', '0' ) === '1', 'pilot_event' => Model::EVENT, 'sessions' => array_column( $catalogue['offers'], 'session_id' ), 'google_credential_present' => is_string( get_option( 'connectors_ai_google_api_key', '' ) ) && trim( get_option( 'connectors_ai_google_api_key', '' ) ) !== '' ) );
         } catch ( \Throwable $e ) { return self::response( array( 'code' => 'SOURCE_UNAVAILABLE', 'enabled' => Gate::enabled() ), 503 ); }
     }
 }

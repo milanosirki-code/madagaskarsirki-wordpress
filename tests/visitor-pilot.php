@@ -19,6 +19,7 @@ function wp_cache_delete(){}function wp_json_encode($d,$flags=0){return json_enc
 function is_wp_error($r){return $r instanceof \Exception;}function wp_remote_retrieve_response_code($r){return $r['status'];}function wp_remote_retrieve_body($r){return $r['body'];}
 function wp_remote_request($url,$args){$GLOBALS['calls'][]=array($url,$args);return $GLOBALS['upstream'];}
 function register_rest_route($ns,$r,$args){$GLOBALS['routes'][$r]=$args;}
+function is_page($slug){return $slug==='bilet-al';}function in_the_loop(){return true;}function is_main_query(){return true;}
 require __DIR__.'/../wp-content/plugins/mdg-visitor-pilot/mdg-visitor-pilot.php';
 use Madagaskar\Visitor\Gate;use Madagaskar\Visitor\Model;use Madagaskar\Visitor\Gemini;use Madagaskar\Visitor\Api;use Madagaskar\Visitor\Problem;
 $checks=0;function ok($v,$label){global $checks;$checks++;if(!$v)throw new \Exception('FAIL '.$label);}
@@ -62,5 +63,6 @@ reset_case();$GLOBALS['opts']['mdg_vp_lock_rate']=($GLOBALS['clock']-1).'|'.str_
 reset_case();$new=($GLOBALS['clock']+100).'|'.str_repeat('b',24);Gate::locked('ownership',function()use($new){$GLOBALS['opts']['mdg_vp_lock_ownership']=$new;});ok($GLOBALS['opts']['mdg_vp_lock_ownership']===$new,'old owner cannot delete replacement');
 reset_case();foreach(array(array('adults'=>0),array('adults'=>2.5),array('children'=>21),array('city_key'=>'İstanbul / Fake'),array('price'=>1)) as $patch){$p=array_merge(array('city_key'=>'İzmir / Konak','adults'=>2,'children'=>3,'infants'=>0),$patch);problem(function()use($p){Gemini::validate($p,array('İzmir / Konak'));},'PARSE_NOT_CONFIRMED');}
 reset_case();$GLOBALS['admin']=true;ok(Api::health()->data['google_credential_present'],'admin health only presence');
+reset_case();ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','listing off by default');$GLOBALS['opts']['mdg_vp_listed']='1';ok(strpos(\Madagaskar\Visitor\Page::entry('Original'),'/bilet-onerisi/')!==false,'explicit entry switch');$GLOBALS['opts']['mdg_vp_enabled']='0';ok(\Madagaskar\Visitor\Page::entry('Original')==='Original','master removes entry');
 echo "PASS $checks anonymous-boundary, canonical-pilot, budget and secret-isolation assertions; no live HTTP\n";
 }

@@ -1,0 +1,16 @@
+name: Visitor anonymous production smoke
+on:
+  push:
+    branches: [feature/visitor-pilot-launch-20261106]
+    paths: [docs/VISITOR_LIVE_SMOKE_TRIGGER.json]
+permissions:
+  contents: read
+jobs:
+  anonymous:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/visitor-live-smoke.cjs

@@ -11,15 +11,15 @@ final class Page {
 <p class="mdg-wa-note">Öneri rezervasyon oluşturmaz. Fiyat ve uygunluk bilet ekranında yeniden kontrol edilir.</p><noscript>Bu araç için JavaScript gerekir. Güncel gösterilere Bilet Al sayfasından ulaşabilirsiniz.</noscript></main>';
     }
     public static function entry( $content ) {
-        if ( ! Gate::enabled() || ! is_page( 'bilet-al' ) || ! in_the_loop() || ! is_main_query() ) { return $content; }
+        if ( ! Gate::enabled() || (string) get_option( 'mdg_vp_listed', '0' ) !== '1' || ! is_page( 'bilet-al' ) || ! in_the_loop() || ! is_main_query() ) { return $content; }
         return '<aside style="padding:20px;margin:20px 0;border:1px solid #e4c56c;border-radius:12px;background:#fffbef"><strong>Ailenize uygun bileti bulalım</strong><p>İzmir gösterisi için kişi sayılarınıza göre seçenekleri karşılaştırın.</p><a href="' . esc_url( home_url( '/bilet-onerisi/' ) ) . '">Bilet önerisini aç →</a></aside>' . $content;
     }
     public static function render() {
         if ( ! Gate::enabled() || rtrim( (string) parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' ) !== '/bilet-onerisi' ) { return; }
         status_header( 200 ); nocache_headers(); header( 'X-Robots-Tag: noindex, nofollow', true );
         $main = __DIR__ . '/mdg-visitor-pilot.php';
-        wp_enqueue_style( 'mdg-visitor-pilot', plugins_url( 'style.css', $main ), array(), '1.0.0' );
-        wp_enqueue_script( 'mdg-visitor-pilot', plugins_url( 'client.js', $main ), array(), '1.0.0', true );
+        wp_enqueue_style( 'mdg-visitor-pilot', plugins_url( 'style.css', $main ), array(), '1.0.1' );
+        wp_enqueue_script( 'mdg-visitor-pilot', plugins_url( 'client.js', $main ), array(), '1.0.1', true );
         ?><!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Ailenize Uygun Bilet · Madagaskar Sirki</title><?php wp_head(); ?></head><body class="mdg-vp-page"><nav aria-label="Siteye dön"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">← Madagaskar Sirki</a></nav><?php echo self::markup(); ?>
 <script id="vp-config" type="application/json"><?php echo wp_json_encode( array( 'api' => rest_url( 'mdg-visitor/v1/' ), 'origin' => Gate::origin() ), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?></script><?php wp_footer(); ?></body></html><?php
         exit;
