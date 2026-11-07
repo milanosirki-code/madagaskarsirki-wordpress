@@ -1,0 +1,265 @@
+{
+  "checked_at_utc": "2026-10-26T09:15:31.613762+00:00",
+  "results": [
+    {
+      "source": "/ana-sayfa",
+      "target": "/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/",
+      "pass": true
+    },
+    {
+      "source": "/gosteriler__trashed/sahne-arkasi",
+      "target": "/sahne-arkasi/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sahne-arkasi/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sahne-arkasi/",
+      "pass": true
+    },
+    {
+      "source": "/sehirler__trashed-2/gaziantep",
+      "target": "/sehirler/gaziantep/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sehirler/gaziantep/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sehirler/gaziantep/",
+      "pass": true
+    },
+    {
+      "source": "/galeri/basin-gorselleri",
+      "target": "/galeri/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/galeri/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/galeri/",
+      "pass": true
+    },
+    {
+      "source": "/gosteriler__trashed/akrobasi",
+      "target": "/gosteriler/akrobasi/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/gosteriler/akrobasi/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/gosteriler/akrobasi/",
+      "pass": true
+    },
+    {
+      "source": "/galeri__trashed/basin-gorselleri",
+      "target": "/galeri/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/galeri/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/galeri/",
+      "pass": true
+    },
+    {
+      "source": "/galeri/fotograflar",
+      "target": "/galeri/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/galeri/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/galeri/",
+      "pass": true
+    },
+    {
+      "source": "/gosteriler/jonglor",
+      "target": "/jonglor/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/jonglor/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/jonglor/",
+      "pass": true
+    },
+    {
+      "source": "/sehirler-2",
+      "target": "/sehirler/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sehirler/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sehirler/",
+      "pass": true
+    },
+    {
+      "source": "/sehirler-2/mersin",
+      "target": "/sehirler/mersin/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sehirler/mersin/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sehirler/mersin/",
+      "pass": true
+    },
+    {
+      "source": "/festival-organizasyonlari",
+      "target": "/kurumsal/festival-organizasyonlari/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/kurumsal/festival-organizasyonlari/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/kurumsal/festival-organizasyonlari/",
+      "pass": true
+    },
+    {
+      "source": "/sehirler-2/ankara",
+      "target": "/sehirler/ankara/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sehirler/ankara/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sehirler/ankara/",
+      "pass": true
+    },
+    {
+      "source": "/sehirler-2/konya",
+      "target": "/sehirler/konya/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/sehirler/konya/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/sehirler/konya/",
+      "pass": true
+    },
+    {
+      "source": "/galeri-2",
+      "target": "/galeri/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/galeri/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/galeri/",
+      "pass": true
+    },
+    {
+      "source": "/gosteriler-2",
+      "target": "/gosteriler/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/gosteriler/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/gosteriler/",
+      "pass": true
+    },
+    {
+      "source": "/bilet-al",
+      "target": null,
+      "http_statuses": [
+        "200",
+        "200"
+      ],
+      "locations": [],
+      "final": "200 0 https://madagaskarsirki.com/bilet-al/",
+      "pass": true
+    },
+    {
+      "source": "/shop",
+      "target": "/bilet-al/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/bilet-al/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/bilet-al/",
+      "pass": true
+    },
+    {
+      "source": "/akrobasi",
+      "target": "/gosteriler/akrobasi/",
+      "http_statuses": [
+        "200",
+        "301",
+        "200"
+      ],
+      "locations": [
+        "https://madagaskarsirki.com/gosteriler/akrobasi/"
+      ],
+      "final": "200 1 https://madagaskarsirki.com/gosteriler/akrobasi/",
+      "pass": true
+    },
+    {
+      "source": "/wp-content/themes/assembler/*",
+      "target": null,
+      "http_statuses": [
+        "200",
+        "404"
+      ],
+      "locations": [],
+      "final": "404 0 https://madagaskarsirki.com/wp-content/themes/assembler/*",
+      "pass": true
+    }
+  ]
+}
