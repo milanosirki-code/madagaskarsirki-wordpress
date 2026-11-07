@@ -1,0 +1,187 @@
+<!-- wp:html -->
+<style>
+#ml-tickets .milano-ticket-selector form .ml-session-meta{grid-column:1/-1;font-size:12px;color:#5c6578;margin:0!important;line-height:1.6}
+#ml-tickets .milano-ticket-selector form h3.ml-session-heading{font-size:27px!important;border-bottom:1px solid #e9ebef;margin:0!important;padding:0 0 18px!important;color:#101e43!important}
+#ml-tickets .milano-ticket-selector form label{flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:10px!important}
+#ml-tickets .milano-ticket-selector .ml-ticket-label{display:flex;flex-direction:column;gap:3px;line-height:1.5;font-size:13px;color:#101e43}
+#ml-tickets .milano-ticket-selector .ml-ticket-label small{font-size:12px;font-weight:450;white-space:nowrap;color:#5c6578}
+#ml-tickets .milano-ticket-selector form .ml-qty-control{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;padding:4px;border:1px solid #d7dce5;border-radius:9px;background:#f7f8fa}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button{grid-column:auto!important;display:inline-flex!important;flex:0 0 40px!important;width:40px!important;min-width:40px!important;min-height:44px!important;height:44px!important;padding:0!important;margin:0!important;border:1px solid #d7dce5!important;border-radius:6px!important;background:#fff!important;color:#101e43!important;font-size:22px!important;font-weight:500!important;align-items:center;justify-content:center;cursor:pointer}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button:disabled{opacity:.35;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important;min-width:32px!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;text-align:center!important;appearance:textfield;-moz-appearance:textfield}
+#ml-tickets .ml-qty-control input::-webkit-inner-spin-button,#ml-tickets .ml-qty-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#ml-tickets .milano-ticket-selector .ml-selection-summary{grid-column:1/-1;border:1px solid #e2e5ed;background:#f8f9fc;border-radius:10px;padding:20px;margin-top:6px}
+#ml-tickets .ml-selection-summary h4{font-size:17px;line-height:1.4;color:#101e43;margin:0 0 8px;font-weight:700}
+#ml-tickets .ml-selection-summary .ml-summary-meta{font-size:12px;line-height:1.7;color:#5c6578;margin:0 0 14px}
+#ml-tickets .ml-summary-lines p,#ml-tickets .ml-summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:18px;font-size:13px;line-height:1.6;margin:6px 0}
+#ml-tickets .ml-summary-lines p span:last-child{white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-total{border-top:1px solid #dfe3ec;margin:14px 0 6px;padding-top:14px;font-size:14px}
+#ml-tickets .ml-summary-total strong{font-size:23px;color:#101e43;white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-people{font-size:12px;font-weight:650;margin:5px 0 0;color:#101e43}
+#ml-tickets .ml-selection-summary .ml-summary-note{font-size:11px;line-height:1.7;color:#5c6578;margin:10px 0 0}
+#ml-tickets .milano-ticket-selector form .ml-selection-error{grid-column:1/-1;color:#a32231;font-size:12px;line-height:1.6;margin:0}
+#ml-tickets .ml-selection-error:empty{display:none}
+#ml-tickets .milano-ticket-selector form>button:disabled{opacity:.45;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector button:focus-visible,#ml-tickets .milano-ticket-selector input:focus-visible{outline:3px solid #e9ba60!important;outline-offset:3px}
+@media(max-width:480px){#ml-tickets .milano-ticket-selector form label{flex-direction:row!important;align-items:center!important;gap:12px!important}#ml-tickets .milano-ticket-selector form .ml-ticket-label{flex:1;font-size:13px}#ml-tickets .milano-ticket-selector form .ml-qty-control{flex:0 0 145px;width:145px!important}#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important}#ml-tickets .ml-selection-summary{padding:16px!important}#ml-tickets .ml-summary-lines p{gap:12px;font-size:12px}}
+
+</style>
+<script>
+(function () {
+  'use strict';
+  function start() {
+    var root = document.getElementById('ml-tickets');
+    if (!root) return;
+    var money = new Intl.NumberFormat('tr-TR', {style: 'currency', currency: 'TRY'});
+    var names = {adults: 'Yetişkin', children: 'Çocuk', families: 'Aile paketi (2 yetişkin + 2 çocuk)'};
+    var forms = root.querySelectorAll('.milano-ticket-selector form');
+    forms.forEach(function (form) {
+      if (form.dataset.mlSelectionEnhanced) return;
+      var heading = form.querySelector('h3');
+      var submit = form.querySelector('button[type="submit"]');
+      var session = form.querySelector('input[name="session_id"]');
+      var event = form.querySelector('input[name="event_id"]');
+      var title = heading ? heading.textContent.match(/^(.*?) — (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/) : null;
+      if (!title || !submit || !session || !event) return;
+      var city = title[1].split(' — ').pop().trim();
+      var time = title[5] + '.' + title[6];
+      var date = new Date(Date.UTC(Number(title[2]), Number(title[3]) - 1, Number(title[4]), 12));
+      var dateText = new Intl.DateTimeFormat('tr-TR', {day: 'numeric', month: 'long', year: 'numeric', weekday: 'long', timeZone: 'UTC'}).format(date);
+      var entries = [];
+      var validPrices = true;
+      Object.keys(names).forEach(function (key) {
+        var input = form.querySelector('input[type="number"][name="' + key + '"]');
+        if (!input) { if (key !== 'families') validPrices = false; return; }
+        var label = input.closest('label');
+        var labelText = label ? label.textContent.trim() : '';
+        var price = labelText.match(/ — ([0-9]+(?:\.[0-9]{3})*),([0-9]{2}) TL\s*$/);
+        if (!price) { validPrices = false; return; }
+        var cents = Number(price[1].replace(/\./g, '')) * 100 + Number(price[2]);
+        if (!Number.isSafeInteger(cents) || 0 > cents) { validPrices = false; return; }
+        entries.push({key: key, input: input, label: label, text: labelText, cents: cents});
+      });
+      // A changed upstream form/price format retains the unmodified server form.
+      if (!validPrices || 2 > entries.length) return;
+      form.dataset.mlSelectionEnhanced = '1';
+      var eyebrow = document.createElement('p');
+      eyebrow.className = 'ml-session-meta';
+      eyebrow.textContent = city + ' · ' + dateText;
+      heading.before(eyebrow);
+      heading.classList.add('ml-session-heading');
+      heading.textContent = time + ' Seansı';
+      var side = Array.from(root.querySelectorAll('.ml-ticket-side')).find(function (s) {
+        var h = s.querySelector('h2'); return h ? h.textContent.trim() === city : false;
+      });
+      var venue = side ? side.querySelector('strong') : null;
+      var summary = document.createElement('section');
+      summary.className = 'ml-selection-summary';
+      summary.setAttribute('aria-label', city + ' ' + time + ' seçim özeti');
+      summary.setAttribute('aria-live', 'polite');
+      summary.setAttribute('aria-atomic', 'true');
+      var summaryTitle = document.createElement('h4');
+      summaryTitle.textContent = 'Seçiminiz';
+      var meta = document.createElement('p');
+      meta.className = 'ml-summary-meta';
+      meta.textContent = city + ' · ' + dateText + ' · ' + time + (venue ? ' · ' + venue.textContent.trim() : '');
+      var lines = document.createElement('div');
+      lines.className = 'ml-summary-lines';
+      var total = document.createElement('p');
+      total.className = 'ml-summary-total';
+      var totalLabel = document.createElement('span');
+      totalLabel.textContent = 'Bilet toplamı';
+      var totalAmount = document.createElement('strong');
+      total.append(totalLabel, totalAmount);
+      var people = document.createElement('p');
+      people.className = 'ml-summary-people';
+      var note = document.createElement('p');
+      note.className = 'ml-summary-note';
+      note.textContent = 'Varsa hizmet bedeli ve kesin toplam, ortak ödeme ekranında gösterilir.';
+      summary.append(summaryTitle, meta, lines, total, people, note);
+      var error = document.createElement('p');
+      error.className = 'ml-selection-error';
+      error.setAttribute('role', 'alert');
+      submit.before(summary, error);
+      submit.textContent = 'Seçimi Onayla, Ödemeye Geç →';
+      function quantities() {
+        var values = {adults: 0, children: 0, families: 0};
+        var invalid = false;
+        entries.forEach(function (e) {
+          var raw = e.input.value;
+          if (!/^\d+$/.test(raw)) { invalid = true; return; }
+          var n = Number(raw);
+          if (!Number.isSafeInteger(n) || 0 > n || n > Number(e.input.max || (e.key === 'families' ? 10 : 20))) invalid = true;
+          values[e.key] = n;
+        });
+        return {values: values, invalid: invalid};
+      }
+      function withinLimit(v) {
+        return !(v.families > 10 || v.adults + 2 * v.families > 20 || v.children + 2 * v.families > 20);
+      }
+      function update() {
+        var result = quantities(), v = result.values;
+        var units = v.adults + v.children + 4 * v.families;
+        var invalid = result.invalid || !withinLimit(v);
+        var cents = 0;
+        lines.replaceChildren();
+        entries.forEach(function (e) {
+          if (invalid ? false : v[e.key]) {
+            var line = document.createElement('p');
+            var description = document.createElement('span');
+            var amount = document.createElement('span');
+            description.textContent = v[e.key] + ' × ' + names[e.key];
+            amount.textContent = money.format(v[e.key] * e.cents / 100);
+            line.append(description, amount);
+            lines.append(line);
+            cents += v[e.key] * e.cents;
+          }
+          e.minus.disabled = result.invalid || 0 >= v[e.key];
+          var next = Object.assign({}, v); next[e.key]++;
+          e.plus.disabled = result.invalid || !withinLimit(next) || next[e.key] > Number(e.input.max || 20);
+        });
+        if (invalid ? false : !units) {
+          var empty = document.createElement('p'); empty.textContent = 'Henüz bilet seçmediniz.'; lines.append(empty);
+        }
+        totalAmount.textContent = invalid ? '—' : money.format(cents / 100);
+        people.textContent = invalid ? '' : 'Toplam ' + units + ' kişi' + (v.families ? ' · Her aile paketi 4 giriş hakkıdır.' : '');
+        error.textContent = result.invalid ? 'Lütfen sıfır veya pozitif tam sayı girin; alan sınırını aşmayın.' : !withinLimit(v) ? 'Aile paketi dahil en fazla 20 yetişkin ve 20 çocuk seçebilirsiniz.' : '';
+        submit.disabled = invalid || 1 > units;
+        return invalid ? false : units > 0;
+      }
+      entries.forEach(function (e) {
+        var label = document.createElement('span');
+        label.className = 'ml-ticket-label';
+        var ticketName = document.createElement('span');
+        ticketName.textContent = e.key === 'families' ? 'Aile 2+2' : names[e.key];
+        var unitPrice = document.createElement('small');
+        unitPrice.textContent = money.format(e.cents / 100);
+        label.append(ticketName, unitPrice);
+        var control = document.createElement('span');
+        control.className = 'ml-qty-control';
+        var minus = document.createElement('button');
+        minus.type = 'button'; minus.textContent = '−';
+        minus.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' azalt');
+        var plus = document.createElement('button');
+        plus.type = 'button'; plus.textContent = '+';
+        plus.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' artır');
+        e.minus = minus; e.plus = plus;
+        e.input.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' adedi');
+        e.input.setAttribute('inputmode', 'numeric');
+        e.label.replaceChildren(label, control);
+        control.append(minus, e.input, plus);
+        minus.addEventListener('click', function () { e.input.stepDown(); e.input.dispatchEvent(new Event('input', {bubbles: true})); });
+        plus.addEventListener('click', function () { e.input.stepUp(); e.input.dispatchEvent(new Event('input', {bubbles: true})); });
+        e.input.addEventListener('input', update);
+        e.input.addEventListener('change', function () { if (e.input.value === '') e.input.value = '0'; update(); });
+      });
+      form.addEventListener('submit', function (ev) {
+        if (!update()) { ev.preventDefault(); error.textContent = error.textContent || 'Devam etmek için en az bir bilet seçin.'; }
+      });
+      update();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+
+</script>
+<!-- /wp:html -->

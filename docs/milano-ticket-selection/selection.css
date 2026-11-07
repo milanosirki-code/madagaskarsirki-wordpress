@@ -1,0 +1,24 @@
+#ml-tickets .milano-ticket-selector form .ml-session-meta{grid-column:1/-1;font-size:12px;color:#5c6578;margin:0!important;line-height:1.6}
+#ml-tickets .milano-ticket-selector form h3.ml-session-heading{font-size:27px!important;border-bottom:1px solid #e9ebef;margin:0!important;padding:0 0 18px!important;color:#101e43!important}
+#ml-tickets .milano-ticket-selector form label{flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:10px!important}
+#ml-tickets .milano-ticket-selector .ml-ticket-label{display:flex;flex-direction:column;gap:3px;line-height:1.5;font-size:13px;color:#101e43}
+#ml-tickets .milano-ticket-selector .ml-ticket-label small{font-size:12px;font-weight:450;white-space:nowrap;color:#5c6578}
+#ml-tickets .milano-ticket-selector form .ml-qty-control{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;padding:4px;border:1px solid #d7dce5;border-radius:9px;background:#f7f8fa}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button{grid-column:auto!important;display:inline-flex!important;flex:0 0 40px!important;width:40px!important;min-width:40px!important;min-height:44px!important;height:44px!important;padding:0!important;margin:0!important;border:1px solid #d7dce5!important;border-radius:6px!important;background:#fff!important;color:#101e43!important;font-size:22px!important;font-weight:500!important;align-items:center;justify-content:center;cursor:pointer}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button:disabled{opacity:.35;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important;min-width:32px!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;text-align:center!important;appearance:textfield;-moz-appearance:textfield}
+#ml-tickets .ml-qty-control input::-webkit-inner-spin-button,#ml-tickets .ml-qty-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#ml-tickets .milano-ticket-selector .ml-selection-summary{grid-column:1/-1;border:1px solid #e2e5ed;background:#f8f9fc;border-radius:10px;padding:20px;margin-top:6px}
+#ml-tickets .ml-selection-summary h4{font-size:17px;line-height:1.4;color:#101e43;margin:0 0 8px;font-weight:700}
+#ml-tickets .ml-selection-summary .ml-summary-meta{font-size:12px;line-height:1.7;color:#5c6578;margin:0 0 14px}
+#ml-tickets .ml-summary-lines p,#ml-tickets .ml-summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:18px;font-size:13px;line-height:1.6;margin:6px 0}
+#ml-tickets .ml-summary-lines p span:last-child{white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-total{border-top:1px solid #dfe3ec;margin:14px 0 6px;padding-top:14px;font-size:14px}
+#ml-tickets .ml-summary-total strong{font-size:23px;color:#101e43;white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-people{font-size:12px;font-weight:650;margin:5px 0 0;color:#101e43}
+#ml-tickets .ml-selection-summary .ml-summary-note{font-size:11px;line-height:1.7;color:#5c6578;margin:10px 0 0}
+#ml-tickets .milano-ticket-selector form .ml-selection-error{grid-column:1/-1;color:#a32231;font-size:12px;line-height:1.6;margin:0}
+#ml-tickets .ml-selection-error:empty{display:none}
+#ml-tickets .milano-ticket-selector form>button:disabled{opacity:.45;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector button:focus-visible,#ml-tickets .milano-ticket-selector input:focus-visible{outline:3px solid #e9ba60!important;outline-offset:3px}
+@media(max-width:480px){#ml-tickets .milano-ticket-selector form label{flex-direction:row!important;align-items:center!important;gap:12px!important}#ml-tickets .milano-ticket-selector form .ml-ticket-label{flex:1;font-size:13px}#ml-tickets .milano-ticket-selector form .ml-qty-control{flex:0 0 145px;width:145px!important}#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important}#ml-tickets .ml-selection-summary{padding:16px!important}#ml-tickets .ml-summary-lines p{gap:12px;font-size:12px}}
