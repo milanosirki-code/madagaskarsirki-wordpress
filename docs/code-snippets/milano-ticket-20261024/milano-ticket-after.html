@@ -1,0 +1,682 @@
+<!-- wp:html -->
+<style id="ml-ticket-hero-v2">
+#ml-tickets .ml-catalog-head{display:none!important}
+.mlx{--ink:#101e43;--red:#b51e36;--gold:#e9ba60;--paper:#f8f6f1;--muted:#5c6578;font-family:var(--wp--preset--font-family--inter,Inter,Arial,sans-serif);color:var(--ink);line-height:1.6}
+.mlx *{box-sizing:border-box}
+.mlx :is(h1,h2,h3,p){margin:0}
+.mlx-wrap{max-width:1160px;width:calc(100% - 64px);margin:auto}
+.mlx-hero{position:relative;overflow:hidden;background:radial-gradient(1200px 500px at 85% -10%,#2a3a7a 0%,transparent 60%),linear-gradient(135deg,#0b1638 0%,#101e43 55%,#5a1426 100%);color:#fff;padding:64px 0 120px}
+.mlx-hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#e9ba60 1.2px,transparent 1.3px);background-size:38px 38px;opacity:.13;pointer-events:none}
+.mlx-hero .mlx-wrap{position:relative;display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}
+.mlx-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;margin-bottom:18px!important}
+.mlx-eyebrow:before{content:"✦"}
+.mlx-hero h1{color:#fff!important;font-size:clamp(38px,5.4vw,70px)!important;line-height:1.04!important;letter-spacing:-.045em;font-weight:800!important;margin-bottom:20px!important}
+.mlx-hero h1 em{font-style:normal;color:var(--gold)}
+.mlx-hero p.mlx-lead{font-size:18px;color:#d9def0;max-width:560px;margin-bottom:26px!important}
+.mlx-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:30px}
+.mlx-chips span{font-size:13px;font-weight:650;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#fff}
+.mlx-cta{display:inline-flex;align-items:center;gap:12px;min-height:56px;padding:16px 28px;border-radius:12px;background:var(--red);color:#fff!important;font-weight:800;font-size:16px;text-decoration:none!important;box-shadow:0 12px 30px rgba(181,30,54,.45);transition:transform .15s}
+.mlx-cta:hover{transform:translateY(-2px)}
+.mlx-badge{justify-self:center;width:min(300px,100%);aspect-ratio:1;border-radius:50%;background:conic-gradient(from 0deg,#e9ba60,#f6dc9c,#e9ba60,#c9962e,#e9ba60);display:grid;place-items:center;box-shadow:0 25px 60px rgba(0,0,0,.35);transform:rotate(-6deg)}
+.mlx-badge>div{width:84%;aspect-ratio:1;border-radius:50%;background:#101e43;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;border:2px dashed rgba(233,186,96,.6);padding:16px}
+.mlx-badge small{font-size:12px;letter-spacing:.14em;font-weight:800;color:var(--gold)}
+.mlx-badge strong{font-size:clamp(44px,5vw,58px);line-height:1;font-weight:800;letter-spacing:-.04em;margin:8px 0 4px}
+.mlx-badge span{font-size:14px;color:#d9def0;line-height:1.4}
+.mlx-types{position:relative;margin-top:-80px;padding-bottom:20px}
+.mlx-types-grid{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:16px}
+.mlx-type{background:#fff;border:1px solid #e3e4e8;border-radius:18px;padding:24px;box-shadow:0 14px 36px rgba(16,30,67,.10)}
+.mlx-type .mlx-ico{font-size:30px;line-height:1;margin-bottom:12px}
+.mlx-type h3{font-size:19px!important;font-weight:750;color:var(--ink)!important;margin-bottom:4px!important}
+.mlx-type p{font-size:13px;color:var(--muted)}
+.mlx-type .mlx-price{font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:14px!important;color:var(--ink)}
+.mlx-type .mlx-price small{font-size:15px;font-weight:600}
+.mlx-type.is-family{position:relative;background:linear-gradient(160deg,#fff8e7,#fff 60%);border:2px solid var(--gold)}
+.mlx-ribbon{position:absolute;top:-13px;right:18px;background:var(--red);color:#fff;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(181,30,54,.35)}
+.mlx-family-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:14px}
+.mlx-family-row s{color:#8a92a6;font-size:16px}
+.mlx-family-row .mlx-price{margin-top:0!important}
+.mlx-family-list{margin:12px 0 0;padding:0;list-style:none;font-size:13px;color:#39435a;display:grid;gap:4px}
+.mlx-family-list li:before{content:"✓ ";color:#2e8d64;font-weight:800}
+.mlx-free{margin-top:14px!important;font-size:13px;color:var(--muted);text-align:center}
+.mlx-free b{color:var(--ink)}
+.mlx-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:30px 0 34px}
+.mlx-step{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid #e3e4e8;border-radius:14px;padding:18px}
+.mlx-step b{flex:0 0 38px;height:38px;border-radius:50%;background:var(--ink);color:var(--gold);display:grid;place-items:center;font-size:16px}
+.mlx-step strong{display:block;font-size:15px;color:var(--ink)}
+.mlx-step span{font-size:13px;color:var(--muted)}
+.mlx-pick{font-size:clamp(24px,3vw,32px)!important;font-weight:800!important;letter-spacing:-.03em;color:var(--ink)!important;padding:4px 0 18px}
+@media(max-width:900px){.mlx-hero .mlx-wrap{grid-template-columns:1fr}.mlx-badge{width:220px;justify-self:start}.mlx-types-grid{grid-template-columns:1fr 1fr}.mlx-type.is-family{grid-column:1/-1;grid-row:1}}
+@media(max-width:640px){.mlx-wrap{width:calc(100% - 32px)}.mlx-hero{padding:40px 0 100px}.mlx-badge{display:none}.mlx-types-grid{grid-template-columns:1fr 1fr;gap:10px}.mlx-type{padding:18px}.mlx-type .mlx-price{font-size:28px}.mlx-steps{grid-template-columns:1fr}.mlx-cta{width:100%;justify-content:center}}
+</style>
+<div class="mlx">
+  <section class="mlx-hero">
+    <div class="mlx-wrap">
+      <div>
+        <p class="mlx-eyebrow">Uluslararası Milano Sirki · 2026 Türkiye Turnesi</p>
+        <h1>Perde açılıyor.<br><em>Yerinizi şimdi ayırın.</em></h1>
+        <p class="mlx-lead">Akrobasi, denge, jonglörlük ve palyaçolarla dolu, ailece izlenecek bir saatlik sahne şöleni. Şehrinizi seçin, seansınızı bulun, biletiniz birkaç dakikada hazır.</p>
+        <div class="mlx-chips"><span>✨ Hayvansız gösteri</span><span>⏱ Yaklaşık 60 dakika</span><span>👶 0–2 yaş ücretsiz</span><span>🎟 QR kodlu bilet</span></div>
+        <a class="mlx-cta" href="#mlx-pick">Şehrini seç, biletini al ↓</a>
+      </div>
+      <div class="mlx-badge" aria-hidden="true"><div><small>AİLE PAKETİ</small><strong>370 TL</strong><span>avantaj<br>2 yetişkin + 2 çocuk</span></div></div>
+    </div>
+  </section>
+  <section class="mlx-types">
+    <div class="mlx-wrap">
+      <div class="mlx-types-grid">
+        <article class="mlx-type"><div class="mlx-ico">🧒</div><h3>Çocuk</h3><p>3–12 yaş</p><p class="mlx-price">245 <small>TL</small></p></article>
+        <article class="mlx-type"><div class="mlx-ico">🧑</div><h3>Yetişkin</h3><p>13 yaş ve üzeri</p><p class="mlx-price">490 <small>TL</small></p></article>
+        <article class="mlx-type is-family"><span class="mlx-ribbon">En avantajlı</span><div class="mlx-ico">👨‍👩‍👧‍👦</div><h3>Aile Paketi 2+2</h3><p>2 yetişkin + 2 çocuk, tek seferde</p><div class="mlx-family-row"><p class="mlx-price">1.100 <small>TL</small></p><s>1.470 TL</s></div><ul class="mlx-family-list"><li>Ayrı ayrı almaya göre 370 TL daha az</li><li>Her kişiye ayrı giriş QR kodu</li><li>Dört kişilik girişi tek seçimle ekleyin</li></ul></article>
+      </div>
+      <p class="mlx-free"><b>0–2 yaş</b> refakatçiyle ücretsiz · Varsa hizmet bedeli, ödeme öncesinde toplam tutarla birlikte gösterilir</p>
+      <div class="mlx-steps">
+        <div class="mlx-step"><b>1</b><div><strong>Şehrini seç</strong><span>Aşağıdan gösterinin olduğu şehre dokun.</span></div></div>
+        <div class="mlx-step"><b>2</b><div><strong>Seans ve bilet</strong><span>Saati seç, kişi sayısını ya da aile paketini ekle.</span></div></div>
+        <div class="mlx-step"><b>3</b><div><strong>Güvenli ödeme</strong><span>Ödemeden sonra QR biletin hazır; girişte telefonundan göster.</span></div></div>
+      </div>
+      <span id="mlx-pick" style="display:block;height:0;scroll-margin-top:24px"></span>
+    </div>
+  </section>
+</div>
+<!-- /wp:html --><!-- wp:group {"align":"full","className":"ml-experience","anchor":"ml-tickets","layout":{"type":"default"}} -->
+<div id="ml-tickets" class="wp-block-group alignfull ml-experience">
+<!-- wp:html -->
+<style>
+.ml-experience{--ml-ink:#101e43;--ml-red:#b51e36;--ml-gold:#e9ba60;--ml-paper:#f8f6f1;--ml-line:#e3e4e8;--ml-muted:#5c6578;font-family:var(--wp--preset--font-family--inter,Inter,Arial,sans-serif);color:var(--ml-ink);background:var(--ml-paper);margin-block:0!important;padding:0!important;font-size:16px;line-height:1.65}
+.ml-experience *{box-sizing:border-box}.ml-experience :is(h1,h2,h3,p,figure){margin:0}.ml-experience :is(h1,h2,h3){color:var(--ml-ink);font-family:inherit;letter-spacing:-.035em;line-height:1.12}.ml-experience h1{font-size:clamp(40px,5.2vw,68px);font-weight:750}.ml-experience h2{font-size:clamp(28px,3.4vw,40px);font-weight:700}.ml-experience h3{font-size:22px;font-weight:700}.ml-experience a{text-decoration:none}.ml-experience a:focus-visible,.ml-experience input:focus-visible,.ml-experience button:focus-visible{outline:3px solid var(--ml-gold);outline-offset:4px}.ml-shell{max-width:1160px;width:calc(100% - 64px);margin:auto}.ml-kicker{font-size:11px;letter-spacing:.17em;font-weight:750;text-transform:uppercase;color:var(--ml-red);margin-bottom:18px!important}.ml-lead{font-size:18px;line-height:1.75;color:var(--ml-muted);max-width:570px}.ml-btn{display:inline-flex;justify-content:center;align-items:center;gap:14px;padding:16px 26px;min-height:54px;border-radius:10px;background:var(--ml-red);color:#fff!important;font-weight:700;font-size:15px;box-shadow:0 8px 20px #b51e3618;transition:background .15s,transform .15s}.ml-btn:hover{background:#951a2c;transform:translateY(-1px)}.ml-btn-light{background:#fff;color:var(--ml-ink)!important;border:1px solid var(--ml-line);box-shadow:none}.ml-btn-light:hover{background:#f0eef1}.ml-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.ml-breadcrumb{padding-top:24px;font-size:12px;color:var(--ml-muted)}.ml-breadcrumb a{color:var(--ml-muted)}.ml-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:750;letter-spacing:.07em;color:#24644c;background:#e8f1eb;border-radius:40px;padding:6px 12px}.ml-badge:before{content:"";width:6px;height:6px;border-radius:50%;background:#2e8d64}.ml-hero{padding:42px 0 56px;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:64px}.ml-poster{position:relative;background:#ebe7de;border-radius:18px;padding:13px;box-shadow:0 18px 48px #14234214}.ml-poster img{display:block;width:100%;height:auto;border-radius:10px}.ml-poster figcaption{position:absolute;bottom:26px;left:26px;color:white;font-size:11px;font-weight:650;background:#101e43;padding:6px 10px;border-radius:6px}.ml-hero-copy h1{margin:18px 0 20px}.ml-hero-copy h1 span{color:var(--ml-red)}.ml-date{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:20px!important}.ml-date small{font-size:14px;font-weight:450;color:var(--ml-muted);margin-left:10px}.ml-venue{padding:18px 0;border-top:1px solid var(--ml-line);border-bottom:1px solid var(--ml-line)}.ml-venue strong{font-size:17px}.ml-venue p{font-size:13px;color:var(--ml-muted);margin-top:5px!important}.ml-times{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.ml-times a,.ml-times span{font-size:16px;font-weight:700;border:1px solid #d2d8e4;background:white;border-radius:8px;padding:9px 18px;color:var(--ml-ink)}.ml-times a:hover{border-color:var(--ml-red);color:var(--ml-red)}.ml-meta{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ml-muted);margin-top:22px}.ml-small{font-size:12px;line-height:1.7;color:var(--ml-muted)}.ml-section{padding:54px 0;border-top:1px solid var(--ml-line)}.ml-section-head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:26px}.ml-price-grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:16px;margin-top:26px}.ml-price{background:white;padding:25px;border:1px solid var(--ml-line);border-radius:14px}.ml-price p{font-size:13px;color:var(--ml-muted);margin:6px 0!important}.ml-price strong{font-size:30px;font-weight:750;letter-spacing:-.04em}.ml-price strong small{font-size:14px;font-weight:500}.ml-price-family{background:var(--ml-ink);border-color:var(--ml-ink);color:white}.ml-price-family :is(h3,p){color:white}.ml-price-family p{opacity:.7}.ml-info-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:60px}.ml-info-grid p{color:var(--ml-muted);margin-top:18px}.ml-info-grid ul{padding-left:18px;font-size:14px;color:var(--ml-muted);line-height:1.9}.ml-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.ml-tags span{background:#edeae3;padding:6px 12px;border-radius:5px;font-size:12px}.ml-bottom{background:var(--ml-ink);padding:35px;border-radius:16px;display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 50px}.ml-bottom h2{color:white;font-size:28px}.ml-bottom p{color:#c7cfdf;margin-top:8px;font-size:14px}.ml-catalog-head{padding:52px 0 36px}.ml-catalog-head h1{margin:12px 0 18px}.ml-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding:12px 0 60px}.ml-city-card{background:#fff;border:1px solid var(--ml-line);border-radius:15px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px #14234205}.ml-city-card>a{display:block;background:#e9e5dc}.ml-city-card img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:contain}.ml-card-copy{padding:22px;display:flex;flex-direction:column;flex:1}.ml-card-copy .ml-kicker{margin-bottom:10px!important;letter-spacing:.06em}.ml-card-copy h2{font-size:26px}.ml-card-copy p{color:var(--ml-muted);font-size:12px;margin-top:10px}.ml-card-copy .ml-times{gap:7px;margin:14px 0}.ml-card-copy .ml-times span{padding:5px 9px;font-size:13px}.ml-card-copy .ml-btn{margin-top:20px;width:100%;padding:13px 8px;font-size:13px;min-height:48px}.ml-steps{display:flex;gap:30px;flex-wrap:wrap;font-size:12px;color:var(--ml-muted);margin-top:26px}.ml-steps b{display:inline-flex;width:25px;height:25px;align-items:center;justify-content:center;border:1px solid #ced3de;border-radius:50%;margin-right:8px;color:var(--ml-ink)}.ml-city-target{display:block;height:0;scroll-margin-top:28px}.ml-city-tabs{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:26px}.ml-city-tabs a{flex:1;min-width:120px;border:1px solid #d7dce6;padding:12px 18px;border-radius:10px;color:var(--ml-ink);font-size:14px;font-weight:700;background:white;text-align:center}.ml-city-tabs a small{display:block;font-size:11px;font-weight:450;opacity:.75;margin-top:2px}.ml-ticket-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start;padding-bottom:34px}.ml-ticket-side{display:none;background:#fff;border:1px solid var(--ml-line);border-radius:14px;overflow:hidden}.ml-ticket-side img{width:100%;height:auto;display:block}.ml-ticket-side>div{padding:22px}.ml-ticket-side h2{font-size:26px}.ml-ticket-side p{font-size:12px;color:var(--ml-muted);margin-top:10px}.ml-payment-note{background:#f0eee7;border:1px solid #e2dfd6;padding:18px 22px;border-radius:10px;color:var(--ml-muted);font-size:12px;margin-bottom:44px}.ml-payment-note strong{color:var(--ml-ink)}#ml-tickets .milano-ticket-selector{max-width:none!important;width:100%!important;margin:0!important;padding:0!important;display:grid!important;gap:20px}#ml-tickets .milano-ticket-selector>p{display:none!important}#ml-tickets .milano-ticket-selector form{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px!important;margin:0!important;padding:25px!important;border:1px solid var(--ml-line)!important;border-radius:14px!important;background:white!important;box-shadow:0 6px 20px #14234204!important}#ml-tickets .milano-ticket-selector form h3{grid-column:1/-1;font-size:17px!important;line-height:1.5!important;letter-spacing:-.025em;margin:0 0 2px!important;padding-bottom:16px;border-bottom:1px solid #e9ebef}#ml-tickets .milano-ticket-selector label{display:flex!important;flex-direction:column;align-items:stretch!important;gap:9px!important;margin:0!important;width:auto!important;min-width:0!important;font-size:12px!important;font-weight:600!important;color:var(--ml-ink)!important}#ml-tickets .milano-ticket-selector input[type=number]{width:100%!important;max-width:none!important;min-height:48px!important;margin:0!important;background:#f7f8fa!important;border:1px solid #d7dce5!important;border-radius:8px!important;padding:11px!important;color:var(--ml-ink)!important;font:600 16px Inter,Arial,sans-serif!important}#ml-tickets .milano-ticket-selector button{grid-column:1/-1;background:var(--ml-red)!important;border:0!important;border-radius:9px!important;color:#fff!important;font:650 14px Inter,Arial,sans-serif!important;padding:16px 18px!important;margin:3px 0 0!important;width:100%!important;min-height:52px!important;cursor:pointer}#ml-tickets .milano-ticket-selector button:hover{background:#951a2c!important}
+@media(max-width:1000px){.ml-hero{gap:36px}.ml-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.ml-ticket-layout{grid-template-columns:230px minmax(0,1fr)}}
+@media(max-width:760px){.ml-shell{width:calc(100% - 36px)}.ml-hero{grid-template-columns:1fr;gap:28px;padding-top:24px}.ml-hero .ml-poster{max-width:420px;width:100%;margin:auto;order:2}.ml-hero-copy{order:1}.ml-experience h1{font-size:42px}.ml-date small{display:block;margin:4px 0 0}.ml-price-grid,.ml-info-grid{grid-template-columns:1fr;gap:14px}.ml-price{padding:22px}.ml-section{padding:36px 0}.ml-bottom{display:block;padding:26px}.ml-bottom .ml-btn{margin-top:20px;width:100%}.ml-ticket-layout{grid-template-columns:1fr;gap:20px}.ml-ticket-side img{display:none}.ml-ticket-side>div{padding:20px}.ml-ticket-side h2{font-size:23px}.ml-city-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ml-city-tabs a{min-width:0;padding:11px}.ml-catalog-head{padding:32px 0}.ml-steps{gap:12px;font-size:11px}.ml-cards{gap:14px}.ml-card-copy{padding:17px}.ml-card-copy h2{font-size:23px}.ml-section-head{display:block}.ml-section-head p{margin-top:12px}}
+@media(max-width:480px){.ml-cards{grid-template-columns:1fr}.ml-city-card{display:grid;grid-template-columns:115px minmax(0,1fr)}.ml-city-card>a img{height:100%;object-fit:cover}.ml-card-copy .ml-times{gap:4px}.ml-card-copy .ml-btn{margin-top:12px}.ml-card-copy .ml-small{display:none}#ml-tickets .milano-ticket-selector form{padding:18px!important;gap:12px!important;grid-template-columns:1fr!important}#ml-tickets .milano-ticket-selector label{flex-direction:row!important;align-items:center!important;justify-content:space-between;gap:12px!important;font-size:13px!important}#ml-tickets .milano-ticket-selector input[type=number]{width:85px!important;flex:0 0 85px}.ml-experience h1{font-size:38px}.ml-breadcrumb{font-size:11px}.ml-meta{gap:12px}.ml-card-copy .ml-kicker{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ml-btn{transition:none}}
+#ml-tickets:has(#karamursel:target) .ml-ticket-side[data-city="karamursel"],#ml-tickets:has(#karamursel:target) .milano-ticket-selector form:has(input[name="event_id"][value="28"]){display:grid}#ml-tickets:has(#karamursel:target) .ml-city-tabs a[href="#karamursel"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets:has(#yalova:target) .ml-ticket-side[data-city="yalova"],#ml-tickets:has(#yalova:target) .milano-ticket-selector form:has(input[name="event_id"][value="24"]){display:grid}#ml-tickets:has(#yalova:target) .ml-city-tabs a[href="#yalova"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets:has(#darica:target) .ml-ticket-side[data-city="darica"],#ml-tickets:has(#darica:target) .milano-ticket-selector form:has(input[name="event_id"][value="27"]){display:grid}#ml-tickets:has(#darica:target) .ml-city-tabs a[href="#darica"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets:has(#derince:target) .ml-ticket-side[data-city="derince"],#ml-tickets:has(#derince:target) .milano-ticket-selector form:has(input[name="event_id"][value="26"]){display:grid}#ml-tickets:has(#derince:target) .ml-city-tabs a[href="#derince"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}#ml-tickets:has(#menemen:target) .ml-ticket-side[data-city="menemen"],#ml-tickets:has(#menemen:target) .milano-ticket-selector form:has(input[name="event_id"][value="31"]){display:grid}#ml-tickets:has(#menemen:target) .ml-city-tabs a[href="#menemen"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets:has(#tire:target) .ml-ticket-side[data-city="tire"],#ml-tickets:has(#tire:target) .milano-ticket-selector form:has(input[name="event_id"][value="30"]){display:grid}#ml-tickets:has(#tire:target) .ml-city-tabs a[href="#tire"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets:has(#odemis:target) .ml-ticket-side[data-city="odemis"],#ml-tickets:has(#odemis:target) .milano-ticket-selector form:has(input[name="event_id"][value="29"]){display:grid}#ml-tickets:has(#odemis:target) .ml-city-tabs a[href="#odemis"]{background:var(--ml-ink);border-color:var(--ml-ink);color:white}
+#ml-tickets .ml-select-prompt{display:none;padding:28px;border:1px dashed #cbd1de;border-radius:12px;background:#fff;font-size:15px;margin-bottom:30px}#ml-tickets:not(:has(.ml-city-target:target)) .ml-select-prompt{display:block}#ml-tickets:not(:has(.ml-city-target:target)) .ml-ticket-layout{display:none}@supports not selector(:has(*)){#ml-tickets .milano-ticket-selector form{display:grid}}.ml-experience h1{color:var(--ml-ink)!important;font-size:clamp(40px,5.2vw,68px)!important;font-weight:750!important}.ml-experience h1 span{color:var(--ml-red)!important}.ml-experience h2,.ml-experience h3{color:var(--ml-ink)!important}.ml-experience .ml-price-family h3,.ml-experience .ml-bottom h2{color:#fff!important}@media(max-width:760px){.ml-experience h1{font-size:42px!important}}@media(max-width:480px){.ml-experience h1{font-size:38px!important}}</style>
+<!-- /wp:html --><!-- wp:html -->
+<div class="ml-shell"><header class="ml-catalog-head"><p class="ml-kicker">ULUSLARARASI MİLANO SİRKİ</p><h1 style="color:#101e43!important;font-size:clamp(38px,5.2vw,68px)!important;line-height:1.08!important;font-weight:750!important">Bir gösteri.<br><span style="color:var(--ml-red)">Birlikte bir sürü anı.</span></h1><p class="ml-lead">Şehrinizi seçin, size uygun seansı bulun. Ailenizin biletlerini tek ekrandan hazırlayın.</p><div class="ml-steps"><span><b>1</b> Şehrini seç</span><span><b>2</b> Seans ve bilet</span><span><b>3</b> Güvenli ödeme</span></div></header><span class="ml-city-target" id="karamursel"></span><span class="ml-city-target" id="yalova"></span><span class="ml-city-target" id="darica"></span><span class="ml-city-target" id="derince"></span><span class="ml-city-target" id="menemen"></span><span class="ml-city-target" id="tire"></span><span class="ml-city-target" id="odemis"></span><nav class="ml-city-tabs" aria-label="Etkinlik şehri"><a href="#karamursel">Karamürsel<small>21 Ekim · Çarşamba</small></a><a href="#yalova">Yalova<small>22 Ekim · Perşembe</small></a><a href="#darica">Darıca<small>23 Ekim · Cuma</small></a><a href="#derince">Derince<small>24 Ekim · Cumartesi</small></a><a href="#menemen">Menemen<small>31 Ekim · Cumartesi</small></a><a href="#tire">Tire<small>1 Kasım · Pazar</small></a><a href="#odemis">Ödemiş<small>1 Kasım · Pazar</small></a></nav><div class="ml-select-prompt"><strong>Hangi şehirde buluşuyoruz?</strong><p class="ml-small" style="margin-top:6px">Yukarıdan şehrinizi seçin; yalnız o gösterinin seanslarını ve bilet seçeneklerini görüntüleyin.</p></div><div class="ml-ticket-layout"><aside><article class="ml-ticket-side" data-city="karamursel"><img src="https://milanosirki.com/wp-content/uploads/2026/10/milano-karamursel-21-ekim-2026.png" alt="Karamürsel Milano Sirki etkinlik afişi" width="560" height="700"><div><p class="ml-kicker">21 Ekim 2026</p><h2>Karamürsel</h2><p><strong>Atatürk Kapalı Spor Salonu</strong></p><div class="ml-location-links" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"><a href="https://www.google.com/maps/search/?api=1&amp;query=Atat%C3%BCrk%20Kapal%C4%B1%20Spor%20Salonu%2C%204%20Temmuz%20Mahallesi%2C%20115%20Nolu%20Sokak%2C%20Karam%C3%BCrsel%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Haritada Aç ↗</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=Atat%C3%BCrk%20Kapal%C4%B1%20Spor%20Salonu%2C%204%20Temmuz%20Mahallesi%2C%20115%20Nolu%20Sokak%2C%20Karam%C3%BCrsel%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Yol Tarifi Al ↗</a></div><p>4 Temmuz Mahallesi, 115 Nolu Sokak, Karamürsel / Kocaeli</p><p>Yaklaşık 60 dakika · Serbest oturma<br>0–2 yaş ücretsiz</p><a href="/milano-sirki-karamursel-21-ekim-2026/" style="display:inline-block;margin-top:14px;font-size:12px;font-weight:700;color:var(--ml-red)">Etkinlik detayları →</a></div></article><article class="ml-ticket-side" data-city="yalova"><img src="https://milanosirki.com/wp-content/uploads/2026/10/01-1001761400.jpg" alt="Yalova Milano Sirki etkinlik afişi" width="560" height="700"><div><p class="ml-kicker">22 Ekim 2026</p><h2>Yalova</h2><p><strong>90. Yıl Kapalı Spor Salonu</strong></p><div class="ml-location-links" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"><a href="https://www.google.com/maps/search/?api=1&amp;query=90.%20Y%C4%B1l%20Kapal%C4%B1%20Spor%20Salonu%2C%20Bah%C3%A7elievler%20Mahallesi%2C%20Turhan%20Ko%C3%A7al%20Caddesi%20No%3A13%2C%20Yalova" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Haritada Aç ↗</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=90.%20Y%C4%B1l%20Kapal%C4%B1%20Spor%20Salonu%2C%20Bah%C3%A7elievler%20Mahallesi%2C%20Turhan%20Ko%C3%A7al%20Caddesi%20No%3A13%2C%20Yalova" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Yol Tarifi Al ↗</a></div><p>Bahçelievler Mahallesi, Turhan Koçal Caddesi No:13, Yalova</p><p>Yaklaşık 60 dakika · Serbest oturma<br>0–2 yaş ücretsiz</p><a href="/milano-sirki-yalova-22-ekim-2026/" style="display:inline-block;margin-top:14px;font-size:12px;font-weight:700;color:var(--ml-red)">Etkinlik detayları →</a></div></article><article class="ml-ticket-side" data-city="darica"><img src="https://milanosirki.com/wp-content/uploads/2026/10/milano-darica-23-ekim-2026.png" alt="Darıca Milano Sirki etkinlik afişi" width="560" height="700"><div><p class="ml-kicker">23 Ekim 2026</p><h2>Darıca</h2><p><strong>Eray Şamdan Kapalı Spor Salonu</strong></p><div class="ml-location-links" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"><a href="https://www.google.com/maps/search/?api=1&amp;query=Eray%20%C5%9Eamdan%20Kapal%C4%B1%20Spor%20Salonu%2C%20Ba%C4%9Flarba%C5%9F%C4%B1%20Mahallesi%2C%20%C3%96zbay%20Sokak%20No%3A67%2C%20Dar%C4%B1ca%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Haritada Aç ↗</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=Eray%20%C5%9Eamdan%20Kapal%C4%B1%20Spor%20Salonu%2C%20Ba%C4%9Flarba%C5%9F%C4%B1%20Mahallesi%2C%20%C3%96zbay%20Sokak%20No%3A67%2C%20Dar%C4%B1ca%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Yol Tarifi Al ↗</a></div><p>Bağlarbaşı Mahallesi, Özbay Sokak No:67, Darıca / Kocaeli</p><p>Yaklaşık 60 dakika · Serbest oturma<br>0–2 yaş ücretsiz</p><a href="/milano-sirki-darica-23-ekim-2026/" style="display:inline-block;margin-top:14px;font-size:12px;font-weight:700;color:var(--ml-red)">Etkinlik detayları →</a></div></article><article class="ml-ticket-side" data-city="derince"><img src="https://milanosirki.com/wp-content/uploads/2026/10/milano-derince-24-ekim-2026.png" alt="Derince Milano Sirki etkinlik afişi" width="560" height="700"><div><p class="ml-kicker">24 Ekim 2026</p><h2>Derince</h2><p><strong>Derince Kapalı Spor Salonu</strong></p><div class="ml-location-links" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"><a href="https://www.google.com/maps/search/?api=1&amp;query=Derince%20Kapal%C4%B1%20Spor%20Salonu%2C%20Yenikent%20Mahallesi%2C%20Serpil%20Sokak%20No%3A2%2C%20Merkez%20Bankas%C4%B1%20Derince%20Anadolu%20Lisesi%20yan%C4%B1%2C%20Derince%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Haritada Aç ↗</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=Derince%20Kapal%C4%B1%20Spor%20Salonu%2C%20Yenikent%20Mahallesi%2C%20Serpil%20Sokak%20No%3A2%2C%20Merkez%20Bankas%C4%B1%20Derince%20Anadolu%20Lisesi%20yan%C4%B1%2C%20Derince%20%2F%20Kocaeli" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid currentColor;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Yol Tarifi Al ↗</a></div><p>Yenikent Mahallesi, Serpil Sokak No:2, Merkez Bankası Derince Anadolu Lisesi yanı, Derince / Kocaeli</p><p>Yaklaşık 60 dakika · Serbest oturma<br>0–2 yaş ücretsiz</p><a href="/milano-sirki-derince-24-ekim-2026/" style="display:inline-block;margin-top:14px;font-size:12px;font-weight:700;color:var(--ml-red)">Etkinlik detayları →</a></div></article><article class="ml-ticket-side" data-city="menemen"><img src="https://madagaskarsirki.com/wp-content/uploads/2026/10/exec-e9488072-0567-42a0-b480-ce91bc170aa0.png" alt="Menemen Milano Sirki etkinlik afişi" width="1024" height="1536"><div><p class="ml-kicker">31 Ekim 2026 · Cumartesi</p><h2>Menemen</h2><p><strong>Menemen Spor Salonu</strong></p><p>Kazımpaşa, Atatürk Cd. No:154, Menemen/İzmir — İlçe Stadyumu yanında</p><div class="ml-location-links" style="display:flex;gap:8px;margin:12px 0"><a class="ml-btn ml-btn-light" href="https://maps.app.goo.gl/kbs6KCjWJvMnxwaF6" target="_blank" rel="noopener noreferrer">Harita / Yol Tarifi ↗</a></div><p>Yaklaşık 60 dakika · Serbest oturma<br>Her seans 500 kişi · 0–2 yaş ücretsiz</p></div></article><article class="ml-ticket-side" data-city="tire"><img src="https://madagaskarsirki.com/wp-content/uploads/2026/10/exec-75c4ccfe-4242-4bd4-ab35-0db8480c67e4.png" alt="Tire Milano Sirki etkinlik afişi" width="1024" height="1536"><div><p class="ml-kicker">1 Kasım 2026 · Pazar</p><h2>Tire</h2><p><strong>Tire Spor Salonu</strong></p><p>Hürriyet Mah. Mahmut Aşık Cad. No:30, Tire/İzmir</p><div class="ml-location-links" style="display:flex;gap:8px;margin:12px 0"><a class="ml-btn ml-btn-light" href="https://maps.app.goo.gl/FpzozZ68kdtCe3zM7" target="_blank" rel="noopener noreferrer">Harita / Yol Tarifi ↗</a></div><p>Yaklaşık 60 dakika · Serbest oturma<br>Her seans 500 kişi · 0–2 yaş ücretsiz</p></div></article><article class="ml-ticket-side" data-city="odemis"><img src="https://madagaskarsirki.com/wp-content/uploads/2026/10/exec-430bea99-2d55-4429-9535-df3b6a4ece58.png" alt="Ödemiş Milano Sirki etkinlik afişi" width="1024" height="1536"><div><p class="ml-kicker">1 Kasım 2026 · Pazar</p><h2>Ödemiş</h2><p><strong>Ödemiş Spor Salonu</strong></p><p>Zafer Mah. Atatürk Cad. No:131, Ödemiş/İzmir — Devlet Hastanesi yanında</p><div class="ml-location-links" style="display:flex;gap:8px;margin:12px 0"><a class="ml-btn ml-btn-light" href="https://maps.app.goo.gl/Nzd6cUj89jPJJ4it9" target="_blank" rel="noopener noreferrer">Harita / Yol Tarifi ↗</a></div><p>Yaklaşık 60 dakika · Serbest oturma<br>Her seans 500 kişi · 0–2 yaş ücretsiz</p></div></article></aside>
+<!-- /wp:html -->
+<!-- wp:html -->
+<div class="milano-ticket-selector"><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="28"><input type="hidden" name="session_id" value="181"><h3>Milano Sirki — Karamürsel — 21 Ekim 2026 17:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Karamürsel 17:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Karamürsel 17:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Karamürsel 17:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="28"><input type="hidden" name="session_id" value="182"><h3>Milano Sirki — Karamürsel — 21 Ekim 2026 19:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Karamürsel 19:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Karamürsel 19:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Karamürsel 19:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="24"><input type="hidden" name="session_id" value="154"><h3>Milano Sirki — Yalova — 22 Ekim 2026 18:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Yalova 18:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Yalova 18:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Yalova 18:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="24"><input type="hidden" name="session_id" value="155"><h3>Milano Sirki — Yalova — 22 Ekim 2026 19:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Yalova 19:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Yalova 19:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Yalova 19:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="27"><input type="hidden" name="session_id" value="179"><h3>Milano Sirki — Darıca — 23 Ekim 2026 17:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Darıca 17:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Darıca 17:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Darıca 17:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="27"><input type="hidden" name="session_id" value="180"><h3>Milano Sirki — Darıca — 23 Ekim 2026 19:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Darıca 19:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Darıca 19:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Darıca 19:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="26"><input type="hidden" name="session_id" value="176"><h3>Milano Sirki — Derince — 24 Ekim 2026 12:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Derince 12:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Derince 12:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Derince 12:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="26"><input type="hidden" name="session_id" value="177"><h3>Milano Sirki — Derince — 24 Ekim 2026 14:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Derince 14:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Derince 14:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Derince 14:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="26"><input type="hidden" name="session_id" value="178"><h3>Milano Sirki — Derince — 24 Ekim 2026 16:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Milano Sirki — Derince 16:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Milano Sirki — Derince 16:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Milano Sirki — Derince 16:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="31"><input type="hidden" name="session_id" value="194"><h3>Milano Sirki — Menemen — 2026-10-31 12:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Menemen 12:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Menemen 12:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Menemen 12:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="31"><input type="hidden" name="session_id" value="195"><h3>Milano Sirki — Menemen — 2026-10-31 14:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Menemen 14:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Menemen 14:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Menemen 14:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="31"><input type="hidden" name="session_id" value="196"><h3>Milano Sirki — Menemen — 2026-10-31 16:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Menemen 16:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Menemen 16:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Menemen 16:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="30"><input type="hidden" name="session_id" value="189"><h3>Milano Sirki — Tire — 2026-11-01 12:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Tire 12:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Tire 12:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Tire 12:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="30"><input type="hidden" name="session_id" value="190"><h3>Milano Sirki — Tire — 2026-11-01 13:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Tire 13:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Tire 13:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Tire 13:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="29"><input type="hidden" name="session_id" value="185"><h3>Milano Sirki — Ödemiş — 2026-11-01 17:30</h3><label>Yetişkin — 490,00 TL <input aria-label="Ödemiş 17:30 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Ödemiş 17:30 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Ödemiş 17:30 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form><form method="get" action="https://madagaskarsirki.com/"><input type="hidden" name="milano_bilet_odeme" value="1"><input type="hidden" name="event_id" value="29"><input type="hidden" name="session_id" value="186"><h3>Milano Sirki — Ödemiş — 2026-11-01 19:00</h3><label>Yetişkin — 490,00 TL <input aria-label="Ödemiş 19:00 Yetişkin adedi" type="number" name="adults" min="0" max="20" value="0"></label><label>Çocuk — 245,00 TL <input aria-label="Ödemiş 19:00 Çocuk adedi" type="number" name="children" min="0" max="20" value="0"></label><label>Aile 2+2 — 1.100,00 TL <input aria-label="Ödemiş 19:00 Aile 2+2 adedi" type="number" name="families" min="0" max="10" value="0"></label><button type="submit">Bilet al — ortak ödemeye geç</button></form></div>
+<!-- /wp:html -->
+<!-- wp:html -->
+</div><div class="ml-payment-note"><strong>Ödemeniz güvenli ortak altyapıda tamamlanır.</strong><br>Seçiminizin ardından Dünya Organizasyon’un madagaskarsirki.com ödeme ekranına yönlendirilirsiniz. Biletiniz seçtiğiniz Milano Sirki etkinliğine aittir. Aile paketi: 2 yetişkin + 2 çocuk, toplam dört kişi. Varsa hizmet bedeli dahil toplam tutarı ödeme öncesinde görebilirsiniz.</div><p class="ml-small" style="padding-bottom:36px"><a href="/sikca-sorulan-sorular/">Biletler hakkında sorular</a> &nbsp;·&nbsp; <a href="/iade-ve-iptal-politikasi/">İade ve iptal koşulları</a> &nbsp;·&nbsp; <a href="https://wa.me/905363583381">WhatsApp destek</a></p></div>
+<!-- /wp:html -->
+</div>
+<!-- wp:html -->
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var root=document.getElementById('ml-tickets');if(!root)return;
+  fetch('/sehirler/',{credentials:'same-origin'}).then(function(r){if(!r.ok)throw Error('venues');return r.text()}).then(function(html){
+    var doc=new DOMParser().parseFromString(html,'text/html');
+    var cards=Array.from(doc.querySelectorAll('.ml-city-card'));
+    root.querySelectorAll('.ml-ticket-side[data-city]').forEach(function(side){
+      var city=side.getAttribute('data-city');
+      var match=cards.find(function(card){var h=card.querySelector('h2');return h&&h.textContent.trim().toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/ü/g,'u').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ö/g,'o')===city});
+      if(!match||side.querySelector('.ml-location-links'))return;
+      var links=match.querySelector('.ml-location-links');if(!links)return;
+      var copy=links.cloneNode(true);copy.querySelectorAll('a').forEach(function(a){if(!/^https:\/\/www\.google\.com\/maps\//.test(a.href))a.remove();});
+      if(!copy.querySelector('a'))return;
+      var addr=match.querySelector('.ml-location-address');var box=side.querySelector('div');if(!box)return;
+      if(addr){var p=addr.cloneNode(true);box.appendChild(p);}
+      box.appendChild(copy);
+    });
+  }).catch(function(){});
+});
+</script>
+<!-- /wp:html -->
+<!-- /wp:group -->
+
+<!-- wp:html -->
+<style id="ml-ticket-info-v2">
+#ml-tickets .ml-payment-note,#ml-tickets .ml-shell>p.ml-small{display:none!important}
+.mlx-info{background:#f8f6f1;padding:8px 0 64px}
+.mlx-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px}
+.mlx-card{background:#fff;border:1px solid #e3e4e8;border-radius:16px;padding:22px}
+.mlx-card .mlx-ico{font-size:26px;line-height:1;margin-bottom:10px}
+.mlx-card h3{font-size:16px!important;font-weight:750;color:#101e43!important;margin-bottom:6px!important}
+.mlx-card p{font-size:13px;color:#5c6578;line-height:1.65}
+.mlx-faq-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:18px}
+.mlx-faq-head h2{font-size:clamp(26px,3vw,36px)!important;font-weight:800!important;letter-spacing:-.03em;color:#101e43!important}
+.mlx-faq-head p{font-size:14px;color:#5c6578}
+.mlx-faq{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:34px}
+.mlx-faq details{background:#fff;border:1px solid #e3e4e8;border-radius:14px;padding:0 20px;transition:box-shadow .15s}
+.mlx-faq details[open]{box-shadow:0 10px 26px rgba(16,30,67,.08);border-color:#e9ba60}
+.mlx-faq summary{cursor:pointer;list-style:none;padding:18px 28px 18px 0;font-weight:700;font-size:15px;color:#101e43;position:relative}
+.mlx-faq summary::-webkit-details-marker{display:none}
+.mlx-faq summary:after{content:"+";position:absolute;right:0;top:14px;font-size:22px;color:#b51e36;font-weight:500}
+.mlx-faq details[open] summary:after{content:"–"}
+.mlx-faq details p{font-size:14px;color:#39435a;padding:0 0 18px;line-height:1.7}
+.mlx-help{display:flex;align-items:center;justify-content:space-between;gap:20px;background:linear-gradient(135deg,#101e43,#5a1426);color:#fff;border-radius:18px;padding:28px 30px}
+.mlx-help h3{color:#fff!important;font-size:22px!important;font-weight:800}
+.mlx-help p{color:#d9def0;font-size:14px;margin-top:4px!important}
+.mlx-help-links{display:flex;flex-wrap:wrap;gap:10px}
+.mlx-help-links a{display:inline-flex;box-sizing:border-box;align-items:center;min-height:48px;padding:12px 18px;border-radius:10px;font-weight:750;font-size:14px;text-decoration:none!important}
+.mlx-help-links a.wa{background:#25d366;color:#08331a!important}
+.mlx-help-links a.lt{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff!important}
+@media(max-width:900px){.mlx-info-grid{grid-template-columns:1fr 1fr}.mlx-faq{grid-template-columns:1fr}.mlx-help{display:block;padding:24px 20px}.mlx-help-links{display:grid;grid-template-columns:1fr;gap:10px;margin-top:18px}.mlx-help-links a{width:100%;justify-content:center;text-align:center;white-space:normal}}
+@media(max-width:560px){.mlx-info-grid{grid-template-columns:1fr}.mlx-faq-head{display:block}}
+</style>
+<div class="mlx mlx-info">
+  <div class="mlx-wrap">
+    <div class="mlx-info-grid">
+      <div class="mlx-card"><div class="mlx-ico">🔒</div><h3>Güvenli ortak ödeme</h3><p>Seçiminizden sonra Dünya Organizasyon’un madagaskarsirki.com ödeme ekranına geçersiniz. Biletiniz seçtiğiniz Milano Sirki gösterisine aittir.</p></div>
+      <div class="mlx-card"><div class="mlx-ico">📱</div><h3>QR kodlu bilet</h3><p>Ödeme tamamlanınca biletiniz QR kodla oluşturulur. Girişte telefonunuzdan göstermeniz yeterli; yazdırmanız gerekmez.</p></div>
+      <div class="mlx-card"><div class="mlx-ico">👨‍👩‍👧‍👦</div><h3>Aile paketiyle 370 TL avantaj</h3><p>2 yetişkin + 2 çocuk için 1.100 TL. Ayrı ayrı almaya göre (1.470 TL) daha uygun; dört kişinin her biri ayrı QR ile girer.</p></div>
+      <div class="mlx-card"><div class="mlx-ico">✨</div><h3>Hayvansız, ailece gösteri</h3><p>Akrobasi, denge, jonglörlük, hula hoop ve palyaço gösterileri. Performanslar tamamen insan becerisine dayanır.</p></div>
+      <div class="mlx-card"><div class="mlx-ico">⏱</div><h3>Yaklaşık 60 dakika</h3><p>Çocukların ilgisini sonuna kadar canlı tutan, tempolu bir program. Seansa göre küçük farklılıklar olabilir.</p></div>
+      <div class="mlx-card"><div class="mlx-ico">🪑</div><h3>Serbest oturma</h3><p>Numaralı koltuk yoktur; erken gelen ailece yan yana oturur. 0–2 yaş refakatçiyle ücretsizdir.</p></div>
+    </div>
+    <div class="mlx-faq-head"><h2>Aklınıza takılanlar</h2><p>Bir soruya dokunarak cevabını açın.</p></div>
+    <div class="mlx-faq">
+      <details><summary>Aile paketi tam olarak ne?</summary><p>2 yetişkin ve 2 çocuk (3–12 yaş) için tek seferde alınan 1.100 TL’lik pakettir. Aynı biletleri ayrı ayrı alırsanız 1.470 TL ödersiniz; paketle 370 TL daha az ödersiniz. Paket seans kapasitesinden 4 kişi düşer ve her kişiye ayrı giriş QR kodu verilir.</p></details>
+      <details><summary>Daha kalabalık bir aileyiz, ne yapmalıyız?</summary><p>Aile paketini seçip kalan kişiler için ayrıca çocuk veya yetişkin bileti ekleyebilirsiniz. Örneğin 2 yetişkin + 3 çocuk için 1 aile paketi ve 1 çocuk bileti seçmeniz yeterli.</p></details>
+      <details><summary>Kaç yaşından itibaren bilet gerekiyor?</summary><p>0–2 yaş refakatçiyle ücretsizdir. 3–12 yaş çocuk, 13 yaş ve üzeri yetişkin biletiyle girer.</p></details>
+      <details><summary>Biletimi nasıl göstereceğim?</summary><p>Ödeme sonrası oluşturulan QR kodlu biletinizi girişte telefonunuzdan göstermeniz yeterlidir. Her biletin ayrı bir QR kodu vardır.</p></details>
+      <details><summary>Neden ödeme madagaskarsirki.com’da?</summary><p>Milano Sirki biletleri, organizatör Dünya Organizasyon’un ortak ve güvenli bilet altyapısında satılır. Sipariş, ödeme ve QR bilet işlemleri bu altyapıda tamamlanır.</p></details>
+      <details><summary>İptal, iade veya seans değişikliği</summary><p>Bu işlemler satın alma sırasında sunulan satış koşullarına tabidir. Ayrıntılar için <a href="/iade-ve-iptal-politikasi/">İade ve İptal Politikası</a> sayfasına bakabilir, sipariş bilgilerinizle bize WhatsApp’tan yazabilirsiniz.</p></details>
+    </div>
+    <div class="mlx-help">
+      <div><h3>Sorunuz mu var? Hemen yazın.</h3><p>Bilet, seans ve aile paketi için ekibimiz WhatsApp’ta.</p></div>
+      <div class="mlx-help-links"><a class="wa" href="https://wa.me/905363583381" target="_blank" rel="noopener noreferrer">WhatsApp: 0536 358 33 81</a><a class="lt" href="/sikca-sorulan-sorular/">Tüm sorular</a><a class="lt" href="/iade-ve-iptal-politikasi/">İade ve iptal</a></div>
+    </div>
+  </div>
+</div>
+<!-- /wp:html --><!-- wp:html -->
+<style>
+#ml-tickets .milano-ticket-selector form .ml-session-meta{grid-column:1/-1;font-size:12px;color:#5c6578;margin:0!important;line-height:1.6}
+#ml-tickets .milano-ticket-selector form h3.ml-session-heading{font-size:27px!important;border-bottom:1px solid #e9ebef;margin:0!important;padding:0 0 18px!important;color:#101e43!important}
+#ml-tickets .milano-ticket-selector form label{flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:10px!important}
+#ml-tickets .milano-ticket-selector .ml-ticket-label{display:flex;flex-direction:column;gap:3px;line-height:1.5;font-size:13px;color:#101e43}
+#ml-tickets .milano-ticket-selector .ml-ticket-label small{font-size:12px;font-weight:450;white-space:nowrap;color:#5c6578}
+#ml-tickets .milano-ticket-selector form .ml-qty-control{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;padding:4px;border:1px solid #d7dce5;border-radius:9px;background:#f7f8fa}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button{grid-column:auto!important;display:inline-flex!important;flex:0 0 40px!important;width:40px!important;min-width:40px!important;min-height:44px!important;height:44px!important;padding:0!important;margin:0!important;border:1px solid #d7dce5!important;border-radius:6px!important;background:#fff!important;color:#101e43!important;font-size:22px!important;font-weight:500!important;align-items:center;justify-content:center;cursor:pointer}
+#ml-tickets .milano-ticket-selector form .ml-qty-control button:disabled{opacity:.35;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important;min-width:32px!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;text-align:center!important;appearance:textfield;-moz-appearance:textfield}
+#ml-tickets .ml-qty-control input::-webkit-inner-spin-button,#ml-tickets .ml-qty-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#ml-tickets .milano-ticket-selector .ml-selection-summary{grid-column:1/-1;border:1px solid #e2e5ed;background:#f8f9fc;border-radius:10px;padding:20px;margin-top:6px}
+#ml-tickets .ml-selection-summary h4{font-size:17px;line-height:1.4;color:#101e43;margin:0 0 8px;font-weight:700}
+#ml-tickets .ml-selection-summary .ml-summary-meta{font-size:12px;line-height:1.7;color:#5c6578;margin:0 0 14px}
+#ml-tickets .ml-summary-lines p,#ml-tickets .ml-summary-total{display:flex;align-items:baseline;justify-content:space-between;gap:18px;font-size:13px;line-height:1.6;margin:6px 0}
+#ml-tickets .ml-summary-lines p span:last-child{white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-total{border-top:1px solid #dfe3ec;margin:14px 0 6px;padding-top:14px;font-size:14px}
+#ml-tickets .ml-summary-total strong{font-size:23px;color:#101e43;white-space:nowrap}
+#ml-tickets .ml-selection-summary .ml-summary-people{font-size:12px;font-weight:650;margin:5px 0 0;color:#101e43}
+#ml-tickets .ml-selection-summary .ml-summary-note{font-size:11px;line-height:1.7;color:#5c6578;margin:10px 0 0}
+#ml-tickets .milano-ticket-selector form .ml-selection-error{grid-column:1/-1;color:#a32231;font-size:12px;line-height:1.6;margin:0}
+#ml-tickets .ml-selection-error:empty{display:none}
+#ml-tickets .milano-ticket-selector form>button:disabled{opacity:.45;cursor:not-allowed}
+#ml-tickets .milano-ticket-selector button:focus-visible,#ml-tickets .milano-ticket-selector input:focus-visible{outline:3px solid #e9ba60!important;outline-offset:3px}
+@media(max-width:480px){#ml-tickets .milano-ticket-selector form label{flex-direction:row!important;align-items:center!important;gap:12px!important}#ml-tickets .milano-ticket-selector form .ml-ticket-label{flex:1;font-size:13px}#ml-tickets .milano-ticket-selector form .ml-qty-control{flex:0 0 145px;width:145px!important}#ml-tickets .milano-ticket-selector form .ml-qty-control input[type=number]{flex:1 1 0!important;width:0!important}#ml-tickets .ml-selection-summary{padding:16px!important}#ml-tickets .ml-summary-lines p{gap:12px;font-size:12px}}
+
+</style>
+<script>
+(function () {
+  'use strict';
+  function start() {
+    var root = document.getElementById('ml-tickets');
+    if (!root) return;
+    var money = new Intl.NumberFormat('tr-TR', {style: 'currency', currency: 'TRY'});
+    var names = {adults: 'Yetişkin', children: 'Çocuk', families: 'Aile paketi (2 yetişkin + 2 çocuk)'};
+    var forms = root.querySelectorAll('.milano-ticket-selector form');
+    forms.forEach(function (form) {
+      if (form.dataset.mlSelectionEnhanced) return;
+      var heading = form.querySelector('h3');
+      var submit = form.querySelector('button[type="submit"]');
+      var session = form.querySelector('input[name="session_id"]');
+      var event = form.querySelector('input[name="event_id"]');
+      var rawTitle = heading ? heading.textContent.trim() : '';
+      var title = rawTitle.match(/^(.*?) — (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/);
+      if (!title) {
+        var local = rawTitle.match(/^(.*?) — (\d{1,2}) (\S+) (\d{4}) (\d{2}):(\d{2})$/);
+        var months = {ocak:1,şubat:2,mart:3,nisan:4,mayıs:5,haziran:6,temmuz:7,ağustos:8,eylül:9,ekim:10,kasım:11,aralık:12};
+        if (local) {
+          var month = months[local[3].toLocaleLowerCase('tr-TR')];
+          if (month) title = [local[0],local[1],local[4],String(month).padStart(2,'0'),local[2].padStart(2,'0'),local[5],local[6]];
+        }
+      }
+      if (!title || !submit || !session || !event) return;
+      var city = title[1].split(' — ').pop().trim();
+      var time = title[5] + '.' + title[6];
+      var date = new Date(Date.UTC(Number(title[2]), Number(title[3]) - 1, Number(title[4]), 12));
+      var dateText = new Intl.DateTimeFormat('tr-TR', {day: 'numeric', month: 'long', year: 'numeric', weekday: 'long', timeZone: 'UTC'}).format(date);
+      var entries = [];
+      var validPrices = true;
+      Object.keys(names).forEach(function (key) {
+        var input = form.querySelector('input[type="number"][name="' + key + '"]');
+        if (!input) { if (key !== 'families') validPrices = false; return; }
+        var label = input.closest('label');
+        var labelText = label ? label.textContent.trim() : '';
+        var price = labelText.match(/ — ([0-9]+(?:\.[0-9]{3})*),([0-9]{2}) TL\s*$/);
+        if (!price) { validPrices = false; return; }
+        var cents = Number(price[1].replace(/\./g, '')) * 100 + Number(price[2]);
+        if (!Number.isSafeInteger(cents) || 0 > cents) { validPrices = false; return; }
+        entries.push({key: key, input: input, label: label, text: labelText, cents: cents});
+      });
+      // A changed upstream form/price format retains the unmodified server form.
+      if (!validPrices || 2 > entries.length) return;
+      form.dataset.mlSelectionEnhanced = '1';
+      form.dataset.mlStart = title[2]+'-'+title[3]+'-'+title[4]+'T'+title[5]+':'+title[6]+':00+03:00';
+      form.dataset.mlTime = title[5]+':'+title[6];
+      form.dataset.mlCity = city.toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/ü/g,'u').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ö/g,'o').replace(/[^a-z0-9]+/g,'-');
+      var eyebrow = document.createElement('p');
+      eyebrow.className = 'ml-session-meta';
+      eyebrow.textContent = city + ' · ' + dateText;
+      heading.before(eyebrow);
+      heading.classList.add('ml-session-heading');
+      heading.textContent = time + ' Seansı';
+      var side = Array.from(root.querySelectorAll('.ml-ticket-side')).find(function (s) {
+        var h = s.querySelector('h2'); return h ? h.textContent.trim() === city : false;
+      });
+      var venue = side ? side.querySelector('strong') : null;
+      var summary = document.createElement('section');
+      summary.className = 'ml-selection-summary';
+      summary.setAttribute('aria-label', city + ' ' + time + ' seçim özeti');
+      summary.setAttribute('aria-live', 'polite');
+      summary.setAttribute('aria-atomic', 'true');
+      var summaryTitle = document.createElement('h4');
+      summaryTitle.textContent = 'Seçiminiz';
+      var meta = document.createElement('p');
+      meta.className = 'ml-summary-meta';
+      meta.textContent = city + ' · ' + dateText + ' · ' + time + (venue ? ' · ' + venue.textContent.trim() : '');
+      var lines = document.createElement('div');
+      lines.className = 'ml-summary-lines';
+      var total = document.createElement('p');
+      total.className = 'ml-summary-total';
+      var totalLabel = document.createElement('span');
+      totalLabel.textContent = 'Bilet toplamı';
+      var totalAmount = document.createElement('strong');
+      total.append(totalLabel, totalAmount);
+      var people = document.createElement('p');
+      people.className = 'ml-summary-people';
+      var note = document.createElement('p');
+      note.className = 'ml-summary-note';
+      note.textContent = 'Varsa hizmet bedeli ve kesin toplam, ortak ödeme ekranında gösterilir.';
+      summary.append(summaryTitle, meta, lines, total, people, note);
+      var error = document.createElement('p');
+      error.className = 'ml-selection-error';
+      error.setAttribute('role', 'alert');
+      submit.before(summary, error);
+      submit.textContent = 'Seçimi Onayla, Ödemeye Geç →';
+      function quantities() {
+        var values = {adults: 0, children: 0, families: 0};
+        var invalid = false;
+        entries.forEach(function (e) {
+          var raw = e.input.value;
+          if (!/^\d+$/.test(raw)) { invalid = true; return; }
+          var n = Number(raw);
+          if (!Number.isSafeInteger(n) || 0 > n || n > Number(e.input.max || (e.key === 'families' ? 10 : 20))) invalid = true;
+          values[e.key] = n;
+        });
+        return {values: values, invalid: invalid};
+      }
+      function withinLimit(v) {
+        return !(v.families > 10 || v.adults + 2 * v.families > 20 || v.children + 2 * v.families > 20);
+      }
+      function update() {
+        var result = quantities(), v = result.values;
+        var units = v.adults + v.children + 4 * v.families;
+        var invalid = result.invalid || !withinLimit(v);
+        var cents = 0;
+        lines.replaceChildren();
+        entries.forEach(function (e) {
+          if (invalid ? false : v[e.key]) {
+            var line = document.createElement('p');
+            var description = document.createElement('span');
+            var amount = document.createElement('span');
+            description.textContent = v[e.key] + ' × ' + names[e.key];
+            amount.textContent = money.format(v[e.key] * e.cents / 100);
+            line.append(description, amount);
+            lines.append(line);
+            cents += v[e.key] * e.cents;
+          }
+          e.minus.disabled = result.invalid || 0 >= v[e.key];
+          var next = Object.assign({}, v); next[e.key]++;
+          e.plus.disabled = result.invalid || !withinLimit(next) || next[e.key] > Number(e.input.max || 20);
+        });
+        if (invalid ? false : !units) {
+          var empty = document.createElement('p'); empty.textContent = 'Henüz bilet seçmediniz.'; lines.append(empty);
+        }
+        totalAmount.textContent = invalid ? '—' : money.format(cents / 100);
+        people.textContent = invalid ? '' : 'Toplam ' + units + ' kişi' + (v.families ? ' · Her aile paketi 4 giriş hakkıdır.' : '');
+        error.textContent = result.invalid ? 'Lütfen sıfır veya pozitif tam sayı girin; alan sınırını aşmayın.' : !withinLimit(v) ? 'Aile paketi dahil en fazla 20 yetişkin ve 20 çocuk seçebilirsiniz.' : '';
+        submit.disabled = invalid || 1 > units;
+        return invalid ? false : units > 0;
+      }
+      entries.forEach(function (e) {
+        var label = document.createElement('span');
+        label.className = 'ml-ticket-label';
+        var ticketName = document.createElement('span');
+        ticketName.textContent = e.key === 'families' ? 'Aile 2+2' : names[e.key];
+        var unitPrice = document.createElement('small');
+        unitPrice.textContent = money.format(e.cents / 100);
+        label.append(ticketName, unitPrice);
+        var control = document.createElement('span');
+        control.className = 'ml-qty-control';
+        var minus = document.createElement('button');
+        minus.type = 'button'; minus.textContent = '−';
+        minus.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' azalt');
+        var plus = document.createElement('button');
+        plus.type = 'button'; plus.textContent = '+';
+        plus.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' artır');
+        e.minus = minus; e.plus = plus;
+        e.input.setAttribute('aria-label', city + ' ' + time + ' ' + names[e.key] + ' adedi');
+        e.input.setAttribute('inputmode', 'numeric');
+        e.label.replaceChildren(label, control);
+        control.append(minus, e.input, plus);
+        minus.addEventListener('click', function () { e.input.stepDown(); e.input.dispatchEvent(new Event('input', {bubbles: true})); });
+        plus.addEventListener('click', function () { e.input.stepUp(); e.input.dispatchEvent(new Event('input', {bubbles: true})); });
+        e.input.addEventListener('input', update);
+        e.input.addEventListener('change', function () { if (e.input.value === '') e.input.value = '0'; update(); });
+      });
+      form.addEventListener('submit', function (ev) {
+        if (!update()) { ev.preventDefault(); error.textContent = error.textContent || 'Devam etmek için en az bir bilet seçin.'; }
+      });
+      update();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+
+</script>
+<!-- /wp:html --><!-- wp:html -->
+<style id="ml-closed-sales-v1">
+#ml-tickets .milano-ticket-selector form:is(:has(input[name="event_id"][value="29"]),:has(input[name="event_id"][value="30"])) :is(label,button,.ml-selection-summary,.ml-selection-error){display:none!important}
+</style>
+<script id="ml-closed-sales-v1-js">
+(function(){
+  'use strict';
+  var CLOSED={'29':'odemis','30':'tire'};
+  function run(){
+    var root=document.getElementById('ml-tickets'); if(!root) return;
+    root.querySelectorAll('.milano-ticket-selector form').forEach(function(form){
+      var ev=form.querySelector('input[name="event_id"]'); if(!ev||!CLOSED[ev.value]||form.dataset.mlClosed) return;
+      form.dataset.mlClosed='1';
+      form.addEventListener('submit',function(e){e.preventDefault();});
+      var p=document.createElement('p');
+      p.textContent='Bu seans için online bilet satışı kapanmıştır.';
+      p.style.cssText='grid-column:1/-1;margin:0;padding:14px 16px;border-radius:10px;background:#fdecea;color:#8a1c12;font-weight:600';
+      form.appendChild(p);
+    });
+    Object.keys(CLOSED).forEach(function(k){
+      var slug=CLOSED[k];
+      var tab=root.querySelector('.ml-city-tabs a[href="#'+slug+'"] small'); if(tab) tab.textContent='1 Kasım · Satış kapandı';
+      var kick=root.querySelector('.ml-ticket-side[data-city="'+slug+'"] .ml-kicker');
+      if(kick&&!kick.dataset.mlClosed){kick.dataset.mlClosed='1';var s=document.createElement('span');s.textContent=' · Online satış kapandı';s.style.color='#c0392b';kick.appendChild(s);}
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run, {once:true}); else run();
+})();
+</script>
+<script id="ml-family-badge-v1">
+(function(){
+  'use strict';
+  function num(t){var m=(t||'').match(/([0-9]+(?:\.[0-9]{3})*),([0-9]{2})/);return m?Number(m[1].replace(/\./g,''))+Number(m[2])/100:0;}
+  function fmt(n){try{return new Intl.NumberFormat('tr-TR').format(n);}catch(e){return String(n);}}
+  function run(){
+    var root=document.getElementById('ml-tickets'); if(!root) return;
+    root.querySelectorAll('.milano-ticket-selector form').forEach(function(form){
+      if(form.dataset.mlFamilyBadge) return;
+      var fi=form.querySelector('input[name="families"]'), ai=form.querySelector('input[name="adults"]'), ci=form.querySelector('input[name="children"]');
+      if(!fi||!ai||!ci) return;
+      var fl=fi.closest('label'), al=ai.closest('label'), cl=ci.closest('label'); if(!fl||!al||!cl) return;
+      form.dataset.mlFamilyBadge='1';
+      var fam=num(fl.textContent), ad=num(al.textContent), ch=num(cl.textContent), full=2*ad+2*ch, save=full-fam;
+      if(al.parentNode===fl.parentNode) al.parentNode.insertBefore(fl, al);
+      fl.style.cssText+=';border:2px solid #daa520;background:rgba(218,165,32,.09);border-radius:10px;padding:10px 12px';
+      if(!(fam>0&&save>0)) return;
+      var b=document.createElement('span');
+      b.textContent=fmt(save)+' TL kazanç';
+      b.style.cssText='display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:#c0392b;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;vertical-align:middle';
+      var o=document.createElement('small');
+      o.innerHTML='Ayrı ayrı: <s>'+fmt(full)+' TL</s>';
+      o.style.cssText='display:block;font-size:11px;opacity:.75;font-weight:500';
+      var name=fl.querySelector('.ml-ticket-label');
+      if(name){ var first=name.firstElementChild; (first||name).appendChild(b); name.appendChild(o); }
+      else { var d=document.createElement('div'); d.style.cssText='grid-column:1/-1;margin:0 0 -6px'; d.appendChild(b); d.appendChild(o); fl.parentNode.insertBefore(d, fl); }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run, {once:true}); else run();
+})();
+</script>
+<!-- /wp:html --><!-- wp:html -->
+<script id="ml-auto-archive-v1">
+/* Milano Sirki — Otomatik Arşiv V1
+ * Seans saati geçen (son seans + 60 dk) veya CLOSED listesindeki şehirleri
+ * Ana sayfa takviminden, Şehirler kartlarından ve Bilet Al sekmelerinden kaldırır,
+ * sayfanın altında "Geçmiş gösteriler" arşivine taşır. Tarihler sayfadaki metinden okunur.
+ * Satışı elle kapatılan şehirler: CLOSED listesine slug ekleyin (ör. 'tire').
+ */
+(function(){
+  'use strict';
+  var CLOSED = ['tire','odemis'];
+  var SHOW_MINUTES = 60;
+  var MONTHS = {ocak:1,subat:2,mart:3,nisan:4,mayis:5,haziran:6,temmuz:7,agustos:8,eylul:9,ekim:10,kasim:11,aralik:12};
+  var qs = new URLSearchParams(location.search);
+  var NOW = new Date();
+
+  function norm(s){
+    return (s||'').toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/ü/g,'u').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ö/g,'o').replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function slugOf(name){ return norm(name).replace(/ /g,'-'); }
+  // "21 Ekim 2026", "31 EKİM", "2026-10-31"
+  function parseDay(text){
+    var m = (text||'').match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return {y:+m[1], mo:+m[2], d:+m[3]};
+    var t = norm(text);
+    m = t.match(/(\d{1,2}) ([a-z]+)(?: (\d{4}))?/);
+    while (m) {
+      if (MONTHS[m[2]]) return {y: m[3] ? +m[3] : NOW.getFullYear(), mo: MONTHS[m[2]], d: +m[1]};
+      t = t.slice(t.indexOf(m[0]) + m[0].length); m = t.match(/(\d{1,2}) ([a-z]+)(?: (\d{4}))?/);
+    }
+    return null;
+  }
+  function times(text){
+    var out = [], re = /(\d{1,2})[.:](\d{2})/g, m;
+    while ((m = re.exec(text||''))) { var h=+m[1], mi=+m[2]; if (24 > h && 60 > mi) out.push(h*60+mi); }
+    return out;
+  }
+  function endOf(day, mins){
+    if (!day || !mins.length) return null;
+    var last = Math.max.apply(null, mins) + SHOW_MINUTES;
+    // Türkiye saati UTC+03:00
+    return new Date(Date.UTC(day.y, day.mo-1, day.d, 0, 0) + (last - 180) * 60000);
+  }
+  function fmtDay(day){
+    var names = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    return day ? day.d + ' ' + names[day.mo-1] + ' ' + day.y : '';
+  }
+  function isOff(slug, end){ return CLOSED.indexOf(slug) !== -1 || (end && NOW >= end); }
+  function reason(slug){ return CLOSED.indexOf(slug) !== -1 ? 'Online satış kapandı' : 'Gösteri tamamlandı'; }
+
+  function archiveBox(after, items, dark){
+    if (!items.length || !after || document.getElementById('ml-archive-list')) return;
+    var sec = document.createElement('section');
+    sec.id = 'ml-archive-list';
+    sec.style.cssText = 'margin:8px 0 40px;padding:22px 24px;border:1px solid #e3e4e8;border-radius:14px;background:#fff;color:#101e43;font-size:14px';
+    var h = document.createElement('h3');
+    h.textContent = 'Geçmiş gösteriler';
+    h.style.cssText = 'margin:0 0 10px;font-size:18px';
+    var ul = document.createElement('ul');
+    ul.style.cssText = 'margin:0;padding-left:18px;line-height:1.9;color:#5c6578';
+    items.sort(function(a,b){ return (b.end||0) - (a.end||0); }).forEach(function(it){
+      var li = document.createElement('li');
+      li.textContent = it.name + (it.day ? ' · ' + fmtDay(it.day) : '') + ' — ' + reason(it.slug);
+      ul.appendChild(li);
+    });
+    sec.append(h, ul);
+    after.after(sec);
+  }
+  function emptyNote(container, text){
+    if (!container || container.querySelector('.ml-archive-empty')) return;
+    var p = document.createElement('p');
+    p.className = 'ml-archive-empty';
+    p.textContent = text;
+    p.style.cssText = 'padding:22px;border:1px dashed #cbd1de;border-radius:12px;background:#fff;color:#5c6578;font-size:15px';
+    container.appendChild(p);
+  }
+
+  // 1) Şehirler sayfası kartları
+  function cityCards(){
+    var cards = document.querySelectorAll('.ml-city-card'); if (!cards.length) return;
+    var archived = [], visible = 0;
+    cards.forEach(function(card){
+      var h = card.querySelector('h2'); if (!h) return;
+      var name = h.textContent.trim(), slug = slugOf(name);
+      var kick = card.querySelector('.ml-kicker'), day = parseDay(kick ? kick.textContent : '');
+      var tEl = card.querySelector('.ml-times'), end = endOf(day, times(tEl ? tEl.textContent : ''));
+      if (isOff(slug, end)) { card.style.display = 'none'; archived.push({name:name, slug:slug, day:day, end:end}); }
+      else visible++;
+    });
+    var grid = document.querySelector('.ml-cards');
+    if (!visible) emptyNote(grid, 'Yeni şehirler ve tarihler çok yakında burada.');
+    archiveBox(grid, archived);
+  }
+
+  // 2) Ana sayfa takvimi
+  function homeTour(){
+    var cols = document.querySelectorAll('.ml-home-city'); if (!cols.length) return;
+    var visible = 0;
+    cols.forEach(function(col){
+      var h = col.querySelector('h3'); if (!h) return;
+      var slug = slugOf(h.textContent.trim());
+      var dEl = col.querySelector('.ml-home-city-date'), tEl = col.querySelector('.ml-home-city-times');
+      var end = endOf(parseDay(dEl ? dEl.textContent : ''), times(tEl ? tEl.textContent : ''));
+      if (isOff(slug, end)) col.style.display = 'none'; else visible++;
+    });
+    if (!visible) emptyNote(document.querySelector('.ml-home-city-grid'), 'Yeni şehirler ve tarihler çok yakında burada.');
+  }
+
+  // 3) Bilet Al: seans bazında gizle; şehrin tüm seansları bitince sekme + yan kartı arşive al
+  function ticketPage(){
+    var root = document.getElementById('ml-tickets'); if (!root) return;
+    var forms = root.querySelectorAll('.milano-ticket-selector form'); if (!forms.length) return;
+    var cities = {};
+    forms.forEach(function(form){
+      var meta = form.querySelector('.ml-session-meta'), h3 = form.querySelector('h3');
+      var raw = h3 ? h3.textContent : '';
+      var name = meta ? meta.textContent.split('·')[0].trim() : (raw.split(' — ')[1] || '').trim();
+      if (!name) return;
+      var slug = slugOf(name);
+      var day = parseDay(meta ? meta.textContent : raw);
+      var t = times(meta ? h3.textContent : raw.split(' — ').slice(2).join(' '));
+      var end = endOf(day, t.slice(-1));
+      var c = cities[slug] || (cities[slug] = {name:name, slug:slug, day:day, end:null, open:0});
+      if (end && (!c.end || end > c.end)) c.end = end;
+      if (isOff(slug, end)) form.style.setProperty('display','none','important');
+      else c.open++;
+    });
+    var archived = [], visible = 0;
+    Object.keys(cities).forEach(function(slug){
+      var c = cities[slug];
+      if (c.open) { visible++; return; }
+      archived.push(c);
+      var tab = root.querySelector('.ml-city-tabs a[href="#' + slug + '"]'); if (tab) tab.style.display = 'none';
+      var side = root.querySelector('.ml-ticket-side[data-city="' + slug + '"]'); if (side) side.style.setProperty('display','none','important');
+    });
+    var tabs = root.querySelector('.ml-city-tabs');
+    if (!visible) emptyNote(tabs, 'Şu an satışta gösteri yok. Yeni şehirler çok yakında.');
+    var hash = location.hash.replace('#','');
+    if (hash && cities[hash] && !cities[hash].open) {
+      emptyNote(tabs, cities[hash].name + ' gösterisi için online satış sona erdi. Yukarıdan satıştaki diğer şehirleri seçebilirsiniz.');
+    }
+    archiveBox(root.querySelector('.ml-payment-note') || tabs, archived);
+  }
+
+  function run(){ NOW = new Date(); try{ cityCards(); }catch(e){} try{ homeTour(); }catch(e){} try{ ticketPage(); }catch(e){} }
+  setInterval(run,15000);
+  document.addEventListener('visibilitychange',run);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, {once:true}); else run();
+})();
+</script>
+<!-- /wp:html --><!-- wp:html -->
+<style id="ml-archived-static-v1">
+/* Kalıcı gizleme (JS gerektirmez): Karamürsel #28, Yalova #24 tamamlandı; Tire #30, Ödemiş #29 satışa kapandı */
+#ml-tickets .ml-city-tabs a:is([href="#karamursel"],[href="#yalova"],[href="#tire"],[href="#odemis"]){display:none!important}
+#ml-tickets .ml-ticket-side:is([data-city="karamursel"],[data-city="yalova"],[data-city="tire"],[data-city="odemis"]){display:none!important}
+#ml-tickets .milano-ticket-selector form:is(:has(input[name="event_id"][value="28"]),:has(input[name="event_id"][value="24"]),:has(input[name="event_id"][value="30"]),:has(input[name="event_id"][value="29"])){display:none!important}
+</style>
+<!-- /wp:html --><!-- wp:html -->
+<style id="ml-ticket-clarity-v3">
+#ml-tickets .ml-location-links{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0!important}
+#ml-tickets .ml-location-links a{display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:12px 18px!important;border:2px solid #101e43!important;border-radius:10px;background:#101e43!important;color:#fff!important;font-size:15px!important;font-weight:800!important;text-decoration:none!important;opacity:1!important;box-shadow:0 3px 10px #101e4320}
+#ml-tickets .ml-location-links a+a{background:#fff!important;color:#101e43!important}
+#ml-tickets .ml-location-links a:hover{background:#b51e36!important;border-color:#b51e36!important;color:#fff!important}
+#ml-tickets .ml-location-links a:focus-visible,#ml-tickets .ml-session-shortcuts button:focus-visible{outline:3px solid #b51e36;outline-offset:3px}
+#ml-tickets .ml-ticket-side .ml-kicker{color:#101e43!important;font-size:16px!important;font-weight:800!important}
+#ml-tickets .ml-city-tabs a small{font-size:14px!important;font-weight:750!important;opacity:1!important}
+#ml-tickets .milano-ticket-selector form{border:2px solid #c7d7ef!important;scroll-margin-top:24px}
+#ml-tickets .milano-ticket-selector form .ml-session-heading{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:14px 16px!important;background:#eaf2ff;border:0!important;border-left:6px solid #1e4b8f!important;border-radius:10px;color:#12366a!important;font-size:28px!important;font-weight:850!important}
+#ml-tickets .milano-ticket-selector form .ml-session-meta{font-size:14px!important;font-weight:750!important;color:#101e43!important}
+#ml-tickets .ml-session-status{grid-column:1/-1;margin:0!important;padding:10px 14px;border-radius:8px;background:#eaf2ff;color:#12366a;font-size:14px;font-weight:750;line-height:1.6}
+#ml-tickets form.ml-session-started{border-color:#ad4b00!important;background:#fff9ef!important}
+#ml-tickets form.ml-session-started .ml-session-heading,#ml-tickets form.ml-session-started .ml-session-status{background:#fff0d5!important;color:#763400!important;border-left-color:#ad4b00!important}
+#ml-tickets .ml-session-shortcuts{margin:18px 0 24px;padding:18px;border:2px solid #c7d7ef;border-radius:14px;background:#fff}
+#ml-tickets .ml-session-shortcuts p{margin:0 0 12px!important;color:#101e43;font-weight:800;font-size:16px}
+#ml-tickets .ml-session-shortcuts>div{display:flex;flex-wrap:wrap;gap:10px}
+#ml-tickets .ml-session-shortcuts button{display:flex;flex-direction:column;gap:3px;align-items:center;min-width:120px;min-height:76px;padding:10px 16px;border:2px solid #1e4b8f;border-radius:12px;background:#eaf2ff;color:#12366a;cursor:pointer;font-family:inherit;font-weight:800}
+#ml-tickets .ml-session-shortcuts button strong{font-size:25px;color:inherit}
+#ml-tickets .ml-session-shortcuts button small{font-size:12px;font-weight:750;color:inherit}
+#ml-tickets .ml-session-shortcuts button[data-state="started"]{background:#fff0d5;color:#763400;border-color:#ad4b00}
+#ml-tickets .ml-session-shortcuts button[data-state="ended"]{background:#f0f0f0;color:#545454;border-color:#aaa;cursor:not-allowed}
+#ml-tickets .ml-city-tabs a[href="#darica"],#ml-tickets .ml-ticket-side[data-city="darica"],#ml-tickets .milano-ticket-selector form:has(input[name="event_id"][value="27"]){display:none!important}
+@media(max-width:480px){#ml-tickets .ml-location-links a{flex:1 1 100%}#ml-tickets .ml-session-shortcuts{padding:14px}#ml-tickets .ml-session-shortcuts button{flex:1 1 85px;min-width:85px;padding:10px 8px}#ml-tickets .ml-session-heading{font-size:26px!important}}
+</style>
+<script id="ml-session-clarity-v3">
+(function(){
+  'use strict';
+  function sessionState(start, now){
+    if(!Number.isFinite(start)) return 'unknown';
+    if(now >= start + 60 * 60000) return 'ended';
+    return now >= start ? 'started' : 'upcoming';
+  }
+  function init(){
+    var root=document.getElementById('ml-tickets'); if(!root) return;
+    var forms=Array.from(root.querySelectorAll('form[data-ml-start]'));
+    var layout=root.querySelector('.ml-ticket-layout'); if(!layout || !forms.length) return;
+    var nav=document.createElement('section'); nav.className='ml-session-shortcuts';
+    nav.setAttribute('aria-label','Seans saatini seçin');
+    var title=document.createElement('p');title.textContent='Seans saatini seçin · Saatler Türkiye saatidir';
+    var list=document.createElement('div'); nav.append(title,list);layout.before(nav);
+    forms.forEach(function(form){
+      var status=document.createElement('p');status.className='ml-session-status';status.setAttribute('role','status');
+      form.querySelector('h3').after(status);
+      var button=document.createElement('button');button.type='button';
+      var time=document.createElement('strong');time.textContent=form.dataset.mlTime;
+      var label=document.createElement('small');button.append(time,label);list.append(button);
+      button.addEventListener('click',function(){form.scrollIntoView({behavior:'smooth',block:'start'});form.querySelector('h3').focus({preventScroll:true});});
+      form.querySelector('h3').setAttribute('tabindex','-1');
+      form.mlStatusElement=status;form.mlTimeButton=button;form.mlTimeLabel=label;
+    });
+    function refresh(){
+      var now=Date.now(), city=location.hash.slice(1), any=false;
+      forms.forEach(function(form){
+        var start=Date.parse(form.dataset.mlStart),state=sessionState(start,now);
+        var active=form.dataset.mlCity===city;
+        form.classList.toggle('ml-session-started',state==='started');
+        var message=state==='started'?'Seans başladı · Başlangıç saati geçti. Bilet almadan önce seans saatinizi kontrol edin; sonraki seansı aşağıdan seçebilirsiniz.':state==='ended'?'Seans tamamlandı':'Başlamadı · Bu seansın başlangıç saati henüz gelmedi.';
+        if(form.mlStatusElement.textContent!==message)form.mlStatusElement.textContent=message;
+        form.mlTimeButton.hidden=!active;
+        form.mlTimeButton.style.display=active?'flex':'none';
+        form.mlTimeButton.dataset.state=state;
+        form.mlTimeButton.disabled=state==='ended';
+        form.mlTimeButton.setAttribute('aria-label',form.dataset.mlTime+' — '+(state==='started'?'Seans başladı':state==='ended'?'Tamamlandı':'Seansa git'));
+        form.mlTimeLabel.textContent=state==='started'?'Seans başladı':state==='ended'?'Tamamlandı':'Seansa git ↓';
+        if(active && state!=='ended')any=true;
+      });
+      nav.hidden=!any;nav.style.display=any?'block':'none';
+    }
+    refresh();window.addEventListener('hashchange',refresh);document.addEventListener('visibilitychange',refresh);setInterval(refresh,15000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+<style id="ml-archived-static-v2-menemen">
+/* Kalıcı gizleme: Menemen #31 satışa kapandı (23.10.2026) */
+#ml-tickets .ml-city-tabs a[href="#menemen"],#ml-tickets .ml-ticket-side[data-city="menemen"],#ml-tickets .milano-ticket-selector form:has(input[name="event_id"][value="31"]){display:none!important}
+</style>
+<!-- /wp:html -->
