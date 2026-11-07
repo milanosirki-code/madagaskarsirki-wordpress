@@ -58,6 +58,7 @@ final class MDG_Campaign_Sales_Report_20261005 {
             $key=$code.'|'.$sid;
             if(!isset($groups[$key])){$groups[$key]=array('code'=>$code,'session'=>$sid,'roles'=>array('adult'=>0,'paid_child'=>0,'free_child'=>0,'infant'=>0),'refunded'=>0,'gross'=>0.0,'refund'=>0.0,'net'=>0.0,'paid'=>$order->is_paid() || (bool)$order->get_date_paid());}
             $g=&$groups[$key];$qty=(int)$item->get_quantity();$role=(string)$item->get_meta('_mdg_campaign_role');
+            if($role==='extra_adult'){$role='adult';}
             if(isset($g['roles'][$role])){$g['roles'][$role]+=$qty;}
             $g['refunded']+=abs((int)$order->get_qty_refunded_for_item($id));
             $gross=(float)$item->get_total()+(float)$item->get_total_tax();
