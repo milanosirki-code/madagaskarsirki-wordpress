@@ -9,6 +9,7 @@ final class MDG_V5_Finance {
     const CAP = 'manage_woocommerce';
 
     public static function boot() {
+        MDG_V5_Finance_Identity::boot();
         MDG_V5_Finance_Records::boot();
         if ( get_option( self::DB_OPTION, '' ) !== self::DB_VERSION ) { self::create_tables(); }
         foreach ( array( 'expense', 'income', 'fixed_cost' ) as $type ) {
@@ -254,6 +255,7 @@ final class MDG_V5_Finance {
         $scope=sanitize_key($_POST['scope']??'program');$event=absint($_POST['event_id']??0);$amount=self::money_value($_POST['amount']??'');$date=sanitize_text_field(wp_unslash($_POST['expense_date']??''));$cat=sanitize_text_field(wp_unslash($_POST['category']??''));
         if(!in_array($scope,array('program','province','general','person','vehicle'),true))$scope='program';
         if($amount<=0||!self::date_ok($date)||!$cat||('program'===$scope&&!$event)){self::go_error('required','expense');}
+        if('program'===$scope&&!MDG_V5_Finance_Identity::valid($_POST['event_id']??''))wp_die('Program kimliği değişmiş veya doğrulanamadı. Programı yeniden seçin.');
         $att=self::upload('document');if(is_wp_error($att))self::go_error('upload','expense');$now=current_time('mysql');
         $saved = $wpdb->insert(self::table('expenses'),array('event_id'=>$event,'scope'=>$scope,'province'=>sanitize_text_field(wp_unslash($_POST['province']??'')),'related_name'=>sanitize_text_field(wp_unslash($_POST['related_name']??'')),'category'=>$cat,'description'=>sanitize_text_field(wp_unslash($_POST['description']??'')),'vendor'=>sanitize_text_field(wp_unslash($_POST['vendor']??'')),'amount'=>$amount,'expense_date'=>$date,'payment_method'=>sanitize_text_field(wp_unslash($_POST['payment_method']??'')),'document_no'=>sanitize_text_field(wp_unslash($_POST['document_no']??'')),'attachment_id'=>$att,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));
         if (false === $saved || !$wpdb->insert_id) {
@@ -270,6 +272,7 @@ final class MDG_V5_Finance {
         $description=sanitize_text_field(wp_unslash($_POST['description']??''));
         if($gross<=0||!self::date_ok($date)||!$channel||('program'===$scope&&!$event)||($is_corporate&&!$description))self::go_error('required',$is_corporate?'corporate':'income');
         if($ref&&(int)$wpdb->get_var($wpdb->prepare('SELECT id FROM '.self::table('incomes').' WHERE source_ref=%s AND channel=%s LIMIT 1',$ref,$channel)))self::go_error('duplicate','income');
+        if('program'===$scope&&!MDG_V5_Finance_Identity::valid($_POST['event_id']??''))wp_die('Program kimliği değişmiş veya doğrulanamadı. Programı yeniden seçin.');
         $att=self::upload('document');if(is_wp_error($att))self::go_error('upload',$is_corporate?'corporate':'income');$now=current_time('mysql');
         $wpdb->insert(self::table('incomes'),array('event_id'=>$event,'scope'=>$scope,'province'=>sanitize_text_field(wp_unslash($_POST['province']??'')),'category'=>$category,'channel'=>$channel,'description'=>$description,'gross_amount'=>$gross,'commission_amount'=>min($gross,$commission),'net_amount'=>max(0,$gross-$commission),'ticket_count'=>absint($_POST['ticket_count']??0),'income_date'=>$date,'collection_status'=>sanitize_key($_POST['collection_status']??'collected'),'payment_method'=>sanitize_text_field(wp_unslash($_POST['payment_method']??'')),'source_ref'=>$ref,'attachment_id'=>$att,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'created_by'=>get_current_user_id(),'created_at'=>$now,'updated_at'=>$now));self::go_saved($is_corporate?'corporate':'income');
     }
@@ -289,6 +292,7 @@ final class MDG_V5_Finance {
     public static function save_program_count(){if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_program_count','mdg_v5_finance_nonce');$m=sanitize_text_field(wp_unslash($_POST['cost_month']??''));$n=absint($_POST['program_count']??0);if(self::month_ok($m)){$map=(array)get_option(self::COUNT_OPTION,array());if($n)$map[$m]=$n;else unset($map[$m]);update_option(self::COUNT_OPTION,$map,false);}self::go_saved('fixed',$m);}
     public static function save_attendance(){
         if(!current_user_can(self::CAP))wp_die('Yetkiniz yok.');check_admin_referer('mdg_v5_save_attendance','mdg_v5_finance_nonce');global$wpdb;
+        if(!MDG_V5_Finance_Identity::valid($_POST['event_id']??''))wp_die('Program kimliği doğrulanamadı.');
         $event=absint($_POST['event_id']??0);$avg=self::money_value($_POST['avg_ticket_price']??'');$manual=absint($_POST['manual_attendance']??0);$month=sanitize_text_field(wp_unslash($_POST['month']??''));
         if(!$event||$avg<=0){wp_safe_redirect(self::url(array('section'=>'attendance','month'=>$month,'finance_error'=>'required')));exit;}
         $wpdb->replace(self::table('attendance'),array('event_id'=>$event,'avg_ticket_price'=>$avg,'manual_attendance'=>$manual,'include_in_reports'=>isset($_POST['include_in_reports'])?1:0,'notes'=>sanitize_textarea_field(wp_unslash($_POST['notes']??'')),'updated_by'=>get_current_user_id(),'updated_at'=>current_time('mysql')));
@@ -296,19 +300,23 @@ final class MDG_V5_Finance {
     }
 
     /** Legacy web snapshots stay visible, but the paid order map owns web revenue. */
+    public static function excluded_income($row) { return 'excluded_duplicate' === ($row->collection_status ?? ''); }
+
     private static function is_web_snapshot($row) {
+        if (self::excluded_income($row)) return true;
         return 'woocommerce' === strtolower(trim((string)($row->channel ?? '')));
     }
 
     /** Returned ticket principal is a cash movement, not a second operating cost. */
-    private static function is_ticket_refund($row){
-        return 'program'===($row->scope??'') && ('İade / WooCommerce'===trim((string)($row->category??'')) || (15===(int)($row->event_id??0) && 'İade / Biletinial'===trim((string)($row->category??''))));
+    public static function is_ticket_refund($row){
+        $manifest=(array)get_option('mdg_finance_identity_manifest_20261026',array());
+        return 'program'===($row->scope??'') && ('İade / WooCommerce'===trim((string)($row->category??'')) || (in_array((int)($row->event_id??0),$manifest['refund_event_ids']??array(),true) && 'İade / Biletinial'===trim((string)($row->category??''))));
     }
 
     private static $web_unverified = false;
 
     /** Read current WooCommerce state; the historical map only identifies program items. */
-    private static function web_revenues_for_events($event_ids){
+    public static function web_revenues_for_events($event_ids){
         global $wpdb;
         $out=array();
         $event_ids=array_values(array_unique(array_filter(array_map('absint',$event_ids))));
@@ -318,20 +326,44 @@ final class MDG_V5_Finance {
         if(function_exists('wc_get_is_paid_statuses'))$statuses=array_merge($statuses,(array)wc_get_is_paid_statuses());
         $placeholders=implode(',',array_fill(0,count($event_ids),'%d'));
         $rows=(array)$wpdb->get_results($wpdb->prepare("SELECT event_id,order_id,order_item_id,line_total FROM ".MDG_DB::table('order_map')." WHERE event_id IN ({$placeholders})",$event_ids));
-        $orders=array();
+        $orders=array();$amounts=array();$seen=array();
         foreach($rows as $r){
             $oid=(int)$r->order_id;$eid=(int)$r->event_id;
+            $key=$oid.':'.(int)$r->order_item_id;
+            if(isset($seen[$key])){self::$web_unverified=true;continue;}$seen[$key]=true;
             if(!array_key_exists($oid,$orders))$orders[$oid]=wc_get_order($oid);
             $order=$orders[$oid];
             if(!$order){self::$web_unverified=true;continue;}
             if(!in_array($order->get_status(),$statuses,true)||!$order->get_date_paid())continue;
             $item=$order->get_item((int)$r->order_item_id);
             if(!$item){self::$web_unverified=true;continue;}
-            // MDG line_total excludes tax, so subtract only the matching item's tax-exclusive refund.
+            if(!isset($amounts[$oid]))$amounts[$oid]=self::order_item_revenues($order);
+            if(!isset($amounts[$oid][(int)$r->order_item_id])){self::$web_unverified=true;continue;}
+            // Actual order-level fees include family discounts; the map is identity only.
             $refund=abs((float)$order->get_total_refunded_for_item((int)$r->order_item_id));
-            $net=max(0,(float)$r->line_total-$refund);
+            $net=max(0,$amounts[$oid][(int)$r->order_item_id]-$refund);
             $out[$eid]=($out[$eid]??0)+$net;
         }
+        return $out;
+    }
+
+    /** Preserve the order's tax-exclusive ticket total, including negative family fees. */
+    private static function order_item_revenues($order) {
+        $weights=array();$sum=0;
+        foreach($order->get_items('line_item') as $id=>$item){
+            $cents=max(0,(int)round((float)$item->get_total()*100));
+            $weights[(int)$id]=$cents;$sum+=$cents;
+        }
+        if(!$sum)return array_fill_keys(array_keys($weights),0.0);
+        $target=max(0,(int)round(((float)$order->get_total()-(float)$order->get_total_tax()-(float)$order->get_shipping_total())*100));
+        $out=array();$remainders=array();$used=0;ksort($weights,SORT_NUMERIC);
+        foreach($weights as $id=>$weight){
+            $out[$id]=intdiv($target*$weight,$sum);$used+=$out[$id];
+            $remainders[$id]=($target*$weight)%$sum;
+        }
+        arsort($remainders,SORT_NUMERIC);
+        foreach($remainders as $id=>$unused){if($used>=$target)break;$out[$id]++;$used++;}
+        foreach($out as $id=>$cents)$out[$id]=$cents/100.0;
         return $out;
     }
 
@@ -341,6 +373,28 @@ final class MDG_V5_Finance {
         return self::web_revenues_for_events(array_keys($month_events));
     }
     public static function month_events($events,$month){$out=array();foreach($events as$e){$status=strtolower((string)($e->status??''));if(0===strpos(self::event_date($e),$month)&&!in_array($status,array('cancelled','canceled','trash','draft'),true))$out[(int)$e->id]=$e;}return$out;}
+    /** One event's share; never charge all business fixed costs to one program. */
+    public static function cost_shares($id) {
+        global $wpdb;
+        $events=self::events();$selected=null;
+        foreach($events as $event)if((int)$event->id===(int)$id)$selected=$event;
+        $out=array('month'=>'','fixed_count'=>0,'fixed_month_total'=>0.0,'allocation_count'=>0,'fixed_share'=>0.0,'common'=>0.0);
+        if(!$selected)return $out;
+        $month=substr(self::event_date($selected),0,7);$out['month']=$month;
+        if(self::month_ok($month)){
+            $fixed=(array)$wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table('fixed_costs').' WHERE cost_month=%s',$month));
+            foreach($fixed as $row)$out['fixed_month_total']+=(float)$row->total_amount;
+            $out['fixed_count']=count($fixed);
+            $attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);
+            $eligible=array_filter(self::month_events($events,$month),static function($e)use($attendance){return !isset($attendance[$e->id])||(int)$attendance[$e->id]->include_in_reports===1;});
+            $counts=(array)get_option(self::COUNT_OPTION,array());$count=isset($counts[$month])?absint($counts[$month]):count($eligible);
+            $out['allocation_count']=$count;
+            $out['fixed_share']=isset($eligible[$id])&&$count?$out['fixed_month_total']/$count:0.0;
+        }
+        foreach(self::allocated_rows((array)$wpdb->get_results('SELECT * FROM '.self::table('expenses').' WHERE scope <> "program"'),$id) as $part)$out['common']+=$part['amount'];
+        return $out;
+    }
+
     private static function money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_price((float)$n)):number_format_i18n((float)$n,2).' TL';}
 
     public static function render(){
@@ -381,8 +435,8 @@ final class MDG_V5_Finance {
         $refund_cash=0;$refund_channels=array();$collected=0;$pending=0;$total_exp=0;$unpaid=0;$unknown=0;$channels=array('Web sitesi'=>$web);$categories=array();
         foreach($inc as $r){if(self::is_web_snapshot($r))continue;$paid=MDG_V5_Finance_Records::collected($r);$collected+=$paid;$channels[$r->channel]=($channels[$r->channel]??0)+$paid;$pending+=max(0,(float)$r->net_amount-$paid);}
         foreach($exp as $r){if(self::is_ticket_refund($r)){$refund_cash+=(float)$r->amount;$refund_channels[$r->category]=($refund_channels[$r->category]??0)+(float)$r->amount;continue;}$total_exp+=(float)$r->amount;$categories[$r->category]=($categories[$r->category]??0)+(float)$r->amount;$state=MDG_V5_Finance_Records::state('expense',$r);if($state['known'])$unpaid+=$state['remaining'];else$unknown+=(float)$r->amount;}
-        $fixed=0;$share=0;$count=0;
-        if(self::month_ok($month)){$fixed=(float)$wpdb->get_var($wpdb->prepare('SELECT COALESCE(SUM(total_amount),0) FROM '.self::table('fixed_costs').' WHERE cost_month=%s',$month));$attendance=(array)$wpdb->get_results('SELECT event_id,include_in_reports FROM '.self::table('attendance'),OBJECT_K);$eligible=array_filter(self::month_events($events,$month),static function($e)use($attendance){return !isset($attendance[$e->id])||(int)$attendance[$e->id]->include_in_reports===1;});$counts=(array)get_option(self::COUNT_OPTION,array());$count=isset($counts[$month])?absint($counts[$month]):count($eligible);$share=isset($eligible[$id])&&$count?$fixed/$count:0;}
+        $cost_shares=self::cost_shares($id);
+        $fixed=$cost_shares['fixed_month_total'];$share=$cost_shares['fixed_share'];$count=$cost_shares['allocation_count'];
         $common_rows = self::allocated_rows((array)$wpdb->get_results('SELECT * FROM '.self::table('expenses').' WHERE scope <> "program"'), $id);
         $common = 0;
         foreach ($common_rows as $part) {
@@ -394,7 +448,8 @@ final class MDG_V5_Finance {
             $categories[$category] = ($categories[$category] ?? 0) + $part['amount'];
         }
         $income=$web+$collected;$result=$income-$total_exp-$common-$share;
-        if(15===$id)echo '<div class="notice notice-warning inline"><p>Kırıkkale iade mutabakatı: gerçekleşen WooCommerce geri ödemesi 13.250 TL (işletme teyidi); sipariş iade kaydı 13.750 TL. Aradaki 500 TL fark kâr veya gider olarak eklenmedi. Tarihsel web tahsilatı 17.750 TL ile gerçekleşen geri ödeme arasındaki 4.500 TL de mutabakat bekler; gelir sayılmadı. Biletinial geri ödemesi 6.250 TL. Banka/PayTR mutabakatı tamamlanana kadar nakit kapanışı kesin değildir.</p></div>';
+        $manifest=(array)get_option('mdg_finance_identity_manifest_20261026',array());
+        if(in_array($id,$manifest['refund_event_ids']??array(),true))echo '<div class="notice notice-warning inline"><p>İptal edilen programın ödeme ve sipariş iade kayıtları için banka/ödeme sağlayıcı mutabakatı tamamlanmalıdır. Kayıtlı bilet iade anaparası maliyete ikinci kez eklenmez.</p></div>';
         echo '<h3>'.esc_html(self::event_name($selected).' — '.$date).'</h3><p>Programın tüm kayıt tarihleri · Son görüntüleme: '.esc_html(wp_date('d.m.Y H:i')).'</p><div class="mdgv5-grid">';
         self::card(self::money($income),'Kayıtlı net gelir','Web vergi hariç; diğer gelir tahsilat esaslı');
         self::card(self::money($total_exp+$common+$share),'Toplam program maliyeti','Doğrudan gider + ortak gider payı + sabit gider payı');
@@ -407,7 +462,7 @@ final class MDG_V5_Finance {
         echo '</div><p class="mdgv5-note">Bu sonuç mevcut kayıtlara dayanır; eksik gelir/giderler, iade mutabakatı ve programa dağıtılmamış genel/il/personel/araç giderleri sonucu değiştirebilir. Ödeme hareketi doğrulanmamış gider: '.esc_html(self::money($unknown)).'. '.(!$fixed?'Bu ay sabit gider kaydı yok.':'').' Program tamamlanmadıysa sonuç geçicidir.</p><div class="mdgv5-grid">';
         foreach(array('Gelir kanalları'=>$channels,'Gider kategorileri'=>$categories) as $heading=>$rows){echo '<div><h3>'.esc_html($heading).'</h3><table class="widefat striped"><thead><tr><th>Kalem</th><th>Tutar</th></tr></thead><tbody>';foreach($rows as $label=>$amount)echo '<tr><td>'.esc_html($label).'</td><td>'.esc_html(self::money($amount)).'</td></tr>';if(!$rows)echo '<tr><td colspan="2">Kayıt yok.</td></tr>';echo '</tbody></table></div>';}
         echo '</div><details><summary>Programın gelir ve gider kayıtlarını göster</summary><table class="widefat striped"><thead><tr><th>Tarih</th><th>Tür / kategori</th><th>Açıklama</th><th>Tutar</th><th>Durum</th></tr></thead><tbody>';
-        foreach($inc as $r)echo '<tr><td>'.esc_html($r->income_date).'</td><td>Gelir · '.esc_html($r->channel).'</td><td>'.esc_html($r->description).'</td><td>'.esc_html(self::money($r->net_amount)).'</td><td>'.esc_html(self::is_web_snapshot($r)?'Web kaydı — toplama ayrıca eklenmez':MDG_V5_Finance_Records::income_label($r)).'</td></tr>';
+        foreach($inc as $r)echo '<tr><td>'.esc_html($r->income_date).'</td><td>Gelir · '.esc_html($r->channel).'</td><td>'.esc_html($r->description).'</td><td>'.esc_html(self::money($r->net_amount)).'</td><td>'.esc_html(self::excluded_income($r)?'Mükerrer — toplam dışı':(self::is_web_snapshot($r)?'Web kaydı — toplama ayrıca eklenmez':MDG_V5_Finance_Records::income_label($r))).'</td></tr>';
         foreach($exp as $r)echo '<tr><td>'.esc_html($r->expense_date).'</td><td>Gider · '.esc_html($r->category).'</td><td>'.esc_html($r->description).'</td><td>'.esc_html(self::money($r->amount)).'</td><td>'.esc_html($r->payment_method?:'Ödeme bilgisi yok').'</td></tr>';
         foreach ($common_rows as $part) {
             $source = $part['source'];
@@ -430,7 +485,7 @@ final class MDG_V5_Finance {
         $total=0;$programs=0;$included=0;foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;if(!$is_included)continue;$included++;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$manual_count?:$estimated;if($used){$total+=$used;$programs++;}}
         echo'<div class="mdgv5-grid">';self::card(number_format_i18n($total),'Aylık toplam seyirci','Manuel sayı varsa o, yoksa tahmin');self::card(number_format_i18n($programs?round($total/$programs):0),'Program başına ortalama','Seyirci toplamı ÷ hesaplanan program');self::card(number_format_i18n($included),'Hesaba katılan program','İptal/taslak ve hariç tutulanlar yok');echo'</div>';
         echo'<div class="mdgv5-card"><h2>Seyirci Sayısı Hesabı</h2><div class="mdgv5-note">Tahmini seyirci = yalnız bilet geliri ÷ ortalama bilet fiyatı. Eski/test programlarda “Hesaba dâhil” işaretini kaldırın. Mobilde tüm alanları görmek için tabloyu sola kaydırabilirsiniz.</div><table class="widefat striped"><thead><tr><th>Program</th><th>Bilet geliri</th><th>Ortalama bilet</th><th>Tahmini seyirci</th><th>Manuel/gerçek</th><th>Kullanılan sayı</th><th>Dâhil</th><th>Kaydet</th></tr></thead><tbody>';
-        foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$is_included?($manual_count?:$estimated):0;echo'<tr'.($is_included?'':' class="mdgv5-excluded"').'><td><strong>'.esc_html(self::event_name($e)).'</strong><div class="mdgv5-sub">'.esc_html(self::event_date($e)).'</div></td><td>'.esc_html(self::money($ticket_revenue)).'</td><td colspan="6"><form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="mdgv5-attendance-row"><input type="hidden" name="action" value="mdg_v5_save_attendance"><input type="hidden" name="event_id" value="'.absint($id).'"><input type="hidden" name="month" value="'.esc_attr($month).'">';wp_nonce_field('mdg_v5_save_attendance','mdg_v5_finance_nonce');echo'<input type="text" name="avg_ticket_price" value="'.esc_attr($avg?number_format($avg,2,',','.'):'350,00').'" aria-label="Ortalama bilet"><span>'.number_format_i18n($estimated).'</span><input type="number" min="0" name="manual_attendance" value="'.esc_attr($manual_count?:'').'" placeholder="Gerçek sayı" aria-label="Manuel seyirci"><strong>'.number_format_i18n($used).'</strong><label class="mdgv5-check"><input type="checkbox" name="include_in_reports" value="1" '.checked($is_included,true,false).'> Dâhil</label><button class="button">Kaydet</button></form></td></tr>';}
+        foreach($events as$id=>$e){$row=$saved[$id]??null;$is_included=!$row||(int)$row->include_in_reports===1;$avg=$row?(float)$row->avg_ticket_price:0;$manual_count=$row?absint($row->manual_attendance):0;$ticket_revenue=(float)($web[$id]??0)+(float)($manual_ticket_revenue[$id]??0);$estimated=$avg>0?(int)round($ticket_revenue/$avg):0;$used=$is_included?($manual_count?:$estimated):0;echo'<tr'.($is_included?'':' class="mdgv5-excluded"').'><td><strong>'.esc_html(self::event_name($e)).'</strong><div class="mdgv5-sub">'.esc_html(self::event_date($e)).'</div></td><td>'.esc_html(self::money($ticket_revenue)).'</td><td colspan="6"><form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="mdgv5-attendance-row"><input type="hidden" name="action" value="mdg_v5_save_attendance"><input type="hidden" name="event_id" value="'.esc_attr(MDG_V5_Finance_Identity::value($id)).'"><input type="hidden" name="month" value="'.esc_attr($month).'">';wp_nonce_field('mdg_v5_save_attendance','mdg_v5_finance_nonce');echo'<input type="text" name="avg_ticket_price" value="'.esc_attr($avg?number_format($avg,2,',','.'):'350,00').'" aria-label="Ortalama bilet"><span>'.number_format_i18n($estimated).'</span><input type="number" min="0" name="manual_attendance" value="'.esc_attr($manual_count?:'').'" placeholder="Gerçek sayı" aria-label="Manuel seyirci"><strong>'.number_format_i18n($used).'</strong><label class="mdgv5-check"><input type="checkbox" name="include_in_reports" value="1" '.checked($is_included,true,false).'> Dâhil</label><button class="button">Kaydet</button></form></td></tr>';}
         if(!$events)echo'<tr><td colspan="8">Bu ay için program bulunamadı.</td></tr>';echo'</tbody></table></div>';
     }
 
@@ -448,7 +503,7 @@ final class MDG_V5_Finance {
 
     private static function card($v,$t,$n){echo'<div class="mdgv5-card"><div class="mdgv5-kpi">'.esc_html($v).'</div><h3>'.esc_html($t).'</h3><p class="mdgv5-sub">'.esc_html($n).'</p></div>';}
     private static function input($label,$name,$value,$type='text'){echo'<label><strong>'.esc_html($label).'</strong><input type="'.esc_attr($type).'" name="'.esc_attr($name).'" value="'.esc_attr($value).'"></label>';}
-    private static function select($label,$name,$options,$value){echo'<label><strong>'.esc_html($label).'</strong><select name="'.esc_attr($name).'"><option value="">Seçin</option>';foreach($options as$k=>$v)echo'<option value="'.esc_attr($k).'" '.selected((string)$value,(string)$k,false).'>'.esc_html($v).'</option>';echo'</select></label>';}
+    private static function select($label,$name,$options,$value){echo'<label><strong>'.esc_html($label).'</strong><select name="'.esc_attr($name).'"><option value="">Seçin</option>';foreach($options as$k=>$v){$option=$name==='event_id'?MDG_V5_Finance_Identity::value($k):$k;if($name==='event_id')$v=MDG_V5_Finance_Identity::label($k,$v);echo'<option value="'.esc_attr($option).'" '.selected((string)$value,(string)$k,false).'>'.esc_html($v).'</option>';}echo'</select></label>';}
     private static function file_note(){echo'<label><strong>Fatura / makbuz</strong><input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png,.webp"></label><label class="mdgv5-wide"><strong>Not</strong><textarea name="notes" rows="3"></textarea></label>';}
     private static function delete_button($action,$field,$id){echo'<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" onsubmit="return confirm(\'Bu kayıt silinsin mi?\');"><input type="hidden" name="action" value="'.esc_attr($action).'"><input type="hidden" name="'.esc_attr($field).'" value="'.absint($id).'">';wp_nonce_field($action.'_'.absint($id),'mdg_v5_finance_nonce');echo'<button class="button-link-delete">Sil</button></form>';}
 }
@@ -527,23 +582,24 @@ final class MDG_V5_Finance_Records {
     }
     public static function state($type,$row,$fresh=false) {
         global $wpdb;$key=$type.':'.$row->id;
+        if($type==='income'&&MDG_V5_Finance::excluded_income($row))return array('settled'=>0.0,'remaining'=>0.0,'overpaid'=>false,'known'=>true,'tracked'=>false,'opening'=>0.0);
         if(!$fresh&&isset(self::$cache[$key]))return self::$cache[$key];
         $start=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.self::table('settlements').' WHERE record_type=%s AND record_id=%d',$type,$row->id));
         $payments=(float)$wpdb->get_var($wpdb->prepare('SELECT COALESCE(SUM(amount),0) FROM '.self::table('payments')." WHERE record_type=%s AND record_id=%d AND status='posted'",$type,$row->id));
         $known=!!$start;
         $opening=$start?(float)$start->opening_amount:0;
-        if(!$start&&$type==='income'){$known=true;$opening=$row->collection_status==='collected'?self::amount($type,$row):0;}
+        if(!$start&&$type==='income'){$known=true;$opening=in_array($row->collection_status,array('collected','tahsiledildi'),true)?self::amount($type,$row):0;}
         if(!$start&&$type==='expense'&&$row->payment_method==='Ödenmedi')$known=true;
         return self::$cache[$key]=array_merge(self::amounts(self::amount($type,$row),$opening,$payments),array('known'=>$known,'tracked'=>!!$start,'opening'=>$opening));
     }
     public static function collected($row) { return self::state('income',$row)['settled']; }
-    public static function income_label($row) {$state=self::state('income',$row);return $state['remaining']<=0?'Tam tahsil edildi':($state['settled']>0?'Kısmi tahsil edildi':'Tahsilat bekliyor');}
+    public static function income_label($row) {if(MDG_V5_Finance::excluded_income($row))return 'Mükerrer — toplam dışı';$state=self::state('income',$row);return $state['remaining']<=0?'Tam tahsil edildi':($state['settled']>0?'Kısmi tahsil edildi':'Tahsilat bekliyor');}
     /** Review classification only: a method, note or attachment never proves bank settlement. */
     public static function reconciliation_status($type,$row,$state) {
         if(self::protected_source($type,$row))return 'source';
         if($state['overpaid'])return 'difference';
         if($state['tracked'])return 'tracked';
-        if($type==='income'&&($row->collection_status??'')==='collected')return 'declared';
+        if($type==='income'&&in_array(($row->collection_status??''),array('collected','tahsiledildi'),true))return 'declared';
         if(preg_match('/(?:^|\s)ödendi(?:$|\s|[\/\-])/iu',(string)($row->notes??'')))return 'declared';
         return $state['known']?'pending':'unverified';
     }
@@ -629,7 +685,7 @@ final class MDG_V5_Finance_Records {
             if($type==='income')self::field('Komisyon (TL)','commission',$row->commission_amount);
             self::field('Kayıt tarihi','record_date',$type==='income'?$row->income_date:$row->expense_date,'date');
             echo '<label>Kapsam <select name="scope">';foreach(array('program'=>'Program','province'=>'İl','general'=>'Genel','person'=>'Personel','vehicle'=>'Araç') as $key=>$label)echo '<option value="'.esc_attr($key).'" '.selected($row->scope,$key,false).'>'.esc_html($label).'</option>';echo '</select></label>';
-            echo '<label> Program <select name="event_id"><option value="0">Program yok</option>';foreach($names as $eid=>$name)echo '<option value="'.absint($eid).'" '.selected($row->event_id,$eid,false).'>'.esc_html($name.' #'.$eid).'</option>';echo '</select></label>';
+            echo '<label> Program <select name="event_id"><option value="0">Program yok</option>';foreach($names as $eid=>$name)echo '<option value="'.esc_attr(MDG_V5_Finance_Identity::value($eid)).'" '.selected($row->event_id,$eid,false).'>'.esc_html(MDG_V5_Finance_Identity::label($eid,$name)).'</option>';echo '</select></label>';
         }
         self::field('Düzeltme gerekçesi','reason');echo '<button class="button">Düzeltmeyi Kaydet</button></form>';
         if(!$state['tracked']) {
@@ -705,7 +761,7 @@ final class MDG_V5_Finance_Records {
                 } else {
                     $amount=self::decimal($_POST['amount']??'');$date=self::text('record_date');$scope=sanitize_key($_POST['scope']??'');$event=absint($_POST['event_id']??0);
                     if($amount===null||$amount<0||!self::date($date)||!in_array($scope,array('program','province','general','person','vehicle'),true))throw new RuntimeException('Tutar, tarih veya kapsam geçersiz.');
-                    if($scope==='program'&&(!$event||!class_exists('MDG_DB')||!$wpdb->get_var($wpdb->prepare('SELECT id FROM '.MDG_DB::table('events').' WHERE id=%d',$event))))throw new RuntimeException('Program doğrulanamadı.');
+                    if($scope==='program'&&!MDG_V5_Finance_Identity::valid($_POST['event_id']??''))throw new RuntimeException('Program doğrulanamadı.');
                     $data=array_merge($data,array('description'=>self::text('description'),'scope'=>$scope,'event_id'=>$scope==='program'?$event:0));
                     if($type==='income') {$commission=self::decimal($_POST['commission']??'');if($commission===null||$commission>$amount)throw new RuntimeException('Komisyon brüt tutarı aşamaz.');$data+=array('gross_amount'=>$amount,'commission_amount'=>$commission,'net_amount'=>$amount-$commission,'income_date'=>$date);$total=$amount-$commission;}
                     else {$data+=array('amount'=>$amount,'expense_date'=>$date);$total=$amount;}
@@ -763,5 +819,109 @@ final class MDG_V5_Finance_Records {
             if($id&&!$pid){echo '<p>Seçili programın MMC eşleşmesi doğrulanamadı; başka program tahmin edilmedi.</p></div>';return;}
             echo '<a class="button button-primary" href="'.esc_url(add_query_arg(array('page'=>'mmc-finance','program_id'=>$pid),admin_url('admin.php'))).'">MMC Fatura, Teminat ve Kapanış</a></div>';
         }
+    }
+}
+
+/** UUID-bound finance writes and a reviewed, reversible historical repair. */
+final class MDG_V5_Finance_Identity {
+    const BACKUP = 'mdg_finance_identity_repair_20261026_v1';
+    public static function boot() {
+        add_action('admin_notices',array(__CLASS__,'notice'));
+        add_action('admin_post_mdg_finance_identity_repair',array(__CLASS__,'repair'));
+    }
+    public static function value($id) {
+        global $wpdb;
+        $uuid=$wpdb->get_var($wpdb->prepare('SELECT public_uuid FROM '.$wpdb->prefix.'mdg_events WHERE id=%d',absint($id)));
+        return $uuid ? absint($id).'|'.$uuid : '';
+    }
+    public static function valid($raw) {
+        if(!is_scalar($raw)||!preg_match('/^([1-9][0-9]*)\|[a-f0-9-]{36}$/D',(string)$raw,$m))return false;
+        $manifest=(array)get_option('mdg_finance_identity_manifest_20261026',array());
+        if(in_array((int)$m[1],$manifest['retired_event_ids']??array(),true))return false;
+        return hash_equals(self::value((int)$m[1]),(string)$raw);
+    }
+    public static function label($id,$name) {
+        global $wpdb;
+        $date=$wpdb->get_var($wpdb->prepare('SELECT MIN(start_at) FROM '.$wpdb->prefix.'mdg_sessions WHERE event_id=%d',absint($id)));
+        return $name.' · '.($date?substr($date,0,10):'Tarih yok').' · MDG #'.absint($id);
+    }
+    public static function fingerprint($type,$row) {
+        $keys=$type==='income'?array('id','event_id','description','income_date','gross_amount','commission_amount','net_amount','source_ref','updated_at','scope','collection_status','notes'):array('id','event_id','description','expense_date','amount','document_no','updated_at','scope','notes');
+        $values=array();foreach($keys as $key)$values[]=(string)($row->$key??'');
+        return hash('sha256',implode('|',$values));
+    }
+    private static function plan() { $m=(array)get_option('mdg_finance_identity_manifest_20261026',array());return $m['records']??array(); }
+    private static function targets() { $m=(array)get_option('mdg_finance_identity_manifest_20261026',array());return $m['targets']??array(); }
+    public static function notice() {
+        if(!current_user_can('manage_options')||($_GET['page']??'')!=='mdg-v5-finance')return;
+        $backup=get_option(self::BACKUP,false);
+        echo '<div class="notice notice-info"><p><strong>Finans kimlik düzeltmesi — 26.10.2026</strong> · '.count(self::plan()).' doğrulanmış kayıt. Sipariş, bilet ve tutarlar korunur. Yalnız özel doğrulanmış listedeki kayıtlar işlenir.</p>';
+        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="mdg_finance_identity_repair">';
+        wp_nonce_field('mdg_finance_identity_repair');
+        if(!$backup||($backup['status']??'')==='rolled_back')echo '<button class="button button-primary" name="repair_operation" value="apply">Yedekle ve doğrulanmış düzeltmeleri uygula</button>';
+        elseif(($backup['status']??'')==='applied')echo '<p>Uygulandı. Özel yedek ve gerekçeli işlem geçmişi kaydedildi.</p><button class="button" name="repair_operation" value="rollback">Yalnız bu düzeltmeleri geri al</button>';
+        else echo '<p>Yedek mevcut; tamamlanmamış işlem için yönetici incelemesi gerekir.</p>';
+        echo '</form></div>';
+    }
+    public static function repair() {
+        if(!current_user_can('manage_options'))wp_die('Yetkiniz yok.');
+        check_admin_referer('mdg_finance_identity_repair');
+        global $wpdb;
+        $op=sanitize_key($_POST['repair_operation']??'');
+        if(!in_array($op,array('apply','rollback'),true))wp_die('Geçersiz işlem.');
+        $lock='mdg_finance_identity_20261026';
+        if((int)$wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s,5)',$lock))!==1)wp_die('Başka finans düzeltmesi sürüyor.');
+        $error='';$backup=get_option(self::BACKUP,false);
+        try {
+            foreach(array('mdg_v5_incomes','mdg_v5_expenses','mdg_v5_finance_history','options') as $suffix){
+                $status=$wpdb->get_row($wpdb->prepare('SHOW TABLE STATUS WHERE Name=%s',$wpdb->prefix.$suffix));
+                if(!$status||strtolower($status->Engine)!=='innodb')throw new RuntimeException('Geri alınabilir işlem için InnoDB gerekir.');
+            }
+            if($op==='apply'&&$backup&&($backup['status']??'')==='applied')throw new RuntimeException('Düzeltme zaten uygulanmış; tekrar yazılmadı.');
+            if($op==='rollback'&&(!$backup||($backup['status']??'')!=='applied'))throw new RuntimeException('Uygulanmış yedek bulunamadı.');
+            $wpdb->query('START TRANSACTION');
+            $changes=array();
+            if($op==='apply'){
+                if(!self::plan()||!self::targets())throw new RuntimeException('Özel doğrulanmış mutabakat listesi yüklenmemiş.');
+                foreach(self::targets() as $id=>$uuid){
+                    if(self::value($id)!==$id.'|'.$uuid)throw new RuntimeException('Hedef etkinlik UUID uyuşmazlığı.');
+                }
+                foreach(self::plan() as $entry){
+                    $type=$entry['type'];$table=$wpdb->prefix.'mdg_v5_'.($type==='income'?'incomes':'expenses');
+                    $row=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.$table.' WHERE id=%d FOR UPDATE',$entry['id']));
+                    if(!$row||!hash_equals($entry['fingerprint'],self::fingerprint($type,$row)))throw new RuntimeException('Kaynak kayıt değişmiş: '.$type.' #'.$entry['id']);
+                    $after=clone $row;$after->event_id=(string)$entry['new'];$after->updated_at=current_time('mysql');
+                    if($type==='income'&&!empty($entry['duplicate_of'])){
+                        $other=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.$wpdb->prefix.'mdg_v5_incomes WHERE id=%d FOR UPDATE',absint($entry['duplicate_of'])));
+                        if(!$other||!hash_equals($entry['duplicate_fingerprint'],self::fingerprint('income',$other))||(string)$row->gross_amount!==(string)$other->gross_amount||(string)$row->income_date!==(string)$other->income_date)throw new RuntimeException('POS mükerrer kanıtı değişmiş.');
+                        foreach(array('payments','settlements') as $suffix)if((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM ".$wpdb->prefix.'mdg_v5_'.$suffix." WHERE record_type='income' AND record_id=%d",$row->id)))throw new RuntimeException('Mükerrer kayıtta ödeme takibi var; otomatik değiştirilmedi.');
+                        $after->collection_status='excluded_duplicate';
+                    }
+                    $changes[]=array('type'=>$type,'before'=>(array)$row,'after'=>(array)$after);
+                }
+                $backup=array('status'=>'ready','created_at'=>current_time('mysql'),'changes'=>$changes);
+                // Store the complete original rows before any source change, without autoload.
+                if(get_option(self::BACKUP,false)){
+                    if(!update_option(self::BACKUP,$backup,false))throw new RuntimeException('Yedek güncellenemedi.');
+                } elseif(!add_option(self::BACKUP,$backup,'',false))throw new RuntimeException('Yedek kaydedilemedi.');
+            } else $changes=$backup['changes'];
+            foreach($changes as $change){
+                $type=$change['type'];$table=$wpdb->prefix.'mdg_v5_'.($type==='income'?'incomes':'expenses');
+                $before=$op==='apply'?$change['before']:$change['after'];
+                $after=$op==='apply'?$change['after']:$change['before'];
+                $current=$wpdb->get_row($wpdb->prepare('SELECT * FROM '.$table.' WHERE id=%d FOR UPDATE',$before['id']),ARRAY_A);
+                if($current!=$before)throw new RuntimeException('Kayıt sonradan değişmiş; geri alma/düzeltme durduruldu.');
+                $data=array('event_id'=>$after['event_id'],'updated_at'=>$after['updated_at']);
+                if($type==='income')$data['collection_status']=$after['collection_status'];
+                if(false===$wpdb->update($table,$data,array('id'=>$before['id'])))throw new RuntimeException('Kayıt güncellenemedi.');
+                if(false===$wpdb->insert($wpdb->prefix.'mdg_v5_finance_history',array('record_type'=>$type,'record_id'=>$before['id'],'operation'=>$op==='apply'?'identity_repair':'identity_rollback','before_data'=>wp_json_encode($before),'after_data'=>wp_json_encode($after),'reason'=>'Doğrulanmış özel mutabakat listesi: program kimlik düzeltmesi ve kaynak mükerrerinin toplam dışı bırakılması. Tutarlar korunur.','created_by'=>get_current_user_id(),'created_at'=>current_time('mysql'))))throw new RuntimeException('İşlem geçmişi yazılamadı.');
+            }
+            $backup['status']=$op==='apply'?'applied':'rolled_back';
+            if(!update_option(self::BACKUP,$backup,false))throw new RuntimeException('Yedek durumu kaydedilemedi.');
+            if(false===$wpdb->query('COMMIT'))throw new RuntimeException('İşlem tamamlanamadı.');
+        } catch (RuntimeException $e){$wpdb->query('ROLLBACK');wp_cache_delete(self::BACKUP,'options');$error=$e->getMessage();}
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));
+        if($error)wp_die(esc_html($error));
+        wp_safe_redirect(admin_url('admin.php?page=mdg-v5-finance&month=2026-10&finance_saved=identity'));exit;
     }
 }

@@ -22,6 +22,8 @@ jobs:
           php tests/finance/web-refunds.php
           php tests/finance/allocations.php
           php tests/finance/records.php
+          php tests/finance/identity-repair.php
+          php tests/finance/program-costs.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-service.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-finance-admin.php
           php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-navigation-admin.php
