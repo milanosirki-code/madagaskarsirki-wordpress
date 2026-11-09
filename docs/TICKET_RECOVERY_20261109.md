@@ -42,7 +42,7 @@ CI: `.github/workflows/ticket-recovery.yml`; ayrıca mevcut Changed PHP Syntax w
 
 Sonuç: `6805c404563c6ad620b7dd7b08f31b307343d59d` için Ticket Recovery Contract, Changed PHP Syntax ve diğer 11 PR workflow'u başarılı. Kod WPCode #13057 olarak kapalı kaydedildi. Yeni işlev henüz canlıda çalışmıyor; kullanıcı etkinleştirmesi ve işletme test telefonuyla teslim doğrulaması bekliyor.
 
-Arşiv: GitHub draft PR #320 oluşturuldu. Drive'a hem teknik kayıt hem sade durum özeti yükleme girişimi otomatik onay incelemesince açık paylaşım talebi bulunmadığı gerekçesiyle reddedildi; Drive kaydı tamamlanmadı. Yeniden deneme yapılmadan kullanıcıdan açık arşiv izni alınmalıdır.
+Arşiv: GitHub draft PR #320 oluşturuldu. İlk Drive yüklemeleri otomatik onay incelemesince açık paylaşım talebi bulunmadığı gerekçesiyle reddedildi. Kullanıcının 9 Kasım 2026 tarihli açık onayı sonrasında sade durum özeti mevcut Drive devir arşivine kaydedildi; dosya adı ve hedef klasör metadata okumasıyla doğrulandı. WPCode #13057 yeniden kontrol edildi: kapalı, hata kaydı yok; kullanıcı etkinleştirmesi bekleniyor.
 
 ## Kontrollü etkinleştirme ve smoke test
 
