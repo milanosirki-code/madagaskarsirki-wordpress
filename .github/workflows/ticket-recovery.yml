@@ -1,0 +1,20 @@
+name: Ticket Recovery Contract
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/mdg-ticket-recovery-20261109.php'
+      - 'tests/ticket-recovery-test.php'
+      - '.github/workflows/ticket-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l docs/code-snippets/mdg-ticket-recovery-20261109.php
+      - run: php tests/ticket-recovery-test.php
