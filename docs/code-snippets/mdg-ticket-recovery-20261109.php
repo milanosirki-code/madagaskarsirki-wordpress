@@ -6,9 +6,10 @@
  * WPCode PHP snippet: omit this opening PHP tag when importing.
  */
 if (!defined('ABSPATH')) { return; }
-if (class_exists('MDG_Ticket_Recovery_20261109', false)) { return; }
-
+// Conditional declaration avoids PHP early class binding bypassing boot().
+if (!class_exists('MDG_Ticket_Recovery_20261109', false)) {
 final class MDG_Ticket_Recovery_20261109 {
+    private static $booted = false;
     const BOT_ID = 110115;
     const BASE = 'https://milanosirki.kommo.com/api/v4';
     const JOB = 'mdg_ticket_recovery_send';
@@ -16,6 +17,8 @@ final class MDG_Ticket_Recovery_20261109 {
     const COOLDOWN = 900;
 
     public static function boot() {
+        if (self::$booted) { return; }
+        self::$booted = true;
         add_filter('tickera_download_ticket_url_front_link', array(__CLASS__, 'label'), 90);
         add_filter('tc_download_ticket_url_front_link', array(__CLASS__, 'label'), 90);
         add_action('template_redirect', array(__CLASS__, 'submit'), 2);
@@ -212,5 +215,6 @@ final class MDG_Ticket_Recovery_20261109 {
     }
 
     public static function unlock($order_id) { delete_option('mdg_tr_send_' . absint($order_id)); }
+}
 }
 MDG_Ticket_Recovery_20261109::boot();

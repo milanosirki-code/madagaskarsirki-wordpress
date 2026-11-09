@@ -79,6 +79,8 @@ function check($condition, $message) {
 require __DIR__ . '/../docs/code-snippets/mdg-ticket-recovery-20261109.php';
 $class = 'MDG_Ticket_Recovery_20261109';
 check(count($registered_hooks) === 6, 'Loading the snippet registers all six hooks');
+require __DIR__ . '/../docs/code-snippets/mdg-ticket-recovery-20261109.php';
+check(count($registered_hooks) === 6, 'Loading twice does not duplicate hooks');
 foreach (array('05550000000', '+90 555 000 00 00', '00905550000000', '5550000000') as $number) {
     check($class::phone($number) === '5550000000', 'TR mobile variants normalize');
 }
