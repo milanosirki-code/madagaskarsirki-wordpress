@@ -4,8 +4,9 @@ define('ABSPATH', __DIR__);
 define('DAY_IN_SECONDS', 86400);
 define('MS_KOMMO_BASE_URL', 'https://milanosirki.kommo.com/api/v4');
 define('MS_KOMMO_PIPELINE_ID', 14297695);
-function add_filter(...$args) {}
-function add_action(...$args) {}
+$registered_hooks = array();
+function add_filter(...$args) { $GLOBALS['registered_hooks'][] = $args[0]; }
+function add_action(...$args) { $GLOBALS['registered_hooks'][] = $args[0]; }
 function is_wp_error($value) { return $value instanceof Exception; }
 function wp_parse_url($value) { return parse_url($value); }
 function absint($value) { return abs((int) $value); }
@@ -77,6 +78,7 @@ function check($condition, $message) {
 }
 require __DIR__ . '/../docs/code-snippets/mdg-ticket-recovery-20261109.php';
 $class = 'MDG_Ticket_Recovery_20261109';
+check(count($registered_hooks) === 6, 'Loading the snippet registers all six hooks');
 foreach (array('05550000000', '+90 555 000 00 00', '00905550000000', '5550000000') as $number) {
     check($class::phone($number) === '5550000000', 'TR mobile variants normalize');
 }
