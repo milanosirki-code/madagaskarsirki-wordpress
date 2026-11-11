@@ -1,0 +1,1 @@
+Son doğrulama: Nihai JS sürümü Node syntax ve fixture testlerinden geçti: onaysız engelleme, yanlış domain engelleme, tekrar yürütmede tek PageView, ViewContent, bulunamayan sayfada ViewContent engelleme ve revoke çağrısı. Canlı Meta olay alındı ve ağda tam tekilleştirme doğrulaması hâlâ eksiktir.
