@@ -65,7 +65,7 @@ class MMC_Event_Service {
         $date = $venue && ! empty( $venue->requested_date ) ? $venue->requested_date : $program->planned_date;
         $event_code = self::generate_event_code( $program, $date );
         $now = current_time( 'mysql' );
-        $title = 'Madagaskar Sirki — ' . ( $program->district_name ?: $program->province_name );
+        $title = MMC_Program_Service::public_brand_profile( $program )['name'] . ' — ' . ( $program->district_name ?: $program->province_name );
 
         $ok = $wpdb->insert(
             $events,

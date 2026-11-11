@@ -2,7 +2,7 @@
   "schema_version": 1,
   "plugin": {
     "slug": "madagaskar-ai-abilities",
-    "source_version": "0.7.0",
+    "source_version": "0.7.1",
     "source_path": "wp-content/plugins/madagaskar-ai-abilities",
     "production_known_version": "0.6.1",
     "option_key": "mdg_ai_abilities_modules",

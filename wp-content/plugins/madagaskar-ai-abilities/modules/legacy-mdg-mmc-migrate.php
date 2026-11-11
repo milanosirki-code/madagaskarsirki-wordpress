@@ -73,8 +73,14 @@ function mdg_ai_legacy_migrate_local_datetime( $utc_datetime ) {
     return $utc_datetime ? substr( (string) $utc_datetime, 0, 16 ) : '';
 }
 
-function mdg_ai_legacy_migrate_one_internal( $mdg_event_id ) {
+function mdg_ai_legacy_migrate_one_internal( $mdg_event_id, $brand = '' ) {
     global $wpdb;
+
+    // Existing legacy sales belong to Madagaskar; never rebrand them as Milano.
+    $brand = MMC_Program_Service::normalized_program_brand( $brand );
+    if ( 'Madagaskar Sirki' !== $brand ) {
+        return new WP_Error( 'mdg_ai_legacy_brand_required', 'Legacy aktarımı için Madagaskar Sirki markasını açıkça belirtin; Milano satışları bu aktarımın kapsamı dışındadır.' );
+    }
 
     $mdg_event_id = absint( $mdg_event_id );
     $legacy_event = MMC_MDG_Bridge_Service::get_mdg_event( $mdg_event_id );
@@ -171,6 +177,7 @@ function mdg_ai_legacy_migrate_one_internal( $mdg_event_id ) {
     try {
         $program_id = mdg_ai_legacy_migrate_require(
             MMC_Program_Service::create_program( array(
+                'brand'         => $brand,
                 'province_name' => (string) $legacy_event->province_name,
                 'district_name' => (string) $legacy_event->district,
                 'plan_year'     => (int) substr( $planned_date, 0, 4 ),
@@ -419,7 +426,7 @@ function mdg_ai_legacy_migrate_one( $input ) {
     if ( 'MIGRATE_LEGACY_MDG_TO_MMC' !== $confirmation ) {
         return new WP_Error( 'mdg_ai_legacy_confirmation', 'Açık migration onayı eksik.' );
     }
-    return mdg_ai_legacy_migrate_one_internal( absint( $input['mdg_event_id'] ?? 0 ) );
+    return mdg_ai_legacy_migrate_one_internal( absint( $input['mdg_event_id'] ?? 0 ), $input['brand'] ?? '' );
 }
 
 function mdg_ai_legacy_migrate_batch( $input ) {
@@ -435,7 +442,7 @@ function mdg_ai_legacy_migrate_batch( $input ) {
 
     $results = array();
     foreach ( $ids as $id ) {
-        $result = mdg_ai_legacy_migrate_one_internal( $id );
+        $result = mdg_ai_legacy_migrate_one_internal( $id, $input['brand'] ?? '' );
         if ( is_wp_error( $result ) ) {
             $results[] = array(
                 'mdg_event_id' => $id,
@@ -478,9 +485,10 @@ add_action( 'wp_abilities_api_init', function() {
             'type' => 'object',
             'properties' => array(
                 'mdg_event_id' => array( 'type'=>'integer', 'minimum'=>1 ),
+                'brand' => array( 'type'=>'string', 'enum'=>array( 'Madagaskar Sirki' ) ),
                 'confirmation' => array( 'type'=>'string' ),
             ),
-            'required' => array( 'mdg_event_id', 'confirmation' ),
+            'required' => array( 'mdg_event_id', 'brand', 'confirmation' ),
         ),
         'output_schema' => array( 'type'=>'object' ),
         'execute_callback' => 'mdg_ai_legacy_migrate_one',
@@ -501,10 +509,11 @@ add_action( 'wp_abilities_api_init', function() {
                     'minItems'=>1,
                     'maxItems'=>10,
                 ),
+                'brand' => array( 'type'=>'string', 'enum'=>array( 'Madagaskar Sirki' ) ),
                 'confirmation' => array( 'type'=>'string' ),
                 'stop_on_error' => array( 'type'=>'boolean' ),
             ),
-            'required' => array( 'mdg_event_ids', 'confirmation' ),
+            'required' => array( 'mdg_event_ids', 'brand', 'confirmation' ),
         ),
         'output_schema' => array( 'type'=>'object' ),
         'execute_callback' => 'mdg_ai_legacy_migrate_batch',
