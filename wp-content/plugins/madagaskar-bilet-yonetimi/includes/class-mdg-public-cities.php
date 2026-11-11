@@ -103,7 +103,7 @@ final class MDG_Public_Cities {
             MDG_Status::ONSALE,
             $now_utc
         );
-        $rows = $wpdb->get_results( $sql );
+        $rows = (array) apply_filters( 'mdg_public_city_events', (array) $wpdb->get_results( $sql ) );
         if ( ! $rows ) { return array(); }
 
         $cities = array();
