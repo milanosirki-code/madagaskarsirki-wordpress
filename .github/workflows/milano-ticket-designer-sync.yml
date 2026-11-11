@@ -1,0 +1,31 @@
+name: Ticket Designer selector consistency
+
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php'
+      - 'tests/milano-ticket-template-selector/**'
+      - '.github/workflows/milano-ticket-designer-sync.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php'
+      - 'tests/milano-ticket-template-selector/**'
+      - '.github/workflows/milano-ticket-designer-sync.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  selector-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify syntax and selector contract
+        run: |
+          php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-ticket-template-qr-binder.php
+          php -l tests/milano-ticket-template-selector/regression.php
+          php -l tests/milano-ticket-template-selector/rebind.php
+          php tests/milano-ticket-template-selector/regression.php
+          php tests/milano-ticket-template-selector/rebind.php
