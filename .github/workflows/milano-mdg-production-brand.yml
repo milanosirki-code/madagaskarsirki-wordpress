@@ -1,0 +1,21 @@
+name: Milano MDG production brand
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-production-plan.php'
+      - 'tests/mdg-production/**'
+      - '.github/workflows/milano-mdg-production-brand.yml'
+permissions:
+  contents: read
+jobs:
+  brand-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l wp-content/plugins/madagaskar-bilet-yonetimi/includes/class-mdg-new-event-production-plan.php
+      - run: php -l tests/mdg-production/brand-plan.php
+      - run: php tests/mdg-production/brand-plan.php
