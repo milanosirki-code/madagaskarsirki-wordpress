@@ -1,0 +1,2068 @@
+{
+  "activeSources": [
+    {
+      "id": 118590,
+      "name": "Madagaskar – Destek Sonuç Bildirimi V1",
+      "source": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_destek_sonuc_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_destek_sonuc_gonderim_onayli",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "{{lead.cf.2460838}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460840}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460842}}",
+                    "term2": "",
+                    "operation": "!="
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_destek_sonuc_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "unset_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_destek_sonuc_gonderim_onayli"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Destek sonuç bildirimi başlatıldı. Talep bilgileri ve şablon alan eşlemeleri sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86942,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_destek_sonuc_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Destek sonuç şablonu WhatsApp kanalına iletildi. Gerçek teslimat mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_destek_sonuc_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Destek sonuç bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu şablon değişkenlerini ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Destek sonuç bildirimi gönderim hatası: talep numarası, konu, sonuç ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden yeniden başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "10": {
+          "question": [
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Destek sonuç bildirimi akışı sonlandırıldı. Otomatik tekrar gönderimi kapalı.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    },
+    {
+      "id": 118588,
+      "name": "Madagaskar – Ödeme Hatırlatma V1",
+      "source": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_odeme_hatirlatma_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "WooCommerce Ödeme Başarılı",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "{{lead.pipeline_id}}",
+                    "term2": "14297695",
+                    "operation": "="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460836}}",
+                    "term2": "ALLOW_SEND",
+                    "operation": "="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460834}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.status_id}}",
+                    "term2": "110416827",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.status_id}}",
+                    "term2": "142",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.status_id}}",
+                    "term2": "143",
+                    "operation": "!="
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_odeme_hatirlatma_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "set_custom_fields",
+                "params": {
+                  "value": "SEND_STARTED",
+                  "value_type": "value",
+                  "custom_field": "{{lead.cf.2460836}}"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Ödeme hatırlatma başlatıldı. Yalnız tek sipariş için ALLOW_SEND doğrulaması, ödeme başarı etiketi bulunmaması ve özel ödeme bağlantısı varlığı kontrol edildi. Aynı sipariş için tekrar başlatma kilidi kondu.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86871,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_odeme_hatirlatma_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Ödeme hatırlatma şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_odeme_hatirlatma_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Ödeme hatırlatma gönderilemedi. Otomatik tekrar yapılmaz; sorumlu WhatsApp hata durumunu ve etkinlik bilgilerini kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Ödeme hatırlatma gönderim hatası: WhatsApp mesaj durumunu, telefon ve etkinlik bilgilerini kontrol edin. Yeniden başlatmadan önce önceki gönderim kaydını inceleyin.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "10": {
+          "question": [
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Ödeme hatırlatma akışı sonlandırıldı. Otomatik tekrar gönderimi kapalı.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    },
+    {
+      "id": 118592,
+      "name": "Madagaskar – İade Tamamlandı V1",
+      "source": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_tamamlandi_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "{{lead.cf.2460844}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460846}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460848}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_bildirim_gonderim_onayli",
+                    "operation": "in"
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "unset_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_bildirim_gonderim_onayli"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade tamamlandı bildirimi başlatıldı. Sipariş, tutar, tarih ve doğrulanmış iade etiketi kontrol edildi. Aynı kayıt için tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86944,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade tamamlandı şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "İade bildirimi hatası: doğrulanmış iade kaydı, sipariş, tutar, tarih ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 10,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "10": {
+          "question": [
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade tamamlandı bildirimi akışı sonlandırıldı. Otomatik tekrar gönderimi kapalı.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    }
+  ],
+  "dailyTriggers": [
+    {
+      "botId": 118590,
+      "conditions": "Uygulama koşulu Madagaskar – Destek Sonuç Bildirimi V1: Tekrarlanan tarih\" [level=2]'\n- paragraph: Aşağıda belirlediğiniz kurallara göre botları otomatik olarak başlatın\n- generic: \"Bu gerçekleştiğinde:\"\n- generic: Günlük at 15:00\n- generic: \"Tümü için müşteriler ile:\"\n- generic: \"Müşteri aşaması:\"\n- generic: Woocommerce pipeline\n- generic \"Incoming leads\":\n  - generic: Incoming leads\n- generic: Woocommerce pipeline\n- generic \"Beklemede olan siparişler\":\n  - generic: Beklemede olan siparişler\n- generic: Woocommerce pipeline\n- generic \"Siparişler işleniyor\":\n  - generic: Siparişler işleniyor\n- generic: Woocommerce pipeline\n- generic \"Closed - won\":\n  - generic: Closed - won\n- generic: Woocommerce pipeline\n- generic \"Closed - lost\":\n  - generic: Closed - lost\n- generic \"Satış Takip Hattı\":\n  - generic \"Satış Takip Hattı\": 5 aşamalar\n- list:\n- text: 5 aşamalar 5 aşamalar 5 aşamalar 5 aşamalar\n- text: ve Etiketler\n- button \"(ya da):\"\n- generic: mdg_destek_sonuc_gonderim_onayli\n- text: ve\n- generic: Destek Talep Numarası\n- button \"(boş değil):\"\n- text: ve\n- generic: Destek Konusu\n- button \"(boş değil):\"\n- text: ve\n- generic: Destek Sonucu\n- button \"(boş değil):\"\n- generic: Bir koşul ekleyin\n- generic: \"Aktif saatler:\"\n- paragraph: Her zaman\n- generic: Mesajı okunmadı olarak bırak\n- paragraph: Salesbot'un yanıtladığı mesajlar yanıtlanmadı olarak işaretlenecek\n- button \"Bitti\":\n  - generic: Bitti\n- button \"İptal\"\n- generic: Tetikleyiciyi sil"
+    },
+    {
+      "botId": 118592,
+      "conditions": "Uygulama koşulu Madagaskar – İade Tamamlandı V1: Tekrarlanan tarih\" [level=2]'\n- paragraph: Aşağıda belirlediğiniz kurallara göre botları otomatik olarak başlatın\n- generic: \"Bu gerçekleştiğinde:\"\n- generic: Günlük at 15:00\n- generic: \"Tümü için müşteriler ile:\"\n- generic: \"Müşteri aşaması:\"\n- generic: Woocommerce pipeline\n- generic \"Incoming leads\":\n  - generic: Incoming leads\n- generic: Woocommerce pipeline\n- generic \"Beklemede olan siparişler\":\n  - generic: Beklemede olan siparişler\n- generic: Woocommerce pipeline\n- generic \"Siparişler işleniyor\":\n  - generic: Siparişler işleniyor\n- generic: Woocommerce pipeline\n- generic \"Closed - won\":\n  - generic: Closed - won\n- generic: Woocommerce pipeline\n- generic \"Closed - lost\":\n  - generic: Closed - lost\n- generic \"Satış Takip Hattı\":\n  - generic \"Satış Takip Hattı\": 5 aşamalar\n- list:\n- text: 5 aşamalar 5 aşamalar 5 aşamalar 5 aşamalar\n- text: ve Etiketler\n- button \"(ve):\"\n- generic: mdg_iade_bildirim_gonderim_onayli\n- generic: mdg_iade_tamamlandi_dogrulandi\n- text: ve\n- generic: İade Sipariş Numarası\n- button \"(boş değil):\"\n- text: ve\n- generic: İade Tutarı\n- button \"(boş değil):\"\n- text: ve\n- generic: İade Tamamlanma Tarihi\n- button \"(boş değil):\"\n- generic: Bir koşul ekleyin\n- generic: \"Aktif saatler:\"\n- paragraph: Her zaman\n- generic: Mesajı okunmadı olarak bırak\n- paragraph: Salesbot'un yanıtladığı mesajlar yanıtlanmadı olarak işaretlenecek\n- checkbox \"Tetikleyiciyi zaten bu aşamada olan tüm müşteriler'a uygulayın\"\n- generic \"Tetikleyiciyi zaten bu aşamada olan tüm müşteriler'a uygulayın\"\n- button \"Bitti\":\n  - generic: Bitti\n- button \"İptal\"\n- generic: Tetikleyiciyi sil"
+    },
+    {
+      "botId": 118588,
+      "conditions": "Uygulama koşulu Madagaskar – Ödeme Hatırlatma V1: Tekrarlanan tarih\" [level=2]'\n- paragraph: Aşağıda belirlediğiniz kurallara göre botları otomatik olarak başlatın\n- generic: \"Bu gerçekleştiğinde:\"\n- generic: Günlük at 15:00\n- generic: \"Tümü için müşteriler ile:\"\n- generic: \"Müşteri aşaması:\"\n- generic: Woocommerce pipeline\n- generic \"Beklemede olan siparişler\":\n  - generic: Beklemede olan siparişler\n- generic \"Satış Takip Hattı\":\n  - generic \"Satış Takip Hattı\": 1 aşama\n- list:\n- text: 1 aşama 1 aşama 1 aşama 1 aşama\n- text: ve\n- generic: Ödeme Hatırlatma Uygunluğu\n- button \"(eşleşiyor):\"\n- textbox: ALLOW_SEND\n- text: ve\n- generic: Ödeme Linki\n- button \"(boş değil):\"\n- generic: Bir koşul ekleyin\n- generic: \"Aktif saatler:\"\n- paragraph: Her zaman\n- generic: Mesajı okunmadı olarak bırak\n- paragraph: Salesbot'un yanıtladığı mesajlar yanıtlanmadı olarak işaretlenecek\n- checkbox \"Tetikleyiciyi zaten bu aşamada olan tüm müşteriler'a uygulayın\"\n- generic \"Tetikleyiciyi zaten bu aşamada olan tüm müşteriler'a uygulayın\"\n- button \"Bitti\":\n  - generic: Bitti\n- button \"İptal\"\n- generic: Tetikleyiciyi sil"
+    }
+  ],
+  "pendingBots": [
+    {
+      "name": "Madagaskar – İade Başlatıldı V1",
+      "before": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86867,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "İade başlatıldı gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      },
+      "after": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_iade_baslangic_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "{{lead.cf.2460844}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460846}}",
+                    "term2": "",
+                    "operation": "!="
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86867,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_iade_baslangic_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "İade başlatıldı bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "İade başlatıldı gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    },
+    {
+      "name": "Madagaskar – Etkinlik İptali V1",
+      "before": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86865,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Etkinlik iptali gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      },
+      "after": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_iptal_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "{{lead.cf.2460844}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460858}}",
+                    "term2": "",
+                    "operation": "!="
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86865,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_iptal_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik iptali bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Etkinlik iptali gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    },
+    {
+      "name": "Madagaskar – Etkinlik Değişikliği V1",
+      "before": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86863,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Etkinlik değişikliği gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      },
+      "after": {
+        "0": {
+          "question": [
+            {
+              "params": {
+                "logic": "and",
+                "result": [
+                  {
+                    "params": {
+                      "step": 2,
+                      "type": "question"
+                    },
+                    "handler": "goto"
+                  }
+                ],
+                "conditions": [
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_baslatildi",
+                    "operation": "not_in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "lead.tags",
+                    "term2": "mdg_etkinlik_degisiklik_bildirim_alanlar_dogrulandi",
+                    "operation": "in"
+                  },
+                  {
+                    "term1": "{{lead.cf.2460844}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460858}}",
+                    "term2": "",
+                    "operation": "!="
+                  },
+                  {
+                    "term1": "{{lead.cf.2460860}}",
+                    "term2": "",
+                    "operation": "!="
+                  }
+                ]
+              },
+              "handler": "conditions"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "2": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_baslatildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği bildirimi başlatıldı. İşlem ve şablon alanları sorumlu tarafından doğrulanmış olmalıdır. Tekrar gönderim kilidi eklendi.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "tag": "",
+                "type": "external",
+                "footer": null,
+                "on_error": {
+                  "params": {
+                    "step": 8,
+                    "type": "question"
+                  },
+                  "handler": "goto"
+                },
+                "products": null,
+                "recipient": {
+                  "type": "main_contact",
+                  "way_of_communication": "over_all"
+                },
+                "template_id": 86863,
+                "chat_sources": [
+                  {
+                    "id": 82576
+                  }
+                ],
+                "is_in_starting_block": false,
+                "create_chat_if_not_exists": true
+              },
+              "handler": "send_message"
+            },
+            {
+              "params": {
+                "step": 3,
+                "type": "question"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "3": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_gonderildi"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği şablonu WhatsApp kanalına iletildi. Gerçek teslimat WhatsApp mesaj durumundan kontrol edilmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "8": {
+          "question": [
+            {
+              "params": {
+                "name": "set_tag",
+                "params": {
+                  "type": 2,
+                  "value": "mdg_etkinlik_degisiklik_bildirim_hata"
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "name": "add_note",
+                "params": {
+                  "text": "Etkinlik değişikliği bildirimi gönderilemedi. Otomatik tekrar yapılmaz; sorumlu alanları ve WhatsApp hata durumunu kontrol etmelidir.",
+                  "note_type": 4,
+                  "element_type": 2
+                }
+              },
+              "handler": "action"
+            },
+            {
+              "params": {
+                "trigger": {
+                  "delay": 0,
+                  "action": "create_task",
+                  "segments": [
+                    ""
+                  ],
+                  "settings": {
+                    "task_text": "Etkinlik değişikliği gönderim hatası: olay kaydını, şablon alanlarını ve WhatsApp mesaj durumunu kontrol edin. Önceki gönderimi incelemeden tekrar başlatmayın.",
+                    "task_type": "1",
+                    "deadline-days": "",
+                    "deadline-hours": "",
+                    "task_type_name": "Takip",
+                    "within-deadline": "0",
+                    "deadline-minutes": "",
+                    "responsible_user": "current"
+                  },
+                  "date_exec": 0,
+                  "handler_code": "amocrm",
+                  "execution_condition": {
+                    "id": 45,
+                    "name": "execute_trigger"
+                  }
+                },
+                "element_type": "lead"
+              },
+              "handler": "trigger"
+            },
+            {
+              "params": {
+                "step": 9,
+                "type": "finish"
+              },
+              "handler": "goto"
+            }
+          ]
+        },
+        "9": {
+          "finish": [
+            {
+              "params": [],
+              "handler": "_stop"
+            }
+          ]
+        },
+        "conversation": false
+      }
+    }
+  ],
+  "newFields": [
+    {
+      "id": 2460858,
+      "name": "Bildirim Önceki Gösteri Bilgileri"
+    },
+    {
+      "id": 2460860,
+      "name": "Bildirim Güncel Gösteri Bilgileri"
+    }
+  ],
+  "templates": [
+    {
+      "name": "madagaskar_etkinlik_degisikligi_v2",
+      "status": "İncelemede"
+    },
+    {
+      "name": "madagaskar_etkinlik_iptali_v2",
+      "status": "İncelemede"
+    },
+    {
+      "name": "madagaskar_iade_baslatildi_v2",
+      "status": "İncelemede"
+    }
+  ],
+  "answeredSurveySessionsStopped": 5,
+  "unansweredSurveySessionsRetained": 6,
+  "timezone": "Europe/Istanbul (GMT +03:00), verified in Kommo workspace settings"
+}
