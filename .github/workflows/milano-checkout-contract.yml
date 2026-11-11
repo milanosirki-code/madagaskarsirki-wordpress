@@ -1,0 +1,81 @@
+name: Milano checkout intent offline contract
+
+on:
+  pull_request:
+    paths:
+      - 'integrations/milano/checkout-contract/**'
+      - 'tests/milano-checkout-contract/**'
+      - '.github/workflows/milano-checkout-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/milano/checkout-contract/**'
+      - 'tests/milano-checkout-contract/**'
+      - '.github/workflows/milano-checkout-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  signed-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP syntax
+        run: |
+          php -l integrations/milano/checkout-contract/milano-checkout-contract-stage.php
+          php -l tests/milano-checkout-contract/regression.php
+          php -l integrations/milano/checkout-contract/milano-paytr-callback-contract.php
+          php -l tests/milano-checkout-contract/paytr-callback.php
+      - name: Offline validation without WordPress or PayTR credentials
+        run: |
+          php tests/milano-checkout-contract/regression.php
+          php tests/milano-checkout-contract/paytr-callback.php
+
+  canonical-order-claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-root
+          MYSQL_DATABASE: milano_claim_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=test-only-root"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, pcntl
+      - name: Verify isolated table-claim source and actual race test syntax
+        run: |
+          php -l integrations/milano/checkout-contract/milano-canonical-order-claim.php
+          php -l tests/milano-checkout-contract/mysql-order-claim.php
+      - name: Concurrent MySQL first-writer checkout + Woo binding test (no site)
+        run: php tests/milano-checkout-contract/mysql-order-claim.php
+      - name: Audit prepayment family order / MDG map / held capacity contract
+        run: |
+          php -l integrations/milano/checkout-contract/milano-prepayment-order-audit.php
+          php -l tests/milano-checkout-contract/prepayment-order-audit.php
+          php tests/milano-checkout-contract/prepayment-order-audit.php
+      - name: Offline one-time MDG reservation lifecycle
+        run: |
+          php -l integrations/milano/checkout-contract/milano-central-checkout-reservation.php
+          php -l tests/milano-checkout-contract/reservation-orchestrator.php
+          php tests/milano-checkout-contract/reservation-orchestrator.php
+      - name: Woo classic and Store API post-MDG pre-gateway hook contract
+        run: |
+          php -l integrations/milano/checkout-contract/milano-woo-checkout-gate.php
+          php -l tests/milano-checkout-contract/woo-hook-gate.php
+          php tests/milano-checkout-contract/woo-hook-gate.php
+          php -l integrations/milano/checkout-contract/milano-woo-classic-checkout-bridge.php
+          php -l tests/milano-checkout-contract/classic-checkout-bridge.php
+          php tests/milano-checkout-contract/classic-checkout-bridge.php
