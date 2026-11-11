@@ -1,0 +1,23 @@
+name: Milano Brand-Aware Programme Entry Contract
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php'
+      - 'wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php'
+      - 'wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php'
+      - 'integrations/milano/tests/brand-aware-entry-contract.php'
+      - '.github/workflows/milano-brand-entry-contract.yml'
+  workflow_dispatch:
+jobs:
+  brand-entry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: |
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-admin.php
+          php -l wp-content/plugins/madagaskar-management-center/includes/class-mmc-program-service.php
+          php -l wp-content/plugins/madagaskar-ai-abilities/modules/program-venue-event-sales.php
+          php -l integrations/milano/tests/brand-aware-entry-contract.php
+      - name: Brand-entry contract
+        run: php integrations/milano/tests/brand-aware-entry-contract.php

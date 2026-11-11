@@ -51,6 +51,12 @@ class MMC_Program_Service {
         $year     = absint( $data['plan_year'] ?? wp_date( 'Y' ) );
         $date     = sanitize_text_field( $data['planned_date'] ?? '' );
         $notes    = sanitize_textarea_field( $data['notes'] ?? '' );
+        // Maintain the existing Madagaskar default for legacy programme integrations.
+        // Milano must be provided explicitly; reject unknown brands.
+        $brand    = $data['brand'] ?? 'Madagaskar Sirki';
+        if ( ! is_string( $brand ) || ! in_array( $brand, array( 'Madagaskar Sirki', 'Milano Sirki' ), true ) ) {
+            return new WP_Error( 'mmc_invalid_brand', 'Geçerli bir program markası seçiniz.' );
+        }
 
         if ( '' === $province ) {
             return new WP_Error( 'mmc_missing_province', 'İl alanı zorunludur.' );
@@ -64,7 +70,7 @@ class MMC_Program_Service {
             $table,
             array(
                 'program_code'  => $code,
-                'brand'         => 'Madagaskar Sirki',
+                'brand'         => $brand,
                 'province_name' => $province,
                 'district_name' => $district,
                 'plan_year'     => $year,
@@ -86,6 +92,7 @@ class MMC_Program_Service {
         $program_id = (int) $wpdb->insert_id;
         self::add_log( $program_id, 'program_created', 'program', $program_id, null, array(
             'program_code' => $code,
+            'brand'        => $brand,
             'province'     => $province,
             'district'     => $district,
             'status'       => 'preparation',

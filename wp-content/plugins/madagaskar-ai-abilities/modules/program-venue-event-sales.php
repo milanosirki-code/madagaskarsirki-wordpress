@@ -144,6 +144,8 @@ if ( ! function_exists( 'mdg_ai_program_get' ) ) {
 if ( ! function_exists( 'mdg_ai_program_create' ) ) {
     function mdg_ai_program_create( $input ) {
         $data = array(
+            // Explicit Milano ownership; legacy Madagaskar callers retain their existing default.
+            'brand'         => sanitize_text_field( $input['brand'] ?? 'Madagaskar Sirki' ),
             'province_name' => sanitize_text_field( $input['province_name'] ?? '' ),
             'district_name' => sanitize_text_field( $input['district_name'] ?? '' ),
             'plan_year'     => absint( $input['plan_year'] ?? wp_date( 'Y' ) ),
@@ -335,6 +337,7 @@ add_action( 'wp_abilities_api_init', function() {
             'input_schema'=> array(
                 'type' => 'object',
                 'properties' => array(
+                    'brand'         => array( 'type' => 'string', 'enum' => array( 'Madagaskar Sirki', 'Milano Sirki' ) ),
                     'province_name' => array( 'type' => 'string', 'minLength' => 1 ),
                     'district_name' => array( 'type' => 'string' ),
                     'plan_year'     => array( 'type' => 'integer', 'minimum' => 2020, 'maximum' => 2100 ),
