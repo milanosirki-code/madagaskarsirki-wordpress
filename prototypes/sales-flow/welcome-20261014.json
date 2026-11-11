@@ -1,0 +1,27 @@
+{
+  "0": {
+    "question": [
+      {
+        "handler": "send_message",
+        "params": {
+          "tag": "",
+          "text": "Merhaba! Madagaskar Sirki’ne hoş geldiniz. 🎪 Gösteri ve bilet bilgisi için hangi şehirle ilgilendiğinizi yazar mısınız? Mevcut siparişinizle ilgili destek istiyorsanız sipariş numaranızı paylaşabilirsiniz.",
+          "type": "external",
+          "recipient": {
+            "type": "main_contact",
+            "way_of_communication": "last_active"
+          },
+          "is_in_starting_block": true,
+          "chat_sources": [
+            {
+              "id": 82576
+            }
+          ],
+          "create_chat_if_not_exists": false,
+          "on_error": null
+        }
+      }
+    ]
+  },
+  "conversation": false
+}
