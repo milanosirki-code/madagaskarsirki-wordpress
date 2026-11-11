@@ -1,0 +1,119 @@
+/* Milano Sirki · mobil menü erişilebilirliği · 2026-10-13 */
+.wp-block-navigation .wp-block-navigation-item__content {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  min-width:44px;
+  padding:10px 12px;
+  box-sizing:border-box;
+  line-height:1.45;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container-open,
+.wp-block-navigation .wp-block-navigation__responsive-container-close {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:44px;
+  min-height:44px;
+  box-sizing:border-box;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open {
+  background-color:#091746 !important;
+  color:#FFFFFF !important;
+}
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation-item__content,
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation__responsive-container-close {
+  color:#FFFFFF !important;
+}
+.wp-block-navigation .wp-block-navigation-item__content:focus-visible,
+.wp-block-navigation .wp-block-navigation__responsive-container-open:focus-visible,
+.wp-block-navigation .wp-block-navigation__responsive-container-close:focus-visible {
+  outline:3px solid #F5C04A;
+  outline-offset:3px;
+}
+@media (max-width:782px) {
+  .wp-block-navigation .wp-block-navigation__responsive-container-content .wp-block-navigation-item__content {
+    padding:12px 14px;
+    justify-content:flex-start;
+    text-align:left;
+  }
+}
+
+/* Milano Sirki · 44px site kimliği ve skip-link hedefleri */
+.wp-block-site-title a {
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  box-sizing:border-box;
+}
+.wp-block-site-logo a {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:44px;
+  min-height:44px;
+}
+.skip-link:focus {
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  padding:10px 18px;
+  box-sizing:border-box;
+}
+
+/* Milano responsive repair 2026-10-15: HTML blocks need explicit block layout. */
+.wp-block-buttons {display:flex;flex-wrap:wrap;align-items:stretch;gap:14px;}
+.wp-block-buttons > .wp-block-button {display:flex;max-width:100%;margin:0;}
+.wp-block-button__link {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:48px;max-width:100%;white-space:normal;text-align:center;line-height:1.4;overflow-wrap:anywhere;}
+main .wp-block-column {min-width:0;}
+main .wp-block-image img {max-width:100%;height:auto;}
+main :is(h1,h2,h3,p,li,a),footer :is(p,a) {overflow-wrap:anywhere;}
+main .wp-block-columns {gap:24px;}
+.wp-block-navigation .wp-block-navigation__responsive-container-open {display:none;}
+.wp-block-navigation .wp-block-navigation__responsive-container-close {display:none;}
+.wp-block-navigation .is-menu-open .wp-block-navigation__responsive-container-close {display:inline-flex;}
+footer a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;line-height:1.5;}
+@media (max-width:781px) {
+  main .wp-block-columns {flex-direction:column;gap:24px;}
+  main .wp-block-columns > .wp-block-column {flex-basis:auto!important;width:100%;}
+  .wp-block-buttons {flex-direction:column;align-items:stretch;}
+  .wp-block-buttons > .wp-block-button,.wp-block-buttons .wp-block-button__link {width:100%;}
+  .milano-hero-v2 {padding-top:36px!important;padding-bottom:40px!important;}
+  .milano-hero-v2 h1 {font-size:clamp(28px,7.4vw,46px)!important;line-height:1.12!important;}
+  .milano-ui-cards-v1 h2 {font-size:clamp(26px,6.5vw,38px)!important;}
+  .milano-ui-cards-v1,.milano-instagram-feature-v1 {padding-top:40px!important;padding-bottom:40px!important;}
+  main h1 {font-size:clamp(28px,7.4vw,46px)!important;}
+  .wp-block-navigation .wp-block-navigation__responsive-container-open {display:inline-flex;}
+  .wp-block-navigation .wp-block-navigation__responsive-container:not(.is-menu-open) {display:none!important;}
+}
+@media (min-width:782px) and (max-width:1100px) {
+  .milano-hero-v2 h1 {font-size:clamp(34px,5vw,55px)!important;}
+}
+
+/* Ticket selector: presentation only; existing form fields/action untouched. */
+.page-id-118 main form {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:24px;margin:24px 0;border:1px solid #E4D8BA;border-radius:22px;background:#FFF0C7;box-shadow:0 8px 24px rgba(9,23,70,.08);}
+.page-id-118 main form h3 {grid-column:1/-1;margin:0;font-size:22px;line-height:1.4;color:#091746;}
+.page-id-118 main form label {display:flex;flex-direction:column;gap:8px;font-weight:700;min-width:0;}
+.page-id-118 main form input[type=number] {width:100%;box-sizing:border-box;min-height:48px;border:1px solid #A59E8D;border-radius:10px;background:#FFFFFF;font:inherit;padding:10px 12px;}
+.page-id-118 main form button[type=submit] {grid-column:1/-1;min-height:48px;box-sizing:border-box;padding:14px 20px;border:0;border-radius:999px;background:#C72528;color:white;font:inherit;font-weight:700;white-space:normal;cursor:pointer;}
+.page-id-118 main form :is(input,button):focus-visible {outline:3px solid #091746;outline-offset:3px;}
+:is(.page-id-33,.page-id-34,.page-id-35,.page-id-115) main h1 {font-size:clamp(28px,3vw,40px)!important;line-height:1.2;}
+:is(.page-id-33,.page-id-34,.page-id-35,.page-id-115) main h2 {font-size:clamp(23px,2.4vw,30px)!important;line-height:1.3;}
+@media(max-width:781px) {
+ .page-id-118 main form {grid-template-columns:1fr;padding:20px;}
+ .page-id-118 main form h3 {font-size:20px;}
+ header > .wp-block-group > .is-content-justification-space-between {gap:12px;}
+ header > .wp-block-group > .is-content-justification-space-between > p {margin:0;font-size:0!important;line-height:1;}
+ header > .wp-block-group > .is-content-justification-space-between > p a {font-size:13px;max-width:100%;white-space:normal;}
+ header .wp-block-site-title {min-width:0;}
+ header > .wp-block-group > .wp-block-group:last-child {margin-block-start:8px;padding-top:0!important;}
+}
+
+:is(.page-id-125,.page-id-126,.page-id-127) main h1 {font-size:clamp(28px,4vw,48px)!important;line-height:1.15;overflow-wrap:normal;word-break:normal;}
+
+:is(.page-id-125,.page-id-126,.page-id-127) main h1 {color:#F5C04A!important;}
+
+#gosteri-takvimi a {display:inline-flex;align-items:center;min-height:44px;max-width:100%;box-sizing:border-box;padding:4px 8px;color:#FFF0C7;text-decoration:underline;}
+.milano-faq-item summary {min-height:44px;box-sizing:border-box;padding-block:10px;line-height:1.5;cursor:pointer;}
+.page-id-22 main .wp-block-group[style*="background-color:#091746"] a {color:#F5C04A;}
