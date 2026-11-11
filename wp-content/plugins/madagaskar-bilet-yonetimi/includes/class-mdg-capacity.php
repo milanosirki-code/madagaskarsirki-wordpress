@@ -72,6 +72,14 @@ final class MDG_Capacity {
         }
     }
 
+    /**
+     * Payment notifications can repeat and run concurrently.
+     *
+     * Claim each held row atomically BEFORE increasing sold units. The claim
+     * and matching session balance mutation are in the same database transaction,
+     * so another callback (or cancellation/expiry worker) can never finalize
+     * that hold twice. A stale SELECT is merely advisory, not the authority.
+     */
     public static function commit_order( $order_id ) {
         global $wpdb;
         $order_id = absint( $order_id );
@@ -83,22 +91,51 @@ final class MDG_Capacity {
             "SELECT * FROM {$holds} WHERE order_id = %d AND status = 'held'",
             $order_id
         ) );
+        if ( ! is_array( $rows ) ) { return false; }
+
+        $all_ok = true;
         foreach ( $rows as $row ) {
-            $wpdb->query( 'START TRANSACTION' );
-            $updated = $wpdb->query( $wpdb->prepare(
-                "UPDATE {$sessions}
-                 SET held_units = GREATEST(held_units - %d, 0), sold_units = sold_units + %d, updated_at = %s
-                 WHERE id = %d",
-                $row->units, $row->units, $now, $row->session_id
-            ) );
-            if ( false === $updated ) {
-                $wpdb->query( 'ROLLBACK' );
+            if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+                $all_ok = false;
                 continue;
             }
-            $wpdb->update( $holds, array( 'status' => 'sold', 'updated_at' => $now ), array( 'id' => $row->id ) );
-            $wpdb->query( 'COMMIT' );
+            try {
+                // This UPDATE takes the hold row lock. Exactly one contender
+                // can turn held -> sold; a losing contender may NOT touch stock.
+                $claimed = $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$holds}
+                     SET status = 'sold', updated_at = %s
+                     WHERE id = %d AND order_id = %d AND session_id = %d
+                       AND units = %d AND status = 'held'",
+                    $now, $row->id, $order_id, $row->session_id, $row->units
+                ) );
+                if ( 1 !== (int) $claimed ) {
+                    $wpdb->query( 'ROLLBACK' );
+                    if ( false === $claimed ) { $all_ok = false; }
+                    continue;
+                }
+                $updated = $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$sessions}
+                     SET held_units = held_units - %d,
+                         sold_units = sold_units + %d, updated_at = %s
+                     WHERE id = %d AND held_units >= %d",
+                    $row->units, $row->units, $now, $row->session_id, $row->units
+                ) );
+                if ( 1 !== (int) $updated ) {
+                    $wpdb->query( 'ROLLBACK' );
+                    $all_ok = false;
+                    continue;
+                }
+                if ( false === $wpdb->query( 'COMMIT' ) ) {
+                    $wpdb->query( 'ROLLBACK' );
+                    $all_ok = false;
+                }
+            } catch ( Throwable $e ) {
+                $wpdb->query( 'ROLLBACK' );
+                $all_ok = false;
+            }
         }
-        return true;
+        return $all_ok;
     }
 
     public static function release_order( $order_id ) {
@@ -116,21 +153,56 @@ final class MDG_Capacity {
         return true;
     }
 
+    /**
+     * Cancellation and expiry share the same atomic hold-claim discipline as
+     * payment settlement. No blind subtraction and no stale-read double release.
+     */
     public static function release_hold( $hold_id, $status = 'released' ) {
         global $wpdb;
+        $hold_id = absint( $hold_id );
+        $status = sanitize_key( $status );
+        if ( ! $hold_id || ! $status || in_array( $status, array( 'held', 'sold' ), true ) ) {
+            return false;
+        }
         $holds = MDG_DB::table( 'holds' );
         $sessions = MDG_DB::table( 'sessions' );
-        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$holds} WHERE id = %d", $hold_id ) );
-        if ( ! $row || 'held' !== $row->status ) { return false; }
-        $now = MDG_DB::now();
-        $wpdb->query( 'START TRANSACTION' );
-        $wpdb->query( $wpdb->prepare(
-            "UPDATE {$sessions} SET held_units = GREATEST(held_units - %d, 0), updated_at = %s WHERE id = %d",
-            $row->units, $now, $row->session_id
+        $row = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$holds} WHERE id = %d AND status = 'held'",
+            $hold_id
         ) );
-        $wpdb->update( $holds, array( 'status' => sanitize_key( $status ), 'updated_at' => $now ), array( 'id' => $hold_id ) );
-        $wpdb->query( 'COMMIT' );
-        return true;
+        if ( ! $row ) { return false; }
+        $now = MDG_DB::now();
+        if ( false === $wpdb->query( 'START TRANSACTION' ) ) { return false; }
+        try {
+            $claimed = $wpdb->query( $wpdb->prepare(
+                "UPDATE {$holds}
+                 SET status = %s, updated_at = %s
+                 WHERE id = %d AND session_id = %d AND units = %d AND status = 'held'",
+                $status, $now, $hold_id, $row->session_id, $row->units
+            ) );
+            if ( 1 !== (int) $claimed ) {
+                $wpdb->query( 'ROLLBACK' );
+                return false;
+            }
+            $updated = $wpdb->query( $wpdb->prepare(
+                "UPDATE {$sessions}
+                 SET held_units = held_units - %d, updated_at = %s
+                 WHERE id = %d AND held_units >= %d",
+                $row->units, $now, $row->session_id, $row->units
+            ) );
+            if ( 1 !== (int) $updated ) {
+                $wpdb->query( 'ROLLBACK' );
+                return false;
+            }
+            if ( false === $wpdb->query( 'COMMIT' ) ) {
+                $wpdb->query( 'ROLLBACK' );
+                return false;
+            }
+            return true;
+        } catch ( Throwable $e ) {
+            $wpdb->query( 'ROLLBACK' );
+            return false;
+        }
     }
 
     public static function cleanup_expired() {
