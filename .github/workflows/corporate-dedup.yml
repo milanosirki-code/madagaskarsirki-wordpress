@@ -1,0 +1,14 @@
+name: Corporate form duplicate guard
+on:
+  pull_request:
+    paths:
+      - 'docs/code-snippets/kommo-corporate-dedup.php'
+      - 'tests/test-corporate-dedup.php'
+      - '.github/workflows/corporate-dedup.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: php -l docs/code-snippets/kommo-corporate-dedup.php
+      - run: php tests/test-corporate-dedup.php
