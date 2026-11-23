@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Sirki – Süper 12
  * Description: Süper 12 (4 yetişkin + 8 çocuk) paketini, aile paketleri gibi satıştaki tüm seanslarda sunar.
- * Version: 0.4.1
+ * Version: 0.4.2
  * Requires PHP: 8.0
  */
 declare(strict_types=1);
@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/class-ms12-antalya.php';
 require_once __DIR__ . '/includes/class-ms12-catalog.php';
 
 final class MS12_Plugin {
-    private const VERSION = '0.4.1';
+    private const VERSION = '0.4.2';
 
     public static function boot(): void {
         if (!class_exists('MDG_DB') || !function_exists('wc_get_product')) { return; }
