@@ -2,15 +2,15 @@
 /**
  * Plugin Name: MDG Kaynak Okuyucu (geçici)
  * Description: Etkinleştirildiğinde madagaskar-super12 eklentisinin dosyalarını base64 ZIP olarak tek bir ÖZEL taslak yazıya kopyalar. Başka hiçbir şeyi değiştirmez. İş bitince devre dışı bırakılır.
- * Version: 0.1.0
+ * Version: 0.1.1
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function mdg_kaynak_okuyucu_dump() {
-	if ( ! current_user_can( 'manage_options' ) || ! class_exists( 'ZipArchive' ) ) { return; }
+	if ( ! class_exists( 'ZipArchive' ) ) { return; }
 	$dir = WP_PLUGIN_DIR . '/madagaskar-super12';
 	if ( ! is_dir( $dir ) ) { return; }
-	$tmp = wp_tempnam( 'ms12' );
+	$tmp = tempnam( get_temp_dir(), 'ms12' );
 	$zip = new ZipArchive();
 	if ( true !== $zip->open( $tmp, ZipArchive::OVERWRITE ) ) { return; }
 	$it = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) );
