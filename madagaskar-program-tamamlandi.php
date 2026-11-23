@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Program Tamamlandı
  * Description: Tarihi geçen etkinlik blog yazılarının başına "Program tamamlandı" notu ekler. Tarih Europe/Istanbul saatine göre, etkinlik gününün bitiminde (23.59 sonrası) devreye girer.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Madagaskar Sirki
  * Requires PHP: 7.4
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class MDG_Program_Tamamlandi {
 
-	const VERSION = '1.0.0';
+	const VERSION = '1.0.1';
 	const TZ      = 'Europe/Istanbul';
 
 	/**
@@ -134,6 +134,11 @@ final class MDG_Program_Tamamlandi {
 			. '.mdg-program-tamamlandi p{margin:0 0 8px}.mdg-program-tamamlandi p:last-child{margin-bottom:0}'
 			. '.mdg-program-tamamlandi .mdg-pt-title{color:#1b5e20;font-size:1.15em}'
 			. '.mdg-program-tamamlandi a{text-decoration:underline}'
+			// Tamamlanan programda bilet satış butonlarını yazı gövdesinde gizle (üst menü/alt bilgi etkilenmez).
+			. '.mdg-program-tamamlandi-sayfa .wp-block-post-content .wp-block-buttons,'
+			. '.mdg-program-tamamlandi-sayfa .entry-content .wp-block-buttons,'
+			. '.mdg-program-tamamlandi-sayfa .wp-block-post-content a[href*="/tc-events/"].wp-block-button__link,'
+			. '.mdg-program-tamamlandi-sayfa .wp-block-post-content a[href*="/bilet-al"].wp-block-button__link{display:none!important}'
 			. '</style>';
 	}
 
