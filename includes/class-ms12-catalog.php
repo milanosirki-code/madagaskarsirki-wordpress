@@ -129,7 +129,9 @@ final class MS12_Catalog {
         $program = $pid ? MMC_Program_Service::get_program($pid) : null;
         if (!$program) { $blocker = 'Etkinliğe bağlı MMC programı bulunamadı.'; return null; }
         if ($program->brand !== 'Madagaskar Sirki') { $blocker = 'MMC programı Madagaskar Sirki markasına bağlı değil.'; return null; }
-        if (!in_array($program->status, ['sales_open','promotion','operations','show_day'], true)) { $blocker = 'MMC programı satışa uygun durumda değil.'; return null; }
+        // 0.4.2: Satış sinyali MDG etkinlik/seans 'onsale' durumudur (aile paketleriyle aynı).
+        // MMC program aşaması (ör. sales_prep) Süper 12'yi ayrıca engellemez; yalnız iptal/kapalı programlar engellenir.
+        if (in_array($program->status, ['cancelled','closed','archived'], true)) { $blocker = 'MMC programı iptal veya kapalı.'; return null; }
         $types = self::types($row, $blocker);
         if (!$types) { return null; }
         // 0.4.0: Sabit profil listesi ve Antalya'ya özel ek kanıt şartı kaldırıldı. Süper 12,
