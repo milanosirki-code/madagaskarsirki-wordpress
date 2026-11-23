@@ -2,33 +2,29 @@
 /**
  * Plugin Name: MDG Kaynak Okuyucu (geçici)
  * Description: Etkinleştirildiğinde madagaskar-super12 eklentisinin dosyalarını base64 ZIP olarak tek bir ÖZEL taslak yazıya kopyalar. Başka hiçbir şeyi değiştirmez. İş bitince devre dışı bırakılır.
- * Version: 0.1.1
+ * Version: 0.1.2
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function mdg_kaynak_okuyucu_dump() {
-	if ( ! class_exists( 'ZipArchive' ) ) { return; }
 	$dir = WP_PLUGIN_DIR . '/madagaskar-super12';
 	if ( ! is_dir( $dir ) ) { return; }
-	$tmp = tempnam( get_temp_dir(), 'ms12' );
-	$zip = new ZipArchive();
-	if ( true !== $zip->open( $tmp, ZipArchive::OVERWRITE ) ) { return; }
-	$it = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) );
-	foreach ( $it as $f ) {
-		if ( $f->isFile() && $f->getSize() < 2000000 ) {
-			$zip->addFile( $f->getPathname(), 'madagaskar-super12/' . ltrim( substr( $f->getPathname(), strlen( $dir ) ), '/' ) );
-		}
+	$out = '';
+	$it  = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) );
+	$files = array();
+	foreach ( $it as $f ) { if ( $f->isFile() && $f->getSize() < 2000000 ) { $files[] = $f->getPathname(); } }
+	sort( $files );
+	foreach ( $files as $path ) {
+		$rel  = ltrim( substr( $path, strlen( $dir ) ), '/' );
+		$data = file_get_contents( $path );
+		$out .= "\n=====MS12FILE " . $rel . " sha256=" . hash( 'sha256', $data ) . " b64=" . strlen( $data ) . "=====\n" . chunk_split( base64_encode( $data ), 76, "\n" );
 	}
-	$zip->close();
-	$data = file_get_contents( $tmp );
-	@unlink( $tmp );
-	if ( false === $data ) { return; }
 	kses_remove_filters();
 	wp_insert_post( array(
 		'post_type'    => 'post',
 		'post_status'  => 'private',
-		'post_title'   => 'TEMP-MS12-KAYNAK ' . gmdate( 'Y-m-d H:i:s' ) . ' sha256=' . hash( 'sha256', $data ),
-		'post_content' => 'MS12B64:' . base64_encode( $data ),
+		'post_title'   => 'TEMP-MS12-DUMP2 ' . gmdate( 'Y-m-d H:i:s' ),
+		'post_content' => $out . str_repeat( "\n#PAD", 12000 ),
 	) );
 	kses_init_filters();
 }
