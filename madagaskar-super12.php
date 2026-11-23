@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Sirki – Süper 12
  * Description: Süper 12 (4 yetişkin + 8 çocuk) paketini, aile paketleri gibi satıştaki tüm seanslarda sunar.
- * Version: 0.4.0
+ * Version: 0.4.1
  * Requires PHP: 8.0
  */
 declare(strict_types=1);
@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/class-ms12-antalya.php';
 require_once __DIR__ . '/includes/class-ms12-catalog.php';
 
 final class MS12_Plugin {
-    private const VERSION = '0.4.0';
+    private const VERSION = '0.4.1';
 
     public static function boot(): void {
         if (!class_exists('MDG_DB') || !function_exists('wc_get_product')) { return; }
@@ -71,7 +71,14 @@ final class MS12_Plugin {
         $offers = [];
         foreach (self::sessions_for_mode() as $sid) {
             $offer = MS12_Catalog::checkout_quote($eid, $sid);
-            if ($offer) { $offers[$eid][$sid] = ['priceCents' => $offer['priceCents'], 'maxBundles' => $offer['maxBundles']]; }
+            if ($offer) {
+                $item = ['priceCents' => $offer['priceCents'], 'maxBundles' => $offer['maxBundles']];
+                // Karttaki tasarruf satırı için seansın internet tekil fiyatları (kuruş).
+                $adult = self::cents((string)($offer['adultPrice'] ?? ''));
+                $child = self::cents((string)($offer['childPrice'] ?? ''));
+                if ($adult && $child) { $item['adultCents'] = $adult; $item['childCents'] = $child; }
+                $offers[$eid][$sid] = $item;
+            }
         }
         if (!$offers) { return; }
         wp_print_inline_script_tag('window.MDG_SUPER12_OFFERS=' . wp_json_encode(
@@ -80,6 +87,12 @@ final class MS12_Plugin {
         // The MDG deferred frontend takes one snapshot of the ticket rows.
         // Install ours synchronously only after the native widget/config exists.
         wp_print_script_tag(['src' => add_query_arg('ver', self::VERSION, plugins_url('assets/super12.js', __FILE__))]);
+    }
+
+    private static function cents(string $money): ?int {
+        if (!preg_match('/\A([0-9]{1,7})(?:\.([0-9]{1,2}))?\z/', $money, $m)) return null;
+        $v = (int)$m[1] * 100 + (int)str_pad($m[2] ?? '', 2, '0');
+        return $v > 0 ? $v : null;
     }
 
     public static function menu(): void {

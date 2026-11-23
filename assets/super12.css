@@ -73,3 +73,18 @@
     #bilet-secimi .mdg-super12-option .mdg-super12-price { text-align: start; }
     #bilet-secimi .mdg-super12-option .mdg-super12-qty { justify-self: end; }
 }
+
+#bilet-secimi .mdg-super12-option .mdg-super12-savings {
+    display: block;
+    align-self: stretch;
+    margin: 0 0 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #FAD66D;
+    color: #25164b;
+    font-size: .9rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+#bilet-secimi .mdg-super12-option .mdg-super12-savings[hidden] { display: none; }
+#bilet-secimi .mdg-super12-option .mdg-super12-was { color: #cbbcf0; font-weight: 600; font-size: .85em; }

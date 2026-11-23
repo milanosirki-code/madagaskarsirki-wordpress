@@ -28,7 +28,13 @@
         const offer = sessionId && own(own(offers, eventId), sessionId);
         if (!offer || ![225000, 250000].includes(offer.priceCents) ||
             !Number.isInteger(offer.maxBundles) || offer.maxBundles < 1 || offer.maxBundles > 20) return null;
-        return { sessionId, priceCents: offer.priceCents, maxBundles: offer.maxBundles };
+        let regularCents = null;
+        if (Number.isSafeInteger(offer.adultCents) && Number.isSafeInteger(offer.childCents) &&
+            offer.adultCents > 0 && offer.childCents > 0) {
+            const total = 4 * offer.adultCents + 8 * offer.childCents;
+            if (total > offer.priceCents) regularCents = total;
+        }
+        return { sessionId, priceCents: offer.priceCents, maxBundles: offer.maxBundles, regularCents };
     }
 
     const buttons = Array.from(picker.querySelectorAll(sessionSelector));
@@ -39,7 +45,8 @@
     row.className = preview ? 'mdg-super12-option mdg-super12-preview' : 'mdg-ticket-option mdg-super12-option';
     row.setAttribute('data-mdg-super12', '1');
     row.hidden = true;
-    row.innerHTML = '<div class="mdg-super12-copy"><span class="mdg-super12-badge">YENİ • GRUP FIRSATI</span>' +
+    row.innerHTML = '<div class="mdg-super12-copy"><span class="mdg-super12-savings" hidden></span>' +
+        '<span class="mdg-super12-badge">YENİ • GRUP FIRSATI</span>' +
         '<strong class="mdg-super12-title">Süper 12 – Arkadaşını Kap Gel!</strong>' +
         '<span class="mdg-super12-people">4 yetişkin + 8 çocuk</span>' +
         '<span class="mdg-super12-detail">12 kişilik süper grup paketi</span>' +
@@ -72,6 +79,7 @@
     }
 
     const priceEl = row.querySelector('.mdg-super12-price');
+    const savingsEl = row.querySelector('.mdg-super12-savings');
     const input = row.querySelector('input');
     const minus = row.querySelector('[data-minus]');
     const plus = row.querySelector('[data-plus]');
@@ -160,6 +168,25 @@
             if (changed) hideWarning();
         }
         priceEl.textContent = offer ? numeral.format(offer.priceCents / 100) + ' TL' : '';
+        if (savingsEl) {
+            if (offer && offer.regularCents) {
+                const save = offer.regularCents - offer.priceCents;
+                const pct = Math.floor(save * 100 / offer.regularCents);
+                savingsEl.textContent = 'Tek tek ' + numeral.format(offer.regularCents / 100) + ' TL yerine ' +
+                    numeral.format(offer.priceCents / 100) + ' TL · ' + numeral.format(save / 100) +
+                    ' TL indirim (%' + pct + ')';
+                savingsEl.hidden = false;
+                if (priceEl) {
+                    const was = document.createElement('s');
+                    was.className = 'mdg-super12-was';
+                    was.textContent = numeral.format(offer.regularCents / 100) + ' TL';
+                    priceEl.prepend(was, ' ');
+                }
+            } else {
+                savingsEl.textContent = '';
+                savingsEl.hidden = true;
+            }
+        }
         group();
     }
 
