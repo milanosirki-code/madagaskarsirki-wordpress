@@ -28,5 +28,8 @@ Yok. Checkout, bilet, etkinlik ve seans verilerine dokunmaz.
 ## Geri alma
 Eklentiyi devre dışı bırak (Eklentiler ekranı). Veri bırakmaz.
 
+## 1.0.1
+Tamamlanan yazılarda yazı gövdesindeki bilet butonları (wp-block-buttons) CSS ile gizlenir; menü ve alt bilgi etkilenmez.
+
 ## Deploy
 Orphan branch `deploy/madagaskar-program-tamamlandi` → WP.com code deployment → `/wp-content/plugins/madagaskar-program-tamamlandi`.

@@ -40,5 +40,12 @@ check( false !== strpos( $h, 'Trakya turnesi programı 11–15 Kasım 2026 tarih
 check( false !== strpos( $h, '/sehirler/' ) && false !== strpos( $h, 'basinda-madagaskar-sirki' ), 'bağlantılar' );
 check( false !== strpos( $C::notice_html( array( 'x', '<b>', 'y' ) ), '&lt;b&gt;' ), 'etiket kaçışlanır' );
 
+
+// 1.0.1: buton gizleme CSS'i yalnızca yazı gövdesine kapsamlı.
+$src = file_get_contents( __DIR__ . '/../../wp-content/plugins/madagaskar-program-tamamlandi/madagaskar-program-tamamlandi.php' );
+check( false !== strpos( $src, '.mdg-program-tamamlandi-sayfa .wp-block-post-content .wp-block-buttons' ), 'buton gizleme kuralı var' );
+check( false === strpos( $src, "'.wp-block-buttons{" ), 'genel (kapsamsız) buton gizleme yok' );
+check( '1.0.1' === MDG_Program_Tamamlandi::VERSION, 'sürüm 1.0.1' );
+
 echo "$n kontrol, $fail hata\n";
 exit( $fail ? 1 : 0 );
