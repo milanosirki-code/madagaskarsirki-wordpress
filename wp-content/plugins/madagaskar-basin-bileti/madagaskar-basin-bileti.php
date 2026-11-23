@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Madagaskar Basın Bileti Talepleri
  * Description: Gizli bağlantıyla açılan basın bileti talep formu, yönetici onayı ve onay sonrası mevcut Protokol / Ücretsiz Bilet altyapısıyla (MDG_Protocol_Tickets) QR bilet üretimi ve e-posta gönderimi. Ücretli checkout, ürünler ve bilet şablonları değiştirilmez.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Madagaskar Sirki
  * Requires PHP: 8.0
  */
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) exit;
 
 if (!class_exists('MDG_Press_Tickets', false)) {
 final class MDG_Press_Tickets {
-	const VERSION = '1.0.0';
+	const VERSION = '1.0.1';
 	const PAGE = 'mdg-press-tickets';
 	const ACCESS_OPTION = 'mdg_press_access_key_v1';
 	const INDEX = 'mdg_press_req_index_v1';
@@ -79,6 +79,18 @@ final class MDG_Press_Tickets {
 		}
 	}
 
+	/** Returns id of an identical open request (same session, e-mail and people), or ''. */
+	static function duplicate_of($requests, $session_id, $email, $people) {
+		$sig = function ($ppl) { $n = array(); foreach ((array) $ppl as $p) $n[] = mb_strtolower(trim((string) ($p['name'] ?? '')), 'UTF-8'); sort($n); return implode('|', $n); };
+		$want = $sig($people); $email = strtolower(trim((string) $email));
+		foreach ((array) $requests as $r) {
+			if (!is_array($r) || (int) ($r['session'] ?? 0) !== (int) $session_id) continue;
+			if (!in_array($r['state'] ?? '', array('pending', 'approved', 'error'), true)) continue;
+			if (strtolower((string) ($r['email'] ?? '')) === $email && $sig($r['people'] ?? array()) === $want) return (string) $r['id'];
+		}
+		return '';
+	}
+
 	/** Builds a MDG_Protocol_Tickets batch array from an approved request. */
 	static function batch_from_request($r, $session, $event_name, $venue, $user_id, $batch_id) {
 		$people = array();
@@ -142,8 +154,8 @@ final class MDG_Press_Tickets {
 		if (!self::valid_key($key, (string) get_option(self::ACCESS_OPTION, ''))) { status_header(404); echo 'Sayfa bulunamadı.'; exit; }
 		$msg = ''; $ok = false;
 		if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-			try { self::submit(); $ok = true; } catch (Throwable $e) { $msg = $e->getMessage(); }
-		}
+			try { self::submit(); wp_safe_redirect(add_query_arg(array('mdg_basin' => 'talep', 'anahtar' => $key, 'gonderildi' => '1'), home_url('/')), 303); exit; } catch (Throwable $e) { $msg = $e->getMessage(); }
+		} elseif (($_GET['gonderildi'] ?? '') === '1') $ok = true;
 		self::render_form($key, $msg, $ok);
 		exit;
 	}
@@ -179,6 +191,7 @@ final class MDG_Press_Tickets {
 		$lock = 'mdg_press_submit_lock_' . $session;
 		if (!add_option($lock, time(), '', 'no')) { $t = (int) get_option($lock); if ($t && time() - $t < 30) throw new Exception('Sistem yoğun; birkaç saniye sonra tekrar gönderin.'); update_option($lock, time(), false); }
 		try {
+			if (self::duplicate_of(self::all_requests(), $session, $email, $people) !== '') return false;
 			self::check_limit(self::all_requests(), $session, $org_key, $email, count($people));
 			$e = $cat[$event]['event'];
 			$r = array(
@@ -190,6 +203,12 @@ final class MDG_Press_Tickets {
 			);
 			self::save($r);
 		} finally { delete_option($lock); }
+		self::notify_new($r);
+		return true;
+	}
+
+	static function notify_new($r) {
+		$org = $r['org']; $email = $r['email']; $people = $r['people']; $phone = $r['phone']; $web = $r['web'];
 		$admin = add_query_arg(array('page' => self::PAGE), admin_url('admin.php'));
 		$list = ''; foreach ($people as $p) $list .= '<li>' . esc_html($p['name'] . ' — ' . $p['role']) . '</li>';
 		self::mail(self::notify_to(), 'Yeni basın bileti talebi: ' . $org, '<p><b>' . esc_html($org) . '</b> basın bileti talep etti.</p><p>' . esc_html($r['event_name'] . ' · ' . $r['venue'] . ' · ' . $r['time']) . '</p><ul>' . $list . '</ul><p>E-posta: ' . esc_html($email) . ' · Tel: ' . esc_html($phone) . ($web ? ' · Web: ' . esc_html($web) : '') . '</p><p><a href="' . esc_url($admin) . '">Talebi onayla veya reddet</a></p>');
@@ -206,7 +225,7 @@ final class MDG_Press_Tickets {
 		if ($msg !== '') echo '<div class="msg err">' . esc_html($msg) . '</div>';
 		if (!$cat) { echo '<div class="msg err">Şu an basın bileti talebine açık gösteri bulunmuyor. Bilgi için WhatsApp: ' . esc_html(self::WHATSAPP) . '</div></body></html>'; return; }
 		$v = function ($k) { return esc_attr(sanitize_text_field(wp_unslash($_POST[$k] ?? ''))); };
-		echo '<form method="post" action="' . $action . '">';
+		echo '<form method="post" action="' . $action . '" onsubmit="var b=this.querySelector(\'button[type=submit]\');if(b.disabled)return false;b.disabled=true;b.textContent=\'Gönderiliyor…\';">';
 		echo '<input type="hidden" name="_mdg_press" value="' . esc_attr(wp_create_nonce('mdg_press_submit')) . '"><div class="hp"><label>Web sitesi<input name="website" tabindex="-1" autocomplete="off"></label></div>';
 		echo '<label for="s">Gösteri ve seans</label><select id="s" name="session" required><option value="">Seçin</option>';
 		$sel = (string) ($_POST['session'] ?? '');

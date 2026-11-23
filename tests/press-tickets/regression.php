@@ -45,4 +45,8 @@ check(array_keys($b['sessions']) === array(5) && count($b['people']) === 2 && $b
 check(strpos($b['people'][0]['name'], 'Basın · Muhabir · Gazete Ayvalık') !== false && $b['people'][0]['seat'] === '', 'ticket label shows press role and org, unnumbered');
 check($b['press_request'] === $r['id'] && $b['title'] === 'Basın — Gazete Ayvalık', 'batch linked to request');
 
+$open = array(array('id' => 'x1', 'session' => 7, 'state' => 'pending', 'email' => 'a@b.com', 'people' => array(array('name' => 'Ali Veli'))));
+check($c::duplicate_of($open, 7, 'A@B.com', array(array('name' => 'ali veli'))) === 'x1', 'duplicate detected case-insensitively');
+check($c::duplicate_of($open, 7, 'a@b.com', array(array('name' => 'Ayşe Kaya'))) === '', 'different person is not duplicate');
+$open[0]['state'] = 'rejected'; check($c::duplicate_of($open, 7, 'a@b.com', array(array('name' => 'Ali Veli'))) === '', 'rejected request does not block resubmission');
 echo "All $n press ticket checks passed.\n";

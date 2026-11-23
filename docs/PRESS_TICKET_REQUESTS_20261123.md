@@ -4,7 +4,7 @@
 Yerel basın kuruluşlarının, yalnızca e-postayla gönderilen gizli bağlantıdan basın bileti talep etmesi; yönetici onayından sonra mevcut **Protokol / Ücretsiz Biletler** altyapısıyla (Code Snippets #127, `MDG_Protocol_Tickets`) QR bilet üretilip kuruluşun e-postasına gönderilmesi.
 
 ## Bileşen
-- Eklenti: `wp-content/plugins/madagaskar-basin-bileti/madagaskar-basin-bileti.php` (v1.0.0)
+- Eklenti: `wp-content/plugins/madagaskar-basin-bileti/madagaskar-basin-bileti.php` (v1.0.1)
 - Admin: Madagaskar (mmc-dashboard) → **Basın Bileti Talepleri** (`manage_woocommerce`)
 - Gizli form: `/?mdg_basin=talep&anahtar=<48 hex>` — anahtar `mdg_press_access_key_v1` seçeneğinde; admin ekranından yenilenebilir (eski bağlantı iptal olur). `anahtar` parametresi Safe Cache (#20) tarafından zaten önbellek dışı; sayfa `no-store`, `noindex`.
 
@@ -36,3 +36,6 @@ Gerçek ödeme/checkout akışına dokunulmaz.
 
 ## Geri alma
 Eklentiyi devre dışı bırak. Üretilmiş protokol biletleri geçerli kalır (gerekirse mevcut iptal yolu). Talep kayıtları `mdg_press_req_*` seçeneklerinde durur; silme yapılmaz.
+
+## 1.0.1 (23.11.2026)
+Canlı testte aynı talep iki kez kaydedildi (çift gönderim/yenileme). Düzeltme: aynı seans + e-posta + kişi listesiyle açık talep varsa yeni kayıt açılmaz; başarılı gönderimden sonra 303 yönlendirme (yenilemede tekrar POST yok); gönder düğmesi tıklanınca kilitlenir.
