@@ -1,0 +1,20 @@
+name: Press ticket requests contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  press-tickets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: php -l wp-content/plugins/madagaskar-basin-bileti/madagaskar-basin-bileti.php
+      - run: php tests/press-tickets/regression.php
+      - run: php tests/press-tickets/flow.php
+      - run: php tests/protocol-tickets/cache.php
