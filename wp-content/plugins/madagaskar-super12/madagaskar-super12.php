@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Madagaskar Sirki – Süper 12
- * Description: Doğrulanmış seanslar için varsayılan kapalı kontrollü Süper 12 yayını.
- * Version: 0.3.4.1-family3-dev
+ * Description: Süper 12 (4 yetişkin + 8 çocuk) paketini, aile paketleri gibi satıştaki tüm seanslarda sunar.
+ * Version: 0.4.0
  * Requires PHP: 8.0
  */
 declare(strict_types=1);
@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/class-ms12-antalya.php';
 require_once __DIR__ . '/includes/class-ms12-catalog.php';
 
 final class MS12_Plugin {
-    private const VERSION = '0.3.4.1-family3-dev';
+    private const VERSION = '0.4.0';
 
     public static function boot(): void {
         if (!class_exists('MDG_DB') || !function_exists('wc_get_product')) { return; }
@@ -89,12 +89,12 @@ final class MS12_Plugin {
     public static function admin(): void {
         if (!current_user_can('manage_woocommerce')) { return; }
         echo '<div class="wrap"><h1>Madagaskar Sirki – Süper 12</h1>';
-        echo '<p>Güncelleme mevcut Ayvalık seçeneklerini korur. Yeni seanslar tek tek doğrulanır ve varsayılan olarak kapalıdır. 500 TL → 2.250 TL; 600 TL → 2.500 TL. Onaylanmış 26 seans için ayrıca 490 TL → 2.250 TL, 580 TL → 2.500 TL. Diğer tarifeler inceleme gerektirir.</p>';
+        echo '<p>Fiyat kuralı: 500 TL → 2.250 TL; 600 TL → 2.500 TL. Onaylı 26 seansta ayrıca 490 TL → 2.250 TL, 580 TL → 2.500 TL.</p>';
         echo '<p>' . esc_html(MS12_Pilot::summary()) . '</p>';
         MS12_Pilot::admin_controls();
         $rows = MS12_Catalog::upcoming();
         if (!$rows) { echo '<p>Okunabilir, satışta ve gelecekte olan seans bulunamadı.</p></div>'; return; }
-        echo '<table class="widefat striped"><thead><tr><th>Etkinlik</th><th>Seans (Türkiye)</th><th>Web yetişkin</th><th>Paket / Durum</th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>Etkinlik</th><th>Seans (Türkiye)</th><th>Web yetişkin</th><th>Paket / Durum</th><th>Süper 12</th></tr></thead><tbody>';
         foreach ($rows as $row) {
             $eid = (int) $row->event_id;
             $sid = (int) $row->session_id;
@@ -107,8 +107,14 @@ final class MS12_Plugin {
             }
             $t = new DateTimeImmutable($row->start_at, new DateTimeZone('UTC'));
             $time = $t->setTimezone(new DateTimeZone('Europe/Istanbul'))->format('d.m.Y H:i');
-            printf('<tr><td>%s (#%d)</td><td>%s (#%d)</td><td>%s</td><td>%s</td></tr>',
-                esc_html($row->title), $eid, esc_html($time), $sid, esc_html($price), esc_html($package));
+            $blocker = MS12_Catalog::deployment_blocker($eid, $sid);
+            if (MS12_Pilot::session_is_stopped($sid)) { $status = 'Durduruldu'; }
+            elseif (!MS12_Pilot::globally_on()) { $status = 'Genel kapalı'; }
+            elseif ($blocker !== null) { $status = 'Görünmüyor: ' . $blocker; }
+            else { $status = 'Açık'; }
+            printf('<tr><td>%s (#%d)</td><td>%s (#%d)</td><td>%s</td><td>%s</td><td>%s %s</td></tr>',
+                esc_html($row->title), $eid, esc_html($time), $sid, esc_html($price), esc_html($package),
+                esc_html($status), MS12_Pilot::session_status_html($eid, $sid));
         }
         echo '</tbody></table></div>';
     }

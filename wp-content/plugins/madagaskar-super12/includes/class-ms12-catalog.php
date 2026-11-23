@@ -132,11 +132,8 @@ final class MS12_Catalog {
         if (!in_array($program->status, ['sales_open','promotion','operations','show_day'], true)) { $blocker = 'MMC programı satışa uygun durumda değil.'; return null; }
         $types = self::types($row, $blocker);
         if (!$types) { return null; }
-        if (!$lab && !MS12_Pilot::matches($row, $types)) { $blocker = 'Canlı seans, ürün, tarife veya gösteri saati onaylı profil ile eşleşmiyor.'; return null; }
-        if (!$lab && $eid === MS12_Antalya::EVENT) {
-            if (!MS12_Antalya::canonical_payment_ready((int)$pid)) { $blocker = 'Antalya MMC, PayTR ve gerçek ücretli satış kanıtı doğrulanamadı.'; return null; }
-            if (!MS12_Antalya::family_ready($row)) { $blocker = 'Antalya yerleşik aile ürünleri ve Tickera bağlantısı doğrulanamadı.'; return null; }
-        }
+        // 0.4.0: Sabit profil listesi ve Antalya'ya özel ek kanıt şartı kaldırıldı. Süper 12,
+        // aile paketleri gibi canlı MDG/Woo eşleşmesiyle (types) doğrulanır.
         $approved = self::approved_online_tariff($eid, $sid)
             || ($lab && defined('MS12_LAB_APPROVED_ALT_SESSIONS') && is_array(MS12_LAB_APPROVED_ALT_SESSIONS)
                 && in_array($sid, MS12_LAB_APPROVED_ALT_SESSIONS, true));
