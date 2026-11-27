@@ -37,6 +37,89 @@ final class MDG_Mikro_Draft {
         return $value;
     }
 
+    // The checkout adds a single non-taxable fee for all complete 2+2 groups.
+    // Rebuild each group from checkout metadata, independently of current catalogue prices.
+    private static function sale_rows( $order ) {
+        if ( $order->get_items( 'shipping' ) ) {
+            throw new RuntimeException( 'Teslimat satırı var.' );
+        }
+        $fees = $order->get_items( 'fee' );
+        $rows = array();
+        $groups = array();
+        foreach ( $order->get_items() as $item ) {
+            $qty = (int) $item->get_quantity();
+            $ticket = get_post_meta( $item->get_product_id(), '_tc_is_ticket', true );
+            if ( 'yes' !== $ticket || $qty < 1 || (float) $qty !== (float) $item->get_quantity() ) {
+                throw new RuntimeException( 'Bilet ürünü veya miktarı doğrulanamadı.' );
+            }
+            // Woo line totals already include coupon reductions. Tax may be embedded in the sales price.
+            $gross = (int) round( 100 * ( (float) $item->get_total() + (float) $item->get_total_tax() ) );
+            $tax = (int) round( 100 * (float) $item->get_total_tax() );
+            $details = $item->get_name();
+            if ( $item->get_variation_id() && $item->get_product() ) {
+                $details .= ' ' . wp_strip_all_tags( wc_get_formatted_variation( $item->get_product(), true, true ) );
+            }
+            $row = compact( 'qty', 'gross', 'tax', 'details' );
+            if ( ! $fees || '1' !== (string) $item->get_meta( '_mdg_family22' ) ) {
+                $rows[] = $row;
+                continue;
+            }
+            $key = (string) $item->get_meta( '_mdg_family22_group' );
+            $role = (string) $item->get_meta( '_mdg_family22_component' );
+            $count = (string) $item->get_meta( '_mdg_family22_packages' );
+            $price = $item->get_meta( '_mdg_family22_package_price' );
+            $event = (string) $item->get_meta( '_mdg_family22_event_id' );
+            $session = (string) $item->get_meta( '_mdg_family22_session_id' );
+            if ( '' === $key || ! in_array( $role, array( 'adult', 'child' ), true ) ||
+                 ! ctype_digit( $count ) || (int) $count < 1 || $qty !== 2 * (int) $count ||
+                 ! ctype_digit( $event ) || (int) $event < 1 || ! ctype_digit( $session ) || (int) $session < 1 ||
+                 ! is_numeric( $price ) || (float) $price <= 0 || $gross <= 0 || 0 !== $tax ) {
+                throw new RuntimeException( 'Aile paketi içeriğini, seansını ve vergi kaydını kontrol edin.' );
+            }
+            $terms = array( 'count' => (int) $count, 'price' => (int) round( 100 * (float) $price ),
+                'event' => $event, 'session' => $session );
+            if ( ! isset( $groups[ $key ] ) ) {
+                $groups[ $key ] = array( 'terms' => $terms, 'members' => array() );
+            }
+            if ( $groups[ $key ]['terms'] !== $terms || isset( $groups[ $key ]['members'][ $role ] ) ) {
+                throw new RuntimeException( 'Aile paketi bileşen kayıtları tutarsız.' );
+            }
+            $groups[ $key ]['members'][ $role ] = $row;
+        }
+        if ( ! $fees ) {
+            return $rows;
+        }
+        if ( count( $fees ) !== 1 || ! $groups ) {
+            throw new RuntimeException( 'Bilet dışı ücret veya eşleşmeyen paket indirimi var.' );
+        }
+        $discount = 0;
+        $packages = 0;
+        foreach ( $groups as $group ) {
+            $members = $group['members'];
+            if ( ! isset( $members['adult'], $members['child'] ) ) {
+                throw new RuntimeException( 'Aile paketinin çocuk veya yetişkin bileti eksik.' );
+            }
+            $qty = $group['terms']['count'];
+            $gross = $qty * $group['terms']['price'];
+            $reduction = $members['adult']['gross'] + $members['child']['gross'] - $gross;
+            if ( $gross < 1 || $reduction <= 0 ) {
+                throw new RuntimeException( 'Aile paketi indirimi biletlere bağlanamadı.' );
+            }
+            $packages += $qty;
+            $discount += $reduction;
+            $rows[] = array( 'qty' => $qty, 'gross' => $gross, 'tax' => 0,
+                'details' => 'Aile Paketi 2+2 (2 yetişkin + 2 çocuk) | ' . $members['adult']['details'] .
+                    ' / ' . $members['child']['details'] );
+        }
+        $fee = reset( $fees );
+        $label = 'Aile Paketi 2+2 İndirimi' . ( 1 === $packages ? '' : ' (' . $packages . ' paket)' );
+        if ( $fee->get_name() !== $label || (float) $fee->get_total_tax() !== 0.0 ||
+             (int) round( 100 * (float) $fee->get_total() ) !== -$discount ) {
+            throw new RuntimeException( 'Aile paketi indirim satırı paket fiyatlarıyla eşleşmiyor.' );
+        }
+        return $rows;
+    }
+
     public static function build( $order, $cutoff ) {
         if ( ! $order || ! $cutoff || ! $order->get_date_created() ||
              $order->get_date_created()->getTimestamp() <= $cutoff ) {
@@ -81,33 +164,21 @@ final class MDG_Mikro_Draft {
             'O' => $first, 'P' => $last, 'Q' => 'TÜRKİYE', 'R' => $province, 'S' => $district,
             'V' => $order->get_billing_email(),
         );
-        if ( $order->get_items( 'fee' ) || $order->get_items( 'shipping' ) ) {
-            throw new RuntimeException( 'Bilet dışı ücret veya teslimat satırı var.' );
-        }
         $lines = array();
         $gross_sum = 0;
         $tax_sum = 0;
-        foreach ( $order->get_items() as $item ) {
-            $qty = (int) $item->get_quantity();
-            $ticket = get_post_meta( $item->get_product_id(), '_tc_is_ticket', true );
-            if ( 'yes' !== $ticket || $qty < 1 || (float) $qty !== (float) $item->get_quantity() ) {
-                throw new RuntimeException( 'Bilet ürünü veya miktarı doğrulanamadı.' );
-            }
-            // Woo line totals already include coupon reductions. Tax may be embedded in the sales price.
-            $gross = (int) round( 100 * ( (float) $item->get_total() + (float) $item->get_total_tax() ) );
-            $tax = (int) round( 100 * (float) $item->get_total_tax() );
+        foreach ( self::sale_rows( $order ) as $row ) {
+            $qty = $row['qty'];
+            $gross = $row['gross'];
+            $tax = $row['tax'];
             $net = (int) round( $gross / 1.10 );
             $vat = (int) round( $net * 0.10 );
             if ( $gross <= 0 || $gross !== $net + $vat || ( $tax && $vat !== $tax ) ) {
                 throw new RuntimeException( 'Kalem tutarı ürün kartındaki %10 KDV ile kuruşu kuruşuna eşleşmiyor.' );
             }
-            $details = $item->get_name();
-            if ( $item->get_variation_id() && $item->get_product() ) {
-                $details .= ' ' . wp_strip_all_tags( wc_get_formatted_variation( $item->get_product(), true, true ) );
-            }
             $lines[] = array( 'C' => 'madagaskar', 'D' => 'Madagaskar sirki bilet ücreti', 'E' => $qty,
                 'F' => 'ADET', 'G' => round( $net / ( 100 * $qty ), 8 ), 'H' => 10,
-                'O' => trim( $details ) . ' | Sipariş #' . $order->get_id() );
+                'O' => trim( $row['details'] ) . ' | Sipariş #' . $order->get_id() );
             $gross_sum += $gross;
             $tax_sum += $tax;
         }
