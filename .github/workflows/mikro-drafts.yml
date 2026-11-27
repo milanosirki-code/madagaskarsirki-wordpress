@@ -1,0 +1,20 @@
+name: Mikro draft workbook
+on:
+  pull_request:
+    paths:
+      - 'wp-content/plugins/mdg-mikro-taslak/**'
+      - 'tests/mdg-mikro/**'
+      - '.github/workflows/mikro-drafts.yml'
+permissions:
+  contents: read
+jobs:
+  workbook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, zip
+          coverage: none
+      - run: php tests/mdg-mikro/regression.php
