@@ -46,6 +46,65 @@ foreach (array( array('_mdg_invoice_type','corporate','Alıcı türü'),array('_
     array('_mdg_invoice_tckn','12345678901','TCKN') ) as $case ) {
     $o=clone $order;$o->meta[$case[0]]=$case[1];rejected(function() use($o,$before){MDG_Mikro_Draft::build($o,$before);},$case[2]);
 }
+// Tickets and fees are synthetic. Package amounts come from checkout metadata.
+function family_example( $item, $role, $total, $group = 'example-group' ) {
+    $member = clone $item;
+    $member->data['get_total'] = $total;
+    $member->data['get_name'] = 'Örnek seans ' . $role;
+    $member->meta = array( '_mdg_family22'=>'1', '_mdg_family22_group'=>$group,
+        '_mdg_family22_component'=>$role, '_mdg_family22_packages'=>'1',
+        '_mdg_family22_package_price'=>'1100', '_mdg_family22_event_id'=>'10', '_mdg_family22_session_id'=>'11' );
+    return $member;
+}
+$adult = family_example( $item, 'adult', 980 );
+$child = family_example( $item, 'child', 490 );
+$fee = new Example( array( 'get_name'=>'Aile Paketi 2+2 İndirimi', 'get_total'=>-370, 'get_total_tax'=>0 ) );
+$family = clone $order;
+$family->data['items'] = array( 'line_item'=>array( $child, $adult ), 'fee'=>array( $fee ) );
+$family->data['get_total'] = 1100;
+$package = MDG_Mikro_Draft::build( $family, $before );
+expect( $package['gross'] === 110000 && count( $package['lines'] ) === 1, 'Family checkout total' );
+$line = $package['lines'][0];
+expect( $line['E'] === 1 && $line['G'] === 1000.0 && $line['H'] === 10, 'Single package with exact tax' );
+expect( strpos( $line['O'], 'Aile Paketi 2+2' ) === 0, 'Family line description' );
+
+$mixed = clone $family;
+$mixed->data['items']['line_item'][] = $item;
+$mixed->data['get_total'] = 2080;
+$mix = MDG_Mikro_Draft::build( $mixed, $before );
+expect( $mix['gross'] === 208000 && $mix['lines'][0] === $doc['lines'][0], 'Standalone tickets retain their price' );
+$second_fee = clone $fee;
+$second_fee->data['get_total'] = -740;
+$second_fee->data['get_name'] .= ' (2 paket)';
+$two = clone $family;
+$two->data['items']['fee'] = array( $second_fee );
+$two->data['items']['line_item'][] = family_example( $item, 'adult', 980, 'another-group' );
+$two->data['items']['line_item'][] = family_example( $item, 'child', 490, 'another-group' );
+$two->data['get_total'] = 2200;
+$pair = MDG_Mikro_Draft::build( $two, $before );
+expect( $pair['gross'] === 220000 && count( $pair['lines'] ) === 2, 'Aggregate fee matches both groups' );
+foreach ( array( array('get_total',-371), array('get_total',370), array('get_name','Başka İndirim'), array('get_total_tax',1) ) as $change ) {
+    $bad = clone $family;
+    $changed = clone $fee;
+    $changed->data[ $change[0] ] = $change[1];
+    $bad->data['items']['fee'] = array( $changed );
+    rejected( function() use ($bad,$before) { MDG_Mikro_Draft::build( $bad, $before ); }, 'indirim satırı' );
+}
+foreach ( array( array('_mdg_family22_group','unmatched','eksik'), array('_mdg_family22_session_id','9','tutarsız'),
+    array('_mdg_family22_component','adult','tutarsız'), array('_mdg_family22_packages','2','içeriğini'),
+    array('_mdg_family22_package_price','100','tutarsız') ) as $change ) {
+    $bad = clone $family;
+    $changed = clone $child;
+    $changed->meta[ $change[0] ] = $change[1];
+    $bad->data['items']['line_item'] = array( $adult, $changed );
+    rejected( function() use ($bad,$before) { MDG_Mikro_Draft::build( $bad, $before ); }, $change[2] );
+}
+foreach ( array( array('fee',array($fee,$fee),'Bilet dışı'), array('shipping',array($fee),'Teslimat'),
+    array('line_item',array($item),'Bilet dışı') ) as $change ) {
+    $bad = clone $family;
+    $bad->data['items'][ $change[0] ] = $change[1];
+    rejected( function() use ($bad,$before) { MDG_Mikro_Draft::build( $bad, $before ); }, $change[2] );
+}
 $doc2=$doc; $doc2['lines'][]=$doc2['lines'][0]; $doc2['customer']['O']='=Test';
 // Small synthetic test template. The operator's workbook remains on their site.
 $fixture = tempnam(sys_get_temp_dir(),'mikro-fixture-');
